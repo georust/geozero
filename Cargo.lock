@@ -75,6 +75,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "geozero-core-out"
+version = "0.1.0"
+dependencies = [
+ "geozero-lib",
+]
+
+[[package]]
 name = "geozero-lib"
 version = "0.1.0"
 
