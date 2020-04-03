@@ -1,0 +1,14 @@
+[package]
+name = "geozero-cli"
+version = "0.1.0"
+authors = ["Pirmin Kalberer <pka@sourcepole.ch>"]
+edition = "2018"
+default-run = "geozero"
+
+[[bin]]
+name = "geozero"
+path = "src/main.rs"
+
+[dependencies]
+flatgeobuf = "0.3"
+structopt = "0.3"
