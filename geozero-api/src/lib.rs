@@ -49,8 +49,10 @@
 //! }
 //! ```
 
+mod feature_reader;
 mod geometry_reader;
 mod property_reader;
 
+pub use feature_reader::*;
 pub use geometry_reader::*;
 pub use property_reader::*;

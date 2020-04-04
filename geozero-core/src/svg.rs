@@ -1,15 +1,94 @@
-use geozero_api::GeomReader;
+use geozero_api::{FeatureReader, GeomReader, PropertyReader};
 use std::io::Write;
 
 pub struct SvgEmitter<'a, W: Write> {
     out: &'a mut W,
     invert_y: bool,
+    xmin: f64,
+    ymin: f64,
+    xmax: f64,
+    ymax: f64,
+    width: u32,
+    height: u32,
 }
 
 impl<'a, W: Write> SvgEmitter<'a, W> {
     pub fn new(out: &'a mut W, invert_y: bool) -> SvgEmitter<'a, W> {
-        SvgEmitter { out, invert_y }
+        SvgEmitter {
+            out,
+            invert_y,
+            xmin: 0.0,
+            ymin: 0.0,
+            xmax: 0.0,
+            ymax: 0.0,
+            width: 0,
+            height: 0,
+        }
     }
+    pub fn set_dimensions(
+        &mut self,
+        xmin: f64,
+        ymin: f64,
+        xmax: f64,
+        ymax: f64,
+        width: u32,
+        height: u32,
+    ) {
+        self.xmin = xmin;
+        self.xmax = xmax;
+        if self.invert_y {
+            self.ymin = -ymax;
+            self.ymax = -ymin;
+        } else {
+            self.ymin = ymin;
+            self.ymax = ymax;
+        }
+        self.width = width;
+        self.height = height;
+    }
+}
+
+impl<W: Write> FeatureReader for SvgEmitter<'_, W> {
+    fn dataset_begin(&mut self, name: Option<&str>) {
+        self.out
+            .write(
+                br#"<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny" "#,
+            )
+            .unwrap();
+        self.out
+            .write(&format!("width=\"{}\" height=\"{}\" ", self.width, self.height).as_bytes())
+            .unwrap();
+        self.out
+            .write(
+                &format!(
+                    "viewBox=\"{} {} {} {}\" ",
+                    self.xmin,
+                    self.ymin,
+                    self.xmax - self.xmin,
+                    self.ymax - self.ymin
+                )
+                .as_bytes(),
+            )
+            .unwrap();
+        self.out
+            .write(
+                br#"stroke-linecap="round" stroke-linejoin="round">
+<g id=""#,
+            )
+            .unwrap();
+        if let Some(name) = name {
+            self.out.write(name.as_bytes()).unwrap();
+        }
+        self.out.write(br#"">"#).unwrap();
+    }
+    fn dataset_end(&mut self) {
+        self.out.write(b"\n</g>\n</svg>").unwrap();
+    }
+    fn feature_begin(&mut self, _idx: u64) {
+        self.out.write(b"\n").unwrap();
+    }
+    fn feature_end(&mut self, _idx: u64) {}
 }
 
 impl<W: Write> GeomReader for SvgEmitter<'_, W> {
@@ -54,3 +133,5 @@ impl<W: Write> GeomReader for SvgEmitter<'_, W> {
         self.out.write(br#""/>"#).unwrap();
     }
 }
+
+impl<W: Write> PropertyReader for SvgEmitter<'_, W> {}

@@ -1,4 +1,4 @@
-use geozero_api::{ColumnValue, GeomReader, PropertyReader};
+use geozero_api::{ColumnValue, FeatureReader, GeomReader, PropertyReader};
 use std::fmt::Display;
 use std::io::Write;
 
@@ -15,6 +15,49 @@ impl<'a, W: Write> GeoJsonEmitter<'a, W> {
             self.out.write(b",").unwrap();
         }
     }
+}
+
+impl<W: Write> FeatureReader for GeoJsonEmitter<'_, W> {
+    fn dataset_begin(&mut self, name: Option<&str>) {
+        self.out
+            .write(
+                br#"{
+"type": "FeatureCollection",
+"name": ""#,
+            )
+            .unwrap();
+        if let Some(name) = name {
+            self.out.write(name.as_bytes()).unwrap();
+        }
+        self.out
+            .write(
+                br#"",
+"features": ["#,
+            )
+            .unwrap();
+    }
+    fn dataset_end(&mut self) {
+        self.out.write(b"]}").unwrap();
+    }
+    fn feature_begin(&mut self, idx: u64) {
+        if idx > 0 {
+            self.out.write(b",\n").unwrap();
+        }
+        self.out.write(br#"{"type": "Feature", "#).unwrap();
+    }
+    fn feature_end(&mut self, _idx: u64) {
+        self.out.write(b"}").unwrap();
+    }
+    fn properties_begin(&mut self) {
+        self.out.write(br#""properties": {"#).unwrap();
+    }
+    fn properties_end(&mut self) {
+        self.out.write(b"}, ").unwrap(); //TODO: support also properties after geometry!
+    }
+    fn geometry_begin(&mut self) {
+        self.out.write(br#""geometry": "#).unwrap();
+    }
+    fn geometry_end(&mut self) {}
 }
 
 impl<W: Write> GeomReader for GeoJsonEmitter<'_, W> {
