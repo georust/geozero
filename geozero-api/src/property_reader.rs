@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt;
 
 #[derive(PartialEq, Debug)]
 pub enum ColumnValue<'a> {
@@ -25,26 +26,31 @@ pub trait PropertyReader {
     }
 }
 
+impl fmt::Display for ColumnValue<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ColumnValue::Byte(v) => write!(f, "{}", v),
+            ColumnValue::UByte(v) => write!(f, "{}", v),
+            ColumnValue::Bool(v) => write!(f, "{}", v),
+            ColumnValue::Short(v) => write!(f, "{}", v),
+            ColumnValue::UShort(v) => write!(f, "{}", v),
+            ColumnValue::Int(v) => write!(f, "{}", v),
+            ColumnValue::UInt(v) => write!(f, "{}", v),
+            ColumnValue::Long(v) => write!(f, "{}", v),
+            ColumnValue::ULong(v) => write!(f, "{}", v),
+            ColumnValue::Float(v) => write!(f, "{}", v),
+            ColumnValue::Double(v) => write!(f, "{}", v),
+            ColumnValue::String(v) => write!(f, "{}", v),
+            ColumnValue::Json(v) => write!(f, "{}", v),
+            ColumnValue::DateTime(v) => write!(f, "{}", v),
+            ColumnValue::Binary(_v) => write!(f, "[BINARY]"),
+        }
+    }
+}
+
 impl PropertyReader for HashMap<String, String> {
     fn property(&mut self, _idx: usize, colname: &str, colval: ColumnValue) -> bool {
-        let vstr = match colval {
-            ColumnValue::Byte(v) => v.to_string(),
-            ColumnValue::UByte(v) => v.to_string(),
-            ColumnValue::Bool(v) => v.to_string(),
-            ColumnValue::Short(v) => v.to_string(),
-            ColumnValue::UShort(v) => v.to_string(),
-            ColumnValue::Int(v) => v.to_string(),
-            ColumnValue::UInt(v) => v.to_string(),
-            ColumnValue::Long(v) => v.to_string(),
-            ColumnValue::ULong(v) => v.to_string(),
-            ColumnValue::Float(v) => v.to_string(),
-            ColumnValue::Double(v) => v.to_string(),
-            ColumnValue::String(v) => v.to_string(),
-            ColumnValue::Json(v) => v.to_string(),
-            ColumnValue::DateTime(v) => v.to_string(),
-            ColumnValue::Binary(_v) => "[BINARY]".to_string(),
-        };
-        self.insert(colname.to_string(), vstr);
+        self.insert(colname.to_string(), colval.to_string());
         false
     }
 }
