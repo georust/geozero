@@ -1,12 +1,12 @@
 use geozero_api::GeomReader;
 use std::io::Write;
 
-struct GeoJsonEmitter<'a, W: Write> {
+pub struct GeoJsonEmitter<'a, W: Write> {
     out: &'a mut W,
 }
 
 impl<'a, W: Write> GeoJsonEmitter<'a, W> {
-    fn new(out: &'a mut W) -> GeoJsonEmitter<'a, W> {
+    pub fn new(out: &'a mut W) -> GeoJsonEmitter<'a, W> {
         GeoJsonEmitter { out }
     }
     fn comma(&mut self, idx: usize) {
