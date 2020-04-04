@@ -1,7 +1,7 @@
 use geozero_api::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 use std::io::Write;
 
-pub struct SvgEmitter<'a, W: Write> {
+pub struct SvgWriter<'a, W: Write> {
     out: &'a mut W,
     invert_y: bool,
     xmin: f64,
@@ -12,9 +12,9 @@ pub struct SvgEmitter<'a, W: Write> {
     height: u32,
 }
 
-impl<'a, W: Write> SvgEmitter<'a, W> {
-    pub fn new(out: &'a mut W, invert_y: bool) -> SvgEmitter<'a, W> {
-        SvgEmitter {
+impl<'a, W: Write> SvgWriter<'a, W> {
+    pub fn new(out: &'a mut W, invert_y: bool) -> SvgWriter<'a, W> {
+        SvgWriter {
             out,
             invert_y,
             xmin: 0.0,
@@ -48,7 +48,7 @@ impl<'a, W: Write> SvgEmitter<'a, W> {
     }
 }
 
-impl<W: Write> FeatureProcessor for SvgEmitter<'_, W> {
+impl<W: Write> FeatureProcessor for SvgWriter<'_, W> {
     fn dataset_begin(&mut self, name: Option<&str>) {
         self.out
             .write(
@@ -91,7 +91,7 @@ impl<W: Write> FeatureProcessor for SvgEmitter<'_, W> {
     fn feature_end(&mut self, _idx: u64) {}
 }
 
-impl<W: Write> GeomProcessor for SvgEmitter<'_, W> {
+impl<W: Write> GeomProcessor for SvgWriter<'_, W> {
     fn pointxy(&mut self, x: f64, y: f64, _idx: usize) {
         let y = if self.invert_y { -y } else { y };
         self.out.write(&format!("{} {} ", x, y).as_bytes()).unwrap();
@@ -134,4 +134,4 @@ impl<W: Write> GeomProcessor for SvgEmitter<'_, W> {
     }
 }
 
-impl<W: Write> PropertyProcessor for SvgEmitter<'_, W> {}
+impl<W: Write> PropertyProcessor for SvgWriter<'_, W> {}

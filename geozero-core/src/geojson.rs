@@ -2,13 +2,13 @@ use geozero_api::{ColumnValue, FeatureProcessor, GeomProcessor, PropertyProcesso
 use std::fmt::Display;
 use std::io::Write;
 
-pub struct GeoJsonEmitter<'a, W: Write> {
+pub struct GeoJsonWriter<'a, W: Write> {
     out: &'a mut W,
 }
 
-impl<'a, W: Write> GeoJsonEmitter<'a, W> {
-    pub fn new(out: &'a mut W) -> GeoJsonEmitter<'a, W> {
-        GeoJsonEmitter { out }
+impl<'a, W: Write> GeoJsonWriter<'a, W> {
+    pub fn new(out: &'a mut W) -> GeoJsonWriter<'a, W> {
+        GeoJsonWriter { out }
     }
     fn comma(&mut self, idx: usize) {
         if idx > 0 {
@@ -17,7 +17,7 @@ impl<'a, W: Write> GeoJsonEmitter<'a, W> {
     }
 }
 
-impl<W: Write> FeatureProcessor for GeoJsonEmitter<'_, W> {
+impl<W: Write> FeatureProcessor for GeoJsonWriter<'_, W> {
     fn dataset_begin(&mut self, name: Option<&str>) {
         self.out
             .write(
@@ -60,7 +60,7 @@ impl<W: Write> FeatureProcessor for GeoJsonEmitter<'_, W> {
     fn geometry_end(&mut self) {}
 }
 
-impl<W: Write> GeomProcessor for GeoJsonEmitter<'_, W> {
+impl<W: Write> GeomProcessor for GeoJsonWriter<'_, W> {
     fn pointxy(&mut self, x: f64, y: f64, idx: usize) {
         self.comma(idx);
         self.out
@@ -147,7 +147,7 @@ fn write_str_prop<'a, W: Write>(out: &'a mut W, colname: &str, v: &dyn Display) 
         .unwrap()
 }
 
-impl<W: Write> PropertyProcessor for GeoJsonEmitter<'_, W> {
+impl<W: Write> PropertyProcessor for GeoJsonWriter<'_, W> {
     fn property(&mut self, i: usize, colname: &str, colval: ColumnValue) -> bool {
         if i > 0 {
             self.out.write(b", ").unwrap();
