@@ -1,4 +1,4 @@
-pub trait FeatureReader {
+pub trait FeatureProcessor {
     fn dataset_begin(&mut self, _name: Option<&str>) {}
     fn dataset_end(&mut self) {}
     fn feature_begin(&mut self, _idx: u64) {}

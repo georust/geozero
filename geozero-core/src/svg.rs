@@ -1,4 +1,4 @@
-use geozero_api::{FeatureReader, GeomReader, PropertyReader};
+use geozero_api::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 use std::io::Write;
 
 pub struct SvgEmitter<'a, W: Write> {
@@ -48,7 +48,7 @@ impl<'a, W: Write> SvgEmitter<'a, W> {
     }
 }
 
-impl<W: Write> FeatureReader for SvgEmitter<'_, W> {
+impl<W: Write> FeatureProcessor for SvgEmitter<'_, W> {
     fn dataset_begin(&mut self, name: Option<&str>) {
         self.out
             .write(
@@ -91,7 +91,7 @@ impl<W: Write> FeatureReader for SvgEmitter<'_, W> {
     fn feature_end(&mut self, _idx: u64) {}
 }
 
-impl<W: Write> GeomReader for SvgEmitter<'_, W> {
+impl<W: Write> GeomProcessor for SvgEmitter<'_, W> {
     fn pointxy(&mut self, x: f64, y: f64, _idx: usize) {
         let y = if self.invert_y { -y } else { y };
         self.out.write(&format!("{} {} ", x, y).as_bytes()).unwrap();
@@ -134,4 +134,4 @@ impl<W: Write> GeomReader for SvgEmitter<'_, W> {
     }
 }
 
-impl<W: Write> PropertyReader for SvgEmitter<'_, W> {}
+impl<W: Write> PropertyProcessor for SvgEmitter<'_, W> {}

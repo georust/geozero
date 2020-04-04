@@ -9,7 +9,7 @@ pub struct Dimensions {
     pub tm: bool,
 }
 
-pub trait GeomReader {
+pub trait GeomProcessor {
     /// Additional dimensions requested from reader
     fn dimensions(&self) -> Dimensions {
         Dimensions {
@@ -53,7 +53,7 @@ pub trait GeomReader {
 
 pub struct DebugReader;
 
-impl GeomReader for DebugReader {
+impl GeomProcessor for DebugReader {
     fn pointxy(&mut self, x: f64, y: f64, _idx: usize) {
         print!("pointxy({} {}) ", x, y);
     }

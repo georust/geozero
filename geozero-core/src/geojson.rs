@@ -1,4 +1,4 @@
-use geozero_api::{ColumnValue, FeatureReader, GeomReader, PropertyReader};
+use geozero_api::{ColumnValue, FeatureProcessor, GeomProcessor, PropertyProcessor};
 use std::fmt::Display;
 use std::io::Write;
 
@@ -17,7 +17,7 @@ impl<'a, W: Write> GeoJsonEmitter<'a, W> {
     }
 }
 
-impl<W: Write> FeatureReader for GeoJsonEmitter<'_, W> {
+impl<W: Write> FeatureProcessor for GeoJsonEmitter<'_, W> {
     fn dataset_begin(&mut self, name: Option<&str>) {
         self.out
             .write(
@@ -60,7 +60,7 @@ impl<W: Write> FeatureReader for GeoJsonEmitter<'_, W> {
     fn geometry_end(&mut self) {}
 }
 
-impl<W: Write> GeomReader for GeoJsonEmitter<'_, W> {
+impl<W: Write> GeomProcessor for GeoJsonEmitter<'_, W> {
     fn pointxy(&mut self, x: f64, y: f64, idx: usize) {
         self.comma(idx);
         self.out
@@ -147,7 +147,7 @@ fn write_str_prop<'a, W: Write>(out: &'a mut W, colname: &str, v: &dyn Display) 
         .unwrap()
 }
 
-impl<W: Write> PropertyReader for GeoJsonEmitter<'_, W> {
+impl<W: Write> PropertyProcessor for GeoJsonEmitter<'_, W> {
     fn property(&mut self, i: usize, colname: &str, colval: ColumnValue) -> bool {
         if i > 0 {
             self.out.write(b", ").unwrap();

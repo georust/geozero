@@ -18,14 +18,14 @@
 //!
 //! ## Zero-copy geometry reader
 //!
-//! Geometries can be accessed by implementing the `GeomReader` trait.
+//! Geometries can be accessed by implementing the `GeomProcessor` trait.
 //!
 //! ```rust
-//! use geozero_api::GeomReader;
+//! use geozero_api::GeomProcessor;
 //!
 //! struct CoordPrinter;
 //!
-//! impl GeomReader for CoordPrinter {
+//! impl GeomProcessor for CoordPrinter {
 //!     fn pointxy(&mut self, x: f64, y: f64, _idx: usize) {
 //!         println!("({} {})", x, y);
 //!     }
@@ -34,14 +34,14 @@
 //!
 //! ## Zero-copy feature access
 //!
-//! Properties can be accessed by implementing the `PropertyReader` trait.
+//! Properties can be accessed by implementing the `PropertyProcessor` trait.
 //!
 //! ```rust
-//! use geozero_api::{PropertyReader, ColumnValue};
+//! use geozero_api::{PropertyProcessor, ColumnValue};
 //!
 //! struct PropertyPrinter;
 //!
-//! impl PropertyReader for PropertyPrinter {
+//! impl PropertyProcessor for PropertyPrinter {
 //!     fn property(&mut self, i: usize, n: &str, v: ColumnValue) -> bool {
 //!         println!("columnidx: {} name: {} value: {:?}", i, n, v);
 //!         false // don't abort
@@ -49,10 +49,10 @@
 //! }
 //! ```
 
-mod feature_reader;
-mod geometry_reader;
-mod property_reader;
+mod feature_processor;
+mod geometry_processor;
+mod property_processor;
 
-pub use feature_reader::*;
-pub use geometry_reader::*;
-pub use property_reader::*;
+pub use feature_processor::*;
+pub use geometry_processor::*;
+pub use property_processor::*;

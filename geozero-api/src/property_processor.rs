@@ -20,7 +20,7 @@ pub enum ColumnValue<'a> {
     Binary(&'a [u8]),
 }
 
-pub trait PropertyReader {
+pub trait PropertyProcessor {
     fn property(&mut self, _idx: usize, _name: &str, _value: ColumnValue) -> bool {
         true
     }
@@ -48,7 +48,7 @@ impl fmt::Display for ColumnValue<'_> {
     }
 }
 
-impl PropertyReader for HashMap<String, String> {
+impl PropertyProcessor for HashMap<String, String> {
     fn property(&mut self, _idx: usize, colname: &str, colval: ColumnValue) -> bool {
         self.insert(colname.to_string(), colval.to_string());
         false
