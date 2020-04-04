@@ -22,6 +22,7 @@
 //!
 //! ```rust
 //! use geozero_api::GeomReader;
+//!
 //! struct CoordPrinter;
 //!
 //! impl GeomReader for CoordPrinter {
@@ -29,7 +30,27 @@
 //!         println!("({} {})", x, y);
 //!     }
 //! }
+//! ```
+//!
+//! ## Zero-copy feature access
+//!
+//! Properties can be accessed by implementing the `PropertyReader` trait.
+//!
+//! ```rust
+//! use geozero_api::{PropertyReader, ColumnValue};
+//!
+//! struct PropertyPrinter;
+//!
+//! impl PropertyReader for PropertyPrinter {
+//!     fn property(&mut self, i: usize, n: &str, v: ColumnValue) -> bool {
+//!         println!("columnidx: {} name: {} value: {:?}", i, n, v);
+//!         false // don't abort
+//!     }
+//! }
+//! ```
 
 mod geometry_reader;
+mod property_reader;
 
 pub use geometry_reader::*;
+pub use property_reader::*;

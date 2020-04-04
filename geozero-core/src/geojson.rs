@@ -1,4 +1,5 @@
-use geozero_api::GeomReader;
+use geozero_api::{ColumnValue, GeomReader, PropertyReader};
+use std::fmt::Display;
 use std::io::Write;
 
 pub struct GeoJsonEmitter<'a, W: Write> {
@@ -90,5 +91,41 @@ impl<W: Write> GeomReader for GeoJsonEmitter<'_, W> {
     }
     fn multipoly_end(&mut self) {
         self.out.write(b"]}").unwrap();
+    }
+}
+
+fn write_num_prop<'a, W: Write>(out: &'a mut W, colname: &str, v: &dyn Display) -> usize {
+    out.write(&format!(r#""{}": {}"#, colname, v).as_bytes())
+        .unwrap()
+}
+
+fn write_str_prop<'a, W: Write>(out: &'a mut W, colname: &str, v: &dyn Display) -> usize {
+    out.write(&format!(r#""{}": "{}""#, colname, v).as_bytes())
+        .unwrap()
+}
+
+impl<W: Write> PropertyReader for GeoJsonEmitter<'_, W> {
+    fn property(&mut self, i: usize, colname: &str, colval: ColumnValue) -> bool {
+        if i > 0 {
+            self.out.write(b", ").unwrap();
+        }
+        match colval {
+            ColumnValue::Byte(v) => write_num_prop(self.out, colname, &v),
+            ColumnValue::UByte(v) => write_num_prop(self.out, colname, &v),
+            ColumnValue::Bool(v) => write_num_prop(self.out, colname, &v),
+            ColumnValue::Short(v) => write_num_prop(self.out, colname, &v),
+            ColumnValue::UShort(v) => write_num_prop(self.out, colname, &v),
+            ColumnValue::Int(v) => write_num_prop(self.out, colname, &v),
+            ColumnValue::UInt(v) => write_num_prop(self.out, colname, &v),
+            ColumnValue::Long(v) => write_num_prop(self.out, colname, &v),
+            ColumnValue::ULong(v) => write_num_prop(self.out, colname, &v),
+            ColumnValue::Float(v) => write_num_prop(self.out, colname, &v),
+            ColumnValue::Double(v) => write_num_prop(self.out, colname, &v),
+            ColumnValue::String(v) => write_str_prop(self.out, colname, &v),
+            ColumnValue::Json(_v) => 0,
+            ColumnValue::DateTime(v) => write_str_prop(self.out, colname, &v),
+            ColumnValue::Binary(_v) => 0,
+        };
+        false
     }
 }
