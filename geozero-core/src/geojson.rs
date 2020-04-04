@@ -1,4 +1,4 @@
-use geozero_lib::geometry_reader::GeomReader;
+use geozero_api::GeomReader;
 use std::io::Write;
 
 struct GeoJsonEmitter<'a, W: Write> {

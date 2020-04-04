@@ -67,6 +67,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "geozero-api"
+version = "0.1.0"
+
+[[package]]
 name = "geozero-cli"
 version = "0.1.0"
 dependencies = [
@@ -75,15 +79,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "geozero-core-out"
+name = "geozero-core"
 version = "0.1.0"
 dependencies = [
- "geozero-lib",
+ "geozero-api",
 ]
-
-[[package]]
-name = "geozero-lib"
-version = "0.1.0"
 
 [[package]]
 name = "heck"
