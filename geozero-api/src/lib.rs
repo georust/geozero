@@ -49,10 +49,12 @@
 //! }
 //! ```
 
+mod driver;
 mod feature_processor;
 mod geometry_processor;
 mod property_processor;
 
+pub use driver::*;
 pub use feature_processor::*;
 pub use geometry_processor::*;
 pub use property_processor::*;

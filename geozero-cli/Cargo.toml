@@ -10,6 +10,8 @@ name = "geozero"
 path = "src/main.rs"
 
 [dependencies]
+geozero-api = { path = "../geozero-api" }
 geozero-core = { path = "../geozero-core" }
 flatgeobuf = { version = "0.3", path = "../../../gis/flatgeobuf/src/rust" }
 structopt = "0.3"
+tokio = { version = "0.2", features = ["full"] }
