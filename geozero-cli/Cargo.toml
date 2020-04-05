@@ -10,5 +10,6 @@ name = "geozero"
 path = "src/main.rs"
 
 [dependencies]
-flatgeobuf = "0.3"
+geozero-core = { path = "../geozero-core" }
+flatgeobuf = { version = "0.3", path = "../../../gis/flatgeobuf/src/rust" }
 structopt = "0.3"

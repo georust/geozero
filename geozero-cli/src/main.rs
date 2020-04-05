@@ -1,3 +1,4 @@
+use geozero_core::geojson::GeoJsonWriter;
 use flatgeobuf::*;
 use std::fs::File;
 use std::io::{BufReader, BufWriter};
@@ -24,5 +25,6 @@ fn main() -> std::result::Result<(), std::io::Error> {
     let mut freader = FeatureReader::select_all(&mut filein, &header)?;
 
     let mut fout = BufWriter::new(File::create(args.dest)?);
-    freader.to_geojson(&mut filein, &header, &mut fout)
+    let mut json = GeoJsonWriter::new(&mut fout);
+    freader.process_features(&mut filein, &header, &mut json)
 }
