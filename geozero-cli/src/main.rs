@@ -1,6 +1,7 @@
 use flatgeobuf;
 use geozero_api::{Extent, HttpReader, OpenOpts, Reader, SelectOpts};
 use geozero_core::geojson::GeoJsonWriter;
+use geozero_core::svg::SvgWriter;
 use std::fs::File;
 use std::io::BufWriter;
 use std::num::ParseFloatError;
@@ -13,6 +14,9 @@ struct Cli {
     /// Geometries within extent
     #[structopt(short, long, parse(try_from_str = parse_extent))]
     extent: Option<Extent>,
+    /// Output format (geojson,svg)
+    #[structopt(short, long)]
+    format: String,
     /// The path to the file to write
     #[structopt(parse(from_os_str))]
     dest: std::path::PathBuf,
@@ -44,8 +48,17 @@ fn process(args: Cli) -> Result<(), std::io::Error> {
     driver.select(&select_opts);
 
     let mut fout = BufWriter::new(File::create(args.dest)?);
-    let mut json = GeoJsonWriter::new(&mut fout);
-    driver.process(&mut json);
+    match args.format.as_str() {
+        "geojson" => {
+            let mut processor = GeoJsonWriter::new(&mut fout);
+            driver.process(&mut processor);
+        }
+        "svg" => {
+            let mut processor = SvgWriter::new(&mut fout, true);
+            driver.process(&mut processor);
+        }
+        _ => panic!("Unkown output format"),
+    };
     Ok(())
 }
 
@@ -60,8 +73,17 @@ async fn process_url(args: Cli) -> Result<(), Box<dyn std::error::Error>> {
     driver.select(&select_opts).await;
 
     let mut fout = BufWriter::new(File::create(args.dest)?);
-    let mut json = GeoJsonWriter::new(&mut fout);
-    driver.process(&mut json).await;
+    match args.format.as_str() {
+        "geojson" => {
+            let mut processor = GeoJsonWriter::new(&mut fout);
+            driver.process(&mut processor).await;
+        }
+        "svg" => {
+            let mut processor = SvgWriter::new(&mut fout, true);
+            driver.process(&mut processor).await;
+        }
+        _ => panic!("Unkown output format"),
+    }
     Ok(())
 }
 
