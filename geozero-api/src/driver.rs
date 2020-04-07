@@ -8,15 +8,16 @@ pub trait Driver {}
 
 pub struct OpenOpts {}
 
-pub struct Bbox {
-    pub min_x: f64,
-    pub min_y: f64,
-    pub max_x: f64,
-    pub max_y: f64,
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub struct Extent {
+    pub minx: f64,
+    pub miny: f64,
+    pub maxx: f64,
+    pub maxy: f64,
 }
 
 pub struct SelectOpts {
-    pub bbox: Option<Bbox>,
+    pub extent: Option<Extent>,
 }
 
 pub trait Reader {
