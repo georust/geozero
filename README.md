@@ -20,9 +20,10 @@ geozero includes a command line interface for converting date between supported 
 ## Available implementations
 
 Implemented:
-* FlatGeobuf [Input](https://github.com/bjornharrtell/flatgeobuf)
+* FlatGeobuf [Reader](https://github.com/bjornharrtell/flatgeobuf)
+* GeoJSON Writer
+* SVG Writer
 
-Planned next:
-* GeoJSON [Output](https://github.com/bjornharrtell/flatgeobuf)
-* WKT Output
-* EWKB Input
+Planned:
+* WKT Writer
+* EWKB Reader

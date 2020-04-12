@@ -55,6 +55,19 @@ fn process(args: Cli) -> Result<(), std::io::Error> {
         }
         "svg" => {
             let mut processor = SvgWriter::new(&mut fout, true);
+            if let Some(extent) = args.extent {
+                processor.set_dimensions(
+                    extent.minx,
+                    extent.miny,
+                    extent.maxx,
+                    extent.maxy,
+                    800,
+                    600,
+                );
+            } else {
+                // TODO: get image size as opts and full extent from data
+                processor.set_dimensions(-180.0, -90.0, 180.0, 90.0, 800, 600);
+            }
             driver.process(&mut processor);
         }
         _ => panic!("Unkown output format"),
@@ -80,6 +93,18 @@ async fn process_url(args: Cli) -> Result<(), Box<dyn std::error::Error>> {
         }
         "svg" => {
             let mut processor = SvgWriter::new(&mut fout, true);
+            if let Some(extent) = args.extent {
+                processor.set_dimensions(
+                    extent.minx,
+                    extent.miny,
+                    extent.maxx,
+                    extent.maxy,
+                    800,
+                    600,
+                );
+            } else {
+                processor.set_dimensions(-180.0, -90.0, 180.0, 90.0, 800, 600);
+            }
             driver.process(&mut processor).await;
         }
         _ => panic!("Unkown output format"),
