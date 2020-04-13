@@ -148,7 +148,7 @@ fn write_str_prop<'a, W: Write>(out: &'a mut W, colname: &str, v: &dyn Display) 
 }
 
 impl<W: Write> PropertyProcessor for GeoJsonWriter<'_, W> {
-    fn property(&mut self, i: usize, colname: &str, colval: ColumnValue) -> bool {
+    fn property(&mut self, i: usize, colname: &str, colval: &ColumnValue) -> bool {
         if i > 0 {
             self.out.write(b", ").unwrap();
         }
