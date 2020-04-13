@@ -12,6 +12,6 @@ path = "src/main.rs"
 [dependencies]
 geozero-api = { path = "../geozero-api" }
 geozero-core = { path = "../geozero-core" }
-flatgeobuf = { version = "0.3", path = "../../../gis/flatgeobuf/src/rust" }
+flatgeobuf = { git = "https://github.com/pka/flatgeobuf/", branch="geozero" }
 structopt = "0.3"
 tokio = { version = "0.2", features = ["full"] }

@@ -1,3 +1,10 @@
 [workspace]
 members = ["geozero-api", "geozero-core", "geozero-cli"]
 default-members = ["geozero-api", "geozero-core", "geozero-cli"]
+
+[patch."https://github.com/pka/flatgeobuf"]
+flatgeobuf = { path = "/home/pi/code/gis/flatgeobuf/src/rust" }
+
+[patch."https://github.com/pka/geozero"]
+geozero-core = { path = "/home/pi/code/rust/geozero/geozero-core" }
+geozero-api = { path = "/home/pi/code/rust/geozero/geozero-api" }
