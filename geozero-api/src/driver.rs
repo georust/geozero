@@ -1,6 +1,4 @@
 use crate::feature_processor::FeatureProcessor;
-use crate::geometry_processor::GeomProcessor;
-use crate::property_processor::PropertyProcessor;
 use async_trait::async_trait;
 use std::path::Path;
 
@@ -25,9 +23,7 @@ pub trait Reader {
     where
         Self: Sized;
     fn select(&mut self, opts: &SelectOpts);
-    fn process<P>(&mut self, processor: &mut P)
-    where
-        P: FeatureProcessor + GeomProcessor + PropertyProcessor;
+    fn process<P: FeatureProcessor>(&mut self, processor: &mut P);
 }
 
 #[async_trait]
@@ -36,9 +32,7 @@ pub trait HttpReader {
     where
         Self: Sized;
     async fn select(&mut self, opts: &SelectOpts);
-    async fn process<P>(&mut self, processor: &mut P)
-    where
-        P: FeatureProcessor + GeomProcessor + PropertyProcessor + Send;
+    async fn process<P: FeatureProcessor + Send>(&mut self, processor: &mut P);
 }
 
 pub struct CreateOpts {}
@@ -47,7 +41,5 @@ pub trait Writer {
     fn open<P: AsRef<Path>>(path: P, opts: &CreateOpts) -> Result<Self, std::io::Error>
     where
         Self: Sized;
-    fn process<P>(&mut self, processor: &mut P)
-    where
-        P: FeatureProcessor + GeomProcessor + PropertyProcessor;
+    fn process<P: FeatureProcessor>(&mut self, processor: &mut P);
 }
