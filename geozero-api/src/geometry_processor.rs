@@ -1,3 +1,5 @@
+use crate::DebugReader;
+
 pub struct Dimensions {
     /// height
     pub z: bool,
@@ -50,8 +52,6 @@ pub trait GeomProcessor {
     fn multipoly_begin(&mut self, _size: usize, _idx: usize) {}
     fn multipoly_end(&mut self) {}
 }
-
-pub struct DebugReader;
 
 impl GeomProcessor for DebugReader {
     fn pointxy(&mut self, x: f64, y: f64, _idx: usize) {

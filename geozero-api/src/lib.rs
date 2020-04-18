@@ -42,7 +42,7 @@
 //! struct PropertyPrinter;
 //!
 //! impl PropertyProcessor for PropertyPrinter {
-//!     fn property(&mut self, i: usize, n: &str, v: ColumnValue) -> bool {
+//!     fn property(&mut self, i: usize, n: &str, v: &ColumnValue) -> bool {
 //!         println!("columnidx: {} name: {} value: {:?}", i, n, v);
 //!         false // don't abort
 //!     }
@@ -60,3 +60,6 @@ pub use feature_processor::*;
 pub use geometry_processor::*;
 pub use multiplex::*;
 pub use property_processor::*;
+
+
+pub struct DebugReader {}

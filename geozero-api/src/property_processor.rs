@@ -1,3 +1,4 @@
+use crate::DebugReader;
 use std::collections::HashMap;
 use std::fmt;
 
@@ -47,6 +48,8 @@ impl fmt::Display for ColumnValue<'_> {
         }
     }
 }
+
+impl PropertyProcessor for DebugReader {} //TODO
 
 impl PropertyProcessor for HashMap<String, String> {
     fn property(&mut self, _idx: usize, colname: &str, colval: &ColumnValue) -> bool {
