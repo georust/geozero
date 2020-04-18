@@ -26,7 +26,7 @@
 //! struct CoordPrinter;
 //!
 //! impl GeomProcessor for CoordPrinter {
-//!     fn pointxy(&mut self, x: f64, y: f64, _idx: usize) {
+//!     fn xy(&mut self, x: f64, y: f64, _idx: usize) {
 //!         println!("({} {})", x, y);
 //!     }
 //! }

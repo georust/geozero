@@ -92,44 +92,40 @@ impl<W: Write> FeatureProcessor for SvgWriter<'_, W> {
 }
 
 impl<W: Write> GeomProcessor for SvgWriter<'_, W> {
-    fn pointxy(&mut self, x: f64, y: f64, _idx: usize) {
+    fn xy(&mut self, x: f64, y: f64, _idx: usize) {
         let y = if self.invert_y { -y } else { y };
         self.out.write(&format!("{} {} ", x, y).as_bytes()).unwrap();
     }
     fn point_begin(&mut self, _idx: usize) {
         self.out.write(br#"<path d="M "#).unwrap();
     }
-    fn point_end(&mut self) {
+    fn point_end(&mut self, _idx: usize) {
         self.out.write(br#"Z"/>"#).unwrap();
     }
-    fn line_begin(&mut self, _size: usize, _idx: usize) {
+    fn linestring_begin(&mut self, tagged: bool, _size: usize, _idx: usize) {
+        if tagged {
+            self.out.write(br#"<path d=""#).unwrap();
+        } else {
+            self.out.write(b"M ").unwrap();
+        }
+    }
+    fn linestring_end(&mut self, tagged: bool, _idx: usize) {
+        if tagged {
+            self.out.write(br#""/>"#).unwrap();
+        } else {
+            self.out.write(b"Z ").unwrap();
+        }
+    }
+    fn multilinestring_begin(&mut self, _size: usize, _idx: usize) {
         self.out.write(br#"<path d=""#).unwrap();
     }
-    fn line_end(&mut self, _idx: usize) {
+    fn multilinestring_end(&mut self, _idx: usize) {
         self.out.write(br#""/>"#).unwrap();
     }
-    fn multiline_begin(&mut self, _size: usize, _idx: usize) {
+    fn polygon_begin(&mut self, _tagged: bool, _size: usize, _idx: usize) {
         self.out.write(br#"<path d=""#).unwrap();
     }
-    fn multiline_end(&mut self) {
-        self.out.write(br#""/>"#).unwrap();
-    }
-    fn ring_begin(&mut self, _size: usize, _idx: usize) {
-        self.out.write(b"M ").unwrap();
-    }
-    fn ring_end(&mut self, _idx: usize) {
-        self.out.write(b"Z ").unwrap();
-    }
-    fn poly_begin(&mut self, _size: usize, _idx: usize) {
-        self.out.write(br#"<path d=""#).unwrap();
-    }
-    fn poly_end(&mut self, _idx: usize) {
-        self.out.write(br#""/>"#).unwrap();
-    }
-    fn subpoly_begin(&mut self, _size: usize, _idx: usize) {
-        self.out.write(br#"<path d=""#).unwrap();
-    }
-    fn subpoly_end(&mut self, _idx: usize) {
+    fn polygon_end(&mut self, _tagged: bool, _idx: usize) {
         self.out.write(br#""/>"#).unwrap();
     }
 }

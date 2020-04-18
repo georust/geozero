@@ -1,6 +1,7 @@
 use crate::DebugReader;
 
-pub struct Dimensions {
+/// Dimensions requested for processing
+pub struct CoordDimensions {
     /// height
     pub z: bool,
     /// measurement
@@ -11,98 +12,126 @@ pub struct Dimensions {
     pub tm: bool,
 }
 
+/// Geometry processing trait
+#[allow(unused_variables)]
 pub trait GeomProcessor {
-    /// Additional dimensions requested from reader
-    fn dimensions(&self) -> Dimensions {
-        Dimensions {
+    /// Additional dimensions requested when processing coordinates
+    fn dimensions(&self) -> CoordDimensions {
+        CoordDimensions {
             z: false,
             m: false,
             t: false,
             tm: false,
         }
     }
-    /// Point without additional dimensions
-    fn pointxy(&mut self, _x: f64, _y: f64, _idx: usize) {}
-    /// Point with additional dimensions
-    fn point(
+
+    /// Process coordinate with x,y dimensions
+    fn xy(&mut self, x: f64, y: f64, idx: usize) {}
+
+    /// Process coordinate with all requested dimensions
+    fn coordinate(
         &mut self,
-        _x: f64,
-        _y: f64,
-        _z: Option<f64>,
-        _m: Option<f64>,
-        _t: Option<f64>,
-        _tm: Option<u64>,
-        _idx: usize,
+        x: f64,
+        y: f64,
+        z: Option<f64>,
+        m: Option<f64>,
+        t: Option<f64>,
+        tm: Option<u64>,
+        idx: usize,
     ) {
     }
-    fn point_begin(&mut self, _idx: usize) {}
-    fn point_end(&mut self) {}
-    fn multipoint_begin(&mut self, _size: usize, _idx: usize) {}
-    fn multipoint_end(&mut self) {}
-    fn line_begin(&mut self, _size: usize, _idx: usize) {}
-    fn line_end(&mut self, _idx: usize) {}
-    fn multiline_begin(&mut self, _size: usize, _idx: usize) {}
-    fn multiline_end(&mut self) {}
-    fn ring_begin(&mut self, _size: usize, _idx: usize) {}
-    fn ring_end(&mut self, _idx: usize) {}
-    fn poly_begin(&mut self, _size: usize, _idx: usize) {}
-    fn poly_end(&mut self, _idx: usize) {}
-    fn subpoly_begin(&mut self, _size: usize, _idx: usize) {}
-    fn subpoly_end(&mut self, _idx: usize) {}
-    fn multipoly_begin(&mut self, _size: usize, _idx: usize) {}
-    fn multipoly_end(&mut self) {}
+
+    /// Begin of Point processing
+    ///
+    /// Next: xy/coordinate
+    fn point_begin(&mut self, idx: usize) {}
+
+    /// End of Point processing
+    fn point_end(&mut self, idx: usize) {}
+
+    /// Begin of MultiPoint processing
+    ///
+    /// Next: size * xy/coordinate
+    fn multipoint_begin(&mut self, size: usize, idx: usize) {}
+
+    /// End of MultiPoint processing
+    fn multipoint_end(&mut self, idx: usize) {}
+
+    /// Begin of LineString processing
+    ///
+    /// An untagged LineString is either a Polygon ring or part of a MultiLineString
+    ///
+    /// Next: size * xy/coordinate
+    fn linestring_begin(&mut self, tagged: bool, size: usize, idx: usize) {}
+
+    /// End of LineString processing
+    fn linestring_end(&mut self, tagged: bool, idx: usize) {}
+
+    /// Begin of MultiLineString processing
+    ///
+    /// Next: size * LineString (untagged)
+    fn multilinestring_begin(&mut self, size: usize, idx: usize) {}
+
+    /// End of MultiLineString processing
+    fn multilinestring_end(&mut self, idx: usize) {}
+
+    /// Begin of Polygon processing
+    ///
+    /// An untagged Polygon is part of a MultiPolygon
+    ///
+    /// Next: size * LineString (untagged) = rings
+    fn polygon_begin(&mut self, tagged: bool, size: usize, idx: usize) {}
+
+    /// End of Polygon processing
+    fn polygon_end(&mut self, tagged: bool, idx: usize) {}
+
+    /// Begin of MultiPolygon processing
+    ///
+    /// Next: size * Polygon (untagged)
+    fn multipolygon_begin(&mut self, size: usize, idx: usize) {}
+
+    /// End of MultiPolygon processing
+    fn multipolygon_end(&mut self, idx: usize) {}
 }
 
 impl GeomProcessor for DebugReader {
-    fn pointxy(&mut self, x: f64, y: f64, _idx: usize) {
-        print!("pointxy({} {}) ", x, y);
+    fn xy(&mut self, x: f64, y: f64, _idx: usize) {
+        print!("xy({} {}) ", x, y);
     }
     fn point_begin(&mut self, _idx: usize) {
         print!("point_begin ");
     }
-    fn point_end(&mut self) {
+    fn point_end(&mut self, _idx: usize) {
         println!("point_end ");
     }
     fn multipoint_begin(&mut self, _size: usize, _idx: usize) {
         print!("multipoint_begin ");
     }
-    fn multipoint_end(&mut self) {
+    fn multipoint_end(&mut self, _idx: usize) {
         println!("multipoint_end ");
     }
-    fn line_begin(&mut self, _size: usize, _idx: usize) {
-        print!("line_begin ");
+    fn linestring_begin(&mut self, _tagged: bool, _size: usize, _idx: usize) {
+        print!("linestring_begin ");
     }
-    fn line_end(&mut self, _idx: usize) {
-        println!("line_end ");
+    fn linestring_end(&mut self, _tagged: bool, _idx: usize) {
+        println!("linestring_end ");
     }
-    fn multiline_begin(&mut self, _size: usize, _idx: usize) {
-        print!("multiline_begin ");
+    fn multilinestring_begin(&mut self, _size: usize, _idx: usize) {
+        print!("multilinestring_begin ");
     }
-    fn multiline_end(&mut self) {
-        println!("multiline_end ");
+    fn multilinestring_end(&mut self, _idx: usize) {
+        println!("multilinestring_end ");
     }
-    fn ring_begin(&mut self, _size: usize, _idx: usize) {
-        print!("ring_begin ");
+    fn polygon_begin(&mut self, _tagged: bool, _size: usize, _idx: usize) {
+        print!("polygon_begin ");
     }
-    fn ring_end(&mut self, _idx: usize) {
-        println!("ring_end ");
+    fn polygon_end(&mut self, _tagged: bool, _idx: usize) {
+        println!("polygon_end ");
     }
-    fn poly_begin(&mut self, _size: usize, _idx: usize) {
-        print!("poly_begin ");
+    fn multipolygon_begin(&mut self, _size: usize, _idx: usize) {
+        print!("multipolygon_begin ");
     }
-    fn poly_end(&mut self, _idx: usize) {
-        println!("poly_end ");
-    }
-    fn subpoly_begin(&mut self, _size: usize, _idx: usize) {
-        print!("subpoly_begin ");
-    }
-    fn subpoly_end(&mut self, _idx: usize) {
-        println!("subpoly_end ");
-    }
-    fn multipoly_begin(&mut self, _size: usize, _idx: usize) {
-        print!("multipoly_begin ");
-    }
-    fn multipoly_end(&mut self) {
-        println!("multipoly_end ");
+    fn multipolygon_end(&mut self, _idx: usize) {
+        println!("multipolygon_end ");
     }
 }

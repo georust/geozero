@@ -36,8 +36,8 @@ fn match_geometry<P: GeomProcessor>(geom: &Geometry, processor: &mut P) {
     match geom.value {
         Value::Point(ref geometry) => process_point(geometry, processor),
         Value::MultiPoint(ref geometry) => process_multi_point(geometry, processor),
-        Value::LineString(ref geometry) => process_line_string(geometry, processor),
-        Value::MultiLineString(ref geometry) => process_multi_line_string(geometry, processor),
+        Value::LineString(ref geometry) => process_linestring(geometry, processor),
+        Value::MultiLineString(ref geometry) => process_multilinestring(geometry, processor),
         Value::Polygon(ref geometry) => {
             process_polygon(geometry, processor);
         }
@@ -59,11 +59,11 @@ type LineStringType = Vec<Position>;
 type PolygonType = Vec<Vec<Position>>;
 
 fn process_coordinate<P: GeomProcessor>(point_type: &PointType, processor: &mut P) {
-    processor.pointxy(point_type[0], point_type[1], 0);
+    processor.xy(point_type[0], point_type[1], 0);
 }
 
 fn process_point<P: GeomProcessor>(point_type: &PointType, processor: &mut P) {
-    processor.pointxy(point_type[0], point_type[1], 0);
+    processor.xy(point_type[0], point_type[1], 0);
 }
 
 fn process_multi_point<P: GeomProcessor>(multi_point_type: &[PointType], processor: &mut P) {
@@ -72,25 +72,25 @@ fn process_multi_point<P: GeomProcessor>(multi_point_type: &[PointType], process
         .for_each(|point_type| process_point(&point_type, processor));
 }
 
-fn process_line_string<P: GeomProcessor>(line_type: &LineStringType, processor: &mut P) {
-    line_type
+fn process_linestring<P: GeomProcessor>(linestring_type: &LineStringType, processor: &mut P) {
+    linestring_type
         .iter()
         .for_each(|point_type| process_coordinate(point_type, processor));
 }
 
-fn process_multi_line_string<P: GeomProcessor>(
-    multi_line_type: &[LineStringType],
+fn process_multilinestring<P: GeomProcessor>(
+    multilinestring_type: &[LineStringType],
     processor: &mut P,
 ) {
-    multi_line_type
+    multilinestring_type
         .iter()
-        .for_each(|point_type| process_line_string(&point_type, processor));
+        .for_each(|point_type| process_linestring(&point_type, processor));
 }
 
 fn process_polygon<P: GeomProcessor>(polygon_type: &PolygonType, processor: &mut P) {
     polygon_type
         .iter()
-        .for_each(|line_string_type| process_line_string(line_string_type, processor));
+        .for_each(|linestring_type| process_linestring(linestring_type, processor));
 }
 
 fn process_multi_polygon<P: GeomProcessor>(multi_polygon_type: &[PolygonType], processor: &mut P) {
@@ -105,6 +105,5 @@ fn from_file() -> std::result::Result<(), std::io::Error> {
 
     let f = File::open("canada.json")?;
     read_geojson(f, &mut geozero::DebugReader {})?;
-    assert!(false);
     Ok(())
 }

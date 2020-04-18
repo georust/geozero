@@ -49,11 +49,11 @@ impl<P1: FeatureProcessor, P2: FeatureProcessor> FeatureProcessor for Multiplexe
 }
 
 impl<P1: FeatureProcessor, P2: FeatureProcessor> GeomProcessor for Multiplexer<P1, P2> {
-    fn pointxy(&mut self, x: f64, y: f64, idx: usize) {
-        self.p1.pointxy(x, y, idx);
-        self.p2.pointxy(x, y, idx);
+    fn xy(&mut self, x: f64, y: f64, idx: usize) {
+        self.p1.xy(x, y, idx);
+        self.p2.xy(x, y, idx);
     }
-    fn point(
+    fn coordinate(
         &mut self,
         x: f64,
         y: f64,
@@ -63,72 +63,56 @@ impl<P1: FeatureProcessor, P2: FeatureProcessor> GeomProcessor for Multiplexer<P
         tm: Option<u64>,
         idx: usize,
     ) {
-        self.p1.point(x, y, z, m, t, tm, idx);
-        self.p2.point(x, y, z, m, t, tm, idx);
+        self.p1.coordinate(x, y, z, m, t, tm, idx);
+        self.p2.coordinate(x, y, z, m, t, tm, idx);
     }
     fn point_begin(&mut self, idx: usize) {
         self.p1.point_begin(idx);
         self.p2.point_begin(idx);
     }
-    fn point_end(&mut self) {
-        self.p1.point_end();
-        self.p2.point_end();
+    fn point_end(&mut self, idx: usize) {
+        self.p1.point_end(idx);
+        self.p2.point_end(idx);
     }
     fn multipoint_begin(&mut self, size: usize, idx: usize) {
         self.p1.multipoint_begin(size, idx);
         self.p2.multipoint_begin(size, idx);
     }
-    fn multipoint_end(&mut self) {
-        self.p1.multipoint_end();
-        self.p2.multipoint_end();
+    fn multipoint_end(&mut self, idx: usize) {
+        self.p1.multipoint_end(idx);
+        self.p2.multipoint_end(idx);
     }
-    fn line_begin(&mut self, size: usize, idx: usize) {
-        self.p1.line_begin(size, idx);
-        self.p2.line_begin(size, idx);
+    fn linestring_begin(&mut self, tagged: bool, size: usize, idx: usize) {
+        self.p1.linestring_begin(tagged, size, idx);
+        self.p2.linestring_begin(tagged, size, idx);
     }
-    fn line_end(&mut self, _idx: usize) {
-        self.p1.line_end(_idx);
-        self.p2.line_end(_idx);
+    fn linestring_end(&mut self, tagged: bool, idx: usize) {
+        self.p1.linestring_end(tagged, idx);
+        self.p2.linestring_end(tagged, idx);
     }
-    fn multiline_begin(&mut self, size: usize, idx: usize) {
-        self.p1.multiline_begin(size, idx);
-        self.p2.multiline_begin(size, idx);
+    fn multilinestring_begin(&mut self, size: usize, idx: usize) {
+        self.p1.multilinestring_begin(size, idx);
+        self.p2.multilinestring_begin(size, idx);
     }
-    fn multiline_end(&mut self) {
-        self.p1.multiline_end();
-        self.p2.multiline_end();
+    fn multilinestring_end(&mut self, idx: usize) {
+        self.p1.multilinestring_end(idx);
+        self.p2.multilinestring_end(idx);
     }
-    fn ring_begin(&mut self, size: usize, idx: usize) {
-        self.p1.ring_begin(size, idx);
-        self.p2.ring_begin(size, idx);
+    fn polygon_begin(&mut self, tagged: bool, size: usize, idx: usize) {
+        self.p1.polygon_begin(tagged, size, idx);
+        self.p2.polygon_begin(tagged, size, idx);
     }
-    fn ring_end(&mut self, _idx: usize) {
-        self.p1.ring_end(_idx);
-        self.p2.ring_end(_idx);
+    fn polygon_end(&mut self, tagged: bool, idx: usize) {
+        self.p1.polygon_end(tagged, idx);
+        self.p2.polygon_end(tagged, idx);
     }
-    fn poly_begin(&mut self, size: usize, idx: usize) {
-        self.p1.poly_begin(size, idx);
-        self.p2.poly_begin(size, idx);
+    fn multipolygon_begin(&mut self, size: usize, idx: usize) {
+        self.p1.multipolygon_begin(size, idx);
+        self.p2.multipolygon_begin(size, idx);
     }
-    fn poly_end(&mut self, _idx: usize) {
-        self.p1.poly_end(_idx);
-        self.p2.poly_end(_idx);
-    }
-    fn subpoly_begin(&mut self, size: usize, idx: usize) {
-        self.p1.subpoly_begin(size, idx);
-        self.p2.subpoly_begin(size, idx);
-    }
-    fn subpoly_end(&mut self, _idx: usize) {
-        self.p1.subpoly_end(_idx);
-        self.p2.subpoly_end(_idx);
-    }
-    fn multipoly_begin(&mut self, size: usize, idx: usize) {
-        self.p1.multipoly_begin(size, idx);
-        self.p2.multipoly_begin(size, idx);
-    }
-    fn multipoly_end(&mut self) {
-        self.p1.multipoly_end();
-        self.p2.multipoly_end();
+    fn multipolygon_end(&mut self, idx: usize) {
+        self.p1.multipolygon_end(idx);
+        self.p2.multipolygon_end(idx);
     }
 }
 
