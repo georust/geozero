@@ -1,6 +1,5 @@
 use crate::geometry_processor::GeomProcessor;
 use crate::property_processor::PropertyProcessor;
-use crate::DebugReader;
 
 pub trait FeatureProcessor: GeomProcessor + PropertyProcessor {
     fn dataset_begin(&mut self, _name: Option<&str>) {}
@@ -12,5 +11,3 @@ pub trait FeatureProcessor: GeomProcessor + PropertyProcessor {
     fn geometry_begin(&mut self) {}
     fn geometry_end(&mut self) {}
 }
-
-impl FeatureProcessor for DebugReader {} //TODO

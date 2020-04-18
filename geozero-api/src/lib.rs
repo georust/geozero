@@ -61,4 +61,15 @@ pub use geometry_processor::*;
 pub use multiplex::*;
 pub use property_processor::*;
 
-pub struct DebugReader {}
+/// Empty processor implementation
+pub struct ProcessorSink;
+
+impl ProcessorSink {
+    pub fn new() -> ProcessorSink {
+        ProcessorSink {}
+    }
+}
+
+impl feature_processor::FeatureProcessor for ProcessorSink {}
+impl geometry_processor::GeomProcessor for ProcessorSink {}
+impl property_processor::PropertyProcessor for ProcessorSink {}

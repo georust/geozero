@@ -1,5 +1,3 @@
-use crate::DebugReader;
-
 /// Dimensions requested for processing
 pub struct CoordDimensions {
     /// height
@@ -92,46 +90,4 @@ pub trait GeomProcessor {
 
     /// End of MultiPolygon processing
     fn multipolygon_end(&mut self, idx: usize) {}
-}
-
-impl GeomProcessor for DebugReader {
-    fn xy(&mut self, x: f64, y: f64, _idx: usize) {
-        print!("xy({} {}) ", x, y);
-    }
-    fn point_begin(&mut self, _idx: usize) {
-        print!("point_begin ");
-    }
-    fn point_end(&mut self, _idx: usize) {
-        println!("point_end ");
-    }
-    fn multipoint_begin(&mut self, _size: usize, _idx: usize) {
-        print!("multipoint_begin ");
-    }
-    fn multipoint_end(&mut self, _idx: usize) {
-        println!("multipoint_end ");
-    }
-    fn linestring_begin(&mut self, _tagged: bool, _size: usize, _idx: usize) {
-        print!("linestring_begin ");
-    }
-    fn linestring_end(&mut self, _tagged: bool, _idx: usize) {
-        println!("linestring_end ");
-    }
-    fn multilinestring_begin(&mut self, _size: usize, _idx: usize) {
-        print!("multilinestring_begin ");
-    }
-    fn multilinestring_end(&mut self, _idx: usize) {
-        println!("multilinestring_end ");
-    }
-    fn polygon_begin(&mut self, _tagged: bool, _size: usize, _idx: usize) {
-        print!("polygon_begin ");
-    }
-    fn polygon_end(&mut self, _tagged: bool, _idx: usize) {
-        println!("polygon_end ");
-    }
-    fn multipolygon_begin(&mut self, _size: usize, _idx: usize) {
-        print!("multipolygon_begin ");
-    }
-    fn multipolygon_end(&mut self, _idx: usize) {
-        println!("multipolygon_end ");
-    }
 }
