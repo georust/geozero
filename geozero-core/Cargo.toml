@@ -8,3 +8,4 @@ edition = "2018"
 
 [dependencies]
 geozero-api = { path = "../geozero-api" }
+geojson = { version =  "0.18" }

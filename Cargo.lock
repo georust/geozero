@@ -228,6 +228,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "geojson"
+version = "0.18.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c2b6970b36b77807a4ea232fcbc13b29026eab7c7e906500446c1e03d16f43af"
+dependencies = [
+ "num-traits",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "geozero-api"
 version = "0.1.0"
 dependencies = [
@@ -249,6 +260,7 @@ dependencies = [
 name = "geozero-core"
 version = "0.1.0"
 dependencies = [
+ "geojson",
  "geozero-api",
 ]
 
@@ -558,6 +570,15 @@ dependencies = [
  "cfg-if",
  "libc",
  "winapi 0.3.8",
+]
+
+[[package]]
+name = "num-traits"
+version = "0.2.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c62be47e61d1842b9170f0fdeec8eba98e60e90e5446449a0545e5152acd7096"
+dependencies = [
+ "autocfg",
 ]
 
 [[package]]
