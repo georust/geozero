@@ -1,4 +1,4 @@
-use geozero_api::{FeatureProcessor, GeomProcessor, PropertyProcessor};
+use geozero::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 use std::io::Write;
 
 pub struct SvgWriter<'a, W: Write> {

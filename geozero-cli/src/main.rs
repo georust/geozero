@@ -1,5 +1,5 @@
 use flatgeobuf;
-use geozero_api::{Extent, HttpReader, OpenOpts, Reader, SelectOpts};
+use geozero::{Extent, HttpReader, OpenOpts, Reader, SelectOpts};
 use geozero_core::geojson::GeoJsonWriter;
 use geozero_core::svg::SvgWriter;
 use std::fs::File;

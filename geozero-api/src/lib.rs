@@ -21,7 +21,7 @@
 //! Geometries can be accessed by implementing the `GeomProcessor` trait.
 //!
 //! ```rust
-//! use geozero_api::GeomProcessor;
+//! use geozero::GeomProcessor;
 //!
 //! struct CoordPrinter;
 //!
@@ -37,7 +37,7 @@
 //! Properties can be accessed by implementing the `PropertyProcessor` trait.
 //!
 //! ```rust
-//! use geozero_api::{PropertyProcessor, ColumnValue};
+//! use geozero::{PropertyProcessor, ColumnValue};
 //!
 //! struct PropertyPrinter;
 //!
@@ -60,6 +60,5 @@ pub use feature_processor::*;
 pub use geometry_processor::*;
 pub use multiplex::*;
 pub use property_processor::*;
-
 
 pub struct DebugReader {}

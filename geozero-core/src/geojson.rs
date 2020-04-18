@@ -1,4 +1,4 @@
-use geozero_api::{ColumnValue, FeatureProcessor, GeomProcessor, PropertyProcessor};
+use geozero::{ColumnValue, FeatureProcessor, GeomProcessor, PropertyProcessor};
 use std::fmt::Display;
 use std::io::Write;
 
