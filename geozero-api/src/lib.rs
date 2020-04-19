@@ -21,13 +21,13 @@
 //! Geometries can be accessed by implementing the `GeomProcessor` trait.
 //!
 //! ```rust
-//! use geozero::GeomProcessor;
+//! use geozero::{GeomProcessor, error::Result};
 //!
 //! struct CoordPrinter;
 //!
 //! impl GeomProcessor for CoordPrinter {
-//!     fn xy(&mut self, x: f64, y: f64, _idx: usize) {
-//!         println!("({} {})", x, y);
+//!     fn xy(&mut self, x: f64, y: f64, _idx: usize) -> Result<()> {
+//!         Ok(println!("({} {})", x, y))
 //!     }
 //! }
 //! ```
@@ -50,6 +50,7 @@
 //! ```
 
 mod driver;
+pub mod error;
 mod feature_processor;
 mod geometry_processor;
 mod multiplex;

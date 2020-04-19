@@ -8,4 +8,5 @@ edition = "2018"
 name = "geozero"
 
 [dependencies]
+thiserror = "1.0"
 async-trait = "0.1"

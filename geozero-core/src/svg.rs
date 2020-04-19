@@ -1,3 +1,4 @@
+use geozero::error::Result;
 use geozero::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 use std::io::Write;
 
@@ -92,41 +93,50 @@ impl<W: Write> FeatureProcessor for SvgWriter<'_, W> {
 }
 
 impl<W: Write> GeomProcessor for SvgWriter<'_, W> {
-    fn xy(&mut self, x: f64, y: f64, _idx: usize) {
+    fn xy(&mut self, x: f64, y: f64, _idx: usize) -> Result<()> {
         let y = if self.invert_y { -y } else { y };
-        self.out.write(&format!("{} {} ", x, y).as_bytes()).unwrap();
+        let _ = self.out.write(&format!("{} {} ", x, y).as_bytes())?;
+        Ok(())
     }
-    fn point_begin(&mut self, _idx: usize) {
-        self.out.write(br#"<path d="M "#).unwrap();
+    fn point_begin(&mut self, _idx: usize) -> Result<()> {
+        let _ = self.out.write(br#"<path d="M "#)?;
+        Ok(())
     }
-    fn point_end(&mut self, _idx: usize) {
-        self.out.write(br#"Z"/>"#).unwrap();
+    fn point_end(&mut self, _idx: usize) -> Result<()> {
+        let _ = self.out.write(br#"Z"/>"#)?;
+        Ok(())
     }
-    fn linestring_begin(&mut self, tagged: bool, _size: usize, _idx: usize) {
+    fn linestring_begin(&mut self, tagged: bool, _size: usize, _idx: usize) -> Result<()> {
         if tagged {
-            self.out.write(br#"<path d=""#).unwrap();
+            let _ = self.out.write(br#"<path d=""#)?;
         } else {
-            self.out.write(b"M ").unwrap();
+            let _ = self.out.write(b"M ")?;
         }
+        Ok(())
     }
-    fn linestring_end(&mut self, tagged: bool, _idx: usize) {
+    fn linestring_end(&mut self, tagged: bool, _idx: usize) -> Result<()> {
         if tagged {
-            self.out.write(br#""/>"#).unwrap();
+            let _ = self.out.write(br#""/>"#)?;
         } else {
-            self.out.write(b"Z ").unwrap();
+            let _ = self.out.write(b"Z ")?;
         }
+        Ok(())
     }
-    fn multilinestring_begin(&mut self, _size: usize, _idx: usize) {
-        self.out.write(br#"<path d=""#).unwrap();
+    fn multilinestring_begin(&mut self, _size: usize, _idx: usize) -> Result<()> {
+        let _ = self.out.write(br#"<path d=""#)?;
+        Ok(())
     }
-    fn multilinestring_end(&mut self, _idx: usize) {
-        self.out.write(br#""/>"#).unwrap();
+    fn multilinestring_end(&mut self, _idx: usize) -> Result<()> {
+        let _ = self.out.write(br#""/>"#)?;
+        Ok(())
     }
-    fn polygon_begin(&mut self, _tagged: bool, _size: usize, _idx: usize) {
-        self.out.write(br#"<path d=""#).unwrap();
+    fn polygon_begin(&mut self, _tagged: bool, _size: usize, _idx: usize) -> Result<()> {
+        let _ = self.out.write(br#"<path d=""#)?;
+        Ok(())
     }
-    fn polygon_end(&mut self, _tagged: bool, _idx: usize) {
-        self.out.write(br#""/>"#).unwrap();
+    fn polygon_end(&mut self, _tagged: bool, _idx: usize) -> Result<()> {
+        let _ = self.out.write(br#""/>"#)?;
+        Ok(())
     }
 }
 

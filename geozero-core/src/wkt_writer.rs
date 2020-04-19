@@ -1,3 +1,4 @@
+use geozero::error::Result;
 use geozero::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 use std::io::Write;
 
@@ -13,66 +14,79 @@ impl<'a, W: Write> WktWriter<'a, W> {
 }
 
 impl<W: Write> GeomProcessor for WktWriter<'_, W> {
-    fn xy(&mut self, x: f64, y: f64, idx: usize) {
+    fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
         if idx == 0 {
-            self.out.write(&format!("{} {}", x, y).as_bytes()).unwrap();
+            let _ = self.out.write(&format!("{} {}", x, y).as_bytes())?;
         } else {
-            self.out
-                .write(&format!(", {} {}", x, y).as_bytes())
-                .unwrap();
+            let _ = self.out.write(&format!(", {} {}", x, y).as_bytes())?;
         }
+        Ok(())
     }
-    fn point_begin(&mut self, _idx: usize) {
-        self.out.write(b"POINT (").unwrap();
+    fn point_begin(&mut self, _idx: usize) -> Result<()> {
+        let _ = self.out.write(b"POINT (")?;
+        Ok(())
     }
-    fn point_end(&mut self, _idx: usize) {
-        self.out.write(b")").unwrap();
+    fn point_end(&mut self, _idx: usize) -> Result<()> {
+        let _ = self.out.write(b")")?;
+        Ok(())
     }
-    fn multipoint_begin(&mut self, _size: usize, _idx: usize) {
-        self.out.write(b"MULTIPOINT (").unwrap();
+    fn multipoint_begin(&mut self, _size: usize, _idx: usize) -> Result<()> {
+        let _ = self.out.write(b"MULTIPOINT (")?;
+        Ok(())
     }
-    fn multipoint_end(&mut self, _idx: usize) {
-        self.out.write(b")").unwrap();
+    fn multipoint_end(&mut self, _idx: usize) -> Result<()> {
+        let _ = self.out.write(b")")?;
+        Ok(())
     }
-    fn linestring_begin(&mut self, tagged: bool, _size: usize, idx: usize) {
+    fn linestring_begin(&mut self, tagged: bool, _size: usize, idx: usize) -> Result<()> {
         if tagged {
-            self.out.write(b"LINESTRING (").unwrap();
+            let _ = self.out.write(b"LINESTRING (")?;
         } else {
             if idx == 0 {
-                self.out.write(b"(").unwrap();
+                let _ = self.out.write(b"(")?;
             } else {
-                self.out.write(b", (").unwrap();
+                let _ = self.out.write(b", (")?;
+            }
+        }
+        Ok(())
+    }
+    fn linestring_end(&mut self, _tagged: bool, _idx: usize) -> Result<()> {
+        let _ = self.out.write(b")")?;
+        Ok(())
+    }
+    fn multilinestring_begin(&mut self, _size: usize, _idx: usize) -> Result<()> {
+        let _ = self.out.write(b"MULTILINESTRING (")?;
+        Ok(())
+    }
+    fn multilinestring_end(&mut self, _idx: usize) -> Result<()> {
+        let _ = self.out.write(b")")?;
+        Ok(())
+    }
+    fn polygon_begin(&mut self, tagged: bool, _size: usize, idx: usize) -> Result<()> {
+        if tagged {
+            let _ = self.out.write(b"POLYGON (")?;
+            Ok(())
+        } else {
+            if idx == 0 {
+                let _ = self.out.write(b"(")?;
+                Ok(())
+            } else {
+                let _ = self.out.write(b", (")?;
+                Ok(())
             }
         }
     }
-    fn linestring_end(&mut self, _tagged: bool, _idx: usize) {
-        self.out.write(b")").unwrap();
+    fn polygon_end(&mut self, _tagged: bool, _idx: usize) -> Result<()> {
+        let _ = self.out.write(b")")?;
+        Ok(())
     }
-    fn multilinestring_begin(&mut self, _size: usize, _idx: usize) {
-        self.out.write(b"MULTILINESTRING (").unwrap();
+    fn multipolygon_begin(&mut self, _size: usize, _idx: usize) -> Result<()> {
+        let _ = self.out.write(b"MULTIPOLYGON (")?;
+        Ok(())
     }
-    fn multilinestring_end(&mut self, _idx: usize) {
-        self.out.write(b")").unwrap();
-    }
-    fn polygon_begin(&mut self, tagged: bool, _size: usize, idx: usize) {
-        if tagged {
-            self.out.write(b"POLYGON (").unwrap();
-        } else {
-            if idx == 0 {
-                self.out.write(b"(").unwrap();
-            } else {
-                self.out.write(b", (").unwrap();
-            }
-        }
-    }
-    fn polygon_end(&mut self, _tagged: bool, _idx: usize) {
-        self.out.write(b")").unwrap();
-    }
-    fn multipolygon_begin(&mut self, _size: usize, _idx: usize) {
-        self.out.write(b"MULTIPOLYGON (").unwrap();
-    }
-    fn multipolygon_end(&mut self, _idx: usize) {
-        self.out.write(b")").unwrap();
+    fn multipolygon_end(&mut self, _idx: usize) -> Result<()> {
+        let _ = self.out.write(b")")?;
+        Ok(())
     }
     // GEOMETRYCOLLECTION (POINT (10 10),
     // POINT (30 30),

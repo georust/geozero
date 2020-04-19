@@ -1,58 +1,70 @@
 use geojson::{GeoJson, Geometry, Value};
+use geozero::error::Result;
 use geozero::GeomProcessor;
 use std::io::Read;
 
-pub fn read_geojson<R: Read, P: GeomProcessor>(
-    mut reader: R,
-    processor: &mut P,
-) -> std::result::Result<(), std::io::Error> {
+pub fn read_geojson<R: Read, P: GeomProcessor>(mut reader: R, processor: &mut P) -> Result<()> {
     let mut geojson_str = String::new();
     reader.read_to_string(&mut geojson_str)?;
     let geojson = geojson_str.parse::<GeoJson>().unwrap();
-    process_geojson(&geojson, processor);
-    Ok(())
+    process_geojson(&geojson, processor)
 }
 
 /// Process top-level GeoJSON items
-fn process_geojson<P: GeomProcessor>(gj: &GeoJson, processor: &mut P) {
+fn process_geojson<P: GeomProcessor>(gj: &GeoJson, processor: &mut P) -> Result<()> {
     match *gj {
-        GeoJson::FeatureCollection(ref collection) => collection
-            .features
-            .iter()
-            // Only pass on non-empty geometries, doing so by reference
-            .filter_map(|feature| feature.geometry.as_ref())
-            .enumerate()
-            .for_each(|(idx, geometry)| match_geometry(geometry, idx, processor)),
-        GeoJson::Feature(ref feature) => {
-            if let Some(ref geometry) = feature.geometry {
-                match_geometry(geometry, 0, processor)
+        GeoJson::FeatureCollection(ref collection) => {
+            for (idx, geometry) in collection
+                .features
+                .iter()
+                // Only pass on non-empty geometries, doing so by reference
+                .filter_map(|feature| feature.geometry.as_ref())
+                .enumerate()
+            {
+                match_geometry(geometry, idx, processor)?;
             }
         }
-        GeoJson::Geometry(ref geometry) => match_geometry(geometry, 0, processor),
+        GeoJson::Feature(ref feature) => {
+            if let Some(ref geometry) = feature.geometry {
+                match_geometry(geometry, 0, processor)?;
+            }
+        }
+        GeoJson::Geometry(ref geometry) => {
+            match_geometry(geometry, 0, processor)?;
+        }
     }
+    Ok(())
 }
 
 /// Process GeoJSON geometries
-fn match_geometry<P: GeomProcessor>(geom: &Geometry, idx: usize, processor: &mut P) {
+fn match_geometry<P: GeomProcessor>(geom: &Geometry, idx: usize, processor: &mut P) -> Result<()> {
     match geom.value {
-        Value::Point(ref geometry) => process_point(geometry, idx, processor),
-        Value::MultiPoint(ref geometry) => process_multi_point(geometry, idx, processor),
-        Value::LineString(ref geometry) => process_linestring(geometry, true, idx, processor),
-        Value::MultiLineString(ref geometry) => process_multilinestring(geometry, idx, processor),
+        Value::Point(ref geometry) => {
+            process_point(geometry, idx, processor)?;
+        }
+        Value::MultiPoint(ref geometry) => {
+            process_multi_point(geometry, idx, processor)?;
+        }
+        Value::LineString(ref geometry) => {
+            process_linestring(geometry, true, idx, processor)?;
+        }
+        Value::MultiLineString(ref geometry) => {
+            process_multilinestring(geometry, idx, processor)?;
+        }
         Value::Polygon(ref geometry) => {
-            process_polygon(geometry, true, idx, processor);
+            process_polygon(geometry, true, idx, processor)?;
         }
         Value::MultiPolygon(ref geometry) => {
-            process_multi_polygon(geometry, idx, processor);
+            process_multi_polygon(geometry, idx, processor)?;
         }
         Value::GeometryCollection(ref collection) => {
             // processor.geomcollection_begin(collection.len());
-            collection
-                .iter()
-                .enumerate()
-                .for_each(|(idx, geometry)| match_geometry(geometry, idx, processor))
+            for (idx, geometry) in collection.iter().enumerate() {
+                match_geometry(geometry, idx, processor)?;
+            }
         }
     }
+    Ok(())
 }
 
 type Position = Vec<f64>;
@@ -60,23 +72,26 @@ type PointType = Position;
 type LineStringType = Vec<Position>;
 type PolygonType = Vec<Vec<Position>>;
 
-fn process_point<P: GeomProcessor>(point_type: &PointType, idx: usize, processor: &mut P) {
-    processor.point_begin(idx);
-    processor.xy(point_type[0], point_type[1], 0);
-    processor.point_end(idx);
+fn process_point<P: GeomProcessor>(
+    point_type: &PointType,
+    idx: usize,
+    processor: &mut P,
+) -> Result<()> {
+    processor.point_begin(idx)?;
+    processor.xy(point_type[0], point_type[1], 0)?;
+    processor.point_end(idx)
 }
 
 fn process_multi_point<P: GeomProcessor>(
     multi_point_type: &[PointType],
     idx: usize,
     processor: &mut P,
-) {
-    processor.multipoint_begin(multi_point_type.len(), idx);
-    multi_point_type
-        .iter()
-        .enumerate()
-        .for_each(|(idxc, point_type)| process_point(&point_type, idxc, processor));
-    processor.multipoint_end(idx);
+) -> Result<()> {
+    processor.multipoint_begin(multi_point_type.len(), idx)?;
+    for (idxc, point_type) in multi_point_type.iter().enumerate() {
+        process_point(&point_type, idxc, processor)?;
+    }
+    processor.multipoint_end(idx)
 }
 
 fn process_linestring<P: GeomProcessor>(
@@ -84,28 +99,24 @@ fn process_linestring<P: GeomProcessor>(
     tagged: bool,
     idx: usize,
     processor: &mut P,
-) {
-    processor.linestring_begin(tagged, linestring_type.len(), idx);
-    linestring_type
-        .iter()
-        .enumerate()
-        .for_each(|(idxc, point_type)| processor.xy(point_type[0], point_type[1], idxc));
-    processor.linestring_end(tagged, idx);
+) -> Result<()> {
+    processor.linestring_begin(tagged, linestring_type.len(), idx)?;
+    for (idxc, point_type) in linestring_type.iter().enumerate() {
+        processor.xy(point_type[0], point_type[1], idxc)?;
+    }
+    processor.linestring_end(tagged, idx)
 }
 
 fn process_multilinestring<P: GeomProcessor>(
     multilinestring_type: &[LineStringType],
     idx: usize,
     processor: &mut P,
-) {
-    processor.multilinestring_begin(multilinestring_type.len(), idx);
-    multilinestring_type
-        .iter()
-        .enumerate()
-        .for_each(|(idxc, linestring_type)| {
-            process_linestring(&linestring_type, false, idxc, processor)
-        });
-    processor.multilinestring_end(idx);
+) -> Result<()> {
+    processor.multilinestring_begin(multilinestring_type.len(), idx)?;
+    for (idxc, linestring_type) in multilinestring_type.iter().enumerate() {
+        process_linestring(&linestring_type, false, idxc, processor)?
+    }
+    processor.multilinestring_end(idx)
 }
 
 fn process_polygon<P: GeomProcessor>(
@@ -113,33 +124,29 @@ fn process_polygon<P: GeomProcessor>(
     tagged: bool,
     idx: usize,
     processor: &mut P,
-) {
-    processor.polygon_begin(tagged, polygon_type.len(), idx);
-    polygon_type
-        .iter()
-        .enumerate()
-        .for_each(|(idxl, linestring_type)| {
-            process_linestring(linestring_type, false, idxl, processor)
-        });
-    processor.polygon_end(tagged, idx);
+) -> Result<()> {
+    processor.polygon_begin(tagged, polygon_type.len(), idx)?;
+    for (idxl, linestring_type) in polygon_type.iter().enumerate() {
+        process_linestring(linestring_type, false, idxl, processor)?
+    }
+    processor.polygon_end(tagged, idx)
 }
 
 fn process_multi_polygon<P: GeomProcessor>(
     multi_polygon_type: &[PolygonType],
     idx: usize,
     processor: &mut P,
-) {
-    processor.multipolygon_begin(multi_polygon_type.len(), idx);
-    multi_polygon_type
-        .iter()
-        .enumerate()
-        .for_each(|(idxp, polygon_type)| process_polygon(&polygon_type, false, idxp, processor));
-    processor.multipolygon_end(idx);
+) -> Result<()> {
+    processor.multipolygon_begin(multi_polygon_type.len(), idx)?;
+    for (idxp, polygon_type) in multi_polygon_type.iter().enumerate() {
+        process_polygon(&polygon_type, false, idxp, processor)?;
+    }
+    processor.multipolygon_end(idx)
 }
 
 #[test]
 #[ignore]
-fn from_file() -> std::result::Result<(), std::io::Error> {
+fn from_file() -> Result<()> {
     use crate::wkt_writer::WktWriter;
     use std::fs::File;
 

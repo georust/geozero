@@ -1,3 +1,4 @@
+use geozero::error::Result;
 use geozero::{ColumnValue, FeatureProcessor, GeomProcessor, PropertyProcessor};
 use std::fmt::Display;
 use std::io::Write;
@@ -10,10 +11,11 @@ impl<'a, W: Write> GeoJsonWriter<'a, W> {
     pub fn new(out: &'a mut W) -> GeoJsonWriter<'a, W> {
         GeoJsonWriter { out }
     }
-    fn comma(&mut self, idx: usize) {
+    fn comma(&mut self, idx: usize) -> Result<()> {
         if idx > 0 {
-            self.out.write(b",").unwrap();
+            let _ = self.out.write(b",")?;
         }
+        Ok(())
     }
 }
 
@@ -61,81 +63,88 @@ impl<W: Write> FeatureProcessor for GeoJsonWriter<'_, W> {
 }
 
 impl<W: Write> GeomProcessor for GeoJsonWriter<'_, W> {
-    fn xy(&mut self, x: f64, y: f64, idx: usize) {
-        self.comma(idx);
-        self.out
-            .write(&format!("[{},{}]", x, y).as_bytes())
-            .unwrap();
+    fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
+        self.comma(idx)?;
+        let _ = self.out.write(&format!("[{},{}]", x, y).as_bytes())?;
+        Ok(())
     }
-    fn point_begin(&mut self, idx: usize) {
-        self.comma(idx);
-        self.out
-            .write(br#"{"type": "Point", "coordinates": "#)
-            .unwrap();
+    fn point_begin(&mut self, idx: usize) -> Result<()> {
+        self.comma(idx)?;
+        let _ = self.out.write(br#"{"type": "Point", "coordinates": "#)?;
+        Ok(())
     }
-    fn point_end(&mut self, _idx: usize) {
-        self.out.write(b"}").unwrap();
+    fn point_end(&mut self, _idx: usize) -> Result<()> {
+        let _ = self.out.write(b"}")?;
+        Ok(())
     }
-    fn multipoint_begin(&mut self, _size: usize, idx: usize) {
-        self.comma(idx);
-        self.out
-            .write(br#"{"type": "MultiPoint", "coordinates": ["#)
-            .unwrap();
+    fn multipoint_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
+        self.comma(idx)?;
+        let _ = self
+            .out
+            .write(br#"{"type": "MultiPoint", "coordinates": ["#)?;
+        Ok(())
     }
-    fn multipoint_end(&mut self, _idx: usize) {
-        self.out.write(b"]}").unwrap();
+    fn multipoint_end(&mut self, _idx: usize) -> Result<()> {
+        let _ = self.out.write(b"]}")?;
+        Ok(())
     }
-    fn linestring_begin(&mut self, tagged: bool, _size: usize, idx: usize) {
-        self.comma(idx);
+    fn linestring_begin(&mut self, tagged: bool, _size: usize, idx: usize) -> Result<()> {
+        self.comma(idx)?;
         if tagged {
-            self.out
-                .write(br#"{"type": "LineString", "coordinates": ["#)
-                .unwrap();
+            let _ = self
+                .out
+                .write(br#"{"type": "LineString", "coordinates": ["#)?;
         } else {
-            self.out.write(b"[").unwrap();
+            let _ = self.out.write(b"[")?;
         }
+        Ok(())
     }
-    fn linestring_end(&mut self, tagged: bool, _idx: usize) {
+    fn linestring_end(&mut self, tagged: bool, _idx: usize) -> Result<()> {
         if tagged {
-            self.out.write(b"]}").unwrap();
+            let _ = self.out.write(b"]}")?;
         } else {
-            self.out.write(b"]").unwrap();
+            let _ = self.out.write(b"]")?;
         }
+        Ok(())
     }
-    fn multilinestring_begin(&mut self, _size: usize, idx: usize) {
-        self.comma(idx);
-        self.out
-            .write(br#"{"type": "MultiLineString", "coordinates": ["#)
-            .unwrap();
+    fn multilinestring_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
+        self.comma(idx)?;
+        let _ = self
+            .out
+            .write(br#"{"type": "MultiLineString", "coordinates": ["#)?;
+        Ok(())
     }
-    fn multilinestring_end(&mut self, _idx: usize) {
-        self.out.write(b"]}").unwrap();
+    fn multilinestring_end(&mut self, _idx: usize) -> Result<()> {
+        let _ = self.out.write(b"]}")?;
+        Ok(())
     }
-    fn polygon_begin(&mut self, tagged: bool, _size: usize, idx: usize) {
-        self.comma(idx);
+    fn polygon_begin(&mut self, tagged: bool, _size: usize, idx: usize) -> Result<()> {
+        self.comma(idx)?;
         if tagged {
-            self.out
-                .write(br#"{"type": "Polygon", "coordinates": ["#)
-                .unwrap();
+            let _ = self.out.write(br#"{"type": "Polygon", "coordinates": ["#)?;
         } else {
-            self.out.write(b"[").unwrap();
+            let _ = self.out.write(b"[")?;
         }
+        Ok(())
     }
-    fn polygon_end(&mut self, tagged: bool, _idx: usize) {
+    fn polygon_end(&mut self, tagged: bool, _idx: usize) -> Result<()> {
         if tagged {
-            self.out.write(b"]}").unwrap();
+            let _ = self.out.write(b"]}")?;
         } else {
-            self.out.write(b"]").unwrap();
+            let _ = self.out.write(b"]")?;
         }
+        Ok(())
     }
-    fn multipolygon_begin(&mut self, _size: usize, idx: usize) {
-        self.comma(idx);
-        self.out
-            .write(br#"{"type": "MultiPolygon", "coordinates": ["#)
-            .unwrap();
+    fn multipolygon_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
+        self.comma(idx)?;
+        let _ = self
+            .out
+            .write(br#"{"type": "MultiPolygon", "coordinates": ["#)?;
+        Ok(())
     }
-    fn multipolygon_end(&mut self, _idx: usize) {
-        self.out.write(b"]}").unwrap();
+    fn multipolygon_end(&mut self, _idx: usize) -> Result<()> {
+        let _ = self.out.write(b"]}")?;
+        Ok(())
     }
 }
 
