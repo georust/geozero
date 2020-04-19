@@ -19,11 +19,7 @@ geozero includes a command line interface for converting date between supported 
 
 ## Available implementations
 
-Implemented:
+* GeoJSON Reader + Writer
 * FlatGeobuf [Reader](https://github.com/bjornharrtell/flatgeobuf)
-* GeoJSON Writer
-* SVG Writer
-
-Planned:
 * WKT Writer
-* EWKB Reader
+* SVG Writer
