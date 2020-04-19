@@ -1,3 +1,4 @@
+use crate::error::Result;
 use std::collections::HashMap;
 use std::fmt;
 
@@ -20,9 +21,11 @@ pub enum ColumnValue<'a> {
     Binary(&'a [u8]),
 }
 
+#[allow(unused_variables)]
 pub trait PropertyProcessor {
-    fn property(&mut self, _idx: usize, _name: &str, _value: &ColumnValue) -> bool {
-        true
+    /// Process property value. Abort processing, if return value is true.
+    fn property(&mut self, idx: usize, name: &str, value: &ColumnValue) -> Result<bool> {
+        Ok(true)
     }
 }
 
@@ -49,8 +52,8 @@ impl fmt::Display for ColumnValue<'_> {
 }
 
 impl PropertyProcessor for HashMap<String, String> {
-    fn property(&mut self, _idx: usize, colname: &str, colval: &ColumnValue) -> bool {
+    fn property(&mut self, _idx: usize, colname: &str, colval: &ColumnValue) -> Result<bool> {
         self.insert(colname.to_string(), colval.to_string());
-        false
+        Ok(false)
     }
 }

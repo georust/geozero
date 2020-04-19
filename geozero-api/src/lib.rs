@@ -37,14 +37,14 @@
 //! Properties can be accessed by implementing the `PropertyProcessor` trait.
 //!
 //! ```rust
-//! use geozero::{PropertyProcessor, ColumnValue};
+//! use geozero::{PropertyProcessor, ColumnValue, error::Result};
 //!
 //! struct PropertyPrinter;
 //!
 //! impl PropertyProcessor for PropertyPrinter {
-//!     fn property(&mut self, i: usize, n: &str, v: &ColumnValue) -> bool {
+//!     fn property(&mut self, i: usize, n: &str, v: &ColumnValue) -> Result<bool> {
 //!         println!("columnidx: {} name: {} value: {:?}", i, n, v);
-//!         false // don't abort
+//!         Ok(false) // don't abort
 //!     }
 //! }
 //! ```

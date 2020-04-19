@@ -118,7 +118,9 @@ impl<P1: FeatureProcessor, P2: FeatureProcessor> GeomProcessor for Multiplexer<P
 }
 
 impl<P1: FeatureProcessor, P2: FeatureProcessor> PropertyProcessor for Multiplexer<P1, P2> {
-    fn property(&mut self, i: usize, colname: &str, colval: &ColumnValue) -> bool {
-        self.p1.property(i, colname, colval) || self.p2.property(i, colname, colval)
+    fn property(&mut self, i: usize, colname: &str, colval: &ColumnValue) -> Result<bool> {
+        self.p1
+            .property(i, colname, colval)
+            .and(self.p2.property(i, colname, colval))
     }
 }

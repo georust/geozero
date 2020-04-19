@@ -148,38 +148,38 @@ impl<W: Write> GeomProcessor for GeoJsonWriter<'_, W> {
     }
 }
 
-fn write_num_prop<'a, W: Write>(out: &'a mut W, colname: &str, v: &dyn Display) -> usize {
-    out.write(&format!(r#""{}": {}"#, colname, v).as_bytes())
-        .unwrap()
+fn write_num_prop<'a, W: Write>(out: &'a mut W, colname: &str, v: &dyn Display) -> Result<()> {
+    let _ = out.write(&format!(r#""{}": {}"#, colname, v).as_bytes())?;
+    Ok(())
 }
 
-fn write_str_prop<'a, W: Write>(out: &'a mut W, colname: &str, v: &dyn Display) -> usize {
-    out.write(&format!(r#""{}": "{}""#, colname, v).as_bytes())
-        .unwrap()
+fn write_str_prop<'a, W: Write>(out: &'a mut W, colname: &str, v: &dyn Display) -> Result<()> {
+    let _ = out.write(&format!(r#""{}": "{}""#, colname, v).as_bytes())?;
+    Ok(())
 }
 
 impl<W: Write> PropertyProcessor for GeoJsonWriter<'_, W> {
-    fn property(&mut self, i: usize, colname: &str, colval: &ColumnValue) -> bool {
+    fn property(&mut self, i: usize, colname: &str, colval: &ColumnValue) -> Result<bool> {
         if i > 0 {
-            self.out.write(b", ").unwrap();
+            let _ = self.out.write(b", ")?;
         }
         match colval {
-            ColumnValue::Byte(v) => write_num_prop(self.out, colname, &v),
-            ColumnValue::UByte(v) => write_num_prop(self.out, colname, &v),
-            ColumnValue::Bool(v) => write_num_prop(self.out, colname, &v),
-            ColumnValue::Short(v) => write_num_prop(self.out, colname, &v),
-            ColumnValue::UShort(v) => write_num_prop(self.out, colname, &v),
-            ColumnValue::Int(v) => write_num_prop(self.out, colname, &v),
-            ColumnValue::UInt(v) => write_num_prop(self.out, colname, &v),
-            ColumnValue::Long(v) => write_num_prop(self.out, colname, &v),
-            ColumnValue::ULong(v) => write_num_prop(self.out, colname, &v),
-            ColumnValue::Float(v) => write_num_prop(self.out, colname, &v),
-            ColumnValue::Double(v) => write_num_prop(self.out, colname, &v),
-            ColumnValue::String(v) => write_str_prop(self.out, colname, &v),
-            ColumnValue::Json(_v) => 0,
-            ColumnValue::DateTime(v) => write_str_prop(self.out, colname, &v),
-            ColumnValue::Binary(_v) => 0,
+            ColumnValue::Byte(v) => write_num_prop(self.out, colname, &v)?,
+            ColumnValue::UByte(v) => write_num_prop(self.out, colname, &v)?,
+            ColumnValue::Bool(v) => write_num_prop(self.out, colname, &v)?,
+            ColumnValue::Short(v) => write_num_prop(self.out, colname, &v)?,
+            ColumnValue::UShort(v) => write_num_prop(self.out, colname, &v)?,
+            ColumnValue::Int(v) => write_num_prop(self.out, colname, &v)?,
+            ColumnValue::UInt(v) => write_num_prop(self.out, colname, &v)?,
+            ColumnValue::Long(v) => write_num_prop(self.out, colname, &v)?,
+            ColumnValue::ULong(v) => write_num_prop(self.out, colname, &v)?,
+            ColumnValue::Float(v) => write_num_prop(self.out, colname, &v)?,
+            ColumnValue::Double(v) => write_num_prop(self.out, colname, &v)?,
+            ColumnValue::String(v) => write_str_prop(self.out, colname, &v)?,
+            ColumnValue::Json(_v) => (),
+            ColumnValue::DateTime(v) => write_str_prop(self.out, colname, &v)?,
+            ColumnValue::Binary(_v) => (),
         };
-        false
+        Ok(false)
     }
 }
