@@ -121,8 +121,12 @@ impl<W: Write> GeomProcessor for GeoJsonWriter<'_, W> {
             self.out.write(b"[").unwrap();
         }
     }
-    fn polygon_end(&mut self, _tagged: bool, _idx: usize) {
-        self.out.write(b"]").unwrap();
+    fn polygon_end(&mut self, tagged: bool, _idx: usize) {
+        if tagged {
+            self.out.write(b"]}").unwrap();
+        } else {
+            self.out.write(b"]").unwrap();
+        }
     }
     fn multipolygon_begin(&mut self, _size: usize, idx: usize) {
         self.comma(idx);
