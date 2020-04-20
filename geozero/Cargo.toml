@@ -1,5 +1,5 @@
 [package]
-name = "geozero-core"
+name = "geozero"
 version = "0.2.0"
 authors = ["Pirmin Kalberer <pka@sourcepole.ch>"]
 edition = "2018"
@@ -8,8 +8,8 @@ homepage = "https://github.com/pka/geozero"
 repository = "https://github.com/pka/geozero"
 readme = "../README.md"
 license = "MIT/Apache-2.0"
-keywords = ["geo", "spatial", "geojson", "svg", "wkt"]
+keywords = ["geo", "spatial"]
 
 [dependencies]
-geozero = { version = "0.2", path = "../geozero" }
-geojson = { version =  "0.18" }
+thiserror = "1.0"
+async-trait = "0.1"

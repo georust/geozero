@@ -10,8 +10,10 @@ name = "geozero"
 path = "src/main.rs"
 
 [dependencies]
-geozero-api = { path = "../geozero-api" }
-geozero-core = { path = "../geozero-core" }
+geozero = "0.2"
+geozero-core = "0.2"
+#geozero = { path = "../geozero" }
+#geozero-core = { path = "../geozero-core" }
 flatgeobuf = { git = "https://github.com/pka/flatgeobuf/", branch="geozero" }
 structopt = "0.3"
 tokio = { version = "0.2", features = ["full"] }

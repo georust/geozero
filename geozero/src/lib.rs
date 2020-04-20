@@ -13,7 +13,7 @@
 //!
 //! ```ini
 //! [dependencies]
-//! geozero-api = "0.1"
+//! geozero = "0.2"
 //! ```
 //!
 //! ## Zero-copy geometry reader
