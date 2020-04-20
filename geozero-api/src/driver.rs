@@ -1,3 +1,4 @@
+use crate::error::Result;
 use crate::feature_processor::FeatureProcessor;
 use async_trait::async_trait;
 use std::path::Path;
@@ -19,27 +20,29 @@ pub struct SelectOpts {
 }
 
 pub trait Reader {
-    fn open<P: AsRef<Path>>(path: P, opts: &OpenOpts) -> Result<Self, std::io::Error>
+    fn open<P: AsRef<Path>>(path: P, opts: &OpenOpts) -> Result<Self>
     where
         Self: Sized;
-    fn select(&mut self, opts: &SelectOpts);
-    fn process<P: FeatureProcessor>(&mut self, processor: &mut P);
+    fn select(&mut self, opts: &SelectOpts) -> Result<()>;
+    fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> Result<()>;
 }
 
 #[async_trait]
 pub trait HttpReader {
-    async fn open(url: String, opts: &OpenOpts) -> Result<Self, std::io::Error>
+    async fn open(url: String, opts: &OpenOpts) -> Result<Self>
     where
         Self: Sized;
-    async fn select(&mut self, opts: &SelectOpts);
-    async fn process<P: FeatureProcessor + Send>(&mut self, processor: &mut P);
+    async fn select(&mut self, opts: &SelectOpts) -> Result<()>;
+    async fn process<P: FeatureProcessor + Send>(&mut self, processor: &mut P) -> Result<()>;
 }
 
 pub struct CreateOpts {}
 
 pub trait Writer {
-    fn open<P: AsRef<Path>>(path: P, opts: &CreateOpts) -> Result<Self, std::io::Error>
+    fn open<P: AsRef<Path>>(path: P, opts: &CreateOpts) -> Result<Self>
     where
         Self: Sized;
-    fn process<P: FeatureProcessor>(&mut self, processor: &mut P);
+    fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> Result<Self>
+    where
+        Self: Sized;
 }

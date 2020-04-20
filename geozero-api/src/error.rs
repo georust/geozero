@@ -7,6 +7,11 @@ pub enum GeozeroError {
     GeometryIndex,
     #[error("geometry format")]
     GeometryFormat,
+    // Http errors
+    #[error("http status {0}")]
+    HttpStatus(u16),
+    #[error("http error `{0}`")]
+    HttpError(String),
     // FeatureProcessor
     #[error("processing dataset: `{0}`")]
     Dataset(String),

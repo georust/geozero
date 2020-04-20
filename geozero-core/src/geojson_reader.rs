@@ -1,12 +1,14 @@
 use geojson::{GeoJson, Geometry, Value};
-use geozero::error::Result;
+use geozero::error::{GeozeroError, Result};
 use geozero::GeomProcessor;
 use std::io::Read;
 
 pub fn read_geojson<R: Read, P: GeomProcessor>(mut reader: R, processor: &mut P) -> Result<()> {
     let mut geojson_str = String::new();
     reader.read_to_string(&mut geojson_str)?;
-    let geojson = geojson_str.parse::<GeoJson>().unwrap();
+    let geojson = geojson_str
+        .parse::<GeoJson>()
+        .map_err(|_| GeozeroError::GeometryFormat)?;
     process_geojson(&geojson, processor)
 }
 

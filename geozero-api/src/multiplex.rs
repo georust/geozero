@@ -15,37 +15,37 @@ impl<P1: FeatureProcessor, P2: FeatureProcessor> Multiplexer<P1, P2> {
 }
 
 impl<P1: FeatureProcessor, P2: FeatureProcessor> FeatureProcessor for Multiplexer<P1, P2> {
-    fn dataset_begin(&mut self, name: Option<&str>) {
-        self.p1.dataset_begin(name);
-        self.p2.dataset_begin(name);
+    fn dataset_begin(&mut self, name: Option<&str>) -> Result<()> {
+        self.p1.dataset_begin(name)?;
+        self.p2.dataset_begin(name)
     }
-    fn dataset_end(&mut self) {
-        self.p1.dataset_end();
-        self.p2.dataset_end();
+    fn dataset_end(&mut self) -> Result<()> {
+        self.p1.dataset_end()?;
+        self.p2.dataset_end()
     }
-    fn feature_begin(&mut self, idx: u64) {
-        self.p1.feature_begin(idx);
-        self.p2.feature_begin(idx);
+    fn feature_begin(&mut self, idx: u64) -> Result<()> {
+        self.p1.feature_begin(idx)?;
+        self.p2.feature_begin(idx)
     }
-    fn feature_end(&mut self, idx: u64) {
-        self.p1.feature_end(idx);
-        self.p2.feature_end(idx);
+    fn feature_end(&mut self, idx: u64) -> Result<()> {
+        self.p1.feature_end(idx)?;
+        self.p2.feature_end(idx)
     }
-    fn properties_begin(&mut self) {
-        self.p1.properties_begin();
-        self.p2.properties_begin();
+    fn properties_begin(&mut self) -> Result<()> {
+        self.p1.properties_begin()?;
+        self.p2.properties_begin()
     }
-    fn properties_end(&mut self) {
-        self.p1.properties_end();
-        self.p2.properties_end();
+    fn properties_end(&mut self) -> Result<()> {
+        self.p1.properties_end()?;
+        self.p2.properties_end()
     }
-    fn geometry_begin(&mut self) {
-        self.p1.geometry_begin();
-        self.p2.geometry_begin();
+    fn geometry_begin(&mut self) -> Result<()> {
+        self.p1.geometry_begin()?;
+        self.p2.geometry_begin()
     }
-    fn geometry_end(&mut self) {
-        self.p1.geometry_end();
-        self.p2.geometry_end();
+    fn geometry_end(&mut self) -> Result<()> {
+        self.p1.geometry_end()?;
+        self.p2.geometry_end()
     }
 }
 

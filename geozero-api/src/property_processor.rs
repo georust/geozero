@@ -21,6 +21,7 @@ pub enum ColumnValue<'a> {
     Binary(&'a [u8]),
 }
 
+/// Feature property processing trait
 #[allow(unused_variables)]
 pub trait PropertyProcessor {
     /// Process property value. Abort processing, if return value is true.

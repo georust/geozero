@@ -50,46 +50,45 @@ impl<'a, W: Write> SvgWriter<'a, W> {
 }
 
 impl<W: Write> FeatureProcessor for SvgWriter<'_, W> {
-    fn dataset_begin(&mut self, name: Option<&str>) {
-        self.out
-            .write(
-                br#"<?xml version="1.0"?>
+    fn dataset_begin(&mut self, name: Option<&str>) -> Result<()> {
+        let _ = self.out.write(
+            br#"<?xml version="1.0"?>
 <svg xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny" "#,
+        )?;
+        let _ = self
+            .out
+            .write(&format!("width=\"{}\" height=\"{}\" ", self.width, self.height).as_bytes())?;
+        let _ = self.out.write(
+            &format!(
+                "viewBox=\"{} {} {} {}\" ",
+                self.xmin,
+                self.ymin,
+                self.xmax - self.xmin,
+                self.ymax - self.ymin
             )
-            .unwrap();
-        self.out
-            .write(&format!("width=\"{}\" height=\"{}\" ", self.width, self.height).as_bytes())
-            .unwrap();
-        self.out
-            .write(
-                &format!(
-                    "viewBox=\"{} {} {} {}\" ",
-                    self.xmin,
-                    self.ymin,
-                    self.xmax - self.xmin,
-                    self.ymax - self.ymin
-                )
-                .as_bytes(),
-            )
-            .unwrap();
-        self.out
-            .write(
-                br#"stroke-linecap="round" stroke-linejoin="round">
+            .as_bytes(),
+        )?;
+        let _ = self.out.write(
+            br#"stroke-linecap="round" stroke-linejoin="round">
 <g id=""#,
-            )
-            .unwrap();
+        )?;
         if let Some(name) = name {
-            self.out.write(name.as_bytes()).unwrap();
+            let _ = self.out.write(name.as_bytes())?;
         }
-        self.out.write(br#"">"#).unwrap();
+        let _ = self.out.write(br#"">"#)?;
+        Ok(())
     }
-    fn dataset_end(&mut self) {
-        self.out.write(b"\n</g>\n</svg>").unwrap();
+    fn dataset_end(&mut self) -> Result<()> {
+        let _ = self.out.write(b"\n</g>\n</svg>")?;
+        Ok(())
     }
-    fn feature_begin(&mut self, _idx: u64) {
-        self.out.write(b"\n").unwrap();
+    fn feature_begin(&mut self, _idx: u64) -> Result<()> {
+        let _ = self.out.write(b"\n")?;
+        Ok(())
     }
-    fn feature_end(&mut self, _idx: u64) {}
+    fn feature_end(&mut self, _idx: u64) -> Result<()> {
+        Ok(())
+    }
 }
 
 impl<W: Write> GeomProcessor for SvgWriter<'_, W> {
