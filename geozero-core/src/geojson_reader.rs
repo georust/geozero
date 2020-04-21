@@ -152,7 +152,7 @@ fn from_file() -> Result<()> {
     use crate::wkt_writer::WktWriter;
     use std::fs::File;
 
-    let f = File::open("canada.json")?;
+    let f = File::open("tests/data/canada.json")?;
     let mut wkt_data: Vec<u8> = Vec::new();
     read_geojson(f, &mut WktWriter::new(&mut wkt_data))?;
     let wkt = std::str::from_utf8(&wkt_data).unwrap();

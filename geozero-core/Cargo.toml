@@ -13,3 +13,6 @@ keywords = ["geo", "spatial", "geojson", "svg", "wkt"]
 [dependencies]
 geozero = { version = "0.2", path = "../geozero" }
 geojson = { version =  "0.18" }
+
+[dev-dependencies]
+kdbush = "0.2"
