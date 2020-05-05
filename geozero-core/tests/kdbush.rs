@@ -1,5 +1,5 @@
 use geozero::error::Result;
-use geozero_core::geojson::read_geojson;
+use geozero_core::geojson::read_geojson_geom;
 use kdbush::*;
 use std::fs::File;
 
@@ -24,7 +24,7 @@ fn create() -> Result<()> {
         pos: 0,
         index: KDBush::new(708024, DEFAULT_NODE_SIZE),
     };
-    read_geojson(f, &mut points)?;
+    read_geojson_geom(f, &mut points)?;
     points.index.build_index();
     let mut cnt = 0;
     points.index.within(8.53, 47.37, 0.1, |_id| cnt += 1);
