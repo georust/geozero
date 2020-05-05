@@ -17,3 +17,4 @@ geo-types = { version =  "0.5", default-features = false }
 
 [dev-dependencies]
 kdbush = "0.2"
+geo = { version =  "0.13" }
