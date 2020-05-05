@@ -146,23 +146,38 @@ fn process_multi_polygon<P: GeomProcessor>(
     processor.multipolygon_end(idx)
 }
 
-#[test]
-#[ignore]
-fn from_file() -> Result<()> {
+#[cfg(test)]
+mod test {
+    use super::*;
     use crate::wkt_writer::WktWriter;
     use std::fs::File;
 
-    let f = File::open("tests/data/canada.json")?;
-    let mut wkt_data: Vec<u8> = Vec::new();
-    read_geojson(f, &mut WktWriter::new(&mut wkt_data))?;
-    let wkt = std::str::from_utf8(&wkt_data).unwrap();
-    assert_eq!(
-        &wkt[0..100],
-        "POLYGON ((-65.61361699999998 43.42027300000001, -65.61972000000003 43.418052999999986, -65.625 43.42"
+    #[test]
+    fn line_string() -> Result<()> {
+        let geojson = r#"{"type": "LineString", "coordinates": [[1875038.447610231,-3269648.6879248763],[1874359.641504197,-3270196.812984864],[1874141.0428635243,-3270953.7840121365],[1874440.1778162003,-3271619.4315206874],[1876396.0598222911,-3274138.747656357],[1876442.0805243007,-3275052.60551469],[1874739.312657555,-3275457.333765534]]}"#;
+        let mut wkt_data: Vec<u8> = Vec::new();
+        assert!(read_geojson(geojson.as_bytes(), &mut WktWriter::new(&mut wkt_data)).is_ok());
+        let wkt = std::str::from_utf8(&wkt_data).unwrap();
+        assert_eq!(wkt, "LINESTRING (1875038.447610231 -3269648.6879248763, 1874359.641504197 -3270196.812984864, 1874141.0428635243 -3270953.7840121365, 1874440.1778162003 -3271619.4315206874, 1876396.0598222911 -3274138.747656357, 1876442.0805243007 -3275052.60551469, 1874739.312657555 -3275457.333765534)"
     );
-    assert_eq!(
-        &wkt[wkt.len()-100..],
-        "9997 83.11387600000012, -70.16000399999996 83.11137400000001, -70.11193799999995 83.10942100000011))"
-    );
-    Ok(())
+        Ok(())
+    }
+
+    #[test]
+    #[ignore]
+    fn from_file() -> Result<()> {
+        let f = File::open("tests/data/canada.json")?;
+        let mut wkt_data: Vec<u8> = Vec::new();
+        assert!(read_geojson(f, &mut WktWriter::new(&mut wkt_data)).is_ok());
+        let wkt = std::str::from_utf8(&wkt_data).unwrap();
+        assert_eq!(
+            &wkt[0..100],
+            "POLYGON ((-65.61361699999998 43.42027300000001, -65.61972000000003 43.418052999999986, -65.625 43.42"
+        );
+        assert_eq!(
+            &wkt[wkt.len()-100..],
+            "9997 83.11387600000012, -70.16000399999996 83.11137400000001, -70.11193799999995 83.10942100000011))"
+        );
+        Ok(())
+    }
 }

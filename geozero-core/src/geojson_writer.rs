@@ -188,3 +188,19 @@ impl<W: Write> PropertyProcessor for GeoJsonWriter<'_, W> {
         Ok(false)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::geojson_reader::read_geojson;
+
+    #[test]
+    fn line_string() -> Result<()> {
+        let geojson = r#"{"type": "LineString", "coordinates": [[1875038.447610231,-3269648.6879248763],[1874359.641504197,-3270196.812984864],[1874141.0428635243,-3270953.7840121365],[1874440.1778162003,-3271619.4315206874],[1876396.0598222911,-3274138.747656357],[1876442.0805243007,-3275052.60551469],[1874739.312657555,-3275457.333765534]]}"#;
+        let mut out: Vec<u8> = Vec::new();
+        assert!(read_geojson(geojson.as_bytes(), &mut GeoJsonWriter::new(&mut out)).is_ok());
+        let jsonout = std::str::from_utf8(&out).unwrap();
+        assert_eq!(jsonout, geojson);
+        Ok(())
+    }
+}
