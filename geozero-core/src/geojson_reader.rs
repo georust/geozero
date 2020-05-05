@@ -232,19 +232,18 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn from_file() -> Result<()> {
-        let f = File::open("tests/data/canada.json")?;
+        let f = File::open("tests/data/places.json")?;
         let mut wkt_data: Vec<u8> = Vec::new();
         assert!(read_geojson(f, &mut WktWriter::new(&mut wkt_data)).is_ok());
         let wkt = std::str::from_utf8(&wkt_data).unwrap();
         assert_eq!(
             &wkt[0..100],
-            "POLYGON ((-65.61361699999998 43.42027300000001, -65.61972000000003 43.418052999999986, -65.625 43.42"
+            "POINT (32.533299524864844 0.583299105614628)POINT (30.27500161597942 0.671004121125236)POINT (15.798"
         );
         assert_eq!(
             &wkt[wkt.len()-100..],
-            "9997 83.11387600000012, -70.16000399999996 83.11137400000001, -70.11193799999995 83.10942100000011))"
+            "06510862875)POINT (103.85387481909902 1.294979325105942)POINT (114.18306345846304 22.30692675357551)"
         );
         Ok(())
     }

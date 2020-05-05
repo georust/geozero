@@ -17,17 +17,16 @@ impl geozero::GeomProcessor for PointIndex {
 }
 
 #[test]
-#[ignore]
 fn create() -> Result<()> {
-    let f = File::open("tests/data/cities.geojson")?;
+    let f = File::open("tests/data/places.json")?;
     let mut points = PointIndex {
         pos: 0,
-        index: KDBush::new(708024, DEFAULT_NODE_SIZE),
+        index: KDBush::new(1249, DEFAULT_NODE_SIZE),
     };
     read_geojson_geom(f, &mut points)?;
     points.index.build_index();
     let mut cnt = 0;
-    points.index.within(8.53, 47.37, 0.1, |_id| cnt += 1);
-    assert_eq!(cnt, 190);
+    points.index.within(8.53, 47.37, 5.0, |_id| cnt += 1);
+    assert_eq!(cnt, 22);
     Ok(())
 }
