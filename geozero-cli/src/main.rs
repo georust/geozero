@@ -1,9 +1,9 @@
-use flatgeobuf;
 use geozero::error::Result;
 use geozero::{Extent, HttpReader, OpenOpts, Reader, SelectOpts};
 use geozero_core::geojson::GeoJsonWriter;
 use geozero_core::svg::SvgWriter;
 use std::fs::File;
+use std::io::BufReader;
 use std::io::BufWriter;
 use std::num::ParseFloatError;
 use structopt::StructOpt;
@@ -41,7 +41,8 @@ fn parse_extent(src: &str) -> std::result::Result<Extent, ParseFloatError> {
 
 fn process(args: Cli) -> Result<()> {
     let open_opts = OpenOpts {};
-    let mut driver = flatgeobuf::Driver::open(args.input, &open_opts)?;
+    let mut filein = BufReader::new(File::open(args.input)?);
+    let mut driver = flatgeobuf::Driver::open(&mut filein, &open_opts)?;
 
     let select_opts = SelectOpts {
         extent: args.extent,
