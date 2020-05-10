@@ -13,14 +13,149 @@ Supported geometry types:
 
 Supported dimensions: X, Y, Z, M, T
 
-## CLI
-
-geozero includes a command line interface for converting date between supported formats.
-
 ## Available implementations
 
+[geozero-core](https://crates.io/crates/geozero-core):
 * GeoJSON Reader + Writer
-* [FlatGeobuf Reader](https://github.com/bjornharrtell/flatgeobuf)
 * WKT Writer
 * SVG Writer
 * [geo](https://github.com/georust/geo) Writer
+
+External:
+* [FlatGeobuf Reader](https://github.com/bjornharrtell/flatgeobuf)
+
+## Applications
+
+* [flatgeobuf-gpu](https://github.com/pka/flatgeobuf-gpu): Demo rendering FlatGeobuf to GPU
+* [flatgeobuf-wasm](https://github.com/pka/flatgeobuf-wasm): WASM demo displaying FlatGeobuf as SVG
+
+## CLI
+
+geozero includes an experimental command line interface for converting between supported formats.
+
+## Usage examples
+
+Count vertices of an input geometry:
+```rust
+struct VertexCounter(u64);
+
+impl GeomProcessor for VertexCounter {
+    fn xy(&mut self, _x: f64, _y: f64, _idx: usize) -> Result<()> {
+        self.0 += 1;
+        Ok(())
+    }
+}
+
+let mut vertex_counter = VertexCounter(0);
+geometry.process(&mut vertex_counter, GeometryType::MultiPolygon)?;
+```
+Full source code: [geozero-api.rs](./geozero-core/tests/geozero-api.rs)
+
+Find maximal height in 3D polygons:
+```rust
+struct MaxHeightFinder(f64);
+
+impl GeomProcessor for MaxHeightFinder {
+    fn coordinate(&mut self, _x: f64, _y: f64, z: Option<f64>, _m: Option<f64>, _t: Option<f64>, _tm: Option<u64>, _idx: usize) -> Result<()> {
+        if let Some(z) = z {
+            if z > self.0 {
+                self.0 = z
+            }
+        }
+        Ok(())
+    }
+}
+
+let mut max_finder = MaxHeightFinder(0.0);
+while let Some(feature) = fgb.next()? {
+    let geometry = feature.geometry().unwrap();
+    geometry.process(&mut max_finder, GeometryType::MultiPolygon)?;
+}
+```
+Full source code: [geozero-api.rs](./geozero-core/tests/geozero-api.rs)
+
+Render polygons:
+```rust
+struct PathDrawer<'a> {
+    canvas: &'a mut CanvasRenderingContext2D,
+    path: Path2D,
+}
+
+impl<'a> GeomProcessor for PathDrawer<'a> {
+    fn linestring_begin(&mut self, _tagged: bool, _size: usize, _idx: usize) -> Result<()> {
+        self.path = Path2D::new();
+        Ok(())
+    }
+    fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
+        if idx == 0 {
+            self.path.move_to(vec2f(x, y));
+        } else {
+            self.path.line_to(vec2f(x, y));
+        }
+        Ok(())
+    }
+    fn linestring_end(&mut self, _tagged: bool, _idx: usize) -> Result<()> {
+        self.path.close_path();
+        self.canvas.fill_path(self.path.clone(), FillRule::Winding);
+        Ok(())
+    }
+}
+```
+Full source code: [flatgeobuf-gpu](https://github.com/pka/flatgeobuf-gpu)
+
+Read a FlatGeobuf dataset with async HTTP client applying a bbox filter and convert to GeoJSON:
+```rust
+let url = "https://github.com/pka/geozero/raw/master/geozero-core/tests/data/countries.fgb";
+let mut fgb = HttpFgbReader::open(url).await?;
+fgb.select_bbox(8.8, 47.2, 9.5, 55.3).await?;
+
+let mut fout = BufWriter::new(File::create("countries.json")?);
+let mut json = GeoJsonWriter::new(&mut fout);
+fgb.process_features(&mut json).await?;
+```
+Full source code: [geojson.rs](./geozero-core/tests/geojson.rs)
+
+Read FlatGeobuf data as rustgeo geometries and calculate label position with [polylabel-rs](https://github.com/urschrei/polylabel-rs):
+```rust
+let mut file = BufReader::new(File::open("countries.fgb")?);
+let mut fgb = FgbReader::open(&mut file)?;
+fgb.select_all()?;
+while let Some(feature) = fgb.next()? {
+    let props = feature.properties()?;
+    let geometry = feature.geometry().unwrap();
+    let mut geo = RustGeo::new();
+    geometry.process(&mut geo, GeometryType::MultiPolygon)?;
+    if let Geometry::MultiPolygon(mpoly) = geo.geometry() {
+        if let Some(poly) = &mpoly.0.iter().next() {
+            let label_pos = polylabel(&poly, &0.10).unwrap();
+            println!("{}: {:?}", props["name"], label_pos);
+        }
+    }
+}
+```
+Full source code: [polylabel.rs](./geozero-core/tests/polylabel.rs)
+
+Create a KD-tree index with [kdbush](https://github.com/pka/rust-kdbush):
+```rust
+struct PointIndex {
+    pos: usize,
+    index: KDBush,
+}
+
+impl geozero::GeomProcessor for PointIndex {
+    fn xy(&mut self, x: f64, y: f64, _idx: usize) -> Result<()> {
+        self.index.add_point(self.pos, x, y);
+        self.pos += 1;
+        Ok(())
+    }
+}
+
+let mut points = PointIndex {
+    pos: 0,
+    index: KDBush::new(1249, DEFAULT_NODE_SIZE),
+};
+read_geojson_geom(f, &mut points)?;
+points.index.build_index();
+}
+```
+Full source code: [kdbush.rs](./geozero-core/tests/kdbush.rs)
