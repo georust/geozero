@@ -1,6 +1,7 @@
 use crate::error::Result;
 
 /// Dimensions requested for processing
+#[derive(Default, Clone, Copy)]
 pub struct CoordDimensions {
     /// height
     pub z: bool,

@@ -1,19 +1,26 @@
 use geozero::error::Result;
-use geozero::{FeatureProcessor, GeomProcessor, PropertyProcessor};
+use geozero::{CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcessor};
 use std::io::Write;
 
 /// WKT according to OpenGIS Simple Features Specification For SQL Revision 1.1
 pub struct WktWriter<'a, W: Write> {
+    pub dims: CoordDimensions,
     out: &'a mut W,
 }
 
 impl<'a, W: Write> WktWriter<'a, W> {
     pub fn new(out: &'a mut W) -> WktWriter<'a, W> {
-        WktWriter { out }
+        WktWriter {
+            dims: CoordDimensions::default(),
+            out,
+        }
     }
 }
 
 impl<W: Write> GeomProcessor for WktWriter<'_, W> {
+    fn dimensions(&self) -> CoordDimensions {
+        self.dims
+    }
     fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
         if idx == 0 {
             let _ = self.out.write(&format!("{} {}", x, y).as_bytes())?;
@@ -22,6 +29,30 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
         }
         Ok(())
     }
+    fn coordinate(
+        &mut self,
+        x: f64,
+        y: f64,
+        z: Option<f64>,
+        m: Option<f64>,
+        _t: Option<f64>,
+        _tm: Option<u64>,
+        idx: usize,
+    ) -> Result<()> {
+        if idx == 0 {
+            let _ = self.out.write(&format!("{} {}", x, y).as_bytes())?;
+        } else {
+            let _ = self.out.write(&format!(", {} {}", x, y).as_bytes())?;
+        }
+        if let Some(z) = z {
+            let _ = self.out.write(&format!(" {}", z).as_bytes())?;
+        }
+        if let Some(m) = m {
+            let _ = self.out.write(&format!(" {}", m).as_bytes())?;
+        }
+        Ok(())
+    }
+
     fn point_begin(&mut self, _idx: usize) -> Result<()> {
         let _ = self.out.write(b"POINT (")?;
         Ok(())
