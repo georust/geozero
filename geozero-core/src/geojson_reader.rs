@@ -149,7 +149,7 @@ fn process_multi_point<P: GeomProcessor>(
 ) -> Result<()> {
     processor.multipoint_begin(multi_point_type.len(), idx)?;
     for (idxc, point_type) in multi_point_type.iter().enumerate() {
-        process_point(&point_type, idxc, processor)?;
+        processor.xy(point_type[0], point_type[1], idxc)?;
     }
     processor.multipoint_end(idx)
 }

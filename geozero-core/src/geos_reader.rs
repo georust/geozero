@@ -2,7 +2,7 @@ use geos::{CoordSeq, Geometry as GGeom, GeometryTypes};
 use geozero::error::{GeozeroError, Result};
 use geozero::GeomProcessor;
 
-fn from_geos_err(error: geos::Error) -> GeozeroError {
+pub(crate) fn from_geos_err(error: geos::Error) -> GeozeroError {
     match error {
         geos::Error::InvalidGeometry(e) => GeozeroError::Geometry(e),
         geos::Error::ImpossibleOperation(e) => GeozeroError::Geometry(e),
