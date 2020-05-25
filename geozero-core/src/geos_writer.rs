@@ -3,7 +3,7 @@ use geos::{CoordDimensions, CoordSeq, GResult, Geometry as GGeom};
 use geozero::error::{GeozeroError, Result};
 use geozero::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 
-/// Generator for https://github.com/georust/geo geometry type
+/// Generator for [GEOS](https://github.com/georust/geos) geometry type
 pub struct Geos<'a> {
     geom: GGeom<'a>,
     // CoordSeq for Points, Lines and Rings

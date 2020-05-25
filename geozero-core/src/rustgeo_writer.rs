@@ -2,7 +2,7 @@ use geo_types::*;
 use geozero::error::{GeozeroError, Result};
 use geozero::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 
-/// Generator for https://github.com/georust/geo geometry type
+/// Generator for [georust/geo](https://github.com/georust/geo) geometry type
 pub struct RustGeo {
     geom: Geometry<f64>,
     line_strings: Vec<LineString<f64>>,

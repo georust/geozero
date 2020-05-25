@@ -170,4 +170,4 @@ let prepared_geom = geos.geometry().to_prepared_geom().expect("to_prepared_geom 
 let geom2 = geos::Geometry::new_from_wkt("POINT (2.5 2.5)").expect("Invalid geometry");
 assert_eq!(prepared_geom.contains(&geom2), Ok(true));
 ```
-Full source code: [kdbush.rs](./geozero-core/tests/geos.rs)
+Full source code: [geos.rs](./geozero-core/tests/geos.rs)
