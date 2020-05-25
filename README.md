@@ -17,6 +17,7 @@ Supported dimensions: X, Y, Z, M, T
 
 [geozero-core](https://crates.io/crates/geozero-core):
 * GeoJSON Reader + Writer
+* [GEOS](https://github.com/georust/geos) Reader + Writer
 * WKT Writer
 * SVG Writer
 * [geo](https://github.com/georust/geo) Writer
@@ -156,6 +157,17 @@ let mut points = PointIndex {
 };
 read_geojson_geom(f, &mut points)?;
 points.index.build_index();
-}
 ```
 Full source code: [kdbush.rs](./geozero-core/tests/kdbush.rs)
+
+
+Use [GEOS](https://github.com/georust/geos) with prepared geometries:
+```rust
+let geojson = r#"{"type": "Polygon", "coordinates": [[[0, 0], [10, 0], [10, 6], [0, 6], [0, 0]]]}"#;
+let mut geos = Geos::new();
+read_geojson(geojson.as_bytes(), &mut geos).unwrap();
+let prepared_geom = geos.geometry().to_prepared_geom().expect("to_prepared_geom failed");
+let geom2 = geos::Geometry::new_from_wkt("POINT (2.5 2.5)").expect("Invalid geometry");
+assert_eq!(prepared_geom.contains(&geom2), Ok(true));
+```
+Full source code: [kdbush.rs](./geozero-core/tests/geos.rs)
