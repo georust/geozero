@@ -96,7 +96,7 @@ impl<'a> GeomProcessor for PathDrawer<'a> {
     }
     fn linestring_end(&mut self, _tagged: bool, _idx: usize) -> Result<()> {
         self.path.close_path();
-        self.canvas.fill_path(self.path.clone(), FillRule::Winding);
+        self.canvas.fill_path(self.path.to_owned(), FillRule::Winding);
         Ok(())
     }
 }
