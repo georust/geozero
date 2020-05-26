@@ -1,5 +1,7 @@
 //! Collection of GeoZero API implementations.
 
+#[cfg(feature = "gdal-ogr")]
+mod gdal_reader;
 mod geojson_reader;
 mod geojson_writer;
 #[cfg(feature = "geos")]
@@ -32,4 +34,10 @@ pub mod wkt {
 pub mod geos {
     pub use crate::geos_reader::*;
     pub use crate::geos_writer::*;
+}
+
+/// [GDAL](https://github.com/georust/gdal) Reader + Writer.
+#[cfg(feature = "gdal-ogr")]
+pub mod gdal {
+    pub use crate::gdal_reader::*;
 }

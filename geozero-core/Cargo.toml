@@ -11,17 +11,20 @@ license = "MIT/Apache-2.0"
 keywords = ["geo", "spatial", "geojson", "svg", "wkt"]
 
 [features]
-default = []
+default = ["gdal-ogr"]
+gdal-ogr = ["gdal", "gdal-sys"]
 # others: ["geos"]
 
 [dependencies]
-geozero = { version =  "0.3.1", path = "../geozero" }
-geojson = { version =  "0.18" }
-geo-types = { version =  "0.5", default-features = false }
-geos = { version =  "5.0", optional = true }
+geozero = { version = "0.3.1", path = "../geozero" }
+geojson = { version = "0.18" }
+geo-types = { version = "0.5", default-features = false }
+geos = { version = "5.0", optional = true }
+gdal = { version = "0.6", default-features = false, optional = true }
+gdal-sys = { version = "0.2", optional = true }
 
 [dev-dependencies]
-geo = { version =  "0.13" }
+geo = { version = "0.13" }
 kdbush = "0.2"
 polylabel = "2.2"
 flatgeobuf = { git = "https://github.com/pka/flatgeobuf/", branch="geozero" }
