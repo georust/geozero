@@ -1,4 +1,4 @@
-#[cfg(feature = "gdal-ogr")]
+#[cfg(feature = "gdal-lib")]
 mod gdal_examples {
 
     use gdal::vector::Dataset;
