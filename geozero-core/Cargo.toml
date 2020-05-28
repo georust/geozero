@@ -11,7 +11,7 @@ license = "MIT/Apache-2.0"
 keywords = ["geo", "spatial", "geojson", "svg", "wkt"]
 
 [features]
-default = ["gdal-lib"]
+default = []
 gdal-lib = ["gdal", "gdal-sys"]
 geos-lib = ["geos"]
 

@@ -2,6 +2,8 @@
 
 #[cfg(feature = "gdal-lib")]
 mod gdal_reader;
+#[cfg(feature = "gdal-lib")]
+mod gdal_writer;
 mod geojson_reader;
 mod geojson_writer;
 #[cfg(feature = "geos-lib")]
@@ -40,4 +42,5 @@ pub mod geos {
 #[cfg(feature = "gdal-lib")]
 pub mod gdal {
     pub use crate::gdal_reader::*;
+    pub use crate::gdal_writer::*;
 }

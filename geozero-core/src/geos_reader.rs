@@ -98,7 +98,8 @@ fn process_coord_seq<P: GeomProcessor>(
 }
 
 fn process_point<P: GeomProcessor>(ggeom: &GGeom, idx: usize, processor: &mut P) -> Result<()> {
-    let cs = ggeom.get_coord_seq().map_err(from_geos_err)?; // NOTE: this clones the underlying CoordSeq!
+    let cs = ggeom.get_coord_seq().map_err(from_geos_err)?;
+    // NOTE: this clones the underlying CoordSeq!
     // let x = GEOSGeom_getX_r(ggeom.get_raw_context(), ggeom.as_raw());
     process_coord_seq(&cs, idx, processor)?;
     Ok(())
@@ -110,7 +111,8 @@ fn process_linestring<P: GeomProcessor>(
     idx: usize,
     processor: &mut P,
 ) -> Result<()> {
-    let cs = ggeom.get_coord_seq().map_err(from_geos_err)?; // NOTE: this clones the underlying CoordSeq!
+    let cs = ggeom.get_coord_seq().map_err(from_geos_err)?;
+    // NOTE: this clones the underlying CoordSeq!
     // let coords = GEOSGeom_getCoordSeq_r(ggeom.get_raw_context(), ggeom.as_raw());
     let n_coords = cs.size().map_err(from_geos_err)?;
     processor.linestring_begin(tagged, n_coords, idx)?;
