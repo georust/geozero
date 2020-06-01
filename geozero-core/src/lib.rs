@@ -13,6 +13,7 @@ mod geos_writer;
 mod rustgeo_writer;
 /// SVG Writer.
 pub mod svg;
+mod wkb_reader;
 mod wkt_writer;
 
 /// GeoJSON Reader + Writer.
@@ -24,6 +25,11 @@ pub mod geojson {
 /// [georust/geo](https://github.com/georust/geo) Writer.
 pub mod geo {
     pub use crate::rustgeo_writer::*;
+}
+
+/// WKB Reader.
+pub mod wkb {
+    pub use crate::wkb_reader::*;
 }
 
 /// WKT Writer.
