@@ -29,3 +29,5 @@ geo = { version = "0.13" }
 kdbush = "0.2"
 polylabel = "2.2"
 flatgeobuf = { git = "https://github.com/pka/flatgeobuf/", branch="geozero" }
+sqlx = { version = "0.3", default-features = false, features = [ "runtime-tokio", "postgres" ] }
+tokio = { version = "0.2", default-features = false, features = ["rt-threaded"] }
