@@ -18,6 +18,8 @@ Supported dimensions: X, Y, Z, M, T
 [geozero-core](https://crates.io/crates/geozero-core):
 * GeoJSON Reader + Writer
 * [GEOS](https://github.com/georust/geos) Reader + Writer
+* [GDAL](https://github.com/georust/gdal) geometry Reader + Writer
+* WKB Reader supporting PostGIS geometries for [rust-postgres](https://github.com/sfackler/rust-postgres) and [SQLx](https://github.com/launchbadge/sqlx)
 * WKT Writer
 * SVG Writer
 * [geo](https://github.com/georust/geo) Writer

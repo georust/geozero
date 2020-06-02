@@ -3,7 +3,7 @@ use gdal_sys::OGRwkbGeometryType;
 use geozero::error::{GeozeroError, Result};
 use geozero::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 
-/// Generator for [GEOS](https://github.com/georust/geos) geometry type
+/// Generator for [GDAL](https://github.com/georust/gdal) geometry type
 pub struct GdalWriter {
     geom: Geometry,
     // current line/ring of geom (non-owned)
