@@ -10,6 +10,8 @@ mod geojson_writer;
 mod geos_reader;
 #[cfg(feature = "geos-lib")]
 mod geos_writer;
+/// PostGIS geometry type conversions.
+pub mod postgis;
 mod rustgeo_writer;
 /// SVG Writer.
 pub mod svg;
