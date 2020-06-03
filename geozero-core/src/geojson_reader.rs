@@ -43,7 +43,7 @@ fn process_geojson<P: FeatureProcessor>(gj: &GeoJson, processor: &mut P) -> Resu
                 // TODO: properties
                 processor.properties_end()?;
                 processor.geometry_begin()?;
-                match_geometry(geometry, idx, processor)?;
+                process_geojson_geom_n(geometry, idx, processor)?;
                 processor.geometry_end()?;
                 processor.feature_end(idx as u64)?;
             }
@@ -57,14 +57,14 @@ fn process_geojson<P: FeatureProcessor>(gj: &GeoJson, processor: &mut P) -> Resu
                 // TODO: properties
                 processor.properties_end()?;
                 processor.geometry_begin()?;
-                match_geometry(geometry, 0, processor)?;
+                process_geojson_geom_n(geometry, 0, processor)?;
                 processor.geometry_end()?;
                 processor.feature_end(0)?;
             }
             processor.dataset_end()?;
         }
         GeoJson::Geometry(ref geometry) => {
-            match_geometry(geometry, 0, processor)?;
+            process_geojson_geom_n(geometry, 0, processor)?;
         }
     }
     Ok(())
@@ -81,23 +81,23 @@ fn process_geojson_geom<P: GeomProcessor>(gj: &GeoJson, processor: &mut P) -> Re
                 .filter_map(|feature| feature.geometry.as_ref())
                 .enumerate()
             {
-                match_geometry(geometry, idx, processor)?;
+                process_geojson_geom_n(geometry, idx, processor)?;
             }
         }
         GeoJson::Feature(ref feature) => {
             if let Some(ref geometry) = feature.geometry {
-                match_geometry(geometry, 0, processor)?;
+                process_geojson_geom_n(geometry, 0, processor)?;
             }
         }
         GeoJson::Geometry(ref geometry) => {
-            match_geometry(geometry, 0, processor)?;
+            process_geojson_geom_n(geometry, 0, processor)?;
         }
     }
     Ok(())
 }
 
 /// Process GeoJSON geometries
-fn match_geometry<P: GeomProcessor>(geom: &Geometry, idx: usize, processor: &mut P) -> Result<()> {
+fn process_geojson_geom_n<P: GeomProcessor>(geom: &Geometry, idx: usize, processor: &mut P) -> Result<()> {
     match geom.value {
         Value::Point(ref geometry) => {
             process_point(geometry, idx, processor)?;
@@ -118,10 +118,11 @@ fn match_geometry<P: GeomProcessor>(geom: &Geometry, idx: usize, processor: &mut
             process_multi_polygon(geometry, idx, processor)?;
         }
         Value::GeometryCollection(ref collection) => {
-            // processor.geomcollection_begin(collection.len());
-            for (idx, geometry) in collection.iter().enumerate() {
-                match_geometry(geometry, idx, processor)?;
+            processor.geometrycollection_begin(collection.len(), idx)?;
+            for (idxg, geometry) in collection.iter().enumerate() {
+                process_geojson_geom_n(geometry, idxg, processor)?;
             }
+            processor.geometrycollection_end(idx)?;
         }
     }
     Ok(())
