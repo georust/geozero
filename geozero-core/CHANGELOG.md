@@ -1,3 +1,7 @@
+## 0.4.2 (2020-06-04)
+
+* Support GeometryCollection in GeoJSON reader
+
 ## 0.4.1 (2020-06-04)
 
 * Support for GeometryCollection
