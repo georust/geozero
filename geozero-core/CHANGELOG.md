@@ -1,3 +1,7 @@
+## 0.4.1 (2020-06-04)
+
+* Support for GeometryCollection
+
 ## 0.4.0 (2020-06-03)
 
 * Add WKB reader

@@ -1,4 +1,4 @@
-# GeoZero core
+# GeoZero Core
 
 Collection of [GeoZero](https://github.com/pka/geozero) processors for zero-copy reading and writing of geospatial data.
 
