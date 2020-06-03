@@ -6,7 +6,6 @@ edition = "2018"
 description = "Zero-Copy reading and writing of geospatial data."
 homepage = "https://github.com/pka/geozero"
 repository = "https://github.com/pka/geozero"
-readme = "../README.md"
 license = "MIT/Apache-2.0"
 keywords = ["geo", "spatial", "geojson", "svg", "wkt"]
 
@@ -18,7 +17,7 @@ postgis-sqlx = ["sqlx"]
 postgis-postgres = ["postgres-types"]
 
 [dependencies]
-geozero = { version = "0.3.1", path = "../geozero" }
+geozero = { version = "0.4", path = "../geozero" }
 geojson = { version = "0.18" }
 geo-types = { version = "0.5", default-features = false }
 geos = { version = "5.0", optional = true }

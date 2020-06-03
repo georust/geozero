@@ -53,7 +53,10 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
         Ok(())
     }
 
-    fn point_begin(&mut self, _idx: usize) -> Result<()> {
+    fn point_begin(&mut self, idx: usize) -> Result<()> {
+        if idx > 0 {
+            let _ = self.out.write(b", ")?;
+        }
         let _ = self.out.write(b"POINT (")?;
         Ok(())
     }
@@ -61,7 +64,10 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
         let _ = self.out.write(b")")?;
         Ok(())
     }
-    fn multipoint_begin(&mut self, _size: usize, _idx: usize) -> Result<()> {
+    fn multipoint_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
+        if idx > 0 {
+            let _ = self.out.write(b", ")?;
+        }
         let _ = self.out.write(b"MULTIPOINT (")?;
         Ok(())
     }
@@ -70,14 +76,13 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
         Ok(())
     }
     fn linestring_begin(&mut self, tagged: bool, _size: usize, idx: usize) -> Result<()> {
+        if idx > 0 {
+            let _ = self.out.write(b", ")?;
+        }
         if tagged {
             let _ = self.out.write(b"LINESTRING (")?;
         } else {
-            if idx == 0 {
-                let _ = self.out.write(b"(")?;
-            } else {
-                let _ = self.out.write(b", (")?;
-            }
+            let _ = self.out.write(b"(")?;
         }
         Ok(())
     }
@@ -85,7 +90,10 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
         let _ = self.out.write(b")")?;
         Ok(())
     }
-    fn multilinestring_begin(&mut self, _size: usize, _idx: usize) -> Result<()> {
+    fn multilinestring_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
+        if idx > 0 {
+            let _ = self.out.write(b", ")?;
+        }
         let _ = self.out.write(b"MULTILINESTRING (")?;
         Ok(())
     }
@@ -94,24 +102,25 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
         Ok(())
     }
     fn polygon_begin(&mut self, tagged: bool, _size: usize, idx: usize) -> Result<()> {
+        if idx > 0 {
+            let _ = self.out.write(b", ")?;
+        }
         if tagged {
             let _ = self.out.write(b"POLYGON (")?;
             Ok(())
         } else {
-            if idx == 0 {
-                let _ = self.out.write(b"(")?;
-                Ok(())
-            } else {
-                let _ = self.out.write(b", (")?;
-                Ok(())
-            }
+            let _ = self.out.write(b"(")?;
+            Ok(())
         }
     }
     fn polygon_end(&mut self, _tagged: bool, _idx: usize) -> Result<()> {
         let _ = self.out.write(b")")?;
         Ok(())
     }
-    fn multipolygon_begin(&mut self, _size: usize, _idx: usize) -> Result<()> {
+    fn multipolygon_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
+        if idx > 0 {
+            let _ = self.out.write(b", ")?;
+        }
         let _ = self.out.write(b"MULTIPOLYGON (")?;
         Ok(())
     }
@@ -119,9 +128,14 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
         let _ = self.out.write(b")")?;
         Ok(())
     }
-    // GEOMETRYCOLLECTION (POINT (10 10),
-    // POINT (30 30),
-    // LINESTRING (15 15, 20 20))’
+    fn geometrycollection_begin(&mut self, _size: usize, _idx: usize) -> Result<()> {
+        let _ = self.out.write(b"GEOMETRYCOLLECTION (")?;
+        Ok(())
+    }
+    fn geometrycollection_end(&mut self, _idx: usize) -> Result<()> {
+        let _ = self.out.write(b")")?;
+        Ok(())
+    }
 }
 
 impl<W: Write> PropertyProcessor for WktWriter<'_, W> {}

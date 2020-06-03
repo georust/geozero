@@ -175,7 +175,7 @@ fn process_wkb_geom_n<R: Read, P: GeomProcessor>(
             processor.multipoint_end(idx)?;
         }
         WKBGeometryType::LineString => {
-            process_linestring(raw, &info, true, 0, processor)?;
+            process_linestring(raw, &info, true, idx, processor)?;
         }
         WKBGeometryType::MultiLineString => {
             let n_lines = raw.ioread_with::<u32>(info.endian)? as usize;
@@ -200,10 +200,11 @@ fn process_wkb_geom_n<R: Read, P: GeomProcessor>(
         }
         WKBGeometryType::GeometryCollection => {
             let n_geoms = raw.ioread_with::<u32>(info.endian)? as usize;
+            processor.geometrycollection_begin(n_geoms, idx)?;
             for i in 0..n_geoms {
                 process_wkb_geom_n(raw, i, processor)?;
             }
-            return Err(GeozeroError::GeometryFormat); //TODO
+            processor.geometrycollection_end(idx)?;
         }
         _ => return Err(GeozeroError::GeometryFormat),
     }
@@ -389,12 +390,11 @@ mod test {
         let ewkb = hex_to_vec("01070000000300000001010000000000000000002440000000000000244001010000000000000000003E400000000000003E400102000000020000000000000000002E400000000000002E4000000000000034400000000000003440");
         let mut wkt_data: Vec<u8> = Vec::new();
         let mut writer = WktWriter::new(&mut wkt_data);
-        assert!(process_wkb_geom(&mut ewkb.as_slice(), &mut writer).is_err());
-        // assert!(process_wkb_geom(&mut ewkb.as_slice(), &mut writer).is_ok());
-        // assert_eq!(
-        //     std::str::from_utf8(&wkt_data).unwrap(),
-        //     "POINT (10 10)POINT (30 30)LINESTRING (15 15, 20 20)"
-        // );
+        assert!(process_wkb_geom(&mut ewkb.as_slice(), &mut writer).is_ok());
+        assert_eq!(
+            std::str::from_utf8(&wkt_data).unwrap(),
+            "GEOMETRYCOLLECTION (POINT (10 10), POINT (30 30), LINESTRING (15 15, 20 20))"
+        );
     }
 
     #[test]
