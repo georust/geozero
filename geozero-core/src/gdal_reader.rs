@@ -5,11 +5,14 @@ use geozero::GeomProcessor;
 
 /// Process GDAL/OGR geometry
 pub fn process_geom<P: GeomProcessor>(geo: &Geometry, processor: &mut P) -> Result<()> {
-    let idx = 0;
+    process_geom_n(geo, 0, processor)
+}
+
+fn process_geom_n<P: GeomProcessor>(geo: &Geometry, idx: usize, processor: &mut P) -> Result<()> {
     match type2d(geo.geometry_type()) {
         OGRwkbGeometryType::wkbPoint => {
             processor.point_begin(idx)?;
-            process_point(geo, idx, processor)?;
+            process_point(geo, 0, processor)?;
             processor.point_end(idx)?;
         }
         OGRwkbGeometryType::wkbMultiPoint => {
@@ -25,7 +28,7 @@ pub fn process_geom<P: GeomProcessor>(geo: &Geometry, processor: &mut P) -> Resu
             processor.multipoint_end(idx)?;
         }
         OGRwkbGeometryType::wkbLineString => {
-            process_linestring(geo, true, 0, processor)?;
+            process_linestring(geo, true, idx, processor)?;
         }
         OGRwkbGeometryType::wkbMultiLineString => {
             let n_lines = geo.geometry_count();
@@ -56,10 +59,12 @@ pub fn process_geom<P: GeomProcessor>(geo: &Geometry, processor: &mut P) -> Resu
         }
         OGRwkbGeometryType::wkbGeometryCollection => {
             let n_geoms = geo.geometry_count();
+            processor.geometrycollection_begin(n_geoms, idx)?;
             for i in 0..n_geoms {
-                let _g = unsafe { geo._get_geometry(i) };
+                let g = unsafe { geo._get_geometry(i) };
+                process_geom_n(&g, i, processor)?;
             }
-            return Err(GeozeroError::GeometryFormat); // TODO
+            processor.geometrycollection_end(idx)?;
         }
         _ => return Err(GeozeroError::GeometryFormat),
     }
@@ -223,14 +228,14 @@ mod test {
         assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), wkt);
     }
 
-    // #[test]
-    // fn geometry_collection() {
-    //     let wkt = "GEOMETRYCOLLECTION(POINT(1 1), LINESTRING(1 1, 2 2))";
-    //     let geo = Geometry::from_wkt(wkt).unwrap();
+    #[test]
+    fn geometry_collection() {
+        let wkt = "GEOMETRYCOLLECTION (POINT (1 1), LINESTRING (1 1, 2 2))";
+        let geo = Geometry::from_wkt(wkt).unwrap();
 
-    //     let mut wkt_data: Vec<u8> = Vec::new();
-    //     assert!(process_geom(&geo, &mut WktWriter::new(&mut wkt_data)).is_ok());
+        let mut wkt_data: Vec<u8> = Vec::new();
+        assert!(process_geom(&geo, &mut WktWriter::new(&mut wkt_data)).is_ok());
 
-    //     assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), wkt);
-    // }
+        assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), wkt);
+    }
 }
