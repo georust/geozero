@@ -6,8 +6,9 @@ edition = "2018"
 description = "Zero-Copy reading and writing of geospatial data."
 homepage = "https://github.com/pka/geozero"
 repository = "https://github.com/pka/geozero"
+readme = "README.md"
 license = "MIT/Apache-2.0"
-keywords = ["geo", "spatial", "geojson", "svg", "wkt"]
+keywords = ["geo", "geojson", "gdal", "geos", "postgis"]
 
 [features]
 default = []
