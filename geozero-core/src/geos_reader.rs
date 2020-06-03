@@ -16,7 +16,10 @@ pub(crate) fn from_geos_err(error: geos::Error) -> GeozeroError {
 
 /// Process GEOS geometry
 pub fn process_geos<P: GeomProcessor>(ggeom: &GGeom, processor: &mut P) -> Result<()> {
-    let idx = 0;
+    process_geos_n(ggeom, 0, processor)
+}
+
+fn process_geos_n<P: GeomProcessor>(ggeom: &GGeom, idx: usize, processor: &mut P) -> Result<()> {
     match ggeom.geometry_type() {
         GeometryTypes::Point => {
             processor.point_begin(idx)?;
@@ -33,7 +36,7 @@ pub fn process_geos<P: GeomProcessor>(ggeom: &GGeom, processor: &mut P) -> Resul
             processor.multipoint_end(idx)?;
         }
         GeometryTypes::LineString | GeometryTypes::LinearRing => {
-            process_linestring(ggeom, true, 0, processor)?;
+            process_linestring(ggeom, true, idx, processor)?;
         }
         GeometryTypes::MultiLineString => {
             let n_lines = ggeom.get_num_geometries().map_err(from_geos_err)?;
@@ -45,7 +48,7 @@ pub fn process_geos<P: GeomProcessor>(ggeom: &GGeom, processor: &mut P) -> Resul
             processor.multilinestring_end(idx)?;
         }
         GeometryTypes::Polygon => {
-            process_polygon(ggeom, true, 0, processor)?;
+            process_polygon(ggeom, true, idx, processor)?;
         }
         GeometryTypes::MultiPolygon => {
             let n_polys = ggeom.get_num_geometries().map_err(from_geos_err)?;
@@ -58,10 +61,12 @@ pub fn process_geos<P: GeomProcessor>(ggeom: &GGeom, processor: &mut P) -> Resul
         }
         GeometryTypes::GeometryCollection => {
             let n_geoms = ggeom.get_num_geometries().map_err(from_geos_err)?;
+            processor.geometrycollection_begin(n_geoms, idx)?;
             for i in 0..n_geoms {
-                let _g = ggeom.get_geometry_n(i).map_err(from_geos_err)?;
+                let g = ggeom.get_geometry_n(i).map_err(from_geos_err)?;
+                process_geos_n(&g, i, processor)?;
             }
-            return Err(GeozeroError::GeometryFormat); // TODO
+            processor.geometrycollection_end(idx)?;
         }
         GeometryTypes::__Unknonwn(_) => return Err(GeozeroError::GeometryFormat),
     }
@@ -241,14 +246,14 @@ mod test {
         assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), wkt);
     }
 
-    // #[test]
-    // fn geometry_collection_geom() {
-    //     let wkt = "GEOMETRYCOLLECTION(POINT(1 1), LINESTRING(1 1, 2 2))";
-    //     let ggeom = GGeom::new_from_wkt(wkt).unwrap();
+    #[test]
+    fn geometry_collection_geom() {
+        let wkt = "GEOMETRYCOLLECTION (POINT (1 1), LINESTRING (1 1, 2 2))";
+        let ggeom = GGeom::new_from_wkt(wkt).unwrap();
 
-    //     let mut wkt_data: Vec<u8> = Vec::new();
-    //     assert!(process_geos(&ggeom, &mut WktWriter::new(&mut wkt_data)).is_ok());
+        let mut wkt_data: Vec<u8> = Vec::new();
+        assert!(process_geos(&ggeom, &mut WktWriter::new(&mut wkt_data)).is_ok());
 
-    //     assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), wkt);
-    // }
+        assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), wkt);
+    }
 }
