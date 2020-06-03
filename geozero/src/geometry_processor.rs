@@ -26,6 +26,13 @@ pub trait GeomProcessor {
         }
     }
 
+    /// SRID of geometries
+    ///
+    /// Emitted before geometry begin
+    fn srid(&mut self, srid: Option<i32>) -> Result<()> {
+        Ok(())
+    }
+
     /// Process coordinate with x,y dimensions
     fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
         Ok(())
@@ -118,6 +125,16 @@ pub trait GeomProcessor {
 
     /// End of MultiPolygon processing
     fn multipolygon_end(&mut self, idx: usize) -> Result<()> {
+        Ok(())
+    }
+
+    /// Begin of GeometryCollection processing
+    fn geometrycollection_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        Ok(())
+    }
+
+    /// End of GeometryCollection processing
+    fn geometrycollection_end(&mut self, idx: usize) -> Result<()> {
         Ok(())
     }
 }
