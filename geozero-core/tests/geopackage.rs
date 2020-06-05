@@ -93,4 +93,34 @@ mod gpkg_sqlx {
             Ok(())
         );
     }
+
+    #[cfg(feature = "geos-lib")]
+    async fn geos_query() -> Result<(), sqlx::Error> {
+        use geozero_core::gpkg::geos::Geometry;
+
+        let pool = SqlitePool::builder()
+            .max_size(5)
+            .build("sqlite://tests/data/gpkg_test.gpkg")
+            .await?;
+
+        let row: (Geometry,) = sqlx::query_as("SELECT geom FROM pt2d")
+            .fetch_one(&pool)
+            .await?;
+        let geom = row.0;
+        assert_eq!(geom.0.to_wkt().unwrap(), "POINT (1.1000000000000001 1.1000000000000001)");
+
+        Ok(())
+    }
+
+    #[test]
+    #[cfg(feature = "geos-lib")]
+    fn async_geos_query() {
+        assert_eq!(
+            Runtime::new()
+                .unwrap()
+                .block_on(geos_query())
+                .map_err(|e| e.to_string()),
+            Ok(())
+        );
+    }
 }

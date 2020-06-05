@@ -1,3 +1,7 @@
+## 0.4.4 (UNRELEASED)
+
+* Add PostGIS + GeoPackage decoder for GEOS geometry
+
 ## 0.4.3 (2020-06-05)
 
 * Add GeoPackage WKB reader

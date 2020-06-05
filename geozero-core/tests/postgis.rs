@@ -42,6 +42,24 @@ mod postgis_postgres {
         Ok(())
     }
 
+    #[test]
+    #[ignore]
+    #[cfg(feature = "geos-lib")]
+    fn geos_query() -> Result<(), postgres::error::Error> {
+        use geozero_core::postgis::postgres::geos::Geometry;
+
+        let mut client = Client::connect(&std::env::var("DATABASE_URL").unwrap(), NoTls)?;
+
+        let row = client.query_one(
+            "SELECT 'SRID=4326;POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))'::geometry",
+            &[],
+        )?;
+
+        let geom: Geometry = row.get(0);
+        assert_eq!(geom.0.to_wkt().unwrap(), "POLYGON ((0.0000000000000000 0.0000000000000000, 2.0000000000000000 0.0000000000000000, 2.0000000000000000 2.0000000000000000, 0.0000000000000000 2.0000000000000000, 0.0000000000000000 0.0000000000000000))");
+        Ok(())
+    }
+
     mod register_type {
         use super::*;
         use postgres_types::{FromSql, Type};
@@ -145,6 +163,31 @@ mod postgis_sqlx {
     #[ignore]
     fn async_rust_geo_query() {
         assert!(Runtime::new().unwrap().block_on(rust_geo_query()).is_ok());
+    }
+
+    #[cfg(feature = "geos-lib")]
+    async fn geos_query() -> Result<(), sqlx::Error> {
+        use geozero_core::postgis::sqlx::geos::Geometry;
+
+        let pool = PgPool::builder()
+            .max_size(5)
+            .build(&std::env::var("DATABASE_URL").unwrap())
+            .await?;
+
+        let row: (Geometry,) =
+            sqlx::query_as("SELECT 'SRID=4326;POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))'::geometry")
+                .fetch_one(&pool)
+                .await?;
+        let geom = row.0;
+        assert_eq!(geom.0.to_wkt().unwrap(), "POLYGON ((0.0000000000000000 0.0000000000000000, 2.0000000000000000 0.0000000000000000, 2.0000000000000000 2.0000000000000000, 0.0000000000000000 2.0000000000000000, 0.0000000000000000 0.0000000000000000))");
+        Ok(())
+    }
+
+    #[test]
+    #[ignore]
+    #[cfg(feature = "geos-lib")]
+    fn async_geos_query() {
+        assert!(Runtime::new().unwrap().block_on(geos_query()).is_ok());
     }
 
     mod register_type {
