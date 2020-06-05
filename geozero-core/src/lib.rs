@@ -6,6 +6,8 @@ mod gdal_reader;
 mod gdal_writer;
 mod geojson_reader;
 mod geojson_writer;
+#[cfg(feature = "gpkg")]
+mod geopackage;
 #[cfg(feature = "geos-lib")]
 mod geos_reader;
 #[cfg(feature = "geos-lib")]
@@ -51,4 +53,10 @@ pub mod geos {
 pub mod gdal {
     pub use crate::gdal_reader::*;
     pub use crate::gdal_writer::*;
+}
+
+/// Type conversions for [SQLx](https://github.com/launchbadge/sqlx)
+#[cfg(feature = "gpkg")]
+pub mod gpkg {
+    pub use crate::geopackage::*;
 }

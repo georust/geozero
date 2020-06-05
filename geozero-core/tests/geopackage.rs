@@ -62,4 +62,35 @@ mod gpkg_sqlx {
             Ok(())
         );
     }
+
+    async fn rust_geo_query() -> Result<(), sqlx::Error> {
+        use geozero_core::gpkg::geo::Geometry;
+
+        let pool = SqlitePool::builder()
+            .max_size(5)
+            .build("sqlite://tests/data/gpkg_test.gpkg")
+            .await?;
+
+        let row: (Geometry,) = sqlx::query_as("SELECT geom FROM pt2d")
+            .fetch_one(&pool)
+            .await?;
+        let geom = row.0;
+        assert_eq!(
+            &format!("{:?}", geom.0),
+            "Point(Point(Coordinate { x: 1.1, y: 1.1 }))"
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn async_rust_geo_query() {
+        assert_eq!(
+            Runtime::new()
+                .unwrap()
+                .block_on(rust_geo_query())
+                .map_err(|e| e.to_string()),
+            Ok(())
+        );
+    }
 }
