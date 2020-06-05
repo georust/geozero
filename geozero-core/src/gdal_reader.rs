@@ -43,7 +43,7 @@ fn process_geom_n<P: GeomProcessor>(geo: &Geometry, idx: usize, processor: &mut 
             processor.multilinestring_end(idx)?;
         }
         OGRwkbGeometryType::wkbPolygon => {
-            process_polygon(geo, true, 0, processor)?;
+            process_polygon(geo, true, idx, processor)?;
         }
         OGRwkbGeometryType::wkbMultiPolygon => {
             let n_polys = geo.geometry_count();

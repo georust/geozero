@@ -18,7 +18,7 @@ pub mod postgres {
             ) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
                 let mut rdr = std::io::Cursor::new(raw);
                 let mut geo = RustGeo::new();
-                wkb::process_wkb_geom(&mut rdr, &mut geo)?;
+                wkb::process_ewkb_geom(&mut rdr, &mut geo)?;
                 let geom = Geometry {
                     0: geo.geometry().to_owned(),
                 };
@@ -77,7 +77,7 @@ pub mod sqlx {
                 match value.get() {
                     Some(PgData::Binary(mut buf)) => {
                         let mut geo = RustGeo::new();
-                        wkb::process_wkb_geom(&mut buf, &mut geo)
+                        wkb::process_ewkb_geom(&mut buf, &mut geo)
                             .map_err(|e| sqlx::Error::Decode(e.to_string().into()))?;
                         let geom = Geometry {
                             0: geo.geometry().to_owned(),

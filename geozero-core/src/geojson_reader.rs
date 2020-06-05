@@ -97,7 +97,11 @@ fn process_geojson_geom<P: GeomProcessor>(gj: &GeoJson, processor: &mut P) -> Re
 }
 
 /// Process GeoJSON geometries
-fn process_geojson_geom_n<P: GeomProcessor>(geom: &Geometry, idx: usize, processor: &mut P) -> Result<()> {
+fn process_geojson_geom_n<P: GeomProcessor>(
+    geom: &Geometry,
+    idx: usize,
+    processor: &mut P,
+) -> Result<()> {
     match geom.value {
         Value::Point(ref geometry) => {
             process_point(geometry, idx, processor)?;

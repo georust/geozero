@@ -16,7 +16,7 @@ mod postgis_postgres {
         let mut geom: &[u8] = row.get(0);
         let mut wkt_data: Vec<u8> = Vec::new();
         let mut writer = WktWriter::new(&mut wkt_data);
-        assert!(wkb::process_wkb_geom(&mut geom, &mut writer).is_ok());
+        assert!(wkb::process_ewkb_geom(&mut geom, &mut writer).is_ok());
         assert_eq!(
             std::str::from_utf8(&wkt_data).unwrap(),
             "POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))"
@@ -56,7 +56,7 @@ mod postgis_postgres {
                 let mut rdr = std::io::Cursor::new(raw);
                 let mut wkt_data: Vec<u8> = Vec::new();
                 let mut writer = WktWriter::new(&mut wkt_data);
-                wkb::process_wkb_geom(&mut rdr, &mut writer)?;
+                wkb::process_ewkb_geom(&mut rdr, &mut writer)?;
                 let wkt = Wkt {
                     0: std::str::from_utf8(&wkt_data)?.to_string(),
                 };
@@ -109,7 +109,7 @@ mod postgis_sqlx {
 
         let mut wkt_data: Vec<u8> = Vec::new();
         let mut writer = WktWriter::new(&mut wkt_data);
-        assert!(wkb::process_wkb_geom(&mut row.0.as_slice(), &mut writer).is_ok());
+        assert!(wkb::process_ewkb_geom(&mut row.0.as_slice(), &mut writer).is_ok());
         assert_eq!(
             std::str::from_utf8(&wkt_data).unwrap(),
             "POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))"
@@ -166,7 +166,7 @@ mod postgis_sqlx {
                     Some(PgData::Binary(mut buf)) => {
                         let mut wkt_data: Vec<u8> = Vec::new();
                         let mut writer = WktWriter::new(&mut wkt_data);
-                        wkb::process_wkb_geom(&mut buf, &mut writer)
+                        wkb::process_ewkb_geom(&mut buf, &mut writer)
                             .map_err(|e| sqlx::Error::Decode(e.to_string().into()))?;
                         let wkt = Wkt {
                             0: std::str::from_utf8(&wkt_data).unwrap().to_string(),
