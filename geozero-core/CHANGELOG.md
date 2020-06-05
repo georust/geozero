@@ -1,3 +1,8 @@
+## 0.4.3 (2020-06-05)
+
+* Add GeoPackage WKB reader
+* Add GeoPackage decoder for georust/geo geometry (SQLx)
+
 ## 0.4.2 (2020-06-04)
 
 * Support GeometryCollection in GeoJSON reader
@@ -9,7 +14,7 @@
 ## 0.4.0 (2020-06-03)
 
 * Add WKB reader
-* Add PostGIS conversion for georust/geo geometry
+* Add PostGIS decoder for georust/geo geometry (rust-postgres and SQLx)
 * Add GDAL geometry reader + writer
 
 ## 0.3.1 (2020-05-25)
