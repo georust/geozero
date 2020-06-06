@@ -31,9 +31,16 @@ postgres-types = { version = "0.1", optional = true }
 
 [dev-dependencies]
 hex = "0.4"
-geo = "0.13"
+criterion = "0.3"
+tempfile = "3.1"
+geo = { version = "0.13" }  # , features = ["postgis-integration"] # not compatible with postgis = "0.7"
 kdbush = "0.2"
 polylabel = "2.2"
 flatgeobuf = { git = "https://github.com/pka/flatgeobuf/", branch="geozero" }
 postgres = "0.17"
+postgis = "0.7"
 tokio = { version = "0.2", default-features = false, features = ["rt-threaded"] }
+
+[[bench]]
+name = "geobench"
+harness = false

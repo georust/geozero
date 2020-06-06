@@ -107,7 +107,10 @@ mod gpkg_sqlx {
             .fetch_one(&pool)
             .await?;
         let geom = row.0;
-        assert_eq!(geom.0.to_wkt().unwrap(), "POINT (1.1000000000000001 1.1000000000000001)");
+        assert_eq!(
+            geom.0.to_wkt().unwrap(),
+            "POINT (1.1000000000000001 1.1000000000000001)"
+        );
 
         Ok(())
     }
