@@ -41,7 +41,6 @@ mod fgb {
     }
 }
 
-#[cfg(feature = "postgis-postgres")]
 mod postgis_postgres {
     use super::*;
     use postgres::{self, Client, NoTls};
@@ -60,7 +59,7 @@ mod postgis_postgres {
             0: geo_types::Point::new(0., 0.).into(),
         };
         for row in &client
-            .query("SELECT wkb_geometry FROM countries", &[])
+            .query("SELECT geom FROM countries", &[])
             .unwrap()
         {
             geom = row.get(0);
@@ -75,7 +74,6 @@ mod postgis_postgres {
     }
 }
 
-#[cfg(feature = "postgis-postgres")]
 mod rust_postgis {
     // use geo::algorithm::from_postgis::FromPostgis;
     use postgis::ewkb;
@@ -90,7 +88,7 @@ mod rust_postgis {
         let mut client = Client::connect(&std::env::var("DATABASE_URL").unwrap(), NoTls)?;
 
         for row in &client
-            .query("SELECT wkb_geometry FROM countries", &[])
+            .query("SELECT geom FROM countries", &[])
             .unwrap()
         {
             let _pggeom: ewkb::MultiPolygon = row.get(0);
@@ -100,7 +98,6 @@ mod rust_postgis {
     }
 }
 
-#[cfg(feature = "postgis-sqlx")]
 mod postgis_sqlx {
     use super::*;
     use sqlx::postgres::PgConnection;
@@ -117,7 +114,7 @@ mod postgis_sqlx {
 
         let mut conn = PgConnection::connect(&std::env::var("DATABASE_URL").unwrap()).await?;
 
-        let mut cursor = sqlx::query("SELECT wkb_geometry FROM countries").fetch(&mut conn);
+        let mut cursor = sqlx::query("SELECT geom FROM countries").fetch(&mut conn);
         let mut geom = GeoZeroGeometry {
             0: geo_types::Point::new(0., 0.).into(),
         };
@@ -145,7 +142,6 @@ mod postgis_sqlx {
     }
 }
 
-#[cfg(feature = "gpkg")]
 mod gpkg {
     use super::*;
     use sqlx::prelude::*;

@@ -1,5 +1,5 @@
 [workspace]
-members = ["geozero", "geozero-core", "geozero-cli"]
+members = ["geozero", "geozero-core", "geozero-cli", "geozero-bench"]
 default-members = ["geozero", "geozero-core", "geozero-cli"]
 
 [patch.crates-io]

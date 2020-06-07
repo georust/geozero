@@ -84,7 +84,7 @@ pub mod postgres {
         }
 
         #[test]
-        // #[ignore]
+        #[ignore]
         fn geometry_query() -> Result<(), postgres::error::Error> {
             use postgres::{Client, NoTls};
 
