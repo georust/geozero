@@ -1,1 +1,4 @@
-countries.*
+*.fgb
+*.gpkg
+*.gpkg-wal
+*.gpkg-shm
