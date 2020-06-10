@@ -75,9 +75,7 @@ mod postgis_postgres {
                 let mut wkt_data: Vec<u8> = Vec::new();
                 let mut writer = WktWriter::new(&mut wkt_data);
                 wkb::process_ewkb_geom(&mut rdr, &mut writer)?;
-                let wkt = Wkt {
-                    0: std::str::from_utf8(&wkt_data)?.to_string(),
-                };
+                let wkt = Wkt(std::str::from_utf8(&wkt_data)?.to_string());
                 Ok(wkt)
             }
 
@@ -211,17 +209,13 @@ mod postgis_sqlx {
                         let mut writer = WktWriter::new(&mut wkt_data);
                         wkb::process_ewkb_geom(&mut buf, &mut writer)
                             .map_err(|e| sqlx::Error::Decode(e.to_string().into()))?;
-                        let wkt = Wkt {
-                            0: std::str::from_utf8(&wkt_data).unwrap().to_string(),
-                        };
+                        let wkt = Wkt(std::str::from_utf8(&wkt_data).unwrap().to_string());
                         Ok(wkt)
                     }
                     Some(PgData::Text(_s)) => Err(sqlx::Error::Decode(
                         "supporting binary geometry format only".into(),
                     )),
-                    None => Ok(Wkt {
-                        0: "EMPTY".to_string(),
-                    }),
+                    None => Ok(Wkt("EMPTY".to_string())),
                 }
             }
         }

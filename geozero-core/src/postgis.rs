@@ -19,9 +19,7 @@ pub mod postgres {
                 let mut rdr = std::io::Cursor::new(raw);
                 let mut geo = RustGeo::new();
                 wkb::process_ewkb_geom(&mut rdr, &mut geo)?;
-                let geom = Geometry {
-                    0: geo.geometry().to_owned(),
-                };
+                let geom = Geometry(geo.geometry().to_owned());
                 Ok(geom)
             }
 
@@ -69,9 +67,7 @@ pub mod postgres {
                 let mut rdr = std::io::Cursor::new(raw);
                 let mut geo = Geos::new();
                 wkb::process_ewkb_geom(&mut rdr, &mut geo)?;
-                let geom = Geometry {
-                    0: geo.geometry().to_owned(),
-                };
+                let geom = Geometry(geo.geometry().to_owned());
                 Ok(geom)
             }
 
@@ -129,17 +125,13 @@ pub mod sqlx {
                         let mut geo = RustGeo::new();
                         wkb::process_ewkb_geom(&mut buf, &mut geo)
                             .map_err(|e| sqlx::Error::Decode(e.to_string().into()))?;
-                        let geom = Geometry {
-                            0: geo.geometry().to_owned(),
-                        };
+                        let geom = Geometry(geo.geometry().to_owned());
                         Ok(geom)
                     }
                     Some(PgData::Text(_s)) => Err(sqlx::Error::Decode(
                         "supporting binary geometry format only".into(),
                     )),
-                    None => Ok(Geometry {
-                        0: geo_types::Point::new(0., 0.).into(),
-                    }),
+                    None => Ok(Geometry(geo_types::Point::new(0., 0.).into())),
                 }
             }
         }
@@ -169,17 +161,13 @@ pub mod sqlx {
                         let mut geo = Geos::new();
                         wkb::process_ewkb_geom(&mut buf, &mut geo)
                             .map_err(|e| sqlx::Error::Decode(e.to_string().into()))?;
-                        let geom = Geometry {
-                            0: geo.geometry().to_owned(),
-                        };
+                        let geom = Geometry(geo.geometry().to_owned());
                         Ok(geom)
                     }
                     Some(PgData::Text(_s)) => Err(sqlx::Error::Decode(
                         "supporting binary geometry format only".into(),
                     )),
-                    None => Ok(Geometry {
-                        0: geos::Geometry::create_empty_point().unwrap(),
-                    }),
+                    None => Ok(Geometry(geos::Geometry::create_empty_point().unwrap())),
                 }
             }
         }

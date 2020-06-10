@@ -51,19 +51,14 @@ impl GeomProcessor for RustGeo {
         Ok(())
     }
     fn multipoint_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
-        self.geom = MultiPoint {
-            0: Vec::<Point<f64>>::with_capacity(size),
-        }
-        .into();
+        self.geom = MultiPoint(Vec::<Point<f64>>::with_capacity(size)).into();
         Ok(())
     }
     fn multipoint_end(&mut self, _idx: usize) -> Result<()> {
         Ok(())
     }
     fn linestring_begin(&mut self, tagged: bool, size: usize, _idx: usize) -> Result<()> {
-        let line_string = LineString {
-            0: Vec::<Coordinate<f64>>::with_capacity(size),
-        };
+        let line_string = LineString(Vec::<Coordinate<f64>>::with_capacity(size));
         if tagged {
             self.line_strings = Vec::with_capacity(1);
         } // else allocated in multilinestring_begin or polygon_begin
@@ -85,10 +80,7 @@ impl GeomProcessor for RustGeo {
         Ok(())
     }
     fn multilinestring_end(&mut self, _idx: usize) -> Result<()> {
-        self.geom = MultiLineString {
-            0: self.line_strings.to_owned(),
-        }
-        .into();
+        self.geom = MultiLineString(self.line_strings.to_owned()).into();
         Ok(())
     }
     fn polygon_begin(&mut self, _tagged: bool, size: usize, _idx: usize) -> Result<()> {
@@ -115,10 +107,7 @@ impl GeomProcessor for RustGeo {
         Ok(())
     }
     fn multipolygon_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
-        self.geom = MultiPolygon {
-            0: Vec::<Polygon<f64>>::with_capacity(size),
-        }
-        .into();
+        self.geom = MultiPolygon(Vec::<Polygon<f64>>::with_capacity(size)).into();
         Ok(())
     }
     fn multipolygon_end(&mut self, _idx: usize) -> Result<()> {

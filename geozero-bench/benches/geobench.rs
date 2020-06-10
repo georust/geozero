@@ -136,9 +136,7 @@ mod postgis_sqlx {
         let mut conn = PgConnection::connect(&std::env::var("DATABASE_URL").unwrap()).await?;
 
         let mut cursor = sqlx::query("SELECT geom FROM countries").fetch(&mut conn);
-        let mut geom = GeoZeroGeometry {
-            0: geo_types::Point::new(0., 0.).into(),
-        };
+        let mut geom = GeoZeroGeometry(geo_types::Point::new(0., 0.).into());
         while let Some(row) = cursor.next().await? {
             geom = row.get::<GeoZeroGeometry, _>(0);
         }
