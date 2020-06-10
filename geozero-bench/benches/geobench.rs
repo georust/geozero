@@ -199,6 +199,57 @@ mod gpkg {
             Ok(())
         );
     }
+
+    async fn async_gpkg_to_geo_bbox(
+        fpath: &str,
+        table: &str,
+        min_x: f64,
+        min_y: f64,
+        max_x: f64,
+        max_y: f64,
+        count: usize,
+    ) -> std::result::Result<(), sqlx::Error> {
+        use geozero_core::gpkg::geo::Geometry as GeoZeroGeometry;
+
+        let mut conn = SqliteConnection::connect("sqlite://".to_owned() + fpath).await?;
+
+        // http://erouault.blogspot.com/2017/03/dealing-with-huge-vector-geopackage.html
+        let sql = format!(
+            "SELECT geom FROM {} t JOIN rtree_{}_geom r ON t.fid = r.id
+                           WHERE r.minx <= {} AND r.maxx >= {} AND
+                                 r.miny <= {} AND r.maxy >= {}",
+            table, table, max_x, min_x, max_y, min_y
+        );
+        println!("{}", sql);
+        let mut cursor = sqlx::query(&sql).fetch(&mut conn);
+        let mut cnt = 0;
+        while let Some(row) = cursor.next().await? {
+            let _geom = row.get::<GeoZeroGeometry, _>(0);
+            cnt += 1;
+        }
+        assert_eq!(cnt, count);
+        Ok(())
+    }
+
+    pub(super) fn gpkg_to_geo_bbox(
+        fpath: &str,
+        table: &str,
+        min_x: f64,
+        min_y: f64,
+        max_x: f64,
+        max_y: f64,
+        count: usize,
+    ) {
+        assert_eq!(
+            Runtime::new()
+                .unwrap()
+                .block_on(async_gpkg_to_geo_bbox(
+                    fpath, table, min_x, min_y, max_x, max_y, count
+                ))
+                .map_err(|e| e.to_string()),
+            Ok(())
+        );
+    }
 }
 
 fn quick_benchmark(c: &mut Criterion) {
@@ -221,6 +272,20 @@ fn quick_benchmark(c: &mut Criterion) {
             )
         })
     });
+    // Blocked by https://github.com/launchbadge/sqlx/issues/395
+    // c.bench_function("gpkg_to_geo_bbox", |b| {
+    //     b.iter(|| {
+    //         gpkg::gpkg_to_geo_bbox(
+    //             "tests/data/countries.gpkg",
+    //             "countries",
+    //             8.8,
+    //             47.2,
+    //             9.5,
+    //             55.3,
+    //             6,
+    //         )
+    //     })
+    // });
     c.bench_function("postgis_sqlx_to_geo", |b| {
         b.iter(|| postgis_sqlx::postgis_sqlx_to_geo())
     });
