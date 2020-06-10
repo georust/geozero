@@ -18,6 +18,9 @@ gpkg = ["sqlx"]
 postgis-sqlx = ["sqlx"]
 postgis-postgres = ["postgres-types"]
 
+[package.metadata.docs.rs]
+features = ["gpkg", "postgis-sqlx", "postgis-postgres"]
+
 [dependencies]
 geozero = { version = "0.4", path = "../geozero" }
 geojson = { version = "0.18" }
