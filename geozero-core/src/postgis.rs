@@ -108,7 +108,8 @@ pub mod sqlx {
         use crate::geo::RustGeo;
         use crate::wkb;
         use sqlx::decode::Decode;
-        use sqlx::postgres::{PgData, PgTypeInfo, PgValue, Postgres};
+        use sqlx::error::BoxDynError;
+        use sqlx::postgres::{PgTypeInfo, PgValueRef, Postgres};
 
         pub struct Geometry(pub geo_types::Geometry<f64>);
 
@@ -119,20 +120,13 @@ pub mod sqlx {
         }
 
         impl<'de> Decode<'de, Postgres> for Geometry {
-            fn decode(value: PgValue<'de>) -> sqlx::Result<Self> {
-                match value.get() {
-                    Some(PgData::Binary(mut buf)) => {
-                        let mut geo = RustGeo::new();
-                        wkb::process_ewkb_geom(&mut buf, &mut geo)
-                            .map_err(|e| sqlx::Error::Decode(e.to_string().into()))?;
-                        let geom = Geometry(geo.geometry().to_owned());
-                        Ok(geom)
-                    }
-                    Some(PgData::Text(_s)) => Err(sqlx::Error::Decode(
-                        "supporting binary geometry format only".into(),
-                    )),
-                    None => Ok(Geometry(geo_types::Point::new(0., 0.).into())),
-                }
+            fn decode(value: PgValueRef<'de>) -> Result<Self, BoxDynError> {
+                let mut blob = <&[u8] as Decode<Postgres>>::decode(value)?;
+                let mut geo = RustGeo::new();
+                wkb::process_ewkb_geom(&mut blob, &mut geo)
+                    .map_err(|e| sqlx::Error::Decode(e.to_string().into()))?;
+                let geom = Geometry(geo.geometry().to_owned());
+                Ok(geom)
             }
         }
     }
@@ -144,7 +138,8 @@ pub mod sqlx {
         use crate::geos::Geos;
         use crate::wkb;
         use sqlx::decode::Decode;
-        use sqlx::postgres::{PgData, PgTypeInfo, PgValue, Postgres};
+        use sqlx::error::BoxDynError;
+        use sqlx::postgres::{PgTypeInfo, PgValueRef, Postgres};
 
         pub struct Geometry<'a>(pub geos::Geometry<'a>);
 
@@ -155,20 +150,13 @@ pub mod sqlx {
         }
 
         impl<'de> Decode<'de, Postgres> for Geometry<'static> {
-            fn decode(value: PgValue<'de>) -> sqlx::Result<Self> {
-                match value.get() {
-                    Some(PgData::Binary(mut buf)) => {
-                        let mut geo = Geos::new();
-                        wkb::process_ewkb_geom(&mut buf, &mut geo)
-                            .map_err(|e| sqlx::Error::Decode(e.to_string().into()))?;
-                        let geom = Geometry(geo.geometry().to_owned());
-                        Ok(geom)
-                    }
-                    Some(PgData::Text(_s)) => Err(sqlx::Error::Decode(
-                        "supporting binary geometry format only".into(),
-                    )),
-                    None => Ok(Geometry(geos::Geometry::create_empty_point().unwrap())),
-                }
+            fn decode(value: PgValueRef<'de>) -> Result<Self, BoxDynError> {
+                let mut blob = <&[u8] as Decode<Postgres>>::decode(value)?;
+                let mut geo = Geos::new();
+                wkb::process_ewkb_geom(&mut blob, &mut geo)
+                    .map_err(|e| sqlx::Error::Decode(e.to_string().into()))?;
+                let geom = Geometry(geo.geometry().to_owned());
+                Ok(geom)
             }
         }
     }

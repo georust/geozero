@@ -4,7 +4,8 @@ pub mod geo {
     use crate::geo::RustGeo;
     use crate::wkb;
     use sqlx::decode::Decode;
-    use sqlx::sqlite::{Sqlite, SqliteTypeInfo, SqliteValue};
+    use sqlx::error::BoxDynError;
+    use sqlx::sqlite::{Sqlite, SqliteTypeInfo, SqliteValueRef};
 
     pub struct Geometry(pub geo_types::Geometry<f64>);
 
@@ -15,7 +16,7 @@ pub mod geo {
     }
 
     impl<'de> Decode<'de, Sqlite> for Geometry {
-        fn decode(value: SqliteValue<'de>) -> sqlx::Result<Self> {
+        fn decode(value: SqliteValueRef<'de>) -> Result<Self, BoxDynError> {
             let mut blob = <&[u8] as Decode<Sqlite>>::decode(value)?;
             let mut geo = RustGeo::new();
             wkb::process_gpkg_geom(&mut blob, &mut geo)
@@ -33,7 +34,8 @@ pub mod geos {
     use crate::geos::Geos;
     use crate::wkb;
     use sqlx::decode::Decode;
-    use sqlx::sqlite::{Sqlite, SqliteTypeInfo, SqliteValue};
+    use sqlx::error::BoxDynError;
+    use sqlx::sqlite::{Sqlite, SqliteTypeInfo, SqliteValueRef};
 
     pub struct Geometry<'a>(pub geos::Geometry<'a>);
 
@@ -44,7 +46,7 @@ pub mod geos {
     }
 
     impl<'de> Decode<'de, Sqlite> for Geometry<'static> {
-        fn decode(value: SqliteValue<'de>) -> sqlx::Result<Self> {
+        fn decode(value: SqliteValueRef<'de>) -> Result<Self, BoxDynError> {
             let mut blob = <&[u8] as Decode<Sqlite>>::decode(value)?;
             let mut geo = Geos::new();
             wkb::process_gpkg_geom(&mut blob, &mut geo)

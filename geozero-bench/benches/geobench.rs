@@ -1,6 +1,4 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use geo::algorithm::centroid::Centroid;
-use geo::Geometry as GeoGeometry;
 use geozero::error::Result;
 use geozero_core::geo::RustGeo;
 
@@ -56,7 +54,7 @@ mod postgis_postgres {
 
         let mut cnt = 0;
         for row in &client
-            .query(format!("SELECT geom FROM {}", table).as_str(), &[])
+            .query(format!("SELECT wkb_geometry FROM {}", table).as_str(), &[])
             .unwrap()
         {
             let _geom: GeoZeroGeometry = row.get(0);
@@ -86,7 +84,7 @@ mod postgis_postgres {
 
         let mut cnt = 0;
         let sql = format!(
-            "SELECT geom FROM {} WHERE geom && ST_MakeEnvelope({}, {}, {}, {}, {})",
+            "SELECT wkb_geometry FROM {} WHERE wkb_geometry && ST_MakeEnvelope({}, {}, {}, {}, {})",
             table, min_x, min_y, max_x, max_y, srid
         );
         for row in &client.query(sql.as_str(), &[]).unwrap() {
@@ -103,7 +101,10 @@ mod rust_postgis {
     use postgis::ewkb;
     use postgres::{self, Client, NoTls};
 
-    pub(super) fn rust_postgis_to_geo() -> std::result::Result<(), postgres::error::Error> {
+    pub(super) fn rust_postgis_to_geo(
+        table: &str,
+        count: usize,
+    ) -> std::result::Result<(), postgres::error::Error> {
         // ogr2ogr -f PostgreSQL PG:dbname=testdb countries.fgb
         //
         // export DATABASE_URL=postgresql://pi@%2Fvar%2Frun%2Fpostgresql/testdb
@@ -111,21 +112,30 @@ mod rust_postgis {
 
         let mut client = Client::connect(&std::env::var("DATABASE_URL").unwrap(), NoTls)?;
 
-        for row in &client.query("SELECT geom FROM countries", &[]).unwrap() {
+        let mut cnt = 0;
+        for row in &client
+            .query(format!("SELECT wkb_geometry FROM {}", table).as_str(), &[])
+            .unwrap()
+        {
             let _pggeom: ewkb::MultiPolygon = row.get(0);
             // let geom = geo_types::MultiPolygon::from_postgis(&pggeom);
+            cnt += 1;
         }
+        assert_eq!(cnt, count);
         Ok(())
     }
 }
 
 mod postgis_sqlx {
-    use super::*;
+    use futures_util::stream::TryStreamExt;
     use sqlx::postgres::PgConnection;
     use sqlx::prelude::*;
     use tokio::runtime::Runtime;
 
-    async fn async_postgis_sqlx_to_geo() -> std::result::Result<(), sqlx::Error> {
+    async fn async_postgis_sqlx_to_geo(
+        table: &str,
+        count: usize,
+    ) -> std::result::Result<(), sqlx::Error> {
         use geozero_core::postgis::sqlx::geo::Geometry as GeoZeroGeometry;
 
         // ogr2ogr -f PostgreSQL PG:dbname=testdb countries.fgb
@@ -135,26 +145,23 @@ mod postgis_sqlx {
 
         let mut conn = PgConnection::connect(&std::env::var("DATABASE_URL").unwrap()).await?;
 
-        let mut cursor = sqlx::query("SELECT geom FROM countries").fetch(&mut conn);
-        let mut geom = GeoZeroGeometry(geo_types::Point::new(0., 0.).into());
-        while let Some(row) = cursor.next().await? {
-            geom = row.get::<GeoZeroGeometry, _>(0);
-        }
+        let sql = format!("SELECT wkb_geometry FROM {}", table);
+        let mut cursor = sqlx::query(&sql).fetch(&mut conn);
 
-        // check last geometry
-        if let GeoGeometry::MultiPolygon(mpoly) = geom.0 {
-            assert_eq!(mpoly.centroid().unwrap().x(), -59.42097279311143);
-        } else {
-            assert!(false, "MultiPolygon expected");
+        let mut cnt = 0;
+        while let Some(row) = cursor.try_next().await? {
+            let _geom = row.get::<GeoZeroGeometry, _>(0);
+            cnt += 1;
         }
+        assert_eq!(cnt, count);
         Ok(())
     }
 
-    pub(super) fn postgis_sqlx_to_geo() {
+    pub(super) fn postgis_sqlx_to_geo(table: &str, count: usize) {
         assert_eq!(
             Runtime::new()
                 .unwrap()
-                .block_on(async_postgis_sqlx_to_geo())
+                .block_on(async_postgis_sqlx_to_geo(table, count))
                 .map_err(|e| e.to_string()),
             Ok(())
         );
@@ -162,6 +169,7 @@ mod postgis_sqlx {
 }
 
 mod gpkg {
+    use futures_util::stream::TryStreamExt;
     use sqlx::prelude::*;
     use sqlx::sqlite::SqliteConnection;
     use tokio::runtime::Runtime;
@@ -175,12 +183,12 @@ mod gpkg {
 
         // ogr2ogr -f GPKG countries.gpkg countries.fgb
 
-        let mut conn = SqliteConnection::connect("sqlite://".to_owned() + fpath).await?;
+        let mut conn = SqliteConnection::connect(&format!("sqlite://{}", fpath)).await?;
 
         let sql = format!("SELECT geom FROM {}", table);
         let mut cursor = sqlx::query(&sql).fetch(&mut conn);
         let mut cnt = 0;
-        while let Some(row) = cursor.next().await? {
+        while let Some(row) = cursor.try_next().await? {
             let _geom = row.get::<GeoZeroGeometry, _>(0);
             cnt += 1;
         }
@@ -209,7 +217,7 @@ mod gpkg {
     ) -> std::result::Result<(), sqlx::Error> {
         use geozero_core::gpkg::geo::Geometry as GeoZeroGeometry;
 
-        let mut conn = SqliteConnection::connect("sqlite://".to_owned() + fpath).await?;
+        let mut conn = SqliteConnection::connect(&format!("sqlite://{}", fpath)).await?;
 
         // http://erouault.blogspot.com/2017/03/dealing-with-huge-vector-geopackage.html
         let sql = format!(
@@ -218,10 +226,9 @@ mod gpkg {
                                  r.miny <= {} AND r.maxy >= {}",
             table, table, max_x, min_x, max_y, min_y
         );
-        println!("{}", sql);
         let mut cursor = sqlx::query(&sql).fetch(&mut conn);
         let mut cnt = 0;
-        while let Some(row) = cursor.next().await? {
+        while let Some(row) = cursor.try_next().await? {
             let _geom = row.get::<GeoZeroGeometry, _>(0);
             cnt += 1;
         }
@@ -251,8 +258,11 @@ mod gpkg {
 }
 
 fn quick_benchmark(c: &mut Criterion) {
+    c.bench_function("postgis_sqlx_to_geo", |b| {
+        b.iter(|| postgis_sqlx::postgis_sqlx_to_geo("countries", 0 /* FIXME */))
+    });
     c.bench_function("rust_postgis_to_geo", |b| {
-        b.iter(|| rust_postgis::rust_postgis_to_geo())
+        b.iter(|| rust_postgis::rust_postgis_to_geo("countries", 179))
     });
     c.bench_function("postgis_postgres_to_geo", |b| {
         b.iter(|| postgis_postgres::postgis_postgres_to_geo("countries", 179))
@@ -270,22 +280,18 @@ fn quick_benchmark(c: &mut Criterion) {
             )
         })
     });
-    // Blocked by https://github.com/launchbadge/sqlx/issues/395
-    // c.bench_function("gpkg_to_geo_bbox", |b| {
-    //     b.iter(|| {
-    //         gpkg::gpkg_to_geo_bbox(
-    //             "tests/data/countries.gpkg",
-    //             "countries",
-    //             8.8,
-    //             47.2,
-    //             9.5,
-    //             55.3,
-    //             6,
-    //         )
-    //     })
-    // });
-    c.bench_function("postgis_sqlx_to_geo", |b| {
-        b.iter(|| postgis_sqlx::postgis_sqlx_to_geo())
+    c.bench_function("gpkg_to_geo_bbox", |b| {
+        b.iter(|| {
+            gpkg::gpkg_to_geo_bbox(
+                "tests/data/countries.gpkg",
+                "countries",
+                8.8,
+                47.2,
+                9.5,
+                55.3,
+                6,
+            )
+        })
     });
     c.bench_function("fgb_to_geo", |b| {
         b.iter(|| fgb::fgb_to_geo("tests/data/countries.fgb", 179))
