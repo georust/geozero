@@ -108,8 +108,9 @@ pub mod sqlx {
         use crate::geo::RustGeo;
         use crate::wkb;
         use sqlx::decode::Decode;
-        use sqlx::error::BoxDynError;
         use sqlx::postgres::{PgTypeInfo, PgValueRef, Postgres};
+
+        type BoxDynError = Box<dyn std::error::Error + Send + Sync>;
 
         pub struct Geometry(pub geo_types::Geometry<f64>);
 
@@ -120,6 +121,10 @@ pub mod sqlx {
         }
 
         impl<'de> Decode<'de, Postgres> for Geometry {
+            fn accepts(ty: &PgTypeInfo) -> bool {
+                *ty == PgTypeInfo::with_name("geometry")
+                    || *ty == PgTypeInfo::with_name("geography")
+            }
             fn decode(value: PgValueRef<'de>) -> Result<Self, BoxDynError> {
                 let mut blob = <&[u8] as Decode<Postgres>>::decode(value)?;
                 let mut geo = RustGeo::new();
@@ -138,8 +143,9 @@ pub mod sqlx {
         use crate::geos::Geos;
         use crate::wkb;
         use sqlx::decode::Decode;
-        use sqlx::error::BoxDynError;
         use sqlx::postgres::{PgTypeInfo, PgValueRef, Postgres};
+
+        type BoxDynError = Box<dyn std::error::Error + Send + Sync>;
 
         pub struct Geometry<'a>(pub geos::Geometry<'a>);
 
@@ -150,6 +156,10 @@ pub mod sqlx {
         }
 
         impl<'de> Decode<'de, Postgres> for Geometry<'static> {
+            fn accepts(ty: &PgTypeInfo) -> bool {
+                *ty == PgTypeInfo::with_name("geometry")
+                    || *ty == PgTypeInfo::with_name("geography")
+            }
             fn decode(value: PgValueRef<'de>) -> Result<Self, BoxDynError> {
                 let mut blob = <&[u8] as Decode<Postgres>>::decode(value)?;
                 let mut geo = Geos::new();

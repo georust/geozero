@@ -4,8 +4,9 @@ pub mod geo {
     use crate::geo::RustGeo;
     use crate::wkb;
     use sqlx::decode::Decode;
-    use sqlx::error::BoxDynError;
     use sqlx::sqlite::{Sqlite, SqliteTypeInfo, SqliteValueRef};
+
+    type BoxDynError = Box<dyn std::error::Error + Send + Sync>;
 
     pub struct Geometry(pub geo_types::Geometry<f64>);
 
@@ -16,6 +17,9 @@ pub mod geo {
     }
 
     impl<'de> Decode<'de, Sqlite> for Geometry {
+        fn accepts(ty: &SqliteTypeInfo) -> bool {
+            *ty == <Self as sqlx::Type<Sqlite>>::type_info()
+        }
         fn decode(value: SqliteValueRef<'de>) -> Result<Self, BoxDynError> {
             let mut blob = <&[u8] as Decode<Sqlite>>::decode(value)?;
             let mut geo = RustGeo::new();
@@ -34,8 +38,9 @@ pub mod geos {
     use crate::geos::Geos;
     use crate::wkb;
     use sqlx::decode::Decode;
-    use sqlx::error::BoxDynError;
     use sqlx::sqlite::{Sqlite, SqliteTypeInfo, SqliteValueRef};
+
+    type BoxDynError = Box<dyn std::error::Error + Send + Sync>;
 
     pub struct Geometry<'a>(pub geos::Geometry<'a>);
 
@@ -46,6 +51,9 @@ pub mod geos {
     }
 
     impl<'de> Decode<'de, Sqlite> for Geometry<'static> {
+        fn accepts(ty: &SqliteTypeInfo) -> bool {
+            *ty == <Self as sqlx::Type<Sqlite>>::type_info()
+        }
         fn decode(value: SqliteValueRef<'de>) -> Result<Self, BoxDynError> {
             let mut blob = <&[u8] as Decode<Sqlite>>::decode(value)?;
             let mut geo = Geos::new();

@@ -9,7 +9,7 @@ countries.gpkg: countries.fgb
 	docker run --rm -v $$PWD:/data osgeo/gdal:alpine-normal-latest ogr2ogr -f GPKG /data/$@ /data/$<
 
 osm-buildings-3857-ch.gpkg: osm-buildings-3857-ch.fgb
-	docker run --rm -v $$PWD:/data osgeo/gdal:alpine-normal-latest ogr2ogr -f GPKG /data/$@ /data/$<
+	docker run --rm -v $$PWD:/data osgeo/gdal:alpine-normal-latest ogr2ogr -f GPKG -nln buildings /data/$@ /data/$<
 
 createdb:
 	psql postgres -c "DROP DATABASE IF EXISTS $(DBNAME)"
