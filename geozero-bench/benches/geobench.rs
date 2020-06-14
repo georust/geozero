@@ -118,12 +118,11 @@ mod postgis_sqlx {
     use futures_util::stream::TryStreamExt;
     use sqlx::postgres::PgConnection;
     use sqlx::prelude::*;
-    use tokio::runtime::Runtime;
 
     // export DATABASE_URL=postgresql://pi@%2Fvar%2Frun%2Fpostgresql/testdb
     // export DATABASE_URL=postgresql://pi@localhost/testdb
 
-    async fn async_postgis_sqlx_to_geo(
+    pub(super) async fn postgis_sqlx_to_geo(
         table: &str,
         count: usize,
     ) -> std::result::Result<(), sqlx::Error> {
@@ -143,25 +142,14 @@ mod postgis_sqlx {
 
         Ok(())
     }
-
-    pub(super) fn postgis_sqlx_to_geo(table: &str, count: usize) {
-        assert_eq!(
-            Runtime::new()
-                .unwrap()
-                .block_on(async_postgis_sqlx_to_geo(table, count))
-                .map_err(|e| e.to_string()),
-            Ok(())
-        );
-    }
 }
 
 mod gpkg {
     use futures_util::stream::TryStreamExt;
     use sqlx::prelude::*;
     use sqlx::sqlite::SqliteConnection;
-    use tokio::runtime::Runtime;
 
-    async fn async_gpkg_to_geo(
+    pub(super) async fn gpkg_to_geo(
         fpath: &str,
         table: &str,
         count: usize,
@@ -183,17 +171,7 @@ mod gpkg {
         Ok(())
     }
 
-    pub(super) fn gpkg_to_geo(fpath: &str, table: &str, count: usize) {
-        assert_eq!(
-            Runtime::new()
-                .unwrap()
-                .block_on(async_gpkg_to_geo(fpath, table, count))
-                .map_err(|e| e.to_string()),
-            Ok(())
-        );
-    }
-
-    async fn async_gpkg_to_geo_bbox(
+    pub(super) async fn gpkg_to_geo_bbox(
         fpath: &str,
         table: &str,
         min_x: f64,
@@ -222,32 +200,13 @@ mod gpkg {
         assert_eq!(cnt, count);
         Ok(())
     }
-
-    pub(super) fn gpkg_to_geo_bbox(
-        fpath: &str,
-        table: &str,
-        min_x: f64,
-        min_y: f64,
-        max_x: f64,
-        max_y: f64,
-        count: usize,
-    ) {
-        assert_eq!(
-            Runtime::new()
-                .unwrap()
-                .block_on(async_gpkg_to_geo_bbox(
-                    fpath, table, min_x, min_y, max_x, max_y, count
-                ))
-                .map_err(|e| e.to_string()),
-            Ok(())
-        );
-    }
 }
 
 fn countries_benchmark(c: &mut Criterion) {
+    let mut rt = tokio::runtime::Runtime::new().unwrap();
     let mut group = c.benchmark_group("countries");
     group.bench_function("postgis_sqlx", |b| {
-        b.iter(|| postgis_sqlx::postgis_sqlx_to_geo("countries", 179))
+        b.iter(|| rt.block_on(postgis_sqlx::postgis_sqlx_to_geo("countries", 179)));
     });
     group.bench_function("rust_postgis", |b| {
         b.iter(|| rust_postgis::rust_postgis_to_geo("countries", 179))
@@ -259,12 +218,19 @@ fn countries_benchmark(c: &mut Criterion) {
         b.iter(|| fgb::fgb_to_geo("tests/data/countries.fgb", 179))
     });
     group.bench_function("gpkg", |b| {
-        b.iter(|| gpkg::gpkg_to_geo("tests/data/countries.gpkg", "countries", 179))
+        b.iter(|| {
+            rt.block_on(gpkg::gpkg_to_geo(
+                "tests/data/countries.gpkg",
+                "countries",
+                179,
+            ))
+        })
     });
     group.finish()
 }
 
 fn countries_bbox_benchmark(c: &mut Criterion) {
+    let mut rt = tokio::runtime::Runtime::new().unwrap();
     let mut group = c.benchmark_group("countries_bbox");
     group.bench_function("postgis_postgres", |b| {
         b.iter(|| {
@@ -281,7 +247,7 @@ fn countries_bbox_benchmark(c: &mut Criterion) {
     });
     group.bench_function("gpkg", |b| {
         b.iter(|| {
-            gpkg::gpkg_to_geo_bbox(
+            rt.block_on(gpkg::gpkg_to_geo_bbox(
                 "tests/data/countries.gpkg",
                 "countries",
                 8.8,
@@ -289,7 +255,7 @@ fn countries_bbox_benchmark(c: &mut Criterion) {
                 9.5,
                 55.3,
                 6,
-            )
+            ))
         })
     });
     group.bench_function("fgb", |b| {
@@ -299,6 +265,7 @@ fn countries_bbox_benchmark(c: &mut Criterion) {
 }
 
 fn buildings_benchmark(c: &mut Criterion) {
+    let mut rt = tokio::runtime::Runtime::new().unwrap();
     let mut group = c.benchmark_group("buildings");
     // 973.08 ms
     group.bench_function("fgb", |b| {
@@ -307,11 +274,11 @@ fn buildings_benchmark(c: &mut Criterion) {
     // 6.0288 s
     group.bench_function("gpkg", |b| {
         b.iter(|| {
-            gpkg::gpkg_to_geo(
+            rt.block_on(gpkg::gpkg_to_geo(
                 "tests/data/osm-buildings-3857-ch.gpkg",
                 "buildings",
                 2407771,
-            )
+            ))
         })
     });
     // 4.5416 s
@@ -319,7 +286,7 @@ fn buildings_benchmark(c: &mut Criterion) {
         b.iter(|| postgis_postgres::postgis_postgres_to_geo("buildings", 2407771))
     });
     group.bench_function("postgis_sqlx", |b| {
-        b.iter(|| postgis_sqlx::postgis_sqlx_to_geo("buildings", 2407771))
+        b.iter(|| rt.block_on(postgis_sqlx::postgis_sqlx_to_geo("buildings", 2407771)))
     });
     // 4.4715 s
     group.bench_function("rust_postgis", |b| {
@@ -329,10 +296,11 @@ fn buildings_benchmark(c: &mut Criterion) {
 }
 
 fn buildings_bbox_benchmark(c: &mut Criterion) {
+    let mut rt = tokio::runtime::Runtime::new().unwrap();
     let mut group = c.benchmark_group("buildings_bbox");
     group.bench_function("gpkg", |b| {
         b.iter(|| {
-            gpkg::gpkg_to_geo_bbox(
+            rt.block_on(gpkg::gpkg_to_geo_bbox(
                 "tests/data/osm-buildings-3857-ch.gpkg",
                 "buildings",
                 939651.0,
@@ -340,7 +308,7 @@ fn buildings_bbox_benchmark(c: &mut Criterion) {
                 957733.0,
                 6012256.0,
                 54355, // fgb: 54351
-            )
+            ))
         })
     });
     group.bench_function("fgb", |b| {
