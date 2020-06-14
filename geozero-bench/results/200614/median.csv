@@ -1,0 +1,16 @@
+target/criterion/buildings/postgis_postgres/new/estimates.json,3227022892.133333
+target/criterion/buildings/postgis_sqlx/new/estimates.json,4523203326.339286
+target/criterion/buildings/rust_postgis/new/estimates.json,3293596330
+target/criterion/buildings/fgb/new/estimates.json,944337688.0714285
+target/criterion/buildings/gpkg/new/estimates.json,4838367781.416666
+target/criterion/countries/postgis_postgres/new/estimates.json,12024037.6375
+target/criterion/countries/postgis_sqlx/new/estimates.json,18814816.558333334
+target/criterion/countries/rust_postgis/new/estimates.json,10552652.838734567
+target/criterion/countries/fgb/new/estimates.json,197698.08824733825
+target/criterion/countries/gpkg/new/estimates.json,1468069.3183035715
+target/criterion/buildings_bbox/postgis_postgres/new/estimates.json,132202841.6904762
+target/criterion/buildings_bbox/fgb/new/estimates.json,68503230.68125
+target/criterion/buildings_bbox/gpkg/new/estimates.json,109945061.66666667
+target/criterion/countries_bbox/postgis_postgres/new/estimates.json,11220757.345238095
+target/criterion/countries_bbox/fgb/new/estimates.json,26343.571947806493
+target/criterion/countries_bbox/gpkg/new/estimates.json,1022643.983433735
