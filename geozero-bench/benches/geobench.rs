@@ -245,25 +245,28 @@ mod gpkg {
 }
 
 fn countries_benchmark(c: &mut Criterion) {
-    c.bench_function("countries_postgis_sqlx", |b| {
+    let mut group = c.benchmark_group("countries");
+    group.bench_function("postgis_sqlx", |b| {
         b.iter(|| postgis_sqlx::postgis_sqlx_to_geo("countries", 179))
     });
-    c.bench_function("countries_rust_postgis", |b| {
+    group.bench_function("rust_postgis", |b| {
         b.iter(|| rust_postgis::rust_postgis_to_geo("countries", 179))
     });
-    c.bench_function("countries_postgis_postgres", |b| {
+    group.bench_function("postgis_postgres", |b| {
         b.iter(|| postgis_postgres::postgis_postgres_to_geo("countries", 179))
     });
-    c.bench_function("countries_fgb", |b| {
+    group.bench_function("fgb", |b| {
         b.iter(|| fgb::fgb_to_geo("tests/data/countries.fgb", 179))
     });
-    c.bench_function("countries_gpkg", |b| {
+    group.bench_function("gpkg", |b| {
         b.iter(|| gpkg::gpkg_to_geo("tests/data/countries.gpkg", "countries", 179))
     });
+    group.finish()
 }
 
 fn countries_bbox_benchmark(c: &mut Criterion) {
-    c.bench_function("countries_bbox_postgis_postgres", |b| {
+    let mut group = c.benchmark_group("countries_bbox");
+    group.bench_function("postgis_postgres", |b| {
         b.iter(|| {
             postgis_postgres::postgis_postgres_to_geo_bbox(
                 "countries",
@@ -276,7 +279,7 @@ fn countries_bbox_benchmark(c: &mut Criterion) {
             )
         })
     });
-    c.bench_function("countries_bbox_gpkg", |b| {
+    group.bench_function("gpkg", |b| {
         b.iter(|| {
             gpkg::gpkg_to_geo_bbox(
                 "tests/data/countries.gpkg",
@@ -289,18 +292,20 @@ fn countries_bbox_benchmark(c: &mut Criterion) {
             )
         })
     });
-    c.bench_function("countries_bbox_fgb", |b| {
+    group.bench_function("fgb", |b| {
         b.iter(|| fgb::fgb_to_geo_bbox("tests/data/countries.fgb", 8.8, 47.2, 9.5, 55.3, 6))
     });
+    group.finish()
 }
 
 fn buildings_benchmark(c: &mut Criterion) {
+    let mut group = c.benchmark_group("buildings");
     // 973.08 ms
-    c.bench_function("buildings_fgb", |b| {
+    group.bench_function("fgb", |b| {
         b.iter(|| fgb::fgb_to_geo("tests/data/osm-buildings-3857-ch.fgb", 2407771))
     });
     // 6.0288 s
-    c.bench_function("buildings_gpkg", |b| {
+    group.bench_function("gpkg", |b| {
         b.iter(|| {
             gpkg::gpkg_to_geo(
                 "tests/data/osm-buildings-3857-ch.gpkg",
@@ -310,20 +315,22 @@ fn buildings_benchmark(c: &mut Criterion) {
         })
     });
     // 4.5416 s
-    c.bench_function("buildings_postgis_postgres", |b| {
+    group.bench_function("postgis_postgres", |b| {
         b.iter(|| postgis_postgres::postgis_postgres_to_geo("buildings", 2407771))
     });
-    c.bench_function("countries_postgis_sqlx", |b| {
+    group.bench_function("postgis_sqlx", |b| {
         b.iter(|| postgis_sqlx::postgis_sqlx_to_geo("buildings", 2407771))
     });
     // 4.4715 s
-    c.bench_function("countries_rust_postgis", |b| {
+    group.bench_function("rust_postgis", |b| {
         b.iter(|| rust_postgis::rust_postgis_to_geo("buildings", 2407771))
     });
+    group.finish()
 }
 
 fn buildings_bbox_benchmark(c: &mut Criterion) {
-    c.bench_function("buildings_bbox_gpkg", |b| {
+    let mut group = c.benchmark_group("buildings_bbox");
+    group.bench_function("gpkg", |b| {
         b.iter(|| {
             gpkg::gpkg_to_geo_bbox(
                 "tests/data/osm-buildings-3857-ch.gpkg",
@@ -336,7 +343,7 @@ fn buildings_bbox_benchmark(c: &mut Criterion) {
             )
         })
     });
-    c.bench_function("buildings_bbox_fgb", |b| {
+    group.bench_function("fgb", |b| {
         b.iter(|| {
             fgb::fgb_to_geo_bbox(
                 "tests/data/osm-buildings-3857-ch.fgb",
@@ -349,7 +356,7 @@ fn buildings_bbox_benchmark(c: &mut Criterion) {
         })
     });
 
-    c.bench_function("buildings_bbox_postgis_postgres", |b| {
+    group.bench_function("postgis_postgres", |b| {
         b.iter(|| {
             postgis_postgres::postgis_postgres_to_geo_bbox(
                 "buildings",
@@ -362,6 +369,7 @@ fn buildings_bbox_benchmark(c: &mut Criterion) {
             )
         })
     });
+    group.finish()
 }
 
 criterion_group!(name=benches; config=Criterion::default().sample_size(10);
