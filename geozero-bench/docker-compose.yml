@@ -1,0 +1,8 @@
+version: "3"
+services:
+  nginx:
+    image: nginx
+    ports:
+      - "127.0.0.1:3333:80"
+    volumes:
+      - ./tests/data:/usr/share/nginx/html:ro

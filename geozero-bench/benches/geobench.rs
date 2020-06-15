@@ -34,6 +34,34 @@ mod fgb {
         assert_eq!(fgb.features_count(), count);
         Ok(())
     }
+
+    pub(super) async fn fgb_http_to_geo(fname: &str, count: usize) -> Result<()> {
+        let url = format!("http://127.0.0.1:3333/{}", fname);
+        let mut fgb = HttpFgbReader::open(&url).await?;
+        // fgb.select_bbox(8.8, 47.2, 9.5, 55.3).await?;
+        fgb.select_all().await?;
+        let mut geo = RustGeo::new();
+        fgb.process_features(&mut geo).await?;
+        assert_eq!(fgb.features_count(), count);
+        Ok(())
+    }
+
+    pub(super) async fn fgb_http_to_geo_bbox(
+        fname: &str,
+        min_x: f64,
+        min_y: f64,
+        max_x: f64,
+        max_y: f64,
+        count: usize,
+    ) -> Result<()> {
+        let url = format!("http://127.0.0.1:3333/{}", fname);
+        let mut fgb = HttpFgbReader::open(&url).await?;
+        fgb.select_bbox(min_x, min_y, max_x, max_y).await?;
+        let mut geo = RustGeo::new();
+        fgb.process_features(&mut geo).await?;
+        assert_eq!(fgb.features_count(), count);
+        Ok(())
+    }
 }
 
 mod postgis_postgres {
@@ -156,8 +184,6 @@ mod gpkg {
     ) -> std::result::Result<(), sqlx::Error> {
         use geozero_core::gpkg::geo::Geometry as GeoZeroGeometry;
 
-        // ogr2ogr -f GPKG countries.gpkg countries.fgb
-
         let mut conn = SqliteConnection::connect(&format!("sqlite://{}", fpath)).await?;
 
         let sql = format!("SELECT geom FROM {}", table);
@@ -205,15 +231,6 @@ mod gpkg {
 fn countries_benchmark(c: &mut Criterion) {
     let mut rt = tokio::runtime::Runtime::new().unwrap();
     let mut group = c.benchmark_group("countries");
-    group.bench_function("postgis_sqlx", |b| {
-        b.iter(|| rt.block_on(postgis_sqlx::postgis_sqlx_to_geo("countries", 179)));
-    });
-    group.bench_function("rust_postgis", |b| {
-        b.iter(|| rust_postgis::rust_postgis_to_geo("countries", 179))
-    });
-    group.bench_function("postgis_postgres", |b| {
-        b.iter(|| postgis_postgres::postgis_postgres_to_geo("countries", 179))
-    });
     group.bench_function("fgb", |b| {
         b.iter(|| fgb::fgb_to_geo("tests/data/countries.fgb", 179))
     });
@@ -226,12 +243,52 @@ fn countries_benchmark(c: &mut Criterion) {
             ))
         })
     });
+    group.bench_function("fgb_http", |b| {
+        b.iter(|| rt.block_on(fgb::fgb_http_to_geo("countries.fgb", 179)));
+    });
+    group.bench_function("postgis_sqlx", |b| {
+        b.iter(|| rt.block_on(postgis_sqlx::postgis_sqlx_to_geo("countries", 179)));
+    });
+    group.bench_function("postgis_postgres", |b| {
+        b.iter(|| postgis_postgres::postgis_postgres_to_geo("countries", 179))
+    });
+    group.bench_function("rust_postgis", |b| {
+        b.iter(|| rust_postgis::rust_postgis_to_geo("countries", 179))
+    });
     group.finish()
 }
 
 fn countries_bbox_benchmark(c: &mut Criterion) {
     let mut rt = tokio::runtime::Runtime::new().unwrap();
     let mut group = c.benchmark_group("countries_bbox");
+    group.bench_function("fgb", |b| {
+        b.iter(|| fgb::fgb_to_geo_bbox("tests/data/countries.fgb", 8.8, 47.2, 9.5, 55.3, 6))
+    });
+    group.bench_function("gpkg", |b| {
+        b.iter(|| {
+            rt.block_on(gpkg::gpkg_to_geo_bbox(
+                "tests/data/countries.gpkg",
+                "countries",
+                8.8,
+                47.2,
+                9.5,
+                55.3,
+                6,
+            ))
+        })
+    });
+    group.bench_function("fgb_http", |b| {
+        b.iter(|| {
+            rt.block_on(fgb::fgb_http_to_geo_bbox(
+                "countries.fgb",
+                8.8,
+                47.2,
+                9.5,
+                55.3,
+                6,
+            ))
+        });
+    });
     group.bench_function("postgis_postgres", |b| {
         b.iter(|| {
             postgis_postgres::postgis_postgres_to_geo_bbox(
@@ -245,33 +302,15 @@ fn countries_bbox_benchmark(c: &mut Criterion) {
             )
         })
     });
-    group.bench_function("gpkg", |b| {
-        b.iter(|| {
-            rt.block_on(gpkg::gpkg_to_geo_bbox(
-                "tests/data/countries.gpkg",
-                "countries",
-                8.8,
-                47.2,
-                9.5,
-                55.3,
-                6,
-            ))
-        })
-    });
-    group.bench_function("fgb", |b| {
-        b.iter(|| fgb::fgb_to_geo_bbox("tests/data/countries.fgb", 8.8, 47.2, 9.5, 55.3, 6))
-    });
     group.finish()
 }
 
 fn buildings_benchmark(c: &mut Criterion) {
     let mut rt = tokio::runtime::Runtime::new().unwrap();
     let mut group = c.benchmark_group("buildings");
-    // 973.08 ms
     group.bench_function("fgb", |b| {
         b.iter(|| fgb::fgb_to_geo("tests/data/osm-buildings-3857-ch.fgb", 2407771))
     });
-    // 6.0288 s
     group.bench_function("gpkg", |b| {
         b.iter(|| {
             rt.block_on(gpkg::gpkg_to_geo(
@@ -281,14 +320,15 @@ fn buildings_benchmark(c: &mut Criterion) {
             ))
         })
     });
-    // 4.5416 s
-    group.bench_function("postgis_postgres", |b| {
-        b.iter(|| postgis_postgres::postgis_postgres_to_geo("buildings", 2407771))
+    group.bench_function("fgb_http", |b| {
+        b.iter(|| rt.block_on(fgb::fgb_http_to_geo("osm-buildings-3857-ch.fgb", 2407771)));
     });
     group.bench_function("postgis_sqlx", |b| {
         b.iter(|| rt.block_on(postgis_sqlx::postgis_sqlx_to_geo("buildings", 2407771)))
     });
-    // 4.4715 s
+    group.bench_function("postgis_postgres", |b| {
+        b.iter(|| postgis_postgres::postgis_postgres_to_geo("buildings", 2407771))
+    });
     group.bench_function("rust_postgis", |b| {
         b.iter(|| rust_postgis::rust_postgis_to_geo("buildings", 2407771))
     });
@@ -298,6 +338,18 @@ fn buildings_benchmark(c: &mut Criterion) {
 fn buildings_bbox_benchmark(c: &mut Criterion) {
     let mut rt = tokio::runtime::Runtime::new().unwrap();
     let mut group = c.benchmark_group("buildings_bbox");
+    group.bench_function("fgb", |b| {
+        b.iter(|| {
+            fgb::fgb_to_geo_bbox(
+                "tests/data/osm-buildings-3857-ch.fgb",
+                939651.0,
+                5997817.0,
+                957733.0,
+                6012256.0,
+                54351,
+            )
+        })
+    });
     group.bench_function("gpkg", |b| {
         b.iter(|| {
             rt.block_on(gpkg::gpkg_to_geo_bbox(
@@ -311,19 +363,18 @@ fn buildings_bbox_benchmark(c: &mut Criterion) {
             ))
         })
     });
-    group.bench_function("fgb", |b| {
+    group.bench_function("fgb_http", |b| {
         b.iter(|| {
-            fgb::fgb_to_geo_bbox(
-                "tests/data/osm-buildings-3857-ch.fgb",
+            rt.block_on(fgb::fgb_http_to_geo_bbox(
+                "osm-buildings-3857-ch.fgb",
                 939651.0,
                 5997817.0,
                 957733.0,
                 6012256.0,
                 54351,
-            )
-        })
+            ))
+        });
     });
-
     group.bench_function("postgis_postgres", |b| {
         b.iter(|| {
             postgis_postgres::postgis_postgres_to_geo_bbox(
