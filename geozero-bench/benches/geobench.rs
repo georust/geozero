@@ -311,15 +311,16 @@ fn buildings_benchmark(c: &mut Criterion) {
     group.bench_function("fgb", |b| {
         b.iter(|| fgb::fgb_to_geo("tests/data/osm-buildings-3857-ch.fgb", 2407771))
     });
-    group.bench_function("gpkg", |b| {
-        b.iter(|| {
-            rt.block_on(gpkg::gpkg_to_geo(
-                "tests/data/osm-buildings-3857-ch.gpkg",
-                "buildings",
-                2407771,
-            ))
-        })
-    });
+    // One test machine freezes when running this bench !!??
+    // group.bench_function("gpkg", |b| {
+    //     b.iter(|| {
+    //         rt.block_on(gpkg::gpkg_to_geo(
+    //             "tests/data/osm-buildings-3857-ch.gpkg",
+    //             "buildings",
+    //             2407771,
+    //         ))
+    //     })
+    // });
     group.bench_function("fgb_http", |b| {
         b.iter(|| rt.block_on(fgb::fgb_http_to_geo("osm-buildings-3857-ch.fgb", 2407771)));
     });

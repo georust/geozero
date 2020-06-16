@@ -6,13 +6,14 @@ countries.fgb: ../../../geozero-core/tests/data/countries.fgb
 	cp $< $@
 
 countries.gpkg: countries.fgb
-	docker run --rm -v $$PWD:/data osgeo/gdal:alpine-normal-latest ogr2ogr -f GPKG /data/$@ /data/$<
+	docker run --rm --user $$(id -u):$$(id -g) -v $$PWD:/data osgeo/gdal:alpine-normal-latest ogr2ogr -f GPKG /data/$@ /data/$<
+	#echo "PRAGMA journal_mode = MEMORY" | sqlite3 $@
 
 osm-buildings-3857-ch.fgb:
 	wget https://pkg.sourcepole.com/osm-buildings-3857-ch.fgb
 
 osm-buildings-3857-ch.gpkg: osm-buildings-3857-ch.fgb
-	docker run --rm -v $$PWD:/data osgeo/gdal:alpine-normal-latest ogr2ogr -f GPKG -nln buildings /data/$@ /data/$<
+	docker run --rm --user $$(id -u):$$(id -g) -v $$PWD:/data osgeo/gdal:alpine-normal-latest ogr2ogr -f GPKG -nln buildings /data/$@ /data/$<
 
 createdb:
 	psql postgres -c "DROP DATABASE IF EXISTS $(DBNAME)"
