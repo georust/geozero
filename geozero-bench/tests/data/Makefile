@@ -1,12 +1,15 @@
-DBNAME = testdb
+DBNAME = geozerobench
 
-all: countries.fgb countries.gpkg
+all: countries.gpkg osm-buildings-3857-ch.gpkg
 
 countries.fgb: ../../../geozero-core/tests/data/countries.fgb
 	cp $< $@
 
 countries.gpkg: countries.fgb
 	docker run --rm -v $$PWD:/data osgeo/gdal:alpine-normal-latest ogr2ogr -f GPKG /data/$@ /data/$<
+
+osm-buildings-3857-ch.fgb:
+	wget https://pkg.sourcepole.com/osm-buildings-3857-ch.fgb
 
 osm-buildings-3857-ch.gpkg: osm-buildings-3857-ch.fgb
 	docker run --rm -v $$PWD:/data osgeo/gdal:alpine-normal-latest ogr2ogr -f GPKG -nln buildings /data/$@ /data/$<
@@ -16,11 +19,8 @@ createdb:
 	psql postgres -c "CREATE DATABASE $(DBNAME)"
 	psql $(DBNAME) -c "CREATE EXTENSION postgis"
 
-# countriesdb: countries.fgb
-# 	docker run --rm -v $$PWD:/data osgeo/gdal:alpine-normal-latest ogr2ogr -f PostgreSQL PG:dbname=$(DBNAME) /data/$<
-
 countries_table: countries.gpkg
-	ogr2ogr -f PostgreSQL PG:dbname=$(DBNAME) $<
+	ogr2ogr -f PostgreSQL -lco GEOMETRY_NAME=geom PG:dbname=$(DBNAME) $<
 
 osm_buildings_table: osm-buildings-3857-ch.gpkg
-	ogr2ogr -f PostgreSQL PG:dbname=$(DBNAME) $<
+	ogr2ogr -f PostgreSQL -lco GEOMETRY_NAME=geom PG:dbname=$(DBNAME) $<

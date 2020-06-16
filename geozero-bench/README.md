@@ -72,7 +72,12 @@ Create PostGIS database:
     make createdb
     make countries_table osm_buildings_table
 
+Start web server:
+
+    docker-compose up -d
+    cd ../..
+
 Run benchmark:
 
-    export DATABASE_URL=postgresql://$USER@localhost/testdb
+    export DATABASE_URL=postgresql://$USER@localhost/geozerobench
     cargo bench
