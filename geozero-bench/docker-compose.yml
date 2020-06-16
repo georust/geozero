@@ -5,4 +5,5 @@ services:
     ports:
       - "127.0.0.1:3333:80"
     volumes:
+      - ./nginx-site.conf:/etc/nginx/conf.d/default.conf:ro
       - ./tests/data:/usr/share/nginx/html:ro
