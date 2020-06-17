@@ -20,6 +20,7 @@ geo = { version = "0.13" }  # , features = ["postgis-integration"] # not compati
 flatgeobuf = { git = "https://github.com/pka/flatgeobuf/", branch="geozero" }
 postgres = "0.17"
 postgis = "0.7"
+gdal = { version = "0.6", default-features = false }
 tokio = { version = "0.2", default-features = false, features = ["rt-threaded"] }
 
 [[bench]]

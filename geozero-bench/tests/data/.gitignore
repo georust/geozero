@@ -1,4 +1,2 @@
-*.fgb
-*.gpkg
-*.gpkg-wal
-*.gpkg-shm
+countries.*
+osm-buildings-3857-ch.*
