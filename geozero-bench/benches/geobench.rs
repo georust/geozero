@@ -8,7 +8,9 @@ mod fgb {
     use flatgeobuf::*;
     use geozero::Extent;
     use std::fs::File;
-    use std::io::BufReader;
+    // seek_bufread::BufReader is much faster for bbox queries,
+    // because seek resets buffer of std::io::BufReader
+    use seek_bufread::BufReader;
 
     pub(super) fn fgb_to_geo(fpath: &str, bbox: &Option<Extent>, count: usize) -> Result<()> {
         let mut filein = BufReader::new(File::open(fpath)?);

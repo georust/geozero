@@ -25,6 +25,7 @@ pub trait ReadSeek: Read + Seek {}
 
 // Implement it for common Read + Seek inputs
 impl<R: Read + Seek> ReadSeek for std::io::BufReader<R> {}
+impl<R: Read + Seek> ReadSeek for seek_bufread::BufReader<R> {}
 impl ReadSeek for std::fs::File {}
 impl<R: AsRef<[u8]>> ReadSeek for std::io::Cursor<R> {}
 

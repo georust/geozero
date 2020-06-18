@@ -13,3 +13,4 @@ keywords = ["geo", "spatial"]
 [dependencies]
 thiserror = "1.0"
 async-trait = "0.1"
+seek_bufread = "1.2"

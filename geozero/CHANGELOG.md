@@ -1,3 +1,7 @@
+## 0.4.1 (UNRELEASED)
+
+* Add support for seek_bufread::BufReader
+
 ## 0.4.0 (2020-06-03)
 
 * Add GeometryCollection processing methods
