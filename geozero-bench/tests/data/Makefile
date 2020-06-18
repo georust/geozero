@@ -1,6 +1,6 @@
 DBNAME = geozerobench
 
-all: countries.shp countries-geom.shp countries.json osm-buildings-3857-ch.shp osm-buildings-3857-ch-geom.shp
+all: countries.shp countries.json osm-buildings-3857-ch.shp
 
 countries.fgb: ../../../geozero-core/tests/data/countries.fgb
 	cp $< $@
@@ -11,9 +11,6 @@ countries.gpkg: countries.fgb
 
 countries.shp: countries.gpkg
 	ogr2ogr -f "ESRI Shapefile" -lco SPATIAL_INDEX=YES -lco ENCODING=UTF-8 $@ $<
-
-countries-geom.shp: countries.gpkg
-	ogr2ogr -f "ESRI Shapefile" -lco SPATIAL_INDEX=YES -select geom $@ $<
 
 countries.json: countries.gpkg
 	ogr2ogr -f "GeoJSON" $@ $<
@@ -26,9 +23,6 @@ osm-buildings-3857-ch.gpkg: osm-buildings-3857-ch.fgb
 
 osm-buildings-3857-ch.shp: osm-buildings-3857-ch.gpkg
 	ogr2ogr -f "ESRI Shapefile" -lco SPATIAL_INDEX=YES -lco ENCODING=UTF-8 $@ $<
-
-osm-buildings-3857-ch-geom.shp: osm-buildings-3857-ch.gpkg
-	ogr2ogr -f "ESRI Shapefile" -lco SPATIAL_INDEX=YES -select geom $@ $<
 
 osm-buildings-3857-ch.json: osm-buildings-3857-ch.gpkg
 	ogr2ogr -f "GeoJSON" $@ $<

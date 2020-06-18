@@ -191,7 +191,7 @@ mod gpkg {
 }
 
 mod gdal {
-    use gdal::vector::{Dataset, Geometry};
+    use gdal::vector::{Dataset, Geometry, Layer};
     use geozero::Extent;
     use std::path::Path;
 
@@ -202,18 +202,30 @@ mod gdal {
     ) -> std::result::Result<(), gdal::errors::Error> {
         let mut dataset = Dataset::open(Path::new(fpath))?;
         let layer = dataset.layer(0)?;
+        // omit fields when fetching features
+        ignore_fields(&layer);
+
         if let Some(bbox) = bbox {
             let bbox = Geometry::bbox(bbox.minx, bbox.miny, bbox.maxx, bbox.maxy)?;
             layer.set_spatial_filter(&bbox);
         }
+
         let mut cnt = 0;
         for feature in layer.features() {
-            // GDAL probably reads all property fields, not only geometry
             let _geom = feature.geometry();
             cnt += 1;
         }
         assert_eq!(cnt, count);
         Ok(())
+    }
+
+    fn ignore_fields(layer: &Layer) {
+        let defn = layer.defn();
+        let count = unsafe { gdal_sys::OGR_FD_GetFieldCount(defn.c_defn()) };
+        for i in 0..count {
+            let c_field_defn = unsafe { gdal_sys::OGR_FD_GetFieldDefn(defn.c_defn(), i) };
+            unsafe { gdal_sys::OGR_Fld_SetIgnored(c_field_defn, 1) }
+        }
     }
 }
 
@@ -224,9 +236,6 @@ fn countries_benchmark(c: &mut Criterion) {
     let srid = 4326;
     group.bench_function("1-shp", |b| {
         b.iter(|| gdal::gdal_read("tests/data/countries.shp", &bbox, 179))
-    });
-    group.bench_function("2-shp_geom", |b| {
-        b.iter(|| gdal::gdal_read("tests/data/countries-geom.shp", &bbox, 179))
     });
     group.bench_function("3-fgb", |b| {
         b.iter(|| fgb::fgb_to_geo("tests/data/countries.fgb", &bbox, 179))
@@ -279,9 +288,6 @@ fn countries_bbox_benchmark(c: &mut Criterion) {
     group.bench_function("1-shp", |b| {
         b.iter(|| gdal::gdal_read("tests/data/countries.shp", &bbox, 3))
         // != 6 ! within filter?
-    });
-    group.bench_function("2-shp_geom", |b| {
-        b.iter(|| gdal::gdal_read("tests/data/countries-geom.shp", &bbox, 3))
     });
     group.bench_function("3-fgb", |b| {
         b.iter(|| fgb::fgb_to_geo("tests/data/countries.fgb", &bbox, 6))
@@ -338,9 +344,6 @@ fn buildings_benchmark(c: &mut Criterion) {
     group.bench_function("1-shp", |b| {
         b.iter(|| gdal::gdal_read("tests/data/osm-buildings-3857-ch.shp", &bbox, 2407771))
     });
-    group.bench_function("2-shp_geom", |b| {
-        b.iter(|| gdal::gdal_read("tests/data/osm-buildings-3857-ch-geom.shp", &bbox, 2407771))
-    });
     if std::env::var("SKIP_GPKG_BIG").is_err() {
         // A test machine freezes when running this bench !!??
         group.bench_function("4-gpkg", |b| {
@@ -394,9 +397,6 @@ fn buildings_bbox_benchmark(c: &mut Criterion) {
     let srid = 3857;
     group.bench_function("1-shp", |b| {
         b.iter(|| gdal::gdal_read("tests/data/osm-buildings-3857-ch.shp", &bbox, 54351))
-    });
-    group.bench_function("2-shp_geom", |b| {
-        b.iter(|| gdal::gdal_read("tests/data/osm-buildings-3857-ch-geom.shp", &bbox, 54351))
     });
     group.bench_function("3-fgb", |b| {
         b.iter(|| fgb::fgb_to_geo("tests/data/osm-buildings-3857-ch.fgb", &bbox, 54351))
