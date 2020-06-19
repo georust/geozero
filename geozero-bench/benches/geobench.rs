@@ -239,10 +239,10 @@ fn countries_benchmark(c: &mut Criterion) {
     group.bench_function("1-shp", |b| {
         b.iter(|| gdal::gdal_read("tests/data/countries.shp", &bbox, 179))
     });
-    group.bench_function("3-fgb", |b| {
+    group.bench_function("2-fgb", |b| {
         b.iter(|| fgb::fgb_to_geo("tests/data/countries.fgb", &bbox, 179))
     });
-    group.bench_function("4-gpkg", |b| {
+    group.bench_function("3-gpkg", |b| {
         b.iter(|| {
             rt.block_on(gpkg::gpkg_to_geo(
                 "tests/data/countries.gpkg",
@@ -252,8 +252,14 @@ fn countries_benchmark(c: &mut Criterion) {
             ))
         })
     });
-    group.bench_function("5-geojson", |b| {
+    group.bench_function("4-geojson", |b| {
         b.iter(|| gdal::gdal_read("tests/data/countries.json", &bbox, 179))
+    });
+    group.bench_function("5-geojson_http", |b| {
+        b.iter(|| gdal::gdal_read("http://127.0.0.1:3333/countries.json", &bbox, 179))
+    });
+    group.bench_function("5-geojson_http_gz", |b| {
+        b.iter(|| gdal::gdal_read("http://127.0.0.1:3333/countries-gz.json", &bbox, 179))
     });
     group.bench_function("6-fgb_http", |b| {
         b.iter(|| rt.block_on(fgb::fgb_http_to_geo("countries.fgb", &bbox, 179)));
@@ -268,10 +274,10 @@ fn countries_benchmark(c: &mut Criterion) {
             ))
         });
     });
-    group.bench_function("8-postgis_postgres", |b| {
+    group.bench_function("7-postgis_postgres", |b| {
         b.iter(|| postgis_postgres::postgis_postgres_to_geo("countries", &bbox, srid, 179))
     });
-    group.bench_function("9-rust_postgis", |b| {
+    group.bench_function("7-rust_postgis", |b| {
         b.iter(|| rust_postgis::rust_postgis_read("countries", &bbox, srid, 179))
     });
     group.finish()
@@ -291,10 +297,10 @@ fn countries_bbox_benchmark(c: &mut Criterion) {
         b.iter(|| gdal::gdal_read("tests/data/countries.shp", &bbox, 3))
         // != 6 ! within filter?
     });
-    group.bench_function("3-fgb", |b| {
+    group.bench_function("2-fgb", |b| {
         b.iter(|| fgb::fgb_to_geo("tests/data/countries.fgb", &bbox, 6))
     });
-    group.bench_function("4-gpkg", |b| {
+    group.bench_function("3-gpkg", |b| {
         b.iter(|| {
             rt.block_on(gpkg::gpkg_to_geo(
                 "tests/data/countries.gpkg",
@@ -304,7 +310,7 @@ fn countries_bbox_benchmark(c: &mut Criterion) {
             ))
         })
     });
-    group.bench_function("5-gpkg_gdal", |b| {
+    group.bench_function("3-gpkg_gdal", |b| {
         b.iter(|| {
             gdal::gdal_read(
                 "tests/data/countries.gpkg",
@@ -313,8 +319,14 @@ fn countries_bbox_benchmark(c: &mut Criterion) {
             )
         })
     });
-    group.bench_function("5-geojson", |b| {
+    group.bench_function("4-geojson", |b| {
         b.iter(|| gdal::gdal_read("tests/data/countries.json", &bbox, 3))
+    });
+    group.bench_function("5-geojson_http", |b| {
+        b.iter(|| gdal::gdal_read("http://127.0.0.1:3333/countries.json", &bbox, 3))
+    });
+    group.bench_function("5-geojson_http_gz", |b| {
+        b.iter(|| gdal::gdal_read("http://127.0.0.1:3333/countries-gz.json", &bbox, 3))
     });
     group.bench_function("6-fgb_http", |b| {
         b.iter(|| rt.block_on(fgb::fgb_http_to_geo("countries.fgb", &bbox, 6)));
@@ -329,10 +341,10 @@ fn countries_bbox_benchmark(c: &mut Criterion) {
             ))
         })
     });
-    group.bench_function("8-postgis_postgres", |b| {
+    group.bench_function("7-postgis_postgres", |b| {
         b.iter(|| postgis_postgres::postgis_postgres_to_geo("countries", &bbox, srid, 6))
     });
-    group.bench_function("9-rust_postgis", |b| {
+    group.bench_function("7-rust_postgis", |b| {
         b.iter(|| rust_postgis::rust_postgis_read("countries", &bbox, srid, 6))
     });
     group.finish()
@@ -343,7 +355,7 @@ fn buildings_benchmark(c: &mut Criterion) {
     let mut rt = tokio::runtime::Runtime::new().unwrap();
     let bbox = None;
     let srid = 3857;
-    group.bench_function("3-fgb", |b| {
+    group.bench_function("2-fgb", |b| {
         b.iter(|| fgb::fgb_to_geo("tests/data/osm-buildings-3857-ch.fgb", &bbox, 2407771))
     });
     group.bench_function("1-shp", |b| {
@@ -351,7 +363,7 @@ fn buildings_benchmark(c: &mut Criterion) {
     });
     if std::env::var("SKIP_GPKG_BIG").is_err() {
         // A test machine freezes when running this bench !!??
-        group.bench_function("4-gpkg", |b| {
+        group.bench_function("3-gpkg", |b| {
             b.iter(|| {
                 rt.block_on(gpkg::gpkg_to_geo(
                     "tests/data/osm-buildings-3857-ch.gpkg",
@@ -362,7 +374,27 @@ fn buildings_benchmark(c: &mut Criterion) {
             })
         });
     }
-    group.bench_function("5-fgb_http", |b| {
+    // > 50s
+    // group.bench_function("4-geojson_gz", |b| {
+    //     b.iter(|| {
+    //         gdal::gdal_read(
+    //             "/vsigzip/tests/data/osm-buildings-3857-ch-gz.json.gz",
+    //             &bbox,
+    //             2407771,
+    //         )
+    //     })
+    // });
+    // > 60s
+    // group.bench_function("5-geojson_http", |b| {
+    //     b.iter(|| {
+    //         gdal::gdal_read(
+    //             "http://127.0.0.1:3333/osm-buildings-3857-ch.json",
+    //             &bbox,
+    //             2407771,
+    //         )
+    //     })
+    // });
+    group.bench_function("6-fgb_http", |b| {
         b.iter(|| {
             rt.block_on(fgb::fgb_http_to_geo(
                 "osm-buildings-3857-ch.fgb",
@@ -371,7 +403,7 @@ fn buildings_benchmark(c: &mut Criterion) {
             ))
         });
     });
-    // group.bench_function("6-postgis_sqlx", |b| {
+    // group.bench_function("7-postgis_sqlx", |b| {
     //     b.iter(|| {
     //         rt.block_on(postgis_sqlx::postgis_sqlx_to_geo(
     //             "buildings",
@@ -384,7 +416,7 @@ fn buildings_benchmark(c: &mut Criterion) {
     group.bench_function("7-postgis_postgres", |b| {
         b.iter(|| postgis_postgres::postgis_postgres_to_geo("buildings", &bbox, srid, 2407771))
     });
-    // group.bench_function("8-rust_postgis", |b| {
+    // group.bench_function("7-rust_postgis", |b| {
     //     b.iter(|| rust_postgis::rust_postgis_read("buildings", &bbox, srid, 2407771))
     // });
     group.finish()
@@ -403,10 +435,10 @@ fn buildings_bbox_benchmark(c: &mut Criterion) {
     group.bench_function("1-shp", |b| {
         b.iter(|| gdal::gdal_read("tests/data/osm-buildings-3857-ch.shp", &bbox, 54351))
     });
-    group.bench_function("3-fgb", |b| {
+    group.bench_function("2-fgb", |b| {
         b.iter(|| fgb::fgb_to_geo("tests/data/osm-buildings-3857-ch.fgb", &bbox, 54351))
     });
-    group.bench_function("4-gpkg", |b| {
+    group.bench_function("3-gpkg", |b| {
         b.iter(|| {
             rt.block_on(gpkg::gpkg_to_geo(
                 "tests/data/osm-buildings-3857-ch.gpkg",
@@ -416,7 +448,7 @@ fn buildings_bbox_benchmark(c: &mut Criterion) {
             ))
         })
     });
-    group.bench_function("5-gpkg_gdal", |b| {
+    group.bench_function("3-gpkg_gdal", |b| {
         b.iter(|| gdal::gdal_read("tests/data/osm-buildings-3857-ch.gpkg", &bbox, 54351))
     });
     group.bench_function("6-fgb_http", |b| {
@@ -438,7 +470,7 @@ fn buildings_bbox_benchmark(c: &mut Criterion) {
             ))
         })
     });
-    group.bench_function("8-postgis_postgres", |b| {
+    group.bench_function("7-postgis_postgres", |b| {
         b.iter(|| {
             postgis_postgres::postgis_postgres_to_geo(
                 "buildings",
@@ -448,7 +480,7 @@ fn buildings_bbox_benchmark(c: &mut Criterion) {
             )
         })
     });
-    group.bench_function("9-rust_postgis", |b| {
+    group.bench_function("7-rust_postgis", |b| {
         b.iter(|| rust_postgis::rust_postgis_read("buildings", &bbox, srid, 54353))
         // fgb: 54351
     });

@@ -1,6 +1,6 @@
 DBNAME = geozerobench
 
-all: countries.shp countries.json osm-buildings-3857-ch.shp
+all: countries.shp countries.json countries-gz.json.gz osm-buildings-3857-ch.shp
 
 countries.fgb: ../../../geozero-core/tests/data/countries.fgb
 	cp $< $@
@@ -15,6 +15,9 @@ countries.shp: countries.gpkg
 countries.json: countries.gpkg
 	ogr2ogr -f "GeoJSON" $@ $<
 
+countries-gz.json.gz: countries.gpkg
+	ogr2ogr -f "GeoJSON" /vsigzip/$@ $<
+
 osm-buildings-3857-ch.fgb:
 	wget https://pkg.sourcepole.com/osm-buildings-3857-ch.fgb
 
@@ -24,8 +27,8 @@ osm-buildings-3857-ch.gpkg: osm-buildings-3857-ch.fgb
 osm-buildings-3857-ch.shp: osm-buildings-3857-ch.gpkg
 	ogr2ogr -f "ESRI Shapefile" -lco SPATIAL_INDEX=YES -lco ENCODING=UTF-8 $@ $<
 
-osm-buildings-3857-ch.json: osm-buildings-3857-ch.gpkg
-	ogr2ogr -f "GeoJSON" $@ $<
+osm-buildings-3857-ch-gz.json.gz: osm-buildings-3857-ch.gpkg
+	ogr2ogr -f "GeoJSON" /vsigzip/$@ $<
 
 createdb:
 	psql postgres -c "DROP DATABASE IF EXISTS $(DBNAME)"
