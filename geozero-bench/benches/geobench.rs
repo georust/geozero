@@ -54,14 +54,17 @@ mod postgis_postgres {
     // export DATABASE_URL=postgresql://pi@%2Fvar%2Frun%2Fpostgresql/testdb
     // export DATABASE_URL=postgresql://pi@localhost/testdb
 
+    pub(super) fn connect() -> std::result::Result<Client, postgres::error::Error> {
+        Client::connect(&std::env::var("DATABASE_URL").unwrap(), NoTls)
+    }
+
     pub(super) fn postgis_postgres_to_geo(
+        client: &mut Client,
         table: &str,
         bbox: &Option<Extent>,
         srid: i32,
         count: usize,
     ) -> std::result::Result<(), postgres::error::Error> {
-        let mut client = Client::connect(&std::env::var("DATABASE_URL").unwrap(), NoTls)?;
-
         let mut sql = format!("SELECT geom FROM {}", table);
         if let Some(bbox) = bbox {
             sql += &format!(
@@ -71,7 +74,7 @@ mod postgis_postgres {
         }
 
         let mut cnt = 0;
-        for row in &client.query(sql.as_str(), &[]).unwrap() {
+        for row in client.query(sql.as_str(), &[]).unwrap() {
             let _geom: GeoZeroGeometry = row.get(0);
             cnt += 1;
         }
@@ -84,19 +87,15 @@ mod rust_postgis {
     use geozero::Extent;
     // use geo::algorithm::from_postgis::FromPostgis;
     use postgis::ewkb;
-    use postgres::{self, Client, NoTls};
-
-    // export DATABASE_URL=postgresql://pi@%2Fvar%2Frun%2Fpostgresql/testdb
-    // export DATABASE_URL=postgresql://pi@localhost/testdb
+    use postgres::{self, Client};
 
     pub(super) fn rust_postgis_read(
+        client: &mut Client,
         table: &str,
         bbox: &Option<Extent>,
         srid: i32,
         count: usize,
     ) -> std::result::Result<(), postgres::error::Error> {
-        let mut client = Client::connect(&std::env::var("DATABASE_URL").unwrap(), NoTls)?;
-
         let mut sql = format!("SELECT geom FROM {}", table);
         if let Some(bbox) = bbox {
             sql += &format!(
@@ -106,7 +105,7 @@ mod rust_postgis {
         }
 
         let mut cnt = 0;
-        for row in &client.query(sql.as_str(), &[]).unwrap() {
+        for row in client.query(sql.as_str(), &[]).unwrap() {
             let _pggeom: ewkb::MultiPolygon = row.get(0);
             // let geom = geo_types::MultiPolygon::from_postgis(&pggeom);
             cnt += 1;
@@ -125,15 +124,18 @@ mod postgis_sqlx {
     // export DATABASE_URL=postgresql://pi@%2Fvar%2Frun%2Fpostgresql/testdb
     // export DATABASE_URL=postgresql://pi@localhost/testdb
 
+    pub(super) async fn connect() -> std::result::Result<PgConnection, sqlx::Error> {
+        PgConnection::connect(&std::env::var("DATABASE_URL").unwrap()).await
+    }
+
     pub(super) async fn postgis_sqlx_to_geo(
+        conn: &mut PgConnection,
         table: &str,
         bbox: &Option<Extent>,
         srid: i32,
         count: usize,
     ) -> std::result::Result<(), sqlx::Error> {
         use geozero_core::postgis::sqlx::geo::Geometry as GeoZeroGeometry;
-
-        let mut conn = PgConnection::connect(&std::env::var("DATABASE_URL").unwrap()).await?;
 
         let mut sql = format!("SELECT geom FROM {}", table);
         if let Some(bbox) = bbox {
@@ -142,7 +144,7 @@ mod postgis_sqlx {
                 bbox.minx, bbox.miny, bbox.maxx, bbox.maxy, srid
             );
         }
-        let mut cursor = sqlx::query(&sql).fetch(&mut conn);
+        let mut cursor = sqlx::query(&sql).fetch(conn);
 
         let mut cnt = 0;
         while let Some(row) = cursor.try_next().await? {
@@ -265,8 +267,10 @@ fn countries_benchmark(c: &mut Criterion) {
         b.iter(|| rt.block_on(fgb::fgb_http_to_geo("countries.fgb", &bbox, 179)));
     });
     group.bench_function("7-postgis_sqlx", |b| {
+        let mut conn = rt.block_on(postgis_sqlx::connect()).unwrap();
         b.iter(|| {
             rt.block_on(postgis_sqlx::postgis_sqlx_to_geo(
+                &mut conn,
                 "countries",
                 &bbox,
                 srid,
@@ -275,10 +279,14 @@ fn countries_benchmark(c: &mut Criterion) {
         });
     });
     group.bench_function("7-postgis_postgres", |b| {
-        b.iter(|| postgis_postgres::postgis_postgres_to_geo("countries", &bbox, srid, 179))
+        let mut client = postgis_postgres::connect().unwrap();
+        b.iter(|| {
+            postgis_postgres::postgis_postgres_to_geo(&mut client, "countries", &bbox, srid, 179)
+        })
     });
     group.bench_function("7-rust_postgis", |b| {
-        b.iter(|| rust_postgis::rust_postgis_read("countries", &bbox, srid, 179))
+        let mut client = postgis_postgres::connect().unwrap();
+        b.iter(|| rust_postgis::rust_postgis_read(&mut client, "countries", &bbox, srid, 179))
     });
     group.finish()
 }
@@ -332,8 +340,10 @@ fn countries_bbox_benchmark(c: &mut Criterion) {
         b.iter(|| rt.block_on(fgb::fgb_http_to_geo("countries.fgb", &bbox, 6)));
     });
     group.bench_function("7-postgis_sqlx", |b| {
+        let mut conn = rt.block_on(postgis_sqlx::connect()).unwrap();
         b.iter(|| {
             rt.block_on(postgis_sqlx::postgis_sqlx_to_geo(
+                &mut conn,
                 "countries",
                 &bbox,
                 srid,
@@ -342,10 +352,14 @@ fn countries_bbox_benchmark(c: &mut Criterion) {
         })
     });
     group.bench_function("7-postgis_postgres", |b| {
-        b.iter(|| postgis_postgres::postgis_postgres_to_geo("countries", &bbox, srid, 6))
+        let mut client = postgis_postgres::connect().unwrap();
+        b.iter(|| {
+            postgis_postgres::postgis_postgres_to_geo(&mut client, "countries", &bbox, srid, 6)
+        })
     });
     group.bench_function("7-rust_postgis", |b| {
-        b.iter(|| rust_postgis::rust_postgis_read("countries", &bbox, srid, 6))
+        let mut client = postgis_postgres::connect().unwrap();
+        b.iter(|| rust_postgis::rust_postgis_read(&mut client, "countries", &bbox, srid, 6))
     });
     group.finish()
 }
@@ -404,8 +418,10 @@ fn buildings_benchmark(c: &mut Criterion) {
         });
     });
     // group.bench_function("7-postgis_sqlx", |b| {
+    //     let mut conn = rt.block_on(postgis_sqlx::connect()).unwrap();
     //     b.iter(|| {
     //         rt.block_on(postgis_sqlx::postgis_sqlx_to_geo(
+    //             &mut conn,
     //             "buildings",
     //             &bbox,
     //             srid,
@@ -414,10 +430,20 @@ fn buildings_benchmark(c: &mut Criterion) {
     //     })
     // });
     group.bench_function("7-postgis_postgres", |b| {
-        b.iter(|| postgis_postgres::postgis_postgres_to_geo("buildings", &bbox, srid, 2407771))
+        let mut client = postgis_postgres::connect().unwrap();
+        b.iter(|| {
+            postgis_postgres::postgis_postgres_to_geo(
+                &mut client,
+                "buildings",
+                &bbox,
+                srid,
+                2407771,
+            )
+        })
     });
     // group.bench_function("7-rust_postgis", |b| {
-    //     b.iter(|| rust_postgis::rust_postgis_read("buildings", &bbox, srid, 2407771))
+    //     let mut client = postgis_postgres::connect().unwrap();
+    //     b.iter(|| rust_postgis::rust_postgis_read(&mut client, "buildings", &bbox, srid, 2407771))
     // });
     group.finish()
 }
@@ -461,8 +487,10 @@ fn buildings_bbox_benchmark(c: &mut Criterion) {
         });
     });
     group.bench_function("7-postgis_sqlx", |b| {
+        let mut conn = rt.block_on(postgis_sqlx::connect()).unwrap();
         b.iter(|| {
             rt.block_on(postgis_sqlx::postgis_sqlx_to_geo(
+                &mut conn,
                 "buildings",
                 &bbox,
                 srid,
@@ -471,8 +499,10 @@ fn buildings_bbox_benchmark(c: &mut Criterion) {
         })
     });
     group.bench_function("7-postgis_postgres", |b| {
+        let mut client = postgis_postgres::connect().unwrap();
         b.iter(|| {
             postgis_postgres::postgis_postgres_to_geo(
+                &mut client,
                 "buildings",
                 &bbox,
                 srid,
@@ -481,7 +511,8 @@ fn buildings_bbox_benchmark(c: &mut Criterion) {
         })
     });
     group.bench_function("7-rust_postgis", |b| {
-        b.iter(|| rust_postgis::rust_postgis_read("buildings", &bbox, srid, 54353))
+        let mut client = postgis_postgres::connect().unwrap();
+        b.iter(|| rust_postgis::rust_postgis_read(&mut client, "buildings", &bbox, srid, 54353))
         // fgb: 54351
     });
     group.finish()
