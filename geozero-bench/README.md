@@ -24,54 +24,55 @@ Remark: All data is converted from the FlatGeobuf file and therefore has the sam
 
 ## Results
 
-![countries](./results/200618/countries/violin.svg)
+![countries](./results/200619/countries/violin.svg)
 
-| Benchmark | Median (ms) |
-| --------- | ----------: |
-| countries/1-shp | 0.85 |
-| countries/3-fgb | 0.20 |
-| countries/4-gpkg | 1.10 |
-| countries/5-geojson | 26.57 |
-| countries/6-fgb_http | 9.97 |
-| countries/7-postgis_sqlx | 24.51 |
-| countries/8-postgis_postgres | 12.04 |
-| countries/9-rust_postgis | 12.22 |
+| Benchmark | Median (ms) | Factor |
+| --------- | ----------: | -----: |
+| countries/1-shp | 1.17 | 1.00 |
+| countries/3-fgb | 0.18 | 0.15 |
+| countries/4-gpkg | 1.09 | 0.93 |
+| countries/5-geojson | 25.97 | 22.21 |
+| countries/6-fgb_http | 9.88 | 8.45 |
+| countries/7-postgis_sqlx | 11.95 | 10.21 |
+| countries/8-postgis_postgres | 11.93 | 10.20 |
+| countries/9-rust_postgis | 12.14 | 10.38 |
 
-![countries_bbox](./results/200618/countries_bbox/violin.svg)
+![countries_bbox](./results/200619/countries_bbox/violin.svg)
 
-| Benchmark | Median (ms) |
-| --------- | ----------: |
-| countries_bbox/1-shp | 1.15 |
-| countries_bbox/3-fgb | 0.03 |
-| countries_bbox/4-gpkg | 0.72 |
-| countries_bbox/5-gpkg_gdal | 3.83 |
-| countries_bbox/6-fgb_http | 13.57 |
-| countries_bbox/7-postgis_sqlx | 29.76 |
-| countries_bbox/8-postgis_postgres | 14.76 |
-| countries_bbox/9-rust_postgis | 14.60 |
+| Benchmark | Median (ms) | Factor |
+| --------- | ----------: | -----: |
+| countries_bbox/1-shp | 1.12 | 1.00 |
+| countries_bbox/3-fgb | 0.02 | 0.02 |
+| countries_bbox/4-gpkg | 0.65 | 0.58 |
+| countries_bbox/5-gpkg_gdal | 2.89 | 2.58 |
+| countries_bbox/6-fgb_http | 10.09 | 9.01 |
+| countries_bbox/7-postgis_sqlx | 11.39 | 10.17 |
+| countries_bbox/8-postgis_postgres | 11.49 | 10.26 |
+| countries_bbox/9-rust_postgis | 11.52 | 10.29 |
 
-![buildings](./results/200618/buildings/violin.svg)
+![buildings](./results/200619/buildings/violin.svg)
 
-| Benchmark | Median (s) |
-| --------- | ---------: |
-| buildings/1-shp | 2.71 |
-| buildings/3-fgb | 0.98 |
-| buildings/4-gpkg | 4.99 |
-| buildings/5-fgb_http | 2.45 |
-| buildings/7-postgis_postgres | 3.27 |
+| Benchmark | Median (ms) | Factor |
+| --------- | ----------: | -----: |
+| buildings/1-shp | 2.73 | 1.00 |
+| buildings/3-fgb | 0.94 | 0.35 |
+| buildings/4-gpkg | 4.26 | 1.56 |
+| buildings/5-fgb_http | 2.15 | 0.79 |
+| buildings/7-postgis_postgres | 3.20 | 1.17 |
 
-![buildings_bbox](./results/200618/buildings_bbox/violin.svg)
+![buildings_bbox](./results/200619/buildings_bbox/violin.svg)
 
-| Benchmark | Median (ms) |
-| --------- | ----------: |
-| buildings_bbox/1-shp | 88.51 |
-| buildings_bbox/3-fgb | 70.27 |
-| buildings_bbox/4-gpkg | 106.84 |
-| buildings_bbox/5-gpkg_gdal | 113.81 |
-| buildings_bbox/6-fgb_http | 59.79 |
-| buildings_bbox/7-postgis_sqlx | 149.64 |
-| buildings_bbox/8-postgis_postgres | 119.24 |
-| buildings_bbox/9-rust_postgis | 127.41 |
+| Benchmark | Median (ms) | Factor |
+| --------- | ----------: | -----: |
+| buildings_bbox/1-shp | 87.27 | 1.00 |
+| buildings_bbox/3-fgb | 24.65 | 0.28 |
+| buildings_bbox/4-gpkg | 107.03 | 1.23 |
+| buildings_bbox/5-gpkg_gdal | 115.66 | 1.33 |
+| buildings_bbox/6-fgb_http | 59.34 | 0.68 |
+| buildings_bbox/7-postgis_sqlx | 166.08 | 1.90 |
+| buildings_bbox/8-postgis_postgres | 121.34 | 1.39 |
+| buildings_bbox/9-rust_postgis | 127.80 | 1.46 |
+
 
 ## Running the benchmark
 
@@ -92,5 +93,5 @@ Start web server:
 
 Run benchmark:
 
-    export DATABASE_URL=postgresql://$USER@localhost/geozerobench
+    export DATABASE_URL=postgresql://$USER@localhost/geozerobench?sslmode=disable
     cargo bench
