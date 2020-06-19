@@ -52,7 +52,7 @@ Remark: All data is converted from the FlatGeobuf file and therefore has the sam
 
 ![buildings](./results/200619/buildings/violin.svg)
 
-| Benchmark | Median (ms) | Factor |
+| Benchmark | Median (s)  | Factor |
 | --------- | ----------: | -----: |
 | buildings/1-shp | 2.73 | 1.00 |
 | buildings/3-fgb | 0.94 | 0.35 |
