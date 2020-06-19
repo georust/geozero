@@ -313,6 +313,9 @@ fn countries_bbox_benchmark(c: &mut Criterion) {
             )
         })
     });
+    group.bench_function("5-geojson", |b| {
+        b.iter(|| gdal::gdal_read("tests/data/countries.json", &bbox, 3))
+    });
     group.bench_function("6-fgb_http", |b| {
         b.iter(|| rt.block_on(fgb::fgb_http_to_geo("countries.fgb", &bbox, 6)));
     });

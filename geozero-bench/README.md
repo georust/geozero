@@ -11,8 +11,8 @@
 
 
 *  `shp`: Shapefile with GDAL driver
-*  `fgb`: FlatGeobuf file with Rust driver and GeoZero processor for `geo`
-*  `gpkg`: GeoPackage file with GeoZero GPKG reader for [SQLx](https://github.com/launchbadge/sqlx) and processor for `geo`
+*  `fgb`: [FlatGeobuf](https://bjornharrtell.github.io/flatgeobuf/) file with Rust driver and GeoZero processor for `geo`
+*  `gpkg`: [GeoPackage](https://www.geopackage.org/) file with GeoZero GPKG reader for [SQLx](https://github.com/launchbadge/sqlx) and processor for `geo`
 *  `gpkg_gdal`: GeoPackage file with GDAL driver
 *  `geojson`: GeoJSON file with GDAL driver
 *  `fgb_http`: FlatGeobuf over HTTP (Nginx) with Rust driver and GeoZero processor for `geo`
