@@ -17,9 +17,6 @@ pub mod geo {
     }
 
     impl<'de> Decode<'de, Sqlite> for Geometry {
-        fn accepts(ty: &SqliteTypeInfo) -> bool {
-            *ty == <Self as sqlx::Type<Sqlite>>::type_info()
-        }
         fn decode(value: SqliteValueRef<'de>) -> Result<Self, BoxDynError> {
             let mut blob = <&[u8] as Decode<Sqlite>>::decode(value)?;
             let mut geo = RustGeo::new();
@@ -51,9 +48,6 @@ pub mod geos {
     }
 
     impl<'de> Decode<'de, Sqlite> for Geometry<'static> {
-        fn accepts(ty: &SqliteTypeInfo) -> bool {
-            *ty == <Self as sqlx::Type<Sqlite>>::type_info()
-        }
         fn decode(value: SqliteValueRef<'de>) -> Result<Self, BoxDynError> {
             let mut blob = <&[u8] as Decode<Sqlite>>::decode(value)?;
             let mut geo = Geos::new();

@@ -121,10 +121,6 @@ pub mod sqlx {
         }
 
         impl<'de> Decode<'de, Postgres> for Geometry {
-            fn accepts(ty: &PgTypeInfo) -> bool {
-                *ty == PgTypeInfo::with_name("geometry")
-                    || *ty == PgTypeInfo::with_name("geography")
-            }
             fn decode(value: PgValueRef<'de>) -> Result<Self, BoxDynError> {
                 let mut blob = <&[u8] as Decode<Postgres>>::decode(value)?;
                 let mut geo = RustGeo::new();
@@ -156,10 +152,6 @@ pub mod sqlx {
         }
 
         impl<'de> Decode<'de, Postgres> for Geometry<'static> {
-            fn accepts(ty: &PgTypeInfo) -> bool {
-                *ty == PgTypeInfo::with_name("geometry")
-                    || *ty == PgTypeInfo::with_name("geography")
-            }
             fn decode(value: PgValueRef<'de>) -> Result<Self, BoxDynError> {
                 let mut blob = <&[u8] as Decode<Postgres>>::decode(value)?;
                 let mut geo = Geos::new();
