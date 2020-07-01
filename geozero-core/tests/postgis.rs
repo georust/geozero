@@ -108,7 +108,7 @@ mod postgis_postgres {
 mod postgis_sqlx {
     use geozero_core::wkb;
     use geozero_core::wkt::WktWriter;
-    use sqlx::postgres::{PgPool, PgQueryAs};
+    use sqlx::postgres::PgPool;
     use tokio::runtime::Runtime;
 
     async fn blob_query() -> Result<(), sqlx::Error> {
@@ -191,7 +191,9 @@ mod postgis_sqlx {
     mod register_type {
         use super::*;
         use sqlx::decode::Decode;
-        use sqlx::postgres::{PgData, PgTypeInfo, PgValue, Postgres};
+        use sqlx::postgres::{PgTypeInfo, PgValueRef, Postgres};
+
+        type BoxDynError = Box<dyn std::error::Error + Send + Sync>;
 
         struct Wkt(String);
 
@@ -202,21 +204,14 @@ mod postgis_sqlx {
         }
 
         impl<'de> Decode<'de, Postgres> for Wkt {
-            fn decode(value: PgValue<'de>) -> sqlx::Result<Self> {
-                match value.get() {
-                    Some(PgData::Binary(mut buf)) => {
-                        let mut wkt_data: Vec<u8> = Vec::new();
-                        let mut writer = WktWriter::new(&mut wkt_data);
-                        wkb::process_ewkb_geom(&mut buf, &mut writer)
-                            .map_err(|e| sqlx::Error::Decode(e.to_string().into()))?;
-                        let wkt = Wkt(std::str::from_utf8(&wkt_data).unwrap().to_string());
-                        Ok(wkt)
-                    }
-                    Some(PgData::Text(_s)) => Err(sqlx::Error::Decode(
-                        "supporting binary geometry format only".into(),
-                    )),
-                    None => Ok(Wkt("EMPTY".to_string())),
-                }
+            fn decode(value: PgValueRef) -> Result<Self, BoxDynError> {
+                let mut blob = <&[u8] as Decode<Postgres>>::decode(value)?;
+                let mut wkt_data: Vec<u8> = Vec::new();
+                let mut writer = WktWriter::new(&mut wkt_data);
+                wkb::process_ewkb_geom(&mut blob, &mut writer)
+                    .map_err(|e| sqlx::Error::Decode(e.to_string().into()))?;
+                let wkt = Wkt(std::str::from_utf8(&wkt_data).unwrap().to_string());
+                Ok(wkt)
             }
         }
 

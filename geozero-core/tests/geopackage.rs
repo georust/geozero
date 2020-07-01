@@ -2,7 +2,7 @@
 mod gpkg_sqlx {
     use geozero_core::wkb;
     use geozero_core::wkt::WktWriter;
-    use sqlx::sqlite::{SqlitePool, SqliteQueryAs};
+    use sqlx::sqlite::SqlitePool;
     use tokio::runtime::Runtime;
 
     async fn geometry_columns_query() -> Result<(), sqlx::Error> {
