@@ -463,54 +463,32 @@ mod test {
         );
 
         // SELECT 'SRID=4326;LINESTRING (10 -20 100, 0 -0.5 101)'::geometry
-        let ewkb = hex::decode("01020000A0E610000002000000000000000000244000000000000034C000000000000059400000000000000000000000000000E0BF0000000000405940").unwrap();
-        let mut wkt_data: Vec<u8> = Vec::new();
-        let mut writer = WktWriter::new(&mut wkt_data);
-        writer.dims.z = true;
-        assert!(process_ewkb_geom(&mut ewkb.as_slice(), &mut writer).is_ok());
         assert_eq!(
-            std::str::from_utf8(&wkt_data).unwrap(),
+            &ewkb_to_wkt("01020000A0E610000002000000000000000000244000000000000034C000000000000059400000000000000000000000000000E0BF0000000000405940", true),
             "LINESTRING (10 -20 100, 0 -0.5 101)"
         );
 
         // SELECT 'SRID=4326;MULTILINESTRING ((10 -20, 0 -0.5), (0 0, 2 0))'::geometry
-        let ewkb = hex::decode("0105000020E610000002000000010200000002000000000000000000244000000000000034C00000000000000000000000000000E0BF0102000000020000000000000000000000000000000000000000000000000000400000000000000000").unwrap();
-        let mut wkt_data: Vec<u8> = Vec::new();
-        let mut writer = WktWriter::new(&mut wkt_data);
-        writer.dims.z = true;
-        assert!(process_ewkb_geom(&mut ewkb.as_slice(), &mut writer).is_ok());
         assert_eq!(
-            std::str::from_utf8(&wkt_data).unwrap(),
+            &ewkb_to_wkt("0105000020E610000002000000010200000002000000000000000000244000000000000034C00000000000000000000000000000E0BF0102000000020000000000000000000000000000000000000000000000000000400000000000000000", false),
             "MULTILINESTRING ((10 -20, 0 -0.5), (0 0, 2 0))"
         );
 
         // SELECT 'SRID=4326;POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))'::geometry
-        let ewkb = hex::decode("0103000020E610000001000000050000000000000000000000000000000000000000000000000000400000000000000000000000000000004000000000000000400000000000000000000000000000004000000000000000000000000000000000").unwrap();
-        let mut wkt_data: Vec<u8> = Vec::new();
-        let mut writer = WktWriter::new(&mut wkt_data);
-        assert!(process_ewkb_geom(&mut ewkb.as_slice(), &mut writer).is_ok());
         assert_eq!(
-            std::str::from_utf8(&wkt_data).unwrap(),
+            &ewkb_to_wkt("0103000020E610000001000000050000000000000000000000000000000000000000000000000000400000000000000000000000000000004000000000000000400000000000000000000000000000004000000000000000000000000000000000", false),
             "POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))"
         );
 
         // SELECT 'SRID=4326;MULTIPOLYGON (((0 0, 2 0, 2 2, 0 2, 0 0)), ((10 10, -2 10, -2 -2, 10 -2, 10 10)))'::geometry
-        let ewkb = hex::decode("0106000020E610000002000000010300000001000000050000000000000000000000000000000000000000000000000000400000000000000000000000000000004000000000000000400000000000000000000000000000004000000000000000000000000000000000010300000001000000050000000000000000002440000000000000244000000000000000C0000000000000244000000000000000C000000000000000C0000000000000244000000000000000C000000000000024400000000000002440").unwrap();
-        let mut wkt_data: Vec<u8> = Vec::new();
-        let mut writer = WktWriter::new(&mut wkt_data);
-        assert!(process_ewkb_geom(&mut ewkb.as_slice(), &mut writer).is_ok());
         assert_eq!(
-            std::str::from_utf8(&wkt_data).unwrap(),
+            &ewkb_to_wkt("0106000020E610000002000000010300000001000000050000000000000000000000000000000000000000000000000000400000000000000000000000000000004000000000000000400000000000000000000000000000004000000000000000000000000000000000010300000001000000050000000000000000002440000000000000244000000000000000C0000000000000244000000000000000C000000000000000C0000000000000244000000000000000C000000000000024400000000000002440", false),
             "MULTIPOLYGON (((0 0, 2 0, 2 2, 0 2, 0 0)), ((10 10, -2 10, -2 -2, 10 -2, 10 10)))"
         );
 
         // SELECT 'GeometryCollection(POINT (10 10),POINT (30 30),LINESTRING (15 15, 20 20))'::geometry
-        let ewkb = hex::decode("01070000000300000001010000000000000000002440000000000000244001010000000000000000003E400000000000003E400102000000020000000000000000002E400000000000002E4000000000000034400000000000003440").unwrap();
-        let mut wkt_data: Vec<u8> = Vec::new();
-        let mut writer = WktWriter::new(&mut wkt_data);
-        assert!(process_ewkb_geom(&mut ewkb.as_slice(), &mut writer).is_ok());
         assert_eq!(
-            std::str::from_utf8(&wkt_data).unwrap(),
+            &ewkb_to_wkt("01070000000300000001010000000000000000002440000000000000244001010000000000000000003E400000000000003E400102000000020000000000000000002E400000000000002E4000000000000034400000000000003440", false),
             "GEOMETRYCOLLECTION (POINT (10 10), POINT (30 30), LINESTRING (15 15, 20 20))"
         );
 
@@ -539,6 +517,15 @@ mod test {
 
         // SELECT 'TRIANGLE((0 0,0 9,9 0,0 0))'::geometry
         let ewkb = hex::decode("0111000000010000000400000000000000000000000000000000000000000000000000000000000000000022400000000000002240000000000000000000000000000000000000000000000000").unwrap();
+    }
+
+    fn ewkb_to_wkt(ewkbstr: &str, with_z: bool) -> String {
+        let ewkb = hex::decode(ewkbstr).unwrap();
+        let mut wkt_data: Vec<u8> = Vec::new();
+        let mut writer = WktWriter::new(&mut wkt_data);
+        writer.dims.z = with_z;
+        assert!(process_ewkb_geom(&mut ewkb.as_slice(), &mut writer).is_ok());
+        std::str::from_utf8(&wkt_data).unwrap().to_string()
     }
 
     #[test]
