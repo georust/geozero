@@ -50,7 +50,7 @@ impl GeomProcessor for Geos<'_> {
         let cs = self
             .cs
             .pop()
-            .ok_or(GeozeroError::Geometry("CoordSeq missing".to_string()))?;
+            .ok_or_else(|| GeozeroError::Geometry("CoordSeq missing".to_string()))?;
         self.geom = GGeom::create_point(cs).map_err(from_geos_err)?;
         Ok(())
     }
@@ -64,7 +64,7 @@ impl GeomProcessor for Geos<'_> {
         let cs = self
             .cs
             .pop()
-            .ok_or(GeozeroError::Geometry("CoordSeq missing".to_string()))?;
+            .ok_or_else(|| GeozeroError::Geometry("CoordSeq missing".to_string()))?;
         let size = cs.size().map_err(from_geos_err)?;
         let ggpts = (0..size)
             .map(|i| {
@@ -90,7 +90,7 @@ impl GeomProcessor for Geos<'_> {
             let cs = self
                 .cs
                 .pop()
-                .ok_or(GeozeroError::Geometry("CoordSeq missing".to_string()))?;
+                .ok_or_else(|| GeozeroError::Geometry("CoordSeq missing".to_string()))?;
             self.geom = GGeom::create_line_string(cs).map_err(from_geos_err)?;
         }
         Ok(())

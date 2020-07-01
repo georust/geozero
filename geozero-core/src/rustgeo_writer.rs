@@ -95,14 +95,12 @@ impl GeomProcessor for RustGeo {
         let polygon = Polygon::new(exterior, self.line_strings.to_owned());
         if tagged {
             self.geom = polygon.into();
+        } else if let Geometry::MultiPolygon(mp) = &mut self.geom {
+            mp.0.push(polygon);
         } else {
-            if let Geometry::MultiPolygon(mp) = &mut self.geom {
-                mp.0.push(polygon);
-            } else {
-                return Err(GeozeroError::Geometry(
-                    "Unexpected geometry type".to_string(),
-                ));
-            }
+            return Err(GeozeroError::Geometry(
+                "Unexpected geometry type".to_string(),
+            ));
         }
         Ok(())
     }
