@@ -151,7 +151,7 @@ mod test {
 
     #[test]
     fn point() {
-        let wkt = "POINT (1 1)";
+        let wkt = "POINT(1 1)";
         let geo = Geometry::from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
@@ -162,7 +162,7 @@ mod test {
 
     #[test]
     fn multipoint() {
-        let wkt = "MULTIPOINT (1 1, 2 2)";
+        let wkt = "MULTIPOINT(1 1,2 2)";
         let geo = Geometry::from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
@@ -173,7 +173,7 @@ mod test {
 
     #[test]
     fn line() {
-        let wkt = "LINESTRING (1 1, 2 2)";
+        let wkt = "LINESTRING(1 1,2 2)";
         let geo = Geometry::from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
@@ -184,7 +184,7 @@ mod test {
 
     #[test]
     fn line_3d() {
-        let wkt = "LINESTRING (1 1 10, 2 2 20)";
+        let wkt = "LINESTRING(1 1 10,2 2 20)";
         let geo = Geometry::from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
@@ -197,7 +197,7 @@ mod test {
 
     #[test]
     fn multiline() {
-        let wkt = "MULTILINESTRING ((1 1, 2 2), (3 3, 4 4))";
+        let wkt = "MULTILINESTRING((1 1,2 2),(3 3,4 4))";
         let geo = Geometry::from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
@@ -208,7 +208,7 @@ mod test {
 
     #[test]
     fn polygon() {
-        let wkt = "POLYGON ((0 0, 0 3, 3 3, 3 0, 0 0), (0.2 0.2, 0.2 2, 2 2, 2 0.2, 0.2 0.2))";
+        let wkt = "POLYGON((0 0,0 3,3 3,3 0,0 0),(0.2 0.2,0.2 2,2 2,2 0.2,0.2 0.2))";
         let geo = Geometry::from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
@@ -219,7 +219,7 @@ mod test {
 
     #[test]
     fn multipolygon() {
-        let wkt = "MULTIPOLYGON (((0 0, 0 1, 1 1, 1 0, 0 0)))";
+        let wkt = "MULTIPOLYGON(((0 0,0 1,1 1,1 0,0 0)))";
         let geo = Geometry::from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
@@ -230,7 +230,7 @@ mod test {
 
     #[test]
     fn geometry_collection() {
-        let wkt = "GEOMETRYCOLLECTION (POINT (1 1), LINESTRING (1 1, 2 2))";
+        let wkt = "GEOMETRYCOLLECTION(POINT(1 1),LINESTRING(1 1,2 2))";
         let geo = Geometry::from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();

@@ -2,7 +2,7 @@ use geozero::error::Result;
 use geozero::{CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcessor};
 use std::io::Write;
 
-/// WKT according to OpenGIS Simple Features Specification For SQL Revision 1.1
+/// WKT according to OpenGIS Simple Features Specification For SQL Revision 1.1, Chapter 3.2.5
 pub struct WktWriter<'a, W: Write> {
     pub dims: CoordDimensions,
     out: &'a mut W,
@@ -25,7 +25,7 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
         if idx == 0 {
             let _ = self.out.write(&format!("{} {}", x, y).as_bytes())?;
         } else {
-            let _ = self.out.write(&format!(", {} {}", x, y).as_bytes())?;
+            let _ = self.out.write(&format!(",{} {}", x, y).as_bytes())?;
         }
         Ok(())
     }
@@ -42,7 +42,7 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
         if idx == 0 {
             let _ = self.out.write(&format!("{} {}", x, y).as_bytes())?;
         } else {
-            let _ = self.out.write(&format!(", {} {}", x, y).as_bytes())?;
+            let _ = self.out.write(&format!(",{} {}", x, y).as_bytes())?;
         }
         if let Some(z) = z {
             let _ = self.out.write(&format!(" {}", z).as_bytes())?;
@@ -55,9 +55,9 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
 
     fn point_begin(&mut self, idx: usize) -> Result<()> {
         if idx > 0 {
-            let _ = self.out.write(b", ")?;
+            let _ = self.out.write(b",")?;
         }
-        let _ = self.out.write(b"POINT (")?;
+        let _ = self.out.write(b"POINT(")?;
         Ok(())
     }
     fn point_end(&mut self, _idx: usize) -> Result<()> {
@@ -66,9 +66,9 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
     }
     fn multipoint_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
         if idx > 0 {
-            let _ = self.out.write(b", ")?;
+            let _ = self.out.write(b",")?;
         }
-        let _ = self.out.write(b"MULTIPOINT (")?;
+        let _ = self.out.write(b"MULTIPOINT(")?;
         Ok(())
     }
     fn multipoint_end(&mut self, _idx: usize) -> Result<()> {
@@ -77,10 +77,10 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
     }
     fn linestring_begin(&mut self, tagged: bool, _size: usize, idx: usize) -> Result<()> {
         if idx > 0 {
-            let _ = self.out.write(b", ")?;
+            let _ = self.out.write(b",")?;
         }
         if tagged {
-            let _ = self.out.write(b"LINESTRING (")?;
+            let _ = self.out.write(b"LINESTRING(")?;
         } else {
             let _ = self.out.write(b"(")?;
         }
@@ -92,9 +92,9 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
     }
     fn multilinestring_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
         if idx > 0 {
-            let _ = self.out.write(b", ")?;
+            let _ = self.out.write(b",")?;
         }
-        let _ = self.out.write(b"MULTILINESTRING (")?;
+        let _ = self.out.write(b"MULTILINESTRING(")?;
         Ok(())
     }
     fn multilinestring_end(&mut self, _idx: usize) -> Result<()> {
@@ -103,10 +103,10 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
     }
     fn polygon_begin(&mut self, tagged: bool, _size: usize, idx: usize) -> Result<()> {
         if idx > 0 {
-            let _ = self.out.write(b", ")?;
+            let _ = self.out.write(b",")?;
         }
         if tagged {
-            let _ = self.out.write(b"POLYGON (")?;
+            let _ = self.out.write(b"POLYGON(")?;
             Ok(())
         } else {
             let _ = self.out.write(b"(")?;
@@ -119,9 +119,9 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
     }
     fn multipolygon_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
         if idx > 0 {
-            let _ = self.out.write(b", ")?;
+            let _ = self.out.write(b",")?;
         }
-        let _ = self.out.write(b"MULTIPOLYGON (")?;
+        let _ = self.out.write(b"MULTIPOLYGON(")?;
         Ok(())
     }
     fn multipolygon_end(&mut self, _idx: usize) -> Result<()> {
@@ -129,10 +129,66 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
         Ok(())
     }
     fn geometrycollection_begin(&mut self, _size: usize, _idx: usize) -> Result<()> {
-        let _ = self.out.write(b"GEOMETRYCOLLECTION (")?;
+        let _ = self.out.write(b"GEOMETRYCOLLECTION(")?;
         Ok(())
     }
     fn geometrycollection_end(&mut self, _idx: usize) -> Result<()> {
+        let _ = self.out.write(b")")?;
+        Ok(())
+    }
+    fn circularstring_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
+        if idx > 0 {
+            let _ = self.out.write(b",")?;
+        }
+        let _ = self.out.write(b"CIRCULARSTRING(")?;
+        Ok(())
+    }
+    fn circularstring_end(&mut self, _idx: usize) -> Result<()> {
+        let _ = self.out.write(b")")?;
+        Ok(())
+    }
+    fn compoundcurve_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
+        if idx > 0 {
+            let _ = self.out.write(b",")?;
+        }
+        let _ = self.out.write(b"COMPOUNDCURVE(")?;
+        Ok(())
+    }
+
+    fn compoundcurve_end(&mut self, _idx: usize) -> Result<()> {
+        let _ = self.out.write(b")")?;
+        Ok(())
+    }
+    fn curvepolygon_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
+        if idx > 0 {
+            let _ = self.out.write(b",")?;
+        }
+        let _ = self.out.write(b"CURVEPOLYGON(")?;
+        Ok(())
+    }
+    fn curvepolygon_end(&mut self, _idx: usize) -> Result<()> {
+        let _ = self.out.write(b")")?;
+        Ok(())
+    }
+    fn multicurve_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
+        if idx > 0 {
+            let _ = self.out.write(b",")?;
+        }
+        let _ = self.out.write(b"MULTICURVE(")?;
+        Ok(())
+    }
+    fn multicurve_end(&mut self, _idx: usize) -> Result<()> {
+        let _ = self.out.write(b")")?;
+        Ok(())
+    }
+    fn multisurface_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
+        if idx > 0 {
+            let _ = self.out.write(b",")?;
+        }
+        let _ = self.out.write(b"MULTISURFACE(")?;
+        Ok(())
+    }
+    fn multisurface_end(&mut self, _idx: usize) -> Result<()> {
         let _ = self.out.write(b")")?;
         Ok(())
     }

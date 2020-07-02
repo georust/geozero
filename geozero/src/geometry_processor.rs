@@ -137,6 +137,76 @@ pub trait GeomProcessor {
     fn geometrycollection_end(&mut self, idx: usize) -> Result<()> {
         Ok(())
     }
+
+    /// Begin of CircularString processing
+    ///
+    /// The CircularString is the basic curve type, similar to a LineString in the linear world. A single segment required three points, the start and end points (first and third) and any other point on the arc. The exception to this is for a closed circle, where the start and end points are the same. In this case the second point MUST be the center of the arc, ie the opposite side of the circle. To chain arcs together, the last point of the previous arc becomes the first point of the next arc, just like in LineString. This means that a valid circular string must have an odd number of points greated than 1.
+    ///
+    /// Next: size * xy/coordinate
+    fn circularstring_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        Ok(())
+    }
+
+    /// End of CircularString processing
+    fn circularstring_end(&mut self, idx: usize) -> Result<()> {
+        Ok(())
+    }
+
+    /// Begin of CompoundCurve processing
+    ///
+    /// A compound curve is a single, continuous curve that has both curved (circular) segments and linear segments. That means that in addition to having well-formed components, the end point of every component (except the last) must be coincident with the start point of the following component.
+    ///
+    /// Next: size * (CircularString | LineString (untagged))
+    fn compoundcurve_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        Ok(())
+    }
+
+    /// End of CompoundCurve processing
+    fn compoundcurve_end(&mut self, idx: usize) -> Result<()> {
+        Ok(())
+    }
+
+    /// Begin of CurvePolygon processing
+    ///
+    /// A CurvePolygon is just like a polygon, with an outer ring and zero or more inner rings. The difference is that a ring can take the form of a circular string, linear string or compound string.
+    ///
+    /// Next: size * (CircularString | LineString (untagged) | CompoundCurve)
+    fn curvepolygon_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        Ok(())
+    }
+
+    /// End of CurvePolygon processing
+    fn curvepolygon_end(&mut self, idx: usize) -> Result<()> {
+        Ok(())
+    }
+
+    /// Begin of MultiCurve processing
+    ///
+    /// The MultiCurve is a collection of curves, which can include linear strings, circular strings or compound strings.
+    ///
+    /// Next: size * (CircularString | LineString (untagged) | CompoundCurve)
+    fn multicurve_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        Ok(())
+    }
+
+    /// End of MultiCurve processing
+    fn multicurve_end(&mut self, idx: usize) -> Result<()> {
+        Ok(())
+    }
+
+    /// Begin of MultiSurface processing
+    ///
+    /// The MultiSurface is a collection of surfaces, which can be (linear) polygons or curve polygons.
+    ///
+    /// Next: size * (CurvePolygon | Polygon (untagged))
+    fn multisurface_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        Ok(())
+    }
+
+    /// End of MultiSurface processing
+    fn multisurface_end(&mut self, idx: usize) -> Result<()> {
+        Ok(())
+    }
 }
 
 #[test]

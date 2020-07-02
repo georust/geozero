@@ -115,6 +115,46 @@ impl<P1: FeatureProcessor, P2: FeatureProcessor> GeomProcessor for Multiplexer<P
         self.p1.multipolygon_end(idx)?;
         self.p2.multipolygon_end(idx)
     }
+    fn circularstring_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.p1.circularstring_begin(size, idx)?;
+        self.p2.circularstring_begin(size, idx)
+    }
+    fn circularstring_end(&mut self, idx: usize) -> Result<()> {
+        self.p1.circularstring_end(idx)?;
+        self.p2.circularstring_end(idx)
+    }
+    fn compoundcurve_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.p1.compoundcurve_begin(size, idx)?;
+        self.p2.compoundcurve_begin(size, idx)
+    }
+    fn compoundcurve_end(&mut self, idx: usize) -> Result<()> {
+        self.p1.compoundcurve_end(idx)?;
+        self.p2.compoundcurve_end(idx)
+    }
+    fn curvepolygon_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.p1.curvepolygon_begin(size, idx)?;
+        self.p2.curvepolygon_begin(size, idx)
+    }
+    fn curvepolygon_end(&mut self, idx: usize) -> Result<()> {
+        self.p1.curvepolygon_end(idx)?;
+        self.p2.curvepolygon_end(idx)
+    }
+    fn multicurve_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.p1.multicurve_begin(size, idx)?;
+        self.p2.multicurve_begin(size, idx)
+    }
+    fn multicurve_end(&mut self, idx: usize) -> Result<()> {
+        self.p1.multicurve_end(idx)?;
+        self.p2.multicurve_end(idx)
+    }
+    fn multisurface_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.p1.multisurface_begin(size, idx)?;
+        self.p2.multisurface_begin(size, idx)
+    }
+    fn multisurface_end(&mut self, idx: usize) -> Result<()> {
+        self.p1.multisurface_end(idx)?;
+        self.p2.multisurface_end(idx)
+    }
 }
 
 impl<P1: FeatureProcessor, P2: FeatureProcessor> PropertyProcessor for Multiplexer<P1, P2> {

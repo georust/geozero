@@ -311,6 +311,12 @@ fn process_wkb_geom_n<R: Read, P: GeomProcessor>(
         WKBGeometryType::LineString => {
             process_linestring(raw, &info, true, idx, processor)?;
         }
+        WKBGeometryType::CircularString => {
+            process_circularstring(raw, &info, idx, processor)?;
+        }
+        WKBGeometryType::CompoundCurve => {
+            process_compoundcurve(raw, &info, read_header, idx, processor)?;
+        }
         WKBGeometryType::MultiLineString => {
             let n_lines = raw.ioread_with::<u32>(info.endian)? as usize;
             processor.multilinestring_begin(n_lines, idx)?;
@@ -320,8 +326,19 @@ fn process_wkb_geom_n<R: Read, P: GeomProcessor>(
             }
             processor.multilinestring_end(idx)?;
         }
+        WKBGeometryType::MultiCurve => {
+            let n_curves = raw.ioread_with::<u32>(info.endian)? as usize;
+            processor.multicurve_begin(n_curves, idx)?;
+            for i in 0..n_curves {
+                process_curve(raw, read_header, i, processor)?;
+            }
+            processor.multicurve_end(idx)?;
+        }
         WKBGeometryType::Polygon => {
             process_polygon(raw, &info, true, idx, processor)?;
+        }
+        WKBGeometryType::CurvePolygon => {
+            process_curvepolygon(raw, &info, read_header, idx, processor)?;
         }
         WKBGeometryType::MultiPolygon => {
             let n_polys = raw.ioread_with::<u32>(info.endian)? as usize;
@@ -332,6 +349,24 @@ fn process_wkb_geom_n<R: Read, P: GeomProcessor>(
             }
             processor.multipolygon_end(idx)?;
         }
+        WKBGeometryType::MultiSurface => {
+            let n_polys = raw.ioread_with::<u32>(info.endian)? as usize;
+            processor.multisurface_begin(n_polys, idx)?;
+            for i in 0..n_polys {
+                let info = read_header(raw)?;
+                match info.base_type {
+                    WKBGeometryType::CurvePolygon => {
+                        process_curvepolygon(raw, &info, read_header, i, processor)?;
+                    }
+                    WKBGeometryType::Polygon => {
+                        process_polygon(raw, &info, false, i, processor)?;
+                    }
+                    _ => return Err(GeozeroError::GeometryFormat),
+                }
+            }
+            processor.multisurface_end(idx)?;
+        }
+
         WKBGeometryType::GeometryCollection => {
             let n_geoms = raw.ioread_with::<u32>(info.endian)? as usize;
             processor.geometrycollection_begin(n_geoms, idx)?;
@@ -393,6 +428,21 @@ fn process_linestring<R: Read, P: GeomProcessor>(
     processor.linestring_end(tagged, idx)
 }
 
+fn process_circularstring<R: Read, P: GeomProcessor>(
+    raw: &mut R,
+    info: &WkbInfo,
+    idx: usize,
+    processor: &mut P,
+) -> Result<()> {
+    let length = raw.ioread_with::<u32>(info.endian)? as usize;
+    processor.circularstring_begin(length, idx)?;
+    let multi = multi_dim(processor);
+    for i in 0..length {
+        process_coord(raw, info, multi, i, processor)?;
+    }
+    processor.circularstring_end(idx)
+}
+
 fn process_polygon<R: Read, P: GeomProcessor>(
     raw: &mut R,
     info: &WkbInfo,
@@ -408,13 +458,74 @@ fn process_polygon<R: Read, P: GeomProcessor>(
     processor.polygon_end(tagged, idx)
 }
 
+fn process_compoundcurve<R: Read, P: GeomProcessor>(
+    raw: &mut R,
+    info: &WkbInfo,
+    read_header: fn(&mut R) -> Result<WkbInfo>,
+    idx: usize,
+    processor: &mut P,
+) -> Result<()> {
+    let n_strings = raw.ioread_with::<u32>(info.endian)? as usize;
+    processor.compoundcurve_begin(n_strings, idx)?;
+    for i in 0..n_strings {
+        let info = read_header(raw)?;
+        match info.base_type {
+            WKBGeometryType::CircularString => {
+                process_circularstring(raw, &info, i, processor)?;
+            }
+            WKBGeometryType::LineString => {
+                process_linestring(raw, &info, false, i, processor)?;
+            }
+            _ => return Err(GeozeroError::GeometryFormat),
+        }
+    }
+    processor.compoundcurve_end(idx)
+}
+
+fn process_curve<R: Read, P: GeomProcessor>(
+    raw: &mut R,
+    read_header: fn(&mut R) -> Result<WkbInfo>,
+    idx: usize,
+    processor: &mut P,
+) -> Result<()> {
+    let info = read_header(raw)?;
+    match info.base_type {
+        WKBGeometryType::CircularString => {
+            process_circularstring(raw, &info, idx, processor)?;
+        }
+        WKBGeometryType::LineString => {
+            process_linestring(raw, &info, false, idx, processor)?;
+        }
+        WKBGeometryType::CompoundCurve => {
+            process_compoundcurve(raw, &info, read_header, idx, processor)?;
+        }
+        _ => return Err(GeozeroError::GeometryFormat),
+    }
+    Ok(())
+}
+
+fn process_curvepolygon<R: Read, P: GeomProcessor>(
+    raw: &mut R,
+    info: &WkbInfo,
+    read_header: fn(&mut R) -> Result<WkbInfo>,
+    idx: usize,
+    processor: &mut P,
+) -> Result<()> {
+    let ring_count = raw.ioread_with::<u32>(info.endian)? as usize;
+    processor.curvepolygon_begin(ring_count, idx)?;
+    for i in 0..ring_count {
+        process_curve(raw, read_header, i, processor)?;
+    }
+    processor.curvepolygon_end(idx)
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
     use crate::wkt_writer::WktWriter;
 
     #[test]
-    fn ewkb_geometries() {
+    fn ewkb_format() {
         // SELECT 'POINT(10 -20 100 1)'::geometry
         let ewkb = hex::decode(
             "01010000C0000000000000244000000000000034C00000000000005940000000000000F03F",
@@ -431,7 +542,7 @@ mod test {
         assert!(
             process_ewkb_geom(&mut ewkb.as_slice(), &mut WktWriter::new(&mut wkt_data)).is_ok()
         );
-        assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), "POINT (10 -20)");
+        assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), "POINT(10 -20)");
 
         // Process all dimensions
         let mut wkt_data: Vec<u8> = Vec::new();
@@ -441,7 +552,7 @@ mod test {
         assert!(process_ewkb_geom(&mut ewkb.as_slice(), &mut writer).is_ok());
         assert_eq!(
             std::str::from_utf8(&wkt_data).unwrap(),
-            "POINT (10 -20 100 1)"
+            "POINT(10 -20 100 1)"
         );
 
         // SELECT 'SRID=4326;MULTIPOINT ((10 -20 100), (0 -0.5 101))'::geometry
@@ -459,64 +570,114 @@ mod test {
         assert!(process_ewkb_geom(&mut ewkb.as_slice(), &mut writer).is_ok());
         assert_eq!(
             std::str::from_utf8(&wkt_data).unwrap(),
-            "MULTIPOINT (10 -20 100, 0 -0.5 101)"
+            "MULTIPOINT(10 -20 100,0 -0.5 101)"
+        );
+    }
+
+    #[test]
+    fn ewkb_geometries() {
+        // SELECT 'POINT(10 -20)'::geometry
+        assert_eq!(
+            &ewkb_to_wkt("0101000000000000000000244000000000000034C0", false),
+            "POINT(10 -20)"
+        );
+
+        // SELECT 'SRID=4326;MULTIPOINT (10 -20 100, 0 -0.5 101)'::geometry
+        assert_eq!(
+            &ewkb_to_wkt("01040000A0E6100000020000000101000080000000000000244000000000000034C0000000000000594001010000800000000000000000000000000000E0BF0000000000405940", true),
+            "MULTIPOINT(10 -20 100,0 -0.5 101)"
+            //OGR: MULTIPOINT ((10 -20 100),(0 -0.5 101))
         );
 
         // SELECT 'SRID=4326;LINESTRING (10 -20 100, 0 -0.5 101)'::geometry
         assert_eq!(
             &ewkb_to_wkt("01020000A0E610000002000000000000000000244000000000000034C000000000000059400000000000000000000000000000E0BF0000000000405940", true),
-            "LINESTRING (10 -20 100, 0 -0.5 101)"
+            "LINESTRING(10 -20 100,0 -0.5 101)"
         );
 
         // SELECT 'SRID=4326;MULTILINESTRING ((10 -20, 0 -0.5), (0 0, 2 0))'::geometry
         assert_eq!(
             &ewkb_to_wkt("0105000020E610000002000000010200000002000000000000000000244000000000000034C00000000000000000000000000000E0BF0102000000020000000000000000000000000000000000000000000000000000400000000000000000", false),
-            "MULTILINESTRING ((10 -20, 0 -0.5), (0 0, 2 0))"
+            "MULTILINESTRING((10 -20,0 -0.5),(0 0,2 0))"
         );
 
         // SELECT 'SRID=4326;POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))'::geometry
         assert_eq!(
             &ewkb_to_wkt("0103000020E610000001000000050000000000000000000000000000000000000000000000000000400000000000000000000000000000004000000000000000400000000000000000000000000000004000000000000000000000000000000000", false),
-            "POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))"
+            "POLYGON((0 0,2 0,2 2,0 2,0 0))"
         );
 
         // SELECT 'SRID=4326;MULTIPOLYGON (((0 0, 2 0, 2 2, 0 2, 0 0)), ((10 10, -2 10, -2 -2, 10 -2, 10 10)))'::geometry
         assert_eq!(
             &ewkb_to_wkt("0106000020E610000002000000010300000001000000050000000000000000000000000000000000000000000000000000400000000000000000000000000000004000000000000000400000000000000000000000000000004000000000000000000000000000000000010300000001000000050000000000000000002440000000000000244000000000000000C0000000000000244000000000000000C000000000000000C0000000000000244000000000000000C000000000000024400000000000002440", false),
-            "MULTIPOLYGON (((0 0, 2 0, 2 2, 0 2, 0 0)), ((10 10, -2 10, -2 -2, 10 -2, 10 10)))"
+            "MULTIPOLYGON(((0 0,2 0,2 2,0 2,0 0)),((10 10,-2 10,-2 -2,10 -2,10 10)))"
         );
 
         // SELECT 'GeometryCollection(POINT (10 10),POINT (30 30),LINESTRING (15 15, 20 20))'::geometry
         assert_eq!(
             &ewkb_to_wkt("01070000000300000001010000000000000000002440000000000000244001010000000000000000003E400000000000003E400102000000020000000000000000002E400000000000002E4000000000000034400000000000003440", false),
-            "GEOMETRYCOLLECTION (POINT (10 10), POINT (30 30), LINESTRING (15 15, 20 20))"
+            "GEOMETRYCOLLECTION(POINT(10 10),POINT(30 30),LINESTRING(15 15,20 20))"
+        );
+    }
+
+    #[test]
+    fn ewkb_curves() {
+        // SELECT 'CIRCULARSTRING(0 0,1 1,2 0)'::geometry
+        assert_eq!(
+            &ewkb_to_wkt("01080000000300000000000000000000000000000000000000000000000000F03F000000000000F03F00000000000000400000000000000000", false),
+            "CIRCULARSTRING(0 0,1 1,2 0)"
         );
 
-        // SELECT 'CIRCULARSTRING(0 0,1 1,2 0)'::geometry
-        let ewkb = hex::decode("01080000000300000000000000000000000000000000000000000000000000F03F000000000000F03F00000000000000400000000000000000").unwrap();
-
         // SELECT 'COMPOUNDCURVE (CIRCULARSTRING (0 0,1 1,2 0),(2 0,3 0))'::geometry
-        let ewkb = hex::decode("01090000000200000001080000000300000000000000000000000000000000000000000000000000F03F000000000000F03F000000000000004000000000000000000102000000020000000000000000000040000000000000000000000000000008400000000000000000").unwrap();
+        assert_eq!(
+            &ewkb_to_wkt("01090000000200000001080000000300000000000000000000000000000000000000000000000000F03F000000000000F03F000000000000004000000000000000000102000000020000000000000000000040000000000000000000000000000008400000000000000000", false),
+            "COMPOUNDCURVE(CIRCULARSTRING(0 0,1 1,2 0),(2 0,3 0))"
+        );
 
         // SELECT 'CURVEPOLYGON(COMPOUNDCURVE(CIRCULARSTRING(0 0,1 1,2 0),(2 0,3 0,3 -1,0 -1,0 0)))'::geometry
-        let ewkb = hex::decode("010A0000000100000001090000000200000001080000000300000000000000000000000000000000000000000000000000F03F000000000000F03F0000000000000040000000000000000001020000000500000000000000000000400000000000000000000000000000084000000000000000000000000000000840000000000000F0BF0000000000000000000000000000F0BF00000000000000000000000000000000").unwrap();
+        assert_eq!(
+            &ewkb_to_wkt("010A0000000100000001090000000200000001080000000300000000000000000000000000000000000000000000000000F03F000000000000F03F0000000000000040000000000000000001020000000500000000000000000000400000000000000000000000000000084000000000000000000000000000000840000000000000F0BF0000000000000000000000000000F0BF00000000000000000000000000000000", false),
+            "CURVEPOLYGON(COMPOUNDCURVE(CIRCULARSTRING(0 0,1 1,2 0),(2 0,3 0,3 -1,0 -1,0 0)))"
+        );
 
-        // SELECT 'MULTICURVE(CIRCULARSTRING(0 0,1 1,2 0))'::geometry
-        let ewkb = hex::decode("010B0000000100000001080000000300000000000000000000000000000000000000000000000000F03F000000000000F03F00000000000000400000000000000000").unwrap();
+        // SELECT 'MULTICURVE((0 0, 5 5),CIRCULARSTRING(4 0, 4 4, 8 4))'::geometry
+        assert_eq!(
+            &ewkb_to_wkt("010B000000020000000102000000020000000000000000000000000000000000000000000000000014400000000000001440010800000003000000000000000000104000000000000000000000000000001040000000000000104000000000000020400000000000001040", false),
+            "MULTICURVE((0 0,5 5),CIRCULARSTRING(4 0,4 4,8 4))"
+        );
 
         // SELECT 'MULTISURFACE (CURVEPOLYGON (COMPOUNDCURVE (CIRCULARSTRING (0 0,1 1,2 0),(2 0,3 0,3 -1,0 -1,0 0))))'::geometry
-        let ewkb = hex::decode("010C00000001000000010A0000000100000001090000000200000001080000000300000000000000000000000000000000000000000000000000F03F000000000000F03F0000000000000040000000000000000001020000000500000000000000000000400000000000000000000000000000084000000000000000000000000000000840000000000000F0BF0000000000000000000000000000F0BF00000000000000000000000000000000").unwrap();
+        assert_eq!(
+            &ewkb_to_wkt("010C00000001000000010A0000000100000001090000000200000001080000000300000000000000000000000000000000000000000000000000F03F000000000000F03F0000000000000040000000000000000001020000000500000000000000000000400000000000000000000000000000084000000000000000000000000000000840000000000000F0BF0000000000000000000000000000F0BF00000000000000000000000000000000", false),
+            "MULTISURFACE(CURVEPOLYGON(COMPOUNDCURVE(CIRCULARSTRING(0 0,1 1,2 0),(2 0,3 0,3 -1,0 -1,0 0))))"
+        );
+    }
 
-        // Curve: LineString | CircularString | CompoundCurve
-
+    #[test]
+    fn ewkb_surfaces() {
         // SELECT 'POLYHEDRALSURFACE(((0 0 0,0 0 1,0 1 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0)),((0 0 0,1 0 0,1 0 1,0 0 1,0 0 0)),((1 1 0,1 1 1,1 0 1,1 0 0,1 1 0)),((0 1 0,0 1 1,1 1 1,1 1 0,0 1 0)),((0 0 1,1 0 1,1 1 1,0 1 1,0 0 1)))'::geometry
         let ewkb = hex::decode("010F000080060000000103000080010000000500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000F03F0000000000000000000000000000F03F000000000000F03F0000000000000000000000000000F03F0000000000000000000000000000000000000000000000000000000000000000010300008001000000050000000000000000000000000000000000000000000000000000000000000000000000000000000000F03F0000000000000000000000000000F03F000000000000F03F0000000000000000000000000000F03F0000000000000000000000000000000000000000000000000000000000000000000000000000000001030000800100000005000000000000000000000000000000000000000000000000000000000000000000F03F00000000000000000000000000000000000000000000F03F0000000000000000000000000000F03F00000000000000000000000000000000000000000000F03F00000000000000000000000000000000000000000000000001030000800100000005000000000000000000F03F000000000000F03F0000000000000000000000000000F03F000000000000F03F000000000000F03F000000000000F03F0000000000000000000000000000F03F000000000000F03F00000000000000000000000000000000000000000000F03F000000000000F03F0000000000000000010300008001000000050000000000000000000000000000000000F03F00000000000000000000000000000000000000000000F03F000000000000F03F000000000000F03F000000000000F03F000000000000F03F000000000000F03F000000000000F03F00000000000000000000000000000000000000000000F03F00000000000000000103000080010000000500000000000000000000000000000000000000000000000000F03F000000000000F03F0000000000000000000000000000F03F000000000000F03F000000000000F03F000000000000F03F0000000000000000000000000000F03F000000000000F03F00000000000000000000000000000000000000000000F03F").unwrap();
+        // WKBPolyhedralSurface {
+        // byte byteOrder;
+        // static uint32 wkbType = 15;
+        // uint32 numPolygons;
+        // WKBPolygon polygons[numPolygons]}
 
         // SELECT 'TIN(((0 0 0,0 0 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,0 0 0)))'::geometry
         let ewkb = hex::decode("0110000080020000000111000080010000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000F03F0000000000000000000000000000F03F0000000000000000000000000000000000000000000000000000000000000000011100008001000000040000000000000000000000000000000000000000000000000000000000000000000000000000000000F03F0000000000000000000000000000F03F000000000000F03F0000000000000000000000000000000000000000000000000000000000000000").unwrap();
+        // WKBTIN {
+        //    byte byteOrder;
+        //    static uint32 wkbType = 16;
+        //    uint32 numPolygons;
+        //    WKBPolygon polygons[numPolygons]}
 
         // SELECT 'TRIANGLE((0 0,0 9,9 0,0 0))'::geometry
         let ewkb = hex::decode("0111000000010000000400000000000000000000000000000000000000000000000000000000000000000022400000000000002240000000000000000000000000000000000000000000000000").unwrap();
+        // WKBTriangle {
+        // byte    byteOrder;
+        // static uint32    wkbType = 2003;
+        // uint32    numRings;
+        // LinearRing    rings[numRings]}
     }
 
     fn ewkb_to_wkt(ewkbstr: &str, with_z: bool) -> String {
@@ -524,7 +685,10 @@ mod test {
         let mut wkt_data: Vec<u8> = Vec::new();
         let mut writer = WktWriter::new(&mut wkt_data);
         writer.dims.z = with_z;
-        assert!(process_ewkb_geom(&mut ewkb.as_slice(), &mut writer).is_ok());
+        assert_eq!(
+            process_ewkb_geom(&mut ewkb.as_slice(), &mut writer).map_err(|e| e.to_string()),
+            Ok(())
+        );
         std::str::from_utf8(&wkt_data).unwrap().to_string()
     }
 
@@ -540,7 +704,7 @@ mod test {
 
         let mut wkt_data: Vec<u8> = Vec::new();
         assert!(process_gpkg_geom(&mut wkb.as_slice(), &mut WktWriter::new(&mut wkt_data)).is_ok());
-        assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), "POINT (1.1 1.1)");
+        assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), "POINT(1.1 1.1)");
 
         // mln3dzm
         let wkb = hex::decode("47500003E6100000000000000000244000000000000034400000000000002440000000000000344001BD0B00000100000001BA0B0000020000000000000000003440000000000000244000000000000008400000000000001440000000000000244000000000000034400000000000001C400000000000000040").unwrap();
@@ -554,7 +718,7 @@ mod test {
         assert!(process_gpkg_geom(&mut wkb.as_slice(), &mut WktWriter::new(&mut wkt_data)).is_ok());
         assert_eq!(
             std::str::from_utf8(&wkt_data).unwrap(),
-            "MULTILINESTRING ((20 10, 10 20))"
+            "MULTILINESTRING((20 10,10 20))"
         );
 
         // gc2d
@@ -567,7 +731,7 @@ mod test {
         assert!(process_gpkg_geom(&mut wkb.as_slice(), &mut WktWriter::new(&mut wkt_data)).is_ok());
         assert_eq!(
             std::str::from_utf8(&wkt_data).unwrap(),
-            "GEOMETRYCOLLECTION (POINT (1 3), POLYGON ((21 21, 22 21, 21 22, 21 21)))"
+            "GEOMETRYCOLLECTION(POINT(1 3),POLYGON((21 21,22 21,21 22,21 21)))"
         );
     }
 

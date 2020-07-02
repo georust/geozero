@@ -47,7 +47,7 @@ mod gpkg_sqlx {
         let mut wkt_data: Vec<u8> = Vec::new();
         let mut writer = WktWriter::new(&mut wkt_data);
         assert!(wkb::process_gpkg_geom(&mut row.0.as_slice(), &mut writer).is_ok());
-        assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), "POINT (1.1 1.1)");
+        assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), "POINT(1.1 1.1)");
 
         Ok(())
     }

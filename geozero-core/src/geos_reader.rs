@@ -154,7 +154,7 @@ mod test {
 
     #[test]
     fn point_geom() {
-        let wkt = "POINT (1 1)";
+        let wkt = "POINT(1 1)";
         let ggeom = GGeom::new_from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
@@ -165,8 +165,8 @@ mod test {
 
     #[test]
     fn multipoint_geom() {
-        let wkt = "MULTIPOINT (1 1, 2 2)";
-        // let geos_wkt = "MULTIPOINT((1 1), (2 2))";
+        let wkt = "MULTIPOINT(1 1,2 2)";
+        // let geos_wkt = "MULTIPOINT((1 1),(2 2))";
         let ggeom = GGeom::new_from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
@@ -177,7 +177,7 @@ mod test {
 
     #[test]
     fn line_geom() {
-        let wkt = "LINESTRING (1 1, 2 2)";
+        let wkt = "LINESTRING(1 1,2 2)";
         let ggeom = GGeom::new_from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
@@ -188,7 +188,7 @@ mod test {
 
     #[test]
     fn line_geom_3d() {
-        let wkt = "LINESTRING (1 1 10, 2 2 20)";
+        let wkt = "LINESTRING(1 1 10,2 2 20)";
         let ggeom = GGeom::new_from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
@@ -201,7 +201,7 @@ mod test {
 
     #[test]
     fn linearring_geom() {
-        let wkt = "LINEARRING(1 1, 2 1, 2 2, 1 1)";
+        let wkt = "LINEARRING(1 1,2 1,2 2,1 1)";
         let ggeom = GGeom::new_from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
@@ -209,13 +209,13 @@ mod test {
 
         assert_eq!(
             std::str::from_utf8(&wkt_data).unwrap(),
-            "LINESTRING (1 1, 2 1, 2 2, 1 1)"
+            "LINESTRING(1 1,2 1,2 2,1 1)"
         );
     }
 
     #[test]
     fn multiline_geom() {
-        let wkt = "MULTILINESTRING ((1 1, 2 2), (3 3, 4 4))";
+        let wkt = "MULTILINESTRING((1 1,2 2),(3 3,4 4))";
         let ggeom = GGeom::new_from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
@@ -226,7 +226,7 @@ mod test {
 
     #[test]
     fn polygon_geom() {
-        let wkt = "POLYGON ((0 0, 0 3, 3 3, 3 0, 0 0), (0.2 0.2, 0.2 2, 2 2, 2 0.2, 0.2 0.2))";
+        let wkt = "POLYGON((0 0,0 3,3 3,3 0,0 0),(0.2 0.2,0.2 2,2 2,2 0.2,0.2 0.2))";
         let ggeom = GGeom::new_from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
@@ -237,7 +237,7 @@ mod test {
 
     #[test]
     fn multipolygon_geom() {
-        let wkt = "MULTIPOLYGON (((0 0, 0 1, 1 1, 1 0, 0 0)))";
+        let wkt = "MULTIPOLYGON(((0 0,0 1,1 1,1 0,0 0)))";
         let ggeom = GGeom::new_from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
@@ -248,7 +248,7 @@ mod test {
 
     #[test]
     fn geometry_collection_geom() {
-        let wkt = "GEOMETRYCOLLECTION (POINT (1 1), LINESTRING (1 1, 2 2))";
+        let wkt = "GEOMETRYCOLLECTION(POINT(1 1),LINESTRING(1 1,2 2))";
         let ggeom = GGeom::new_from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
