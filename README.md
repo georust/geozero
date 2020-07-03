@@ -8,7 +8,7 @@ or render geometries directly.
 
 Supported geometry types:
 * [OGC Simple Features](https://en.wikipedia.org/wiki/Simple_Features)
-* Circular arcs as defined by SQL-MM Part 3.
+* Circular arcs as defined by SQL-MM Part 3
 * TIN
 
 Supported dimensions: X, Y, Z, M, T
