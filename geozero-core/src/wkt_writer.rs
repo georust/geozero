@@ -192,6 +192,40 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
         let _ = self.out.write(b")")?;
         Ok(())
     }
+
+    fn triangle_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
+        if idx > 0 {
+            let _ = self.out.write(b",")?;
+        }
+        let _ = self.out.write(b"TRIANGLE(")?;
+        Ok(())
+    }
+    fn triangle_end(&mut self, _idx: usize) -> Result<()> {
+        let _ = self.out.write(b")")?;
+        Ok(())
+    }
+    fn polyhedralsurface_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
+        if idx > 0 {
+            let _ = self.out.write(b",")?;
+        }
+        let _ = self.out.write(b"POLYHEDRALSURFACE(")?;
+        Ok(())
+    }
+    fn polyhedralsurface_end(&mut self, _idx: usize) -> Result<()> {
+        let _ = self.out.write(b")")?;
+        Ok(())
+    }
+    fn tin_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
+        if idx > 0 {
+            let _ = self.out.write(b",")?;
+        }
+        let _ = self.out.write(b"TIN(")?;
+        Ok(())
+    }
+    fn tin_end(&mut self, _idx: usize) -> Result<()> {
+        let _ = self.out.write(b")")?;
+        Ok(())
+    }
 }
 
 impl<W: Write> PropertyProcessor for WktWriter<'_, W> {}

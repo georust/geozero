@@ -155,6 +155,30 @@ impl<P1: FeatureProcessor, P2: FeatureProcessor> GeomProcessor for Multiplexer<P
         self.p1.multisurface_end(idx)?;
         self.p2.multisurface_end(idx)
     }
+    fn triangle_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.p1.triangle_begin(size, idx)?;
+        self.p2.triangle_begin(size, idx)
+    }
+    fn triangle_end(&mut self, idx: usize) -> Result<()> {
+        self.p1.triangle_end(idx)?;
+        self.p2.triangle_end(idx)
+    }
+    fn polyhedralsurface_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.p1.polyhedralsurface_begin(size, idx)?;
+        self.p2.polyhedralsurface_begin(size, idx)
+    }
+    fn polyhedralsurface_end(&mut self, idx: usize) -> Result<()> {
+        self.p1.polyhedralsurface_end(idx)?;
+        self.p2.polyhedralsurface_end(idx)
+    }
+    fn tin_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.p1.tin_begin(size, idx)?;
+        self.p2.tin_begin(size, idx)
+    }
+    fn tin_end(&mut self, idx: usize) -> Result<()> {
+        self.p1.tin_end(idx)?;
+        self.p2.tin_end(idx)
+    }
 }
 
 impl<P1: FeatureProcessor, P2: FeatureProcessor> PropertyProcessor for Multiplexer<P1, P2> {

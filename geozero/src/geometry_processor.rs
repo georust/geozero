@@ -207,6 +207,41 @@ pub trait GeomProcessor {
     fn multisurface_end(&mut self, idx: usize) -> Result<()> {
         Ok(())
     }
+    /// Begin of Triangle processing
+    ///
+    /// Next: size * LineString (untagged) = rings
+    fn triangle_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        Ok(())
+    }
+
+    /// End of Polygon processing
+    fn triangle_end(&mut self, idx: usize) -> Result<()> {
+        Ok(())
+    }
+
+    /// Begin of PolyhedralSurface processing
+    ///
+    /// Next: size * Polygon (untagged)
+    fn polyhedralsurface_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        Ok(())
+    }
+
+    /// End of MultiPolygon processing
+    fn polyhedralsurface_end(&mut self, idx: usize) -> Result<()> {
+        Ok(())
+    }
+
+    /// Begin of Tin processing
+    ///
+    /// Next: size * Polygon (untagged)
+    fn tin_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        Ok(())
+    }
+
+    /// End of MultiPolygon processing
+    fn tin_end(&mut self, idx: usize) -> Result<()> {
+        Ok(())
+    }
 }
 
 #[test]
