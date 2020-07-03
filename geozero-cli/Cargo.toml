@@ -10,7 +10,7 @@ name = "geozero"
 path = "src/main.rs"
 
 [dependencies]
-geozero = { version = "0.4", path = "../geozero" }
+geozero = { version = "0.5", path = "../geozero" }
 geozero-core = { version = "0.4", path = "../geozero-core" }
 flatgeobuf = { git = "https://github.com/pka/flatgeobuf/", branch="geozero" }
 structopt = "0.3"

@@ -1,5 +1,7 @@
-## 0.4.1 (UNRELEASED)
+## 0.5.0 (2020-07-03)
 
+* Add curve type processing methods
+* Add triangle/polyhedralsurface/tin processing methods
 * Add support for seek_bufread::BufReader
 
 ## 0.4.0 (2020-06-03)

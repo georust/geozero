@@ -22,7 +22,7 @@ postgis-postgres = ["postgres-types"]
 features = ["gpkg", "postgis-sqlx", "postgis-postgres"]
 
 [dependencies]
-geozero = { version = "0.4", path = "../geozero" }
+geozero = { version = "0.5", path = "../geozero" }
 geojson = { version = "0.18" }
 geo-types = { version = "0.6", default-features = false }
 geos = { version = "5.0", optional = true }
