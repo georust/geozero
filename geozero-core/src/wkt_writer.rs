@@ -15,6 +15,28 @@ impl<'a, W: Write> WktWriter<'a, W> {
             out,
         }
     }
+    fn geom_begin(&mut self, idx: usize, tag: &[u8]) -> Result<()> {
+        if idx > 0 {
+            let _ = self.out.write(b",")?;
+        }
+        let _ = self.out.write(tag)?;
+        Ok(())
+    }
+    fn tagged_geom_begin(&mut self, tagged: bool, idx: usize, tag: &[u8]) -> Result<()> {
+        if idx > 0 {
+            let _ = self.out.write(b",")?;
+        }
+        if tagged {
+            let _ = self.out.write(tag)?;
+        } else {
+            let _ = self.out.write(b"(")?;
+        }
+        Ok(())
+    }
+    fn geom_end(&mut self) -> Result<()> {
+        let _ = self.out.write(b")")?;
+        Ok(())
+    }
 }
 
 impl<W: Write> GeomProcessor for WktWriter<'_, W> {
@@ -54,177 +76,97 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
     }
 
     fn point_begin(&mut self, idx: usize) -> Result<()> {
-        if idx > 0 {
-            let _ = self.out.write(b",")?;
-        }
-        let _ = self.out.write(b"POINT(")?;
-        Ok(())
+        self.geom_begin(idx, b"POINT(")
     }
     fn point_end(&mut self, _idx: usize) -> Result<()> {
-        let _ = self.out.write(b")")?;
-        Ok(())
+        self.geom_end()
     }
     fn multipoint_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
-        if idx > 0 {
-            let _ = self.out.write(b",")?;
-        }
-        let _ = self.out.write(b"MULTIPOINT(")?;
-        Ok(())
+        self.geom_begin(idx, b"MULTIPOINT(")
     }
     fn multipoint_end(&mut self, _idx: usize) -> Result<()> {
-        let _ = self.out.write(b")")?;
-        Ok(())
+        self.geom_end()
     }
     fn linestring_begin(&mut self, tagged: bool, _size: usize, idx: usize) -> Result<()> {
-        if idx > 0 {
-            let _ = self.out.write(b",")?;
-        }
-        if tagged {
-            let _ = self.out.write(b"LINESTRING(")?;
-        } else {
-            let _ = self.out.write(b"(")?;
-        }
-        Ok(())
+        self.tagged_geom_begin(tagged, idx, b"LINESTRING(")
     }
     fn linestring_end(&mut self, _tagged: bool, _idx: usize) -> Result<()> {
-        let _ = self.out.write(b")")?;
-        Ok(())
+        self.geom_end()
     }
     fn multilinestring_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
-        if idx > 0 {
-            let _ = self.out.write(b",")?;
-        }
-        let _ = self.out.write(b"MULTILINESTRING(")?;
-        Ok(())
+        self.geom_begin(idx, b"MULTILINESTRING(")
     }
     fn multilinestring_end(&mut self, _idx: usize) -> Result<()> {
-        let _ = self.out.write(b")")?;
-        Ok(())
+        self.geom_end()
     }
     fn polygon_begin(&mut self, tagged: bool, _size: usize, idx: usize) -> Result<()> {
-        if idx > 0 {
-            let _ = self.out.write(b",")?;
-        }
-        if tagged {
-            let _ = self.out.write(b"POLYGON(")?;
-            Ok(())
-        } else {
-            let _ = self.out.write(b"(")?;
-            Ok(())
-        }
+        self.tagged_geom_begin(tagged, idx, b"POLYGON(")
     }
     fn polygon_end(&mut self, _tagged: bool, _idx: usize) -> Result<()> {
-        let _ = self.out.write(b")")?;
-        Ok(())
+        self.geom_end()
     }
     fn multipolygon_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
-        if idx > 0 {
-            let _ = self.out.write(b",")?;
-        }
-        let _ = self.out.write(b"MULTIPOLYGON(")?;
-        Ok(())
+        self.geom_begin(idx, b"MULTIPOLYGON(")
     }
     fn multipolygon_end(&mut self, _idx: usize) -> Result<()> {
-        let _ = self.out.write(b")")?;
-        Ok(())
+        self.geom_end()
     }
     fn geometrycollection_begin(&mut self, _size: usize, _idx: usize) -> Result<()> {
         let _ = self.out.write(b"GEOMETRYCOLLECTION(")?;
         Ok(())
     }
     fn geometrycollection_end(&mut self, _idx: usize) -> Result<()> {
-        let _ = self.out.write(b")")?;
-        Ok(())
+        self.geom_end()
     }
     fn circularstring_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
-        if idx > 0 {
-            let _ = self.out.write(b",")?;
-        }
-        let _ = self.out.write(b"CIRCULARSTRING(")?;
-        Ok(())
+        self.geom_begin(idx, b"CIRCULARSTRING(")
     }
     fn circularstring_end(&mut self, _idx: usize) -> Result<()> {
-        let _ = self.out.write(b")")?;
-        Ok(())
+        self.geom_end()
     }
     fn compoundcurve_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
-        if idx > 0 {
-            let _ = self.out.write(b",")?;
-        }
-        let _ = self.out.write(b"COMPOUNDCURVE(")?;
-        Ok(())
+        self.geom_begin(idx, b"COMPOUNDCURVE(")
     }
 
     fn compoundcurve_end(&mut self, _idx: usize) -> Result<()> {
-        let _ = self.out.write(b")")?;
-        Ok(())
+        self.geom_end()
     }
     fn curvepolygon_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
-        if idx > 0 {
-            let _ = self.out.write(b",")?;
-        }
-        let _ = self.out.write(b"CURVEPOLYGON(")?;
-        Ok(())
+        self.geom_begin(idx, b"CURVEPOLYGON(")
     }
     fn curvepolygon_end(&mut self, _idx: usize) -> Result<()> {
-        let _ = self.out.write(b")")?;
-        Ok(())
+        self.geom_end()
     }
     fn multicurve_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
-        if idx > 0 {
-            let _ = self.out.write(b",")?;
-        }
-        let _ = self.out.write(b"MULTICURVE(")?;
-        Ok(())
+        self.geom_begin(idx, b"MULTICURVE(")
     }
     fn multicurve_end(&mut self, _idx: usize) -> Result<()> {
-        let _ = self.out.write(b")")?;
-        Ok(())
+        self.geom_end()
     }
     fn multisurface_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
-        if idx > 0 {
-            let _ = self.out.write(b",")?;
-        }
-        let _ = self.out.write(b"MULTISURFACE(")?;
-        Ok(())
+        self.geom_begin(idx, b"MULTISURFACE(")
     }
     fn multisurface_end(&mut self, _idx: usize) -> Result<()> {
-        let _ = self.out.write(b")")?;
-        Ok(())
+        self.geom_end()
     }
 
     fn triangle_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
-        if idx > 0 {
-            let _ = self.out.write(b",")?;
-        }
-        let _ = self.out.write(b"TRIANGLE(")?;
-        Ok(())
+        self.geom_begin(idx, b"TRIANGLE(")
     }
     fn triangle_end(&mut self, _idx: usize) -> Result<()> {
-        let _ = self.out.write(b")")?;
-        Ok(())
+        self.geom_end()
     }
     fn polyhedralsurface_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
-        if idx > 0 {
-            let _ = self.out.write(b",")?;
-        }
-        let _ = self.out.write(b"POLYHEDRALSURFACE(")?;
-        Ok(())
+        self.geom_begin(idx, b"POLYHEDRALSURFACE(")
     }
     fn polyhedralsurface_end(&mut self, _idx: usize) -> Result<()> {
-        let _ = self.out.write(b")")?;
-        Ok(())
+        self.geom_end()
     }
     fn tin_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
-        if idx > 0 {
-            let _ = self.out.write(b",")?;
-        }
-        let _ = self.out.write(b"TIN(")?;
-        Ok(())
+        self.geom_begin(idx, b"TIN(")
     }
     fn tin_end(&mut self, _idx: usize) -> Result<()> {
-        let _ = self.out.write(b")")?;
-        Ok(())
+        self.geom_end()
     }
 }
 
