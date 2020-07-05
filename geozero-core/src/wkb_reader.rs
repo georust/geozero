@@ -6,6 +6,7 @@ use std::io::Read;
 /// WKB Types according to OGC 06-103r4 (https://www.ogc.org/standards/sfa)
 #[derive(PartialEq, Debug)]
 enum WKBGeometryType {
+    Unknown = 0,
     Point = 1,
     LineString = 2,
     Polygon = 3,
@@ -74,8 +75,6 @@ enum WKBGeometryType {
     PolyhedralSurfaceZM = 3015,
     TinZM = 3016,
     TriangleZM = 3017,
-    // Extension to OGC spec
-    Unknown = 255,
 }
 
 impl WKBGeometryType {
