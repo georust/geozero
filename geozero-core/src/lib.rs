@@ -17,7 +17,9 @@ pub mod postgis;
 mod rustgeo_writer;
 /// SVG Writer.
 pub mod svg;
+mod wkb_common;
 mod wkb_reader;
+mod wkb_writer;
 mod wkt_writer;
 
 /// GeoJSON Reader + Writer.
@@ -33,7 +35,9 @@ pub mod geo {
 
 /// WKB Reader.
 pub mod wkb {
+    pub use crate::wkb_common::*;
     pub use crate::wkb_reader::*;
+    pub use crate::wkb_writer::*;
 }
 
 /// WKT Writer.
