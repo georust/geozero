@@ -7,10 +7,19 @@ use std::io::Write;
 pub struct WkbWriter<'a, W: Write> {
     pub dims: CoordDimensions,
     pub srid: Option<i32>,
+    pub envelope: Vec<f64>,
     endian: scroll::Endian,
+    dialect: WkbDialect,
     first_header: bool,
     geom_state: GeomState,
     out: &'a mut W,
+}
+
+#[derive(PartialEq, Debug)]
+pub enum WkbDialect {
+    Wkb,
+    Ewkb,
+    Geopackage,
 }
 
 #[derive(PartialEq, Debug)]
@@ -21,11 +30,13 @@ enum GeomState {
 }
 
 impl<'a, W: Write> WkbWriter<'a, W> {
-    pub fn new(out: &'a mut W) -> WkbWriter<'a, W> {
+    pub fn new(out: &'a mut W, dialect: WkbDialect) -> WkbWriter<'a, W> {
         WkbWriter {
             dims: CoordDimensions::default(),
-            endian: scroll::LE,
             srid: None,
+            envelope: Vec::new(),
+            endian: scroll::LE,
+            dialect,
             first_header: true,
             geom_state: GeomState::Normal,
             out,
@@ -34,7 +45,17 @@ impl<'a, W: Write> WkbWriter<'a, W> {
 
     // Write header in selected format
     fn write_header(&mut self, wkb_type: WKBGeometryType) -> Result<()> {
-        self.write_ewkb_header(wkb_type.clone())?;
+        match self.dialect {
+            WkbDialect::Wkb => self.write_wkb_header(wkb_type)?,
+            WkbDialect::Ewkb => self.write_ewkb_header(wkb_type)?,
+            WkbDialect::Geopackage => {
+                if self.first_header {
+                    self.write_gpkg_header()?;
+                    self.first_header = false;
+                }
+                self.write_wkb_header(wkb_type)?;
+            }
+        }
         Ok(())
     }
     // OGC WKB header
@@ -45,7 +66,14 @@ impl<'a, W: Write> WkbWriter<'a, W> {
             WKBByteOrder::NDR
         };
         self.out.iowrite(byte_order as u8)?;
-        self.out.iowrite_with(wkb_type as u32, self.endian)?;
+        let mut type_id = wkb_type as u32;
+        if self.dims.z {
+            type_id += 1000;
+        }
+        if self.dims.m {
+            type_id += 2000;
+        }
+        self.out.iowrite_with(type_id, self.endian)?;
         Ok(())
     }
 
@@ -85,32 +113,36 @@ impl<'a, W: Write> WkbWriter<'a, W> {
     fn write_gpkg_header(&mut self) -> Result<()> {
         let magic = b"GP";
         self.out.write(magic)?;
-        let version: u8 = 1; // TODO
+        let version: u8 = 0;
         self.out.iowrite(version)?;
-        // let flags = self.out.ioread::<u8>()?;
-        // // println!("flags: {:#010b}", flags);
-        // let _extended = (flags & 0b0010_0000) >> 5 == 1;
-        // let _empty = (flags & 0b0001_0000) >> 4 == 1;
-        // let env_len = match (flags & 0b0000_1110) >> 1 {
-        //     0 => 0,
-        //     1 => 4,
-        //     2 => 6,
-        //     3 => 6,
-        //     4 => 8,
-        //     _ => {
-        //         return Err(GeozeroError::GeometryFormat);
-        //     }
-        // };
-        // let endian = if flags & 0b0000_0001 == 0 {
-        //     scroll::BE
-        // } else {
-        //     scroll::LE
-        // };
-        // let srid = self.out.ioread_with::<i32>(endian)?;
-        // let envelope: std::result::Result<Vec<f64>, _> = (0..env_len)
-        //     .map(|_| self.out.ioread_with::<f64>(endian))
-        //     .collect();
-        // let envelope = envelope?;
+
+        let mut flags: u8 = 0;
+        let extended = false;
+        if extended {
+            flags |= 0b0010_0000;
+        }
+        let empty = false;
+        if empty {
+            flags |= 0b0001_0000;
+        }
+        let env_info: u8 = match self.envelope.len() {
+            0 => 0,
+            4 => 1,
+            _ => 2, //FIXME
+        };
+        flags |= env_info << 1;
+        if self.endian == scroll::LE {
+            flags |= 0b0000_0001;
+        }
+        // println!("flags: {:#010b}", flags);
+        self.out.iowrite(flags)?;
+
+        self.out.iowrite_with(self.srid.unwrap_or(0), self.endian)?;
+
+        for val in &self.envelope {
+            self.out.iowrite_with(*val, self.endian)?;
+        }
+
         Ok(())
     }
 }
@@ -251,12 +283,12 @@ impl<W: Write> FeatureProcessor for WkbWriter<'_, W> {}
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::wkb::process_ewkb_geom;
+    use crate::wkb::{process_ewkb_geom, process_gpkg_geom};
 
     fn ewkb_roundtrip(ewkbstr: &str, with_z: bool, srid: Option<i32>) -> bool {
         let wkb_in = hex::decode(ewkbstr).unwrap();
         let mut wkb_out: Vec<u8> = Vec::new();
-        let mut writer = WkbWriter::new(&mut wkb_out);
+        let mut writer = WkbWriter::new(&mut wkb_out, WkbDialect::Ewkb);
         writer.dims.z = with_z;
         writer.srid = srid;
         assert!(process_ewkb_geom(&mut wkb_in.as_slice(), &mut writer).is_ok());
@@ -323,5 +355,40 @@ mod test {
 
         // SELECT 'TRIANGLE((0 0,0 9,9 0,0 0))'::geometry
         assert!(ewkb_roundtrip("0111000000010000000400000000000000000000000000000000000000000000000000000000000000000022400000000000002240000000000000000000000000000000000000000000000000", false, None));
+    }
+
+    fn gpkg_roundtrip(
+        ewkbstr: &str,
+        dims: CoordDimensions,
+        srid: Option<i32>,
+        envelope: Vec<f64>,
+    ) -> bool {
+        let wkb_in = hex::decode(ewkbstr).unwrap();
+        let mut wkb_out: Vec<u8> = Vec::new();
+        let mut writer = WkbWriter::new(&mut wkb_out, WkbDialect::Geopackage);
+        writer.dims = dims;
+        writer.srid = srid;
+        writer.envelope = envelope;
+        assert!(process_gpkg_geom(&mut wkb_in.as_slice(), &mut writer).is_ok());
+        let ok = wkb_out == wkb_in;
+        if !ok {
+            dbg!(hex::encode(&wkb_out));
+        }
+        ok
+    }
+
+    #[test]
+    fn gpkg_geometries() {
+        // pt2d
+        assert!(gpkg_roundtrip("47500003E61000009A9999999999F13F9A9999999999F13F9A9999999999F13F9A9999999999F13F01010000009A9999999999F13F9A9999999999F13F",
+            CoordDimensions::default(), Some(4326), vec![1.1, 1.1, 1.1, 1.1]));
+
+        // mln3dzm
+        assert!(gpkg_roundtrip("47500003E6100000000000000000244000000000000034400000000000002440000000000000344001BD0B00000100000001BA0B0000020000000000000000003440000000000000244000000000000008400000000000001440000000000000244000000000000034400000000000001C400000000000000040",
+            CoordDimensions {z: true, m: true, t: false, tm: false}, Some(4326), vec![10.0, 20.0, 10.0, 20.0]));
+
+        // gc2d
+        assert!(gpkg_roundtrip("47500003e6100000000000000000f03f0000000000003640000000000000084000000000000036400107000000020000000101000000000000000000f03f00000000000008400103000000010000000400000000000000000035400000000000003540000000000000364000000000000035400000000000003540000000000000364000000000000035400000000000003540",
+            CoordDimensions::default(), Some(4326), vec![1.0, 22.0, 3.0, 22.0]));
     }
 }
