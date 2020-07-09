@@ -209,13 +209,15 @@ pub trait GeomProcessor {
     }
     /// Begin of Triangle processing
     ///
+    /// An untagged Triangle is part of a Tin
+    ///
     /// Next: size * LineString (untagged) = rings
-    fn triangle_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+    fn triangle_begin(&mut self, tagged: bool, size: usize, idx: usize) -> Result<()> {
         Ok(())
     }
 
     /// End of Polygon processing
-    fn triangle_end(&mut self, idx: usize) -> Result<()> {
+    fn triangle_end(&mut self, tagged: bool, idx: usize) -> Result<()> {
         Ok(())
     }
 
