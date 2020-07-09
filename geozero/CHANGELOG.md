@@ -1,3 +1,7 @@
+## 0.5.1 (2020-07-09)
+
+* Support untagged triangles as parts of a TIN
+
 ## 0.5.0 (2020-07-03)
 
 * Add curve type processing methods
