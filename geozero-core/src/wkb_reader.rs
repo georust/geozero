@@ -182,12 +182,7 @@ fn process_wkb_geom_n<R: Read, P: GeomProcessor>(
             process_polygon(raw, &info, true, idx, processor)?;
         }
         WKBGeometryType::Triangle => {
-            let ring_count = raw.ioread_with::<u32>(info.endian)? as usize;
-            processor.triangle_begin(ring_count, idx)?;
-            for i in 0..ring_count {
-                process_linestring(raw, info, false, i, processor)?;
-            }
-            processor.triangle_end(idx)?;
+            process_triangle(raw, &info, true, idx, processor)?;
         }
         WKBGeometryType::CurvePolygon => {
             process_curvepolygon(raw, &info, read_header, idx, processor)?;
@@ -211,11 +206,11 @@ fn process_wkb_geom_n<R: Read, P: GeomProcessor>(
             processor.polyhedralsurface_end(idx)?;
         }
         WKBGeometryType::Tin => {
-            let n_polys = raw.ioread_with::<u32>(info.endian)? as usize;
-            processor.tin_begin(n_polys, idx)?;
-            for i in 0..n_polys {
+            let n_triangles = raw.ioread_with::<u32>(info.endian)? as usize;
+            processor.tin_begin(n_triangles, idx)?;
+            for i in 0..n_triangles {
                 let info = read_header(raw)?;
-                process_polygon(raw, &info, false, i, processor)?;
+                process_triangle(raw, &info, false, i, processor)?;
             }
             processor.tin_end(idx)?;
         }
@@ -326,6 +321,21 @@ fn process_polygon<R: Read, P: GeomProcessor>(
         process_linestring(raw, info, false, i, processor)?;
     }
     processor.polygon_end(tagged, idx)
+}
+
+fn process_triangle<R: Read, P: GeomProcessor>(
+    raw: &mut R,
+    info: &WkbInfo,
+    tagged: bool,
+    idx: usize,
+    processor: &mut P,
+) -> Result<()> {
+    let ring_count = raw.ioread_with::<u32>(info.endian)? as usize;
+    processor.triangle_begin(tagged, ring_count, idx)?;
+    for i in 0..ring_count {
+        process_linestring(raw, info, false, i, processor)?;
+    }
+    processor.triangle_end(tagged, idx)
 }
 
 fn process_compoundcurve<R: Read, P: GeomProcessor>(

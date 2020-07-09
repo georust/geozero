@@ -8,8 +8,16 @@ pub struct WkbWriter<'a, W: Write> {
     pub dims: CoordDimensions,
     pub srid: Option<i32>,
     endian: scroll::Endian,
-    base_type: Option<WKBGeometryType>,
+    first_header: bool,
+    geom_state: GeomState,
     out: &'a mut W,
+}
+
+#[derive(PartialEq, Debug)]
+enum GeomState {
+    Normal,
+    RingGeom,
+    MultiPointGeom,
 }
 
 impl<'a, W: Write> WkbWriter<'a, W> {
@@ -18,25 +26,15 @@ impl<'a, W: Write> WkbWriter<'a, W> {
             dims: CoordDimensions::default(),
             endian: scroll::LE,
             srid: None,
-            base_type: None,
+            first_header: true,
+            geom_state: GeomState::Normal,
             out,
-        }
-    }
-
-    fn in_type(&self, wkb_type: WKBGeometryType) -> bool {
-        if let Some(base_type) = &self.base_type {
-            *base_type == wkb_type
-        } else {
-            false
         }
     }
 
     // Write header in selected format
     fn write_header(&mut self, wkb_type: WKBGeometryType) -> Result<()> {
         self.write_ewkb_header(wkb_type.clone())?;
-        if self.base_type.is_none() {
-            self.base_type = Some(wkb_type);
-        }
         Ok(())
     }
     // OGC WKB header
@@ -67,16 +65,17 @@ impl<'a, W: Write> WkbWriter<'a, W> {
         if self.dims.m {
             type_id |= 0x40000000;
         }
-        if self.srid.is_some() && self.base_type.is_none() {
+        if self.srid.is_some() && self.first_header {
             type_id |= 0x20000000;
         }
         self.out.iowrite_with(type_id, self.endian)?;
 
-        if self.base_type.is_none() {
+        if self.first_header {
             // write SRID in main header only
             if let Some(srid) = self.srid {
                 self.out.iowrite_with(srid, self.endian)?;
             }
+            self.first_header = false;
         }
 
         Ok(())
@@ -121,7 +120,7 @@ impl<W: Write> GeomProcessor for WkbWriter<'_, W> {
         self.dims
     }
     fn xy(&mut self, x: f64, y: f64, _idx: usize) -> Result<()> {
-        if self.in_type(WKBGeometryType::MultiPoint) {
+        if self.geom_state == GeomState::MultiPointGeom {
             self.write_header(WKBGeometryType::Point)?;
         }
         self.out.iowrite_with(x, self.endian)?;
@@ -138,7 +137,7 @@ impl<W: Write> GeomProcessor for WkbWriter<'_, W> {
         _tm: Option<u64>,
         _idx: usize,
     ) -> Result<()> {
-        if self.in_type(WKBGeometryType::MultiPoint) {
+        if self.geom_state == GeomState::MultiPointGeom {
             self.write_header(WKBGeometryType::Point)?;
         }
         self.out.iowrite_with(x, self.endian)?;
@@ -157,10 +156,15 @@ impl<W: Write> GeomProcessor for WkbWriter<'_, W> {
     fn multipoint_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
         self.write_header(WKBGeometryType::MultiPoint)?;
         self.out.iowrite_with(size as u32, self.endian)?;
+        self.geom_state = GeomState::MultiPointGeom;
         Ok(())
     }
-    fn linestring_begin(&mut self, tagged: bool, size: usize, _idx: usize) -> Result<()> {
-        if tagged || self.in_type(WKBGeometryType::MultiLineString) {
+    fn multipoint_end(&mut self, _idx: usize) -> Result<()> {
+        self.geom_state = GeomState::Normal;
+        Ok(())
+    }
+    fn linestring_begin(&mut self, _tagged: bool, size: usize, _idx: usize) -> Result<()> {
+        if self.geom_state != GeomState::RingGeom {
             self.write_header(WKBGeometryType::LineString)?;
         }
         self.out.iowrite_with(size as u32, self.endian)?;
@@ -171,11 +175,14 @@ impl<W: Write> GeomProcessor for WkbWriter<'_, W> {
         self.out.iowrite_with(size as u32, self.endian)?;
         Ok(())
     }
-    fn polygon_begin(&mut self, tagged: bool, size: usize, _idx: usize) -> Result<()> {
-        if tagged || self.in_type(WKBGeometryType::MultiPolygon) {
-            self.write_header(WKBGeometryType::Polygon)?;
-        }
+    fn polygon_begin(&mut self, _tagged: bool, size: usize, _idx: usize) -> Result<()> {
+        self.write_header(WKBGeometryType::Polygon)?;
         self.out.iowrite_with(size as u32, self.endian)?;
+        self.geom_state = GeomState::RingGeom;
+        Ok(())
+    }
+    fn polygon_end(&mut self, _tagged: bool, _idx: usize) -> Result<()> {
+        self.geom_state = GeomState::Normal;
         Ok(())
     }
     fn multipolygon_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
@@ -185,6 +192,53 @@ impl<W: Write> GeomProcessor for WkbWriter<'_, W> {
     }
     fn geometrycollection_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
         self.write_header(WKBGeometryType::GeometryCollection)?;
+        self.out.iowrite_with(size as u32, self.endian)?;
+        Ok(())
+    }
+
+    fn circularstring_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
+        self.write_header(WKBGeometryType::CircularString)?;
+        self.out.iowrite_with(size as u32, self.endian)?;
+        Ok(())
+    }
+    fn compoundcurve_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
+        self.write_header(WKBGeometryType::CompoundCurve)?;
+        self.out.iowrite_with(size as u32, self.endian)?;
+        Ok(())
+    }
+    fn curvepolygon_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
+        self.write_header(WKBGeometryType::CurvePolygon)?;
+        self.out.iowrite_with(size as u32, self.endian)?;
+        Ok(())
+    }
+    fn multicurve_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
+        self.write_header(WKBGeometryType::MultiCurve)?;
+        self.out.iowrite_with(size as u32, self.endian)?;
+        Ok(())
+    }
+    fn multisurface_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
+        self.write_header(WKBGeometryType::MultiSurface)?;
+        self.out.iowrite_with(size as u32, self.endian)?;
+        Ok(())
+    }
+
+    fn triangle_begin(&mut self, _tagged: bool, size: usize, _idx: usize) -> Result<()> {
+        self.write_header(WKBGeometryType::Triangle)?;
+        self.out.iowrite_with(size as u32, self.endian)?;
+        self.geom_state = GeomState::RingGeom;
+        Ok(())
+    }
+    fn triangle_end(&mut self, _tagged: bool, _idx: usize) -> Result<()> {
+        self.geom_state = GeomState::Normal;
+        Ok(())
+    }
+    fn polyhedralsurface_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
+        self.write_header(WKBGeometryType::PolyhedralSurface)?;
+        self.out.iowrite_with(size as u32, self.endian)?;
+        Ok(())
+    }
+    fn tin_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
+        self.write_header(WKBGeometryType::Tin)?;
         self.out.iowrite_with(size as u32, self.endian)?;
         Ok(())
     }
@@ -239,5 +293,35 @@ mod test {
 
         // SELECT 'GeometryCollection(POINT (10 10),POINT (30 30),LINESTRING (15 15, 20 20))'::geometry
         assert!(ewkb_roundtrip("01070000000300000001010000000000000000002440000000000000244001010000000000000000003E400000000000003E400102000000020000000000000000002E400000000000002E4000000000000034400000000000003440", false, None));
+    }
+
+    #[test]
+    fn ewkb_curves() {
+        // SELECT 'CIRCULARSTRING(0 0,1 1,2 0)'::geometry
+        assert!(ewkb_roundtrip("01080000000300000000000000000000000000000000000000000000000000F03F000000000000F03F00000000000000400000000000000000", false, None));
+
+        // SELECT 'COMPOUNDCURVE (CIRCULARSTRING (0 0,1 1,2 0),(2 0,3 0))'::geometry
+        assert!(ewkb_roundtrip("01090000000200000001080000000300000000000000000000000000000000000000000000000000F03F000000000000F03F000000000000004000000000000000000102000000020000000000000000000040000000000000000000000000000008400000000000000000", false, None));
+
+        // SELECT 'CURVEPOLYGON(COMPOUNDCURVE(CIRCULARSTRING(0 0,1 1,2 0),(2 0,3 0,3 -1,0 -1,0 0)))'::geometry
+        assert!(ewkb_roundtrip("010A0000000100000001090000000200000001080000000300000000000000000000000000000000000000000000000000F03F000000000000F03F0000000000000040000000000000000001020000000500000000000000000000400000000000000000000000000000084000000000000000000000000000000840000000000000F0BF0000000000000000000000000000F0BF00000000000000000000000000000000", false, None));
+
+        // SELECT 'MULTICURVE((0 0, 5 5),CIRCULARSTRING(4 0, 4 4, 8 4))'::geometry
+        assert!(ewkb_roundtrip("010B000000020000000102000000020000000000000000000000000000000000000000000000000014400000000000001440010800000003000000000000000000104000000000000000000000000000001040000000000000104000000000000020400000000000001040", false, None));
+
+        // SELECT 'MULTISURFACE (CURVEPOLYGON (COMPOUNDCURVE (CIRCULARSTRING (0 0,1 1,2 0),(2 0,3 0,3 -1,0 -1,0 0))))'::geometry
+        assert!(ewkb_roundtrip("010C00000001000000010A0000000100000001090000000200000001080000000300000000000000000000000000000000000000000000000000F03F000000000000F03F0000000000000040000000000000000001020000000500000000000000000000400000000000000000000000000000084000000000000000000000000000000840000000000000F0BF0000000000000000000000000000F0BF00000000000000000000000000000000", false, None));
+    }
+
+    #[test]
+    fn ewkb_surfaces() {
+        // SELECT 'POLYHEDRALSURFACE(((0 0 0,0 0 1,0 1 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0)),((0 0 0,1 0 0,1 0 1,0 0 1,0 0 0)),((1 1 0,1 1 1,1 0 1,1 0 0,1 1 0)),((0 1 0,0 1 1,1 1 1,1 1 0,0 1 0)),((0 0 1,1 0 1,1 1 1,0 1 1,0 0 1)))'::geometry
+        assert!(ewkb_roundtrip("010F000080060000000103000080010000000500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000F03F0000000000000000000000000000F03F000000000000F03F0000000000000000000000000000F03F0000000000000000000000000000000000000000000000000000000000000000010300008001000000050000000000000000000000000000000000000000000000000000000000000000000000000000000000F03F0000000000000000000000000000F03F000000000000F03F0000000000000000000000000000F03F0000000000000000000000000000000000000000000000000000000000000000000000000000000001030000800100000005000000000000000000000000000000000000000000000000000000000000000000F03F00000000000000000000000000000000000000000000F03F0000000000000000000000000000F03F00000000000000000000000000000000000000000000F03F00000000000000000000000000000000000000000000000001030000800100000005000000000000000000F03F000000000000F03F0000000000000000000000000000F03F000000000000F03F000000000000F03F000000000000F03F0000000000000000000000000000F03F000000000000F03F00000000000000000000000000000000000000000000F03F000000000000F03F0000000000000000010300008001000000050000000000000000000000000000000000F03F00000000000000000000000000000000000000000000F03F000000000000F03F000000000000F03F000000000000F03F000000000000F03F000000000000F03F000000000000F03F00000000000000000000000000000000000000000000F03F00000000000000000103000080010000000500000000000000000000000000000000000000000000000000F03F000000000000F03F0000000000000000000000000000F03F000000000000F03F000000000000F03F000000000000F03F0000000000000000000000000000F03F000000000000F03F00000000000000000000000000000000000000000000F03F", true, None));
+
+        // SELECT 'TIN(((0 0 0,0 0 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,0 0 0)))'::geometry
+        assert!(ewkb_roundtrip("0110000080020000000111000080010000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000F03F0000000000000000000000000000F03F0000000000000000000000000000000000000000000000000000000000000000011100008001000000040000000000000000000000000000000000000000000000000000000000000000000000000000000000F03F0000000000000000000000000000F03F000000000000F03F0000000000000000000000000000000000000000000000000000000000000000", true, None));
+
+        // SELECT 'TRIANGLE((0 0,0 9,9 0,0 0))'::geometry
+        assert!(ewkb_roundtrip("0111000000010000000400000000000000000000000000000000000000000000000000000000000000000022400000000000002240000000000000000000000000000000000000000000000000", false, None));
     }
 }

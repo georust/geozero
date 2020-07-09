@@ -150,10 +150,10 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
         self.geom_end()
     }
 
-    fn triangle_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
-        self.geom_begin(idx, b"TRIANGLE(")
+    fn triangle_begin(&mut self, tagged: bool, _size: usize, idx: usize) -> Result<()> {
+        self.tagged_geom_begin(tagged, idx, b"TRIANGLE(")
     }
-    fn triangle_end(&mut self, _idx: usize) -> Result<()> {
+    fn triangle_end(&mut self, _tagged: bool, _idx: usize) -> Result<()> {
         self.geom_end()
     }
     fn polyhedralsurface_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
