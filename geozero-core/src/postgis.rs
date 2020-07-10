@@ -109,6 +109,7 @@ pub mod sqlx {
         use crate::wkb;
         use sqlx::decode::Decode;
         use sqlx::postgres::{PgTypeInfo, PgValueRef, Postgres};
+        use sqlx::ValueRef;
 
         type BoxDynError = Box<dyn std::error::Error + Send + Sync>;
 
@@ -122,6 +123,12 @@ pub mod sqlx {
 
         impl<'de> Decode<'de, Postgres> for Geometry {
             fn decode(value: PgValueRef<'de>) -> Result<Self, BoxDynError> {
+                if value.is_null() {
+                    // Return empty geometry
+                    return Ok(Geometry(geo_types::Geometry::GeometryCollection(
+                        geo_types::GeometryCollection::new(),
+                    )));
+                }
                 let mut blob = <&[u8] as Decode<Postgres>>::decode(value)?;
                 let mut geo = RustGeo::new();
                 wkb::process_ewkb_geom(&mut blob, &mut geo)
@@ -140,6 +147,7 @@ pub mod sqlx {
         use crate::wkb;
         use sqlx::decode::Decode;
         use sqlx::postgres::{PgTypeInfo, PgValueRef, Postgres};
+        use sqlx::ValueRef;
 
         type BoxDynError = Box<dyn std::error::Error + Send + Sync>;
 
@@ -153,6 +161,10 @@ pub mod sqlx {
 
         impl<'de> Decode<'de, Postgres> for Geometry<'static> {
             fn decode(value: PgValueRef<'de>) -> Result<Self, BoxDynError> {
+                if value.is_null() {
+                    // Return empty geometry
+                    return Ok(Geometry(geos::Geometry::create_empty_point().unwrap()));
+                }
                 let mut blob = <&[u8] as Decode<Postgres>>::decode(value)?;
                 let mut geo = Geos::new();
                 wkb::process_ewkb_geom(&mut blob, &mut geo)

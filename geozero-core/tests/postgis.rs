@@ -154,6 +154,15 @@ mod postgis_sqlx {
                 .await?;
 
         assert_eq!(&format!("{:?}", (row.0).0), "Polygon(Polygon { exterior: LineString([Coordinate { x: 0.0, y: 0.0 }, Coordinate { x: 2.0, y: 0.0 }, Coordinate { x: 2.0, y: 2.0 }, Coordinate { x: 0.0, y: 2.0 }, Coordinate { x: 0.0, y: 0.0 }]), interiors: [] })");
+
+        let row: (Geometry,) = sqlx::query_as("SELECT NULL::geometry")
+            .fetch_one(&pool)
+            .await?;
+
+        assert_eq!(
+            &format!("{:?}", (row.0).0),
+            "GeometryCollection(GeometryCollection([]))"
+        );
         Ok(())
     }
 
@@ -178,6 +187,12 @@ mod postgis_sqlx {
                 .await?;
         let geom = row.0;
         assert_eq!(geom.0.to_wkt().unwrap(), "POLYGON ((0.0000000000000000 0.0000000000000000, 2.0000000000000000 0.0000000000000000, 2.0000000000000000 2.0000000000000000, 0.0000000000000000 2.0000000000000000, 0.0000000000000000 0.0000000000000000))");
+
+        let row: (Geometry,) = sqlx::query_as("SELECT NULL::geometry")
+            .fetch_one(&pool)
+            .await?;
+        let geom = row.0;
+        assert_eq!(geom.0.to_wkt().unwrap(), "POINT EMPTY");
         Ok(())
     }
 
