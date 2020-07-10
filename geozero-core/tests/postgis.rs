@@ -19,7 +19,7 @@ mod postgis_postgres {
         assert!(wkb::process_ewkb_geom(&mut geom, &mut writer).is_ok());
         assert_eq!(
             std::str::from_utf8(&wkt_data).unwrap(),
-            "POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))"
+            "POLYGON((0 0,2 0,2 2,0 2,0 0))"
         );
 
         Ok(())
@@ -98,7 +98,7 @@ mod postgis_postgres {
             )?;
 
             let geom: Wkt = row.get(0);
-            assert_eq!(&geom.0, "POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))");
+            assert_eq!(&geom.0, "POLYGON((0 0,2 0,2 2,0 2,0 0))");
             Ok(())
         }
     }
@@ -128,7 +128,7 @@ mod postgis_sqlx {
         assert!(wkb::process_ewkb_geom(&mut row.0.as_slice(), &mut writer).is_ok());
         assert_eq!(
             std::str::from_utf8(&wkt_data).unwrap(),
-            "POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))"
+            "POLYGON((0 0,2 0,2 2,0 2,0 0))"
         );
 
         Ok(())
@@ -192,6 +192,7 @@ mod postgis_sqlx {
         use super::*;
         use sqlx::decode::Decode;
         use sqlx::postgres::{PgTypeInfo, PgValueRef, Postgres};
+        use sqlx::ValueRef;
 
         type BoxDynError = Box<dyn std::error::Error + Send + Sync>;
 
@@ -205,6 +206,9 @@ mod postgis_sqlx {
 
         impl<'de> Decode<'de, Postgres> for Wkt {
             fn decode(value: PgValueRef) -> Result<Self, BoxDynError> {
+                if value.is_null() {
+                    return Ok(Wkt("EMPTY".to_string()));
+                }
                 let mut blob = <&[u8] as Decode<Postgres>>::decode(value)?;
                 let mut wkt_data: Vec<u8> = Vec::new();
                 let mut writer = WktWriter::new(&mut wkt_data);
@@ -225,7 +229,7 @@ mod postgis_sqlx {
                 sqlx::query_as("SELECT 'SRID=4326;POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))'::geometry")
                     .fetch_one(&pool)
                     .await?;
-            assert_eq!((row.0).0, "POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))");
+            assert_eq!((row.0).0, "POLYGON((0 0,2 0,2 2,0 2,0 0))");
 
             let row: (Wkt,) = sqlx::query_as("SELECT NULL::geometry")
                 .fetch_one(&pool)
