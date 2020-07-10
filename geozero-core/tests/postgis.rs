@@ -57,6 +57,14 @@ mod postgis_postgres {
 
         let geom: Geometry = row.get(0);
         assert_eq!(geom.0.to_wkt().unwrap(), "POLYGON ((0.0000000000000000 0.0000000000000000, 2.0000000000000000 0.0000000000000000, 2.0000000000000000 2.0000000000000000, 0.0000000000000000 2.0000000000000000, 0.0000000000000000 0.0000000000000000))");
+
+        // WKB encoding
+        let geom = geos::Geometry::new_from_wkt("POINT(1 3)").expect("Invalid geometry");
+        let _ = client.execute(
+            "INSERT INTO point2d (datetimefield,geom) VALUES(now(),$1)",
+            &[&Geometry(geom)],
+        );
+
         Ok(())
     }
 
@@ -193,6 +201,16 @@ mod postgis_sqlx {
             .await?;
         let geom = row.0;
         assert_eq!(geom.0.to_wkt().unwrap(), "POINT EMPTY");
+
+        // WKB encoding
+        let mut tx = pool.begin().await?;
+        let geom = geos::Geometry::new_from_wkt("POINT(1 3)").expect("Invalid geometry");
+        let _inserted = sqlx::query("INSERT INTO point2d (datetimefield,geom) VALUES(now(),$1)")
+            .bind(Geometry(geom))
+            .execute(&mut tx)
+            .await?;
+        tx.commit().await?;
+
         Ok(())
     }
 

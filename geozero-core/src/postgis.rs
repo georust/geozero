@@ -53,9 +53,11 @@ pub mod postgres {
     /// PostGIS conversions for [GEOS](https://github.com/georust/geos)
     #[cfg(feature = "geos-lib")]
     pub mod geos {
-        use crate::geos::Geos;
+        use crate::geos::{process_geos, Geos};
         use crate::wkb;
-        use postgres_types::{FromSql, Type};
+        use bytes::{buf::ext::BufMutExt, BytesMut};
+        use postgres_types::{to_sql_checked, FromSql, IsNull, ToSql, Type};
+        use std::fmt;
 
         pub struct Geometry<'a>(pub geos::Geometry<'a>);
 
@@ -77,6 +79,35 @@ pub mod postgres {
                     _ => false,
                 }
             }
+        }
+
+        // required by ToSql
+        impl<'a> fmt::Debug for Geometry<'a> {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                f.write_str("geos::Geometry")
+            }
+        }
+
+        impl<'a> ToSql for Geometry<'a> {
+            fn to_sql(
+                &self,
+                _ty: &Type,
+                out: &mut BytesMut,
+            ) -> Result<IsNull, Box<dyn std::error::Error + Sync + Send>> {
+                let pgout = &mut out.writer();
+                let mut writer = wkb::WkbWriter::new(pgout, wkb::WkbDialect::Ewkb);
+                process_geos(&self.0, &mut writer)?;
+                Ok(IsNull::No)
+            }
+
+            fn accepts(ty: &Type) -> bool {
+                match ty.name() {
+                    "geography" | "geometry" => true,
+                    _ => false,
+                }
+            }
+
+            to_sql_checked!();
         }
 
         #[test]
@@ -143,10 +174,11 @@ pub mod sqlx {
     /// PostGIS conversions for [GEOS](https://github.com/georust/geos)
     #[cfg(feature = "geos-lib")]
     pub mod geos {
-        use crate::geos::Geos;
+        use crate::geos::{process_geos, Geos};
         use crate::wkb;
         use sqlx::decode::Decode;
-        use sqlx::postgres::{PgTypeInfo, PgValueRef, Postgres};
+        use sqlx::encode::{Encode, IsNull};
+        use sqlx::postgres::{PgArgumentBuffer, PgTypeInfo, PgValueRef, Postgres};
         use sqlx::ValueRef;
 
         type BoxDynError = Box<dyn std::error::Error + Send + Sync>;
@@ -171,6 +203,17 @@ pub mod sqlx {
                     .map_err(|e| sqlx::Error::Decode(e.to_string().into()))?;
                 let geom = Geometry(geo.geometry().to_owned());
                 Ok(geom)
+            }
+        }
+
+        impl Encode<'_, Postgres> for Geometry<'_> {
+            fn encode_by_ref(&self, buf: &mut PgArgumentBuffer) -> IsNull {
+                let mut wkb_out: Vec<u8> = Vec::new();
+                let mut writer = wkb::WkbWriter::new(&mut wkb_out, wkb::WkbDialect::Ewkb);
+                process_geos(&self.0, &mut writer).expect("Failed to encode Geometry");
+                buf.extend(&wkb_out); // Is there a way to write directly into PgArgumentBuffer?
+
+                IsNull::No
             }
         }
     }
