@@ -218,7 +218,13 @@ mod postgis_sqlx {
     #[ignore]
     #[cfg(feature = "geos-lib")]
     fn async_geos_query() {
-        assert!(Runtime::new().unwrap().block_on(geos_query()).is_ok());
+        assert_eq!(
+            Runtime::new()
+                .unwrap()
+                .block_on(geos_query())
+                .map_err(|e| e.to_string()),
+            Ok(())
+        );
     }
 
     mod register_type {

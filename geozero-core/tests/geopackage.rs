@@ -112,6 +112,22 @@ mod gpkg_sqlx {
             "POINT (1.1000000000000001 1.1000000000000001)"
         );
 
+        let row: (Geometry,) = sqlx::query_as("SELECT geom FROM pt2d WHERE geom IS NULL")
+            .fetch_one(&pool)
+            .await?;
+        let geom = row.0;
+        assert_eq!(geom.0.to_wkt().unwrap(), "POINT EMPTY");
+
+        // WKB encoding
+        // let mut tx = pool.begin().await?;
+        // let geom = geos::Geometry::new_from_wkt("POINT(1 3)").expect("Invalid geometry");
+        // // Requires loading an extension (e.g. SpatiaLite) providing functions like ST_SRID
+        // let _inserted = sqlx::query("INSERT INTO pt2d (name,geom) VALUES('WKB Test',$1)")
+        //     .bind(Geometry(geom))
+        //     .execute(&mut tx)
+        //     .await?;
+        // tx.commit().await?;
+
         Ok(())
     }
 
