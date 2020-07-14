@@ -1,6 +1,9 @@
-## 0.4.4 (UNRELEASED)
+## 0.5.0 (UNRELEASED)
 
-* Add PostGIS + GeoPackage decoder for GEOS geometry
+* Add WKB writer with PostGIS and GeoPackage support
+* Add PostGIS + GeoPackage encoder and decoder for GEOS geometry
+* Support curve and surface types in WKT writer and WKB reader/writer
+* Update to SQLx 0.4
 
 ## 0.4.3 (2020-06-05)
 
