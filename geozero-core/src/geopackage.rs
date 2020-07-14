@@ -69,7 +69,8 @@ pub mod geos {
         fn encode_by_ref(&self, args: &mut Vec<SqliteArgumentValue<'q>>) -> IsNull {
             let mut wkb_out: Vec<u8> = Vec::new();
             let mut writer = wkb::WkbWriter::new(&mut wkb_out, wkb::WkbDialect::Geopackage);
-            // writer.srid = Some(4326);
+            writer.dims.z = self.0.has_z().unwrap_or(false);
+            writer.srid = self.0.get_srid().map(|srid| srid as i32).ok();
             process_geos(&self.0, &mut writer).expect("Failed to encode Geometry");
 
             args.push(SqliteArgumentValue::Blob(Cow::Owned(wkb_out)));

@@ -7,7 +7,14 @@ use std::io::Write;
 pub struct WkbWriter<'a, W: Write> {
     pub dims: CoordDimensions,
     pub srid: Option<i32>,
+    /// Geometry envelope (GPKG)
     pub envelope: Vec<f64>,
+    /// Envelope dimensions (GPKG)
+    pub envelope_dims: CoordDimensions,
+    /// ExtendedGeoPackageBinary
+    pub extended_gpkg: bool,
+    /// Empty geometry flag (GPKG)
+    pub empty: bool,
     endian: scroll::Endian,
     dialect: WkbDialect,
     first_header: bool,
@@ -35,6 +42,9 @@ impl<'a, W: Write> WkbWriter<'a, W> {
             dims: CoordDimensions::default(),
             srid: None,
             envelope: Vec::new(),
+            envelope_dims: CoordDimensions::default(),
+            extended_gpkg: false,
+            empty: false,
             endian: scroll::LE,
             dialect,
             first_header: true,
@@ -43,7 +53,7 @@ impl<'a, W: Write> WkbWriter<'a, W> {
         }
     }
 
-    // Write header in selected format
+    /// Write header in selected format
     fn write_header(&mut self, wkb_type: WKBGeometryType) -> Result<()> {
         match self.dialect {
             WkbDialect::Wkb => self.write_wkb_header(wkb_type)?,
@@ -58,7 +68,7 @@ impl<'a, W: Write> WkbWriter<'a, W> {
         }
         Ok(())
     }
-    // OGC WKB header
+    /// OGC WKB header
     fn write_wkb_header(&mut self, wkb_type: WKBGeometryType) -> Result<()> {
         let byte_order = if self.endian == scroll::BE {
             WKBByteOrder::XDR
@@ -117,18 +127,21 @@ impl<'a, W: Write> WkbWriter<'a, W> {
         self.out.iowrite(version)?;
 
         let mut flags: u8 = 0;
-        let extended = false;
-        if extended {
+        if self.extended_gpkg {
             flags |= 0b0010_0000;
         }
-        let empty = false;
-        if empty {
+        if self.empty {
             flags |= 0b0001_0000;
         }
-        let env_info: u8 = match self.envelope.len() {
-            0 => 0,
-            4 => 1,
-            _ => 2, //FIXME
+        let env_info: u8 = if self.envelope.len() == 0 {
+            0 // no envelope
+        } else {
+            match (self.envelope_dims.z, self.envelope_dims.m) {
+                (false, false) => 1, // [minx, maxx, miny, maxy]
+                (true, false) => 2,  // [minx, maxx, miny, maxy, minz, maxz]
+                (false, true) => 3,  // [minx, maxx, miny, maxy, minm, maxm]
+                (true, true) => 4,   // [minx, maxx, miny, maxy, minz, maxz, minm, maxm]
+            }
         };
         flags |= env_info << 1;
         if self.endian == scroll::LE {
@@ -137,6 +150,9 @@ impl<'a, W: Write> WkbWriter<'a, W> {
         // println!("flags: {:#010b}", flags);
         self.out.iowrite(flags)?;
 
+        // srs_id
+        // 0: undefined geographic coordinate reference systems
+        // -1: undefined Cartesian coordinate reference systems
         self.out.iowrite_with(self.srid.unwrap_or(0), self.endian)?;
 
         for val in &self.envelope {

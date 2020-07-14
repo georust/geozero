@@ -96,6 +96,8 @@ pub mod postgres {
             ) -> Result<IsNull, Box<dyn std::error::Error + Sync + Send>> {
                 let pgout = &mut out.writer();
                 let mut writer = wkb::WkbWriter::new(pgout, wkb::WkbDialect::Ewkb);
+                writer.dims.z = self.0.has_z().unwrap_or(false);
+                writer.srid = self.0.get_srid().map(|srid| srid as i32).ok();
                 process_geos(&self.0, &mut writer)?;
                 Ok(IsNull::No)
             }
@@ -210,6 +212,8 @@ pub mod sqlx {
             fn encode_by_ref(&self, buf: &mut PgArgumentBuffer) -> IsNull {
                 let mut wkb_out: Vec<u8> = Vec::new();
                 let mut writer = wkb::WkbWriter::new(&mut wkb_out, wkb::WkbDialect::Ewkb);
+                writer.dims.z = self.0.has_z().unwrap_or(false);
+                writer.srid = self.0.get_srid().map(|srid| srid as i32).ok();
                 process_geos(&self.0, &mut writer).expect("Failed to encode Geometry");
                 buf.extend(&wkb_out); // Is there a way to write directly into PgArgumentBuffer?
 
