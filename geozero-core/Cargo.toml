@@ -29,7 +29,7 @@ geos = { version = "5.0", optional = true }
 gdal = { version = "0.6", default-features = false, optional = true }
 gdal-sys = { version = "0.2", optional = true }
 scroll = "0.10"
-sqlx = { version = "0.4.0-pre", git = "https://github.com/launchbadge/sqlx", default-features = false, features = [ "runtime-tokio", "postgres", "sqlite" ], optional = true }
+sqlx = { version = "0.4.0-beta.1", default-features = false, features = [ "runtime-tokio", "postgres", "sqlite" ], optional = true }
 postgres-types = { version = "0.1", optional = true }
 bytes = "0.5"
 

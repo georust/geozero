@@ -116,13 +116,14 @@ mod postgis_postgres {
 mod postgis_sqlx {
     use geozero_core::wkb;
     use geozero_core::wkt::WktWriter;
-    use sqlx::postgres::PgPool;
+    use sqlx::postgres::PgPoolOptions;
+    use std::env;
     use tokio::runtime::Runtime;
 
     async fn blob_query() -> Result<(), sqlx::Error> {
-        let pool = PgPool::builder()
-            .max_size(5)
-            .build(&std::env::var("DATABASE_URL").unwrap())
+        let pool = PgPoolOptions::new()
+            .max_connections(5)
+            .connect(&env::var("DATABASE_URL").unwrap())
             .await?;
 
         let row: (Vec<u8>,) = sqlx::query_as(
@@ -151,9 +152,9 @@ mod postgis_sqlx {
     async fn rust_geo_query() -> Result<(), sqlx::Error> {
         use geozero_core::postgis::sqlx::geo::Geometry;
 
-        let pool = PgPool::builder()
-            .max_size(5)
-            .build(&std::env::var("DATABASE_URL").unwrap())
+        let pool = PgPoolOptions::new()
+            .max_connections(5)
+            .connect(&env::var("DATABASE_URL").unwrap())
             .await?;
 
         let row: (Geometry,) =
@@ -184,9 +185,9 @@ mod postgis_sqlx {
     async fn geos_query() -> Result<(), sqlx::Error> {
         use geozero_core::postgis::sqlx::geos::Geometry;
 
-        let pool = PgPool::builder()
-            .max_size(5)
-            .build(&std::env::var("DATABASE_URL").unwrap())
+        let pool = PgPoolOptions::new()
+            .max_connections(5)
+            .connect(&env::var("DATABASE_URL").unwrap())
             .await?;
 
         let row: (Geometry,) =
@@ -259,9 +260,9 @@ mod postgis_sqlx {
         }
 
         async fn geometry_query() -> Result<(), sqlx::Error> {
-            let pool = PgPool::builder()
-                .max_size(5)
-                .build(&std::env::var("DATABASE_URL").unwrap())
+            let pool = PgPoolOptions::new()
+                .max_connections(5)
+                .connect(&env::var("DATABASE_URL").unwrap())
                 .await?;
 
             let row: (Wkt,) =

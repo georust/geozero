@@ -2,13 +2,13 @@
 mod gpkg_sqlx {
     use geozero_core::wkb;
     use geozero_core::wkt::WktWriter;
-    use sqlx::sqlite::SqlitePool;
+    use sqlx::sqlite::SqlitePoolOptions;
     use tokio::runtime::Runtime;
 
     async fn geometry_columns_query() -> Result<(), sqlx::Error> {
-        let pool = SqlitePool::builder()
-            .max_size(5)
-            .build("sqlite://tests/data/gpkg_test.gpkg")
+        let pool = SqlitePoolOptions::new()
+            .max_connections(5)
+            .connect("sqlite://tests/data/gpkg_test.gpkg")
             .await?;
 
         let row: (String,String,) = sqlx::query_as(
@@ -35,9 +35,9 @@ mod gpkg_sqlx {
     }
 
     async fn blob_query() -> Result<(), sqlx::Error> {
-        let pool = SqlitePool::builder()
-            .max_size(5)
-            .build("sqlite://tests/data/gpkg_test.gpkg")
+        let pool = SqlitePoolOptions::new()
+            .max_connections(5)
+            .connect("sqlite://tests/data/gpkg_test.gpkg")
             .await?;
 
         let row: (Vec<u8>,) = sqlx::query_as("SELECT geom FROM pt2d")
@@ -66,9 +66,9 @@ mod gpkg_sqlx {
     async fn rust_geo_query() -> Result<(), sqlx::Error> {
         use geozero_core::gpkg::geo::Geometry;
 
-        let pool = SqlitePool::builder()
-            .max_size(5)
-            .build("sqlite://tests/data/gpkg_test.gpkg")
+        let pool = SqlitePoolOptions::new()
+            .max_connections(5)
+            .connect("sqlite://tests/data/gpkg_test.gpkg")
             .await?;
 
         let row: (Geometry,) = sqlx::query_as("SELECT geom FROM pt2d")
@@ -98,9 +98,9 @@ mod gpkg_sqlx {
     async fn geos_query() -> Result<(), sqlx::Error> {
         use geozero_core::gpkg::geos::Geometry;
 
-        let pool = SqlitePool::builder()
-            .max_size(5)
-            .build("sqlite://tests/data/gpkg_test.gpkg")
+        let pool = SqlitePoolOptions::new()
+            .max_connections(5)
+            .connect("sqlite://tests/data/gpkg_test.gpkg")
             .await?;
 
         let row: (Geometry,) = sqlx::query_as("SELECT geom FROM pt2d")
