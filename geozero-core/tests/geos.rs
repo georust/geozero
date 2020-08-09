@@ -1,6 +1,7 @@
 #[cfg(feature = "geos-lib")]
 mod geos_examples {
 
+    use geos::Geom;
     use geozero_core::geojson::read_geojson;
     use geozero_core::geos::Geos;
 

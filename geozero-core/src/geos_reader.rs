@@ -1,4 +1,4 @@
-use geos::{CoordSeq, Geometry as GGeom, GeometryTypes};
+use geos::{CoordSeq, Geom, Geometry as GGeometry, GeometryTypes};
 use geozero::error::{GeozeroError, Result};
 use geozero::GeomProcessor;
 
@@ -15,11 +15,15 @@ pub(crate) fn from_geos_err(error: geos::Error) -> GeozeroError {
 }
 
 /// Process GEOS geometry
-pub fn process_geos<P: GeomProcessor>(ggeom: &GGeom, processor: &mut P) -> Result<()> {
+pub fn process_geos<P: GeomProcessor>(ggeom: &GGeometry, processor: &mut P) -> Result<()> {
     process_geos_n(ggeom, 0, processor)
 }
 
-fn process_geos_n<P: GeomProcessor>(ggeom: &GGeom, idx: usize, processor: &mut P) -> Result<()> {
+fn process_geos_n<'a, P: GeomProcessor, G: Geom<'a>>(
+    ggeom: &G,
+    idx: usize,
+    processor: &mut P,
+) -> Result<()> {
     match ggeom.geometry_type() {
         GeometryTypes::Point => {
             processor.point_begin(idx)?;
@@ -102,7 +106,11 @@ fn process_coord_seq<P: GeomProcessor>(
     Ok(())
 }
 
-fn process_point<P: GeomProcessor>(ggeom: &GGeom, idx: usize, processor: &mut P) -> Result<()> {
+fn process_point<'a, P: GeomProcessor, G: Geom<'a>>(
+    ggeom: &G,
+    idx: usize,
+    processor: &mut P,
+) -> Result<()> {
     let cs = ggeom.get_coord_seq().map_err(from_geos_err)?;
     // NOTE: this clones the underlying CoordSeq!
     // let x = GEOSGeom_getX_r(ggeom.get_raw_context(), ggeom.as_raw());
@@ -110,8 +118,8 @@ fn process_point<P: GeomProcessor>(ggeom: &GGeom, idx: usize, processor: &mut P)
     Ok(())
 }
 
-fn process_linestring<P: GeomProcessor>(
-    ggeom: &GGeom,
+fn process_linestring<'a, P: GeomProcessor, G: Geom<'a>>(
+    ggeom: &G,
     tagged: bool,
     idx: usize,
     processor: &mut P,
@@ -125,8 +133,8 @@ fn process_linestring<P: GeomProcessor>(
     processor.linestring_end(tagged, idx)
 }
 
-fn process_polygon<P: GeomProcessor>(
-    ggeom: &GGeom,
+fn process_polygon<'a, P: GeomProcessor, G: Geom<'a>>(
+    ggeom: &G,
     tagged: bool,
     idx: usize,
     processor: &mut P,
@@ -155,7 +163,7 @@ mod test {
     #[test]
     fn point_geom() {
         let wkt = "POINT(1 1)";
-        let ggeom = GGeom::new_from_wkt(wkt).unwrap();
+        let ggeom = GGeometry::new_from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
         assert!(process_geos(&ggeom, &mut WktWriter::new(&mut wkt_data)).is_ok());
@@ -167,7 +175,7 @@ mod test {
     fn multipoint_geom() {
         let wkt = "MULTIPOINT(1 1,2 2)";
         // let geos_wkt = "MULTIPOINT((1 1),(2 2))";
-        let ggeom = GGeom::new_from_wkt(wkt).unwrap();
+        let ggeom = GGeometry::new_from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
         assert!(process_geos(&ggeom, &mut WktWriter::new(&mut wkt_data)).is_ok());
@@ -178,7 +186,7 @@ mod test {
     #[test]
     fn line_geom() {
         let wkt = "LINESTRING(1 1,2 2)";
-        let ggeom = GGeom::new_from_wkt(wkt).unwrap();
+        let ggeom = GGeometry::new_from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
         assert!(process_geos(&ggeom, &mut WktWriter::new(&mut wkt_data)).is_ok());
@@ -189,7 +197,7 @@ mod test {
     #[test]
     fn line_geom_3d() {
         let wkt = "LINESTRING(1 1 10,2 2 20)";
-        let ggeom = GGeom::new_from_wkt(wkt).unwrap();
+        let ggeom = GGeometry::new_from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
         let mut writer = WktWriter::new(&mut wkt_data);
@@ -202,7 +210,7 @@ mod test {
     #[test]
     fn linearring_geom() {
         let wkt = "LINEARRING(1 1,2 1,2 2,1 1)";
-        let ggeom = GGeom::new_from_wkt(wkt).unwrap();
+        let ggeom = GGeometry::new_from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
         assert!(process_geos(&ggeom, &mut WktWriter::new(&mut wkt_data)).is_ok());
@@ -216,7 +224,7 @@ mod test {
     #[test]
     fn multiline_geom() {
         let wkt = "MULTILINESTRING((1 1,2 2),(3 3,4 4))";
-        let ggeom = GGeom::new_from_wkt(wkt).unwrap();
+        let ggeom = GGeometry::new_from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
         assert!(process_geos(&ggeom, &mut WktWriter::new(&mut wkt_data)).is_ok());
@@ -227,7 +235,7 @@ mod test {
     #[test]
     fn polygon_geom() {
         let wkt = "POLYGON((0 0,0 3,3 3,3 0,0 0),(0.2 0.2,0.2 2,2 2,2 0.2,0.2 0.2))";
-        let ggeom = GGeom::new_from_wkt(wkt).unwrap();
+        let ggeom = GGeometry::new_from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
         assert!(process_geos(&ggeom, &mut WktWriter::new(&mut wkt_data)).is_ok());
@@ -238,7 +246,7 @@ mod test {
     #[test]
     fn multipolygon_geom() {
         let wkt = "MULTIPOLYGON(((0 0,0 1,1 1,1 0,0 0)))";
-        let ggeom = GGeom::new_from_wkt(wkt).unwrap();
+        let ggeom = GGeometry::new_from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
         assert!(process_geos(&ggeom, &mut WktWriter::new(&mut wkt_data)).is_ok());
@@ -249,7 +257,7 @@ mod test {
     #[test]
     fn geometry_collection_geom() {
         let wkt = "GEOMETRYCOLLECTION(POINT(1 1),LINESTRING(1 1,2 2))";
-        let ggeom = GGeom::new_from_wkt(wkt).unwrap();
+        let ggeom = GGeometry::new_from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
         assert!(process_geos(&ggeom, &mut WktWriter::new(&mut wkt_data)).is_ok());

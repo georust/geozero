@@ -96,6 +96,7 @@ mod gpkg_sqlx {
 
     #[cfg(feature = "geos-lib")]
     async fn geos_query() -> Result<(), sqlx::Error> {
+        use geos::Geom;
         use geozero_core::gpkg::geos::Geometry;
 
         let pool = SqlitePoolOptions::new()

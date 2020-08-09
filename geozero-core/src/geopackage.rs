@@ -34,6 +34,7 @@ pub mod geo {
 pub mod geos {
     use crate::geos::{process_geos, Geos};
     use crate::wkb;
+    use geos::Geom;
     use sqlx::decode::Decode;
     use sqlx::encode::{Encode, IsNull};
     use sqlx::sqlite::{Sqlite, SqliteArgumentValue, SqliteTypeInfo, SqliteValueRef};

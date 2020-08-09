@@ -25,7 +25,7 @@ features = ["gpkg", "postgis-sqlx", "postgis-postgres"]
 geozero = { version = "0.5", path = "../geozero" }
 geojson = { version = "0.18" }
 geo-types = { version = "0.6", default-features = false }
-geos = { version = "5.0", optional = true }
+geos = { version = "7.0", optional = true }
 gdal = { version = "0.6", default-features = false, optional = true }
 gdal-sys = { version = "0.2", optional = true }
 scroll = "0.10"

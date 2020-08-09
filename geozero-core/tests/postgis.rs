@@ -46,6 +46,7 @@ mod postgis_postgres {
     #[ignore]
     #[cfg(feature = "geos-lib")]
     fn geos_query() -> Result<(), postgres::error::Error> {
+        use geos::Geom;
         use geozero_core::postgis::postgres::geos::Geometry;
 
         let mut client = Client::connect(&std::env::var("DATABASE_URL").unwrap(), NoTls)?;
@@ -183,6 +184,7 @@ mod postgis_sqlx {
 
     #[cfg(feature = "geos-lib")]
     async fn geos_query() -> Result<(), sqlx::Error> {
+        use geos::Geom;
         use geozero_core::postgis::sqlx::geos::Geometry;
 
         let pool = PgPoolOptions::new()

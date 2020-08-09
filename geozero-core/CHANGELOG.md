@@ -4,6 +4,7 @@
 * Add PostGIS + GeoPackage encoder and decoder for GEOS geometry
 * Support curve and surface types in WKT writer and WKB reader/writer
 * Update to SQLx 0.4
+* Update to GEOS bindings 7.0
 
 ## 0.4.3 (2020-06-05)
 

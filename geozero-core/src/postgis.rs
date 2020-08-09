@@ -56,6 +56,7 @@ pub mod postgres {
         use crate::geos::{process_geos, Geos};
         use crate::wkb;
         use bytes::{buf::ext::BufMutExt, BytesMut};
+        use geos::Geom;
         use postgres_types::{to_sql_checked, FromSql, IsNull, ToSql, Type};
         use std::fmt;
 
@@ -178,6 +179,7 @@ pub mod sqlx {
     pub mod geos {
         use crate::geos::{process_geos, Geos};
         use crate::wkb;
+        use geos::Geom;
         use sqlx::decode::Decode;
         use sqlx::encode::{Encode, IsNull};
         use sqlx::postgres::{PgArgumentBuffer, PgTypeInfo, PgValueRef, Postgres};
