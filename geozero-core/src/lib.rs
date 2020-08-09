@@ -4,6 +4,7 @@
 mod gdal_reader;
 #[cfg(feature = "gdal-lib")]
 mod gdal_writer;
+mod geo_types_writer;
 mod geojson_reader;
 mod geojson_writer;
 #[cfg(feature = "gpkg")]
@@ -14,7 +15,6 @@ mod geos_reader;
 mod geos_writer;
 /// PostGIS geometry type conversions.
 pub mod postgis;
-mod rustgeo_writer;
 /// SVG Writer.
 pub mod svg;
 mod wkb_common;
@@ -28,9 +28,9 @@ pub mod geojson {
     pub use crate::geojson_writer::*;
 }
 
-/// [georust/geo](https://github.com/georust/geo) Writer.
-pub mod geo {
-    pub use crate::rustgeo_writer::*;
+/// [geo-types](https://github.com/georust/geo) Writer.
+pub mod geo_types {
+    pub use crate::geo_types_writer::*;
 }
 
 /// WKB Reader.

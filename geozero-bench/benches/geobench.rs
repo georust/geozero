@@ -1,7 +1,7 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use geozero::error::Result;
 use geozero::Extent;
-use geozero_core::geo::RustGeo;
+use geozero_core::geo_types::Geo;
 
 mod fgb {
     use super::*;
@@ -20,7 +20,7 @@ mod fgb {
         } else {
             fgb.select_all()?;
         }
-        let mut geo = RustGeo::new();
+        let mut geo = Geo::new();
         fgb.process_features(&mut geo)?;
         assert_eq!(fgb.features_count(), count);
         Ok(())
@@ -39,7 +39,7 @@ mod fgb {
         } else {
             fgb.select_all().await?;
         }
-        let mut geo = RustGeo::new();
+        let mut geo = Geo::new();
         fgb.process_features(&mut geo).await?;
         assert_eq!(fgb.features_count(), count);
         Ok(())

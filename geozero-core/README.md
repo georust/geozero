@@ -15,7 +15,7 @@ Collection of [GeoZero](https://github.com/pka/geozero) processors for zero-copy
   - GeoPackage geometries for [SQLx](https://github.com/launchbadge/sqlx)
 * WKT Writer
 * SVG Writer
-* [geo](https://github.com/georust/geo) Writer
+* [geo-types](https://github.com/georust/geo) Writer
 
 
 ## Build Features

@@ -24,7 +24,7 @@ Supported dimensions: X, Y, Z, M, T
   - GeoPackage geometries for [SQLx](https://github.com/launchbadge/sqlx)
 * WKT Writer
 * SVG Writer
-* [geo](https://github.com/georust/geo) Writer
+* [geo-types](https://github.com/georust/geo) Writer
 
 External:
 * [FlatGeobuf Reader](https://github.com/bjornharrtell/flatgeobuf)
@@ -128,7 +128,7 @@ fgb.select_all()?;
 while let Some(feature) = fgb.next()? {
     let props = feature.properties()?;
     let geometry = feature.geometry().unwrap();
-    let mut geo = RustGeo::new();
+    let mut geo = Geo::new();
     geometry.process(&mut geo, GeometryType::MultiPolygon)?;
     if let Geometry::MultiPolygon(mpoly) = geo.geometry() {
         if let Some(poly) = &mpoly.0.iter().next() {

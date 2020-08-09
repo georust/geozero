@@ -5,11 +5,12 @@
 * Support curve and surface types in WKT writer and WKB reader/writer
 * Update to SQLx 0.4
 * Update to GEOS bindings 7.0
+* Rename geo::RustGeo to geo_types::Geo
 
 ## 0.4.3 (2020-06-05)
 
 * Add GeoPackage WKB reader
-* Add GeoPackage decoder for georust/geo geometry (SQLx)
+* Add GeoPackage decoder for geo-types geometry (SQLx)
 
 ## 0.4.2 (2020-06-04)
 
@@ -22,7 +23,7 @@
 ## 0.4.0 (2020-06-03)
 
 * Add WKB reader
-* Add PostGIS decoder for georust/geo geometry (rust-postgres and SQLx)
+* Add PostGIS decoder for geo-types geometry (rust-postgres and SQLx)
 * Add GDAL geometry reader + writer
 
 ## 0.3.1 (2020-05-25)
@@ -31,7 +32,7 @@
 
 ## 0.3.0 (2020-05-09)
 
-* Add georust/geo writer
+* Add geo-types writer
 * Impl FeatureProcessor for GeoJSON reader
 
 ## 0.2.0 (2020-04-20)
