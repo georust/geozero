@@ -2,7 +2,7 @@ use geozero::error::Result;
 use geozero::{CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcessor};
 use std::io::Write;
 
-/// WKT according to OpenGIS Simple Features Specification For SQL Revision 1.1, Chapter 3.2.5
+/// WKT Writer.
 pub struct WktWriter<'a, W: Write> {
     pub dims: CoordDimensions,
     out: &'a mut W,

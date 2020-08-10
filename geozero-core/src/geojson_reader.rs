@@ -3,7 +3,7 @@ use geozero::error::{GeozeroError, Result};
 use geozero::{FeatureProcessor, GeomProcessor};
 use std::io::Read;
 
-/// Read and process GeoJSON
+/// Read and process GeoJSON.
 pub fn read_geojson<R: Read, P: FeatureProcessor>(mut reader: R, processor: &mut P) -> Result<()> {
     let mut geojson_str = String::new();
     reader.read_to_string(&mut geojson_str)?;
@@ -13,7 +13,7 @@ pub fn read_geojson<R: Read, P: FeatureProcessor>(mut reader: R, processor: &mut
     process_geojson(&geojson, processor)
 }
 
-/// Read and process GeoJSON geometry
+/// Read and process GeoJSON geometry.
 pub fn read_geojson_geom<R: Read, P: GeomProcessor>(
     mut reader: R,
     processor: &mut P,

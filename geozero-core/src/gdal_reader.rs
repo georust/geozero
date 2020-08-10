@@ -3,7 +3,7 @@ use gdal_sys::{self, OGRwkbGeometryType};
 use geozero::error::{GeozeroError, Result};
 use geozero::GeomProcessor;
 
-/// Process GDAL/OGR geometry
+/// Process GDAL/OGR geometry.
 pub fn process_geom<P: GeomProcessor>(geo: &Geometry, processor: &mut P) -> Result<()> {
     process_geom_n(geo, 0, processor)
 }

@@ -4,6 +4,7 @@ use geozero::{CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcesso
 use scroll::IOwrite;
 use std::io::Write;
 
+/// WKB writer.
 pub struct WkbWriter<'a, W: Write> {
     pub dims: CoordDimensions,
     pub srid: Option<i32>,
@@ -22,6 +23,7 @@ pub struct WkbWriter<'a, W: Write> {
     out: &'a mut W,
 }
 
+/// WKB dialect.
 #[derive(PartialEq, Debug)]
 pub enum WkbDialect {
     Wkb,

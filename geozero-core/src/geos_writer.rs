@@ -3,12 +3,12 @@ use geos::{CoordDimensions, CoordSeq, GResult, Geometry as GGeometry};
 use geozero::error::{GeozeroError, Result};
 use geozero::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 
-/// Generator for [GEOS](https://github.com/georust/geos) geometry type
+/// Generator for [GEOS](https://github.com/georust/geos) geometry type.
 pub struct Geos<'a> {
     geom: GGeometry<'a>,
     // CoordSeq for Points, Lines and Rings
     cs: Vec<CoordSeq<'a>>,
-    // Polygons of MultiPolygons
+    // Polygons or MultiPolygons
     polys: Vec<GGeometry<'a>>,
 }
 

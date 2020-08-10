@@ -14,7 +14,7 @@ pub(crate) fn from_geos_err(error: geos::Error) -> GeozeroError {
     }
 }
 
-/// Process GEOS geometry
+/// Process GEOS geometry.
 pub fn process_geos<P: GeomProcessor>(ggeom: &GGeometry, processor: &mut P) -> Result<()> {
     process_geos_n(ggeom, 0, processor)
 }

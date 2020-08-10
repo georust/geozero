@@ -1,5 +1,5 @@
 // This should be included in georust/geo to avoid a newtype
-/// Geopackage conversions for [geo-types](https://github.com/georust/geo)
+/// Geopackage geometry type decoding for [geo-types](https://github.com/georust/geo).
 pub mod geo {
     use crate::geo_types::Geo;
     use crate::wkb;
@@ -8,6 +8,7 @@ pub mod geo {
 
     type BoxDynError = Box<dyn std::error::Error + Send + Sync>;
 
+    /// geo-types wrapper for Geopackage geometry decoding.
     pub struct Geometry(pub geo_types::Geometry<f64>);
 
     impl sqlx::Type<Sqlite> for Geometry {
@@ -29,7 +30,7 @@ pub mod geo {
 }
 
 // This should be included in georust/geos to avoid a newtype
-/// Geopackage conversions for [GEOS](https://github.com/georust/geos)
+/// Geopackage geometry type encoding/decoding for [GEOS](https://github.com/georust/geos).
 #[cfg(feature = "geos-lib")]
 pub mod geos {
     use crate::geos::{process_geos, Geos};
@@ -43,6 +44,7 @@ pub mod geos {
 
     type BoxDynError = Box<dyn std::error::Error + Send + Sync>;
 
+    /// GEOS geometry wrapper for Geopackage geometry encoding/decoding
     pub struct Geometry<'a>(pub geos::Geometry<'a>);
 
     impl sqlx::Type<Sqlite> for Geometry<'_> {

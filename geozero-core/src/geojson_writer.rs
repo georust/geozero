@@ -3,7 +3,7 @@ use geozero::{ColumnValue, FeatureProcessor, GeomProcessor, PropertyProcessor};
 use std::fmt::Display;
 use std::io::Write;
 
-/// GeoJSON writer
+/// GeoJSON writer.
 pub struct GeoJsonWriter<'a, W: Write> {
     out: &'a mut W,
 }

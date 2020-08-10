@@ -1,14 +1,15 @@
-/// Type conversions for [rust-postgres](https://github.com/sfackler/rust-postgres)
+/// PostGIS geometry type encoding/decoding for [rust-postgres](https://github.com/sfackler/rust-postgres).
 #[cfg(feature = "postgis-postgres")]
 pub mod postgres {
 
     // This should be included in georust/geo to avoid a newtype
-    /// PostGIS conversions for [geo-types](https://github.com/georust/geo)
+    /// PostGIS geometry type decoding for [geo-types](https://github.com/georust/geo).
     pub mod geo {
         use crate::geo_types::Geo;
         use crate::wkb;
         use postgres_types::{FromSql, Type};
 
+        /// geo-types wrapper for PostGIS geometry decoding.
         pub struct Geometry(pub geo_types::Geometry<f64>);
 
         impl FromSql<'_> for Geometry {
@@ -50,7 +51,7 @@ pub mod postgres {
     }
 
     // This should be included in georust/geos to avoid a newtype
-    /// PostGIS conversions for [GEOS](https://github.com/georust/geos)
+    /// PostGIS geometry type encoding/decoding for [GEOS](https://github.com/georust/geos).
     #[cfg(feature = "geos-lib")]
     pub mod geos {
         use crate::geos::{process_geos, Geos};
@@ -60,6 +61,7 @@ pub mod postgres {
         use postgres_types::{to_sql_checked, FromSql, IsNull, ToSql, Type};
         use std::fmt;
 
+        /// GEOS geometry wrapper for PostGIS geometry encoding/decoding.
         pub struct Geometry<'a>(pub geos::Geometry<'a>);
 
         impl<'a> FromSql<'a> for Geometry<'a> {
@@ -132,12 +134,12 @@ pub mod postgres {
     }
 }
 
-/// Type conversions for [SQLx](https://github.com/launchbadge/sqlx)
+/// PostGIS geometry type encoding/decoding for [SQLx](https://github.com/launchbadge/sqlx).
 #[cfg(feature = "postgis-sqlx")]
 pub mod sqlx {
 
     // This should be included in georust/geo to avoid a newtype
-    /// PostGIS conversions for [geo-types](https://github.com/georust/geo)
+    /// PostGIS geometry type decoding for [geo-types](https://github.com/georust/geo).
     pub mod geo {
         use crate::geo_types::Geo;
         use crate::wkb;
@@ -147,6 +149,7 @@ pub mod sqlx {
 
         type BoxDynError = Box<dyn std::error::Error + Send + Sync>;
 
+        /// geo-types wrapper for PostGIS geometry decoding.
         pub struct Geometry(pub geo_types::Geometry<f64>);
 
         impl sqlx::Type<Postgres> for Geometry {
@@ -174,7 +177,7 @@ pub mod sqlx {
     }
 
     // This should be included in georust/geos to avoid a newtype
-    /// PostGIS conversions for [GEOS](https://github.com/georust/geos)
+    /// PostGIS geometry type encoding/decoding for [GEOS](https://github.com/georust/geos).
     #[cfg(feature = "geos-lib")]
     pub mod geos {
         use crate::geos::{process_geos, Geos};
@@ -187,6 +190,7 @@ pub mod sqlx {
 
         type BoxDynError = Box<dyn std::error::Error + Send + Sync>;
 
+        /// GEOS geometry wrapper for PostGIS geometry encoding/decoding.
         pub struct Geometry<'a>(pub geos::Geometry<'a>);
 
         impl sqlx::Type<Postgres> for Geometry<'_> {

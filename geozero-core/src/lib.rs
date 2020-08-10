@@ -13,53 +13,55 @@ mod geopackage;
 mod geos_reader;
 #[cfg(feature = "geos-lib")]
 mod geos_writer;
-/// PostGIS geometry type conversions.
+/// PostGIS geometry type encoding/decoding.
 pub mod postgis;
-/// SVG Writer.
+/// SVG conversions.
 pub mod svg;
 mod wkb_common;
 mod wkb_reader;
 mod wkb_writer;
 mod wkt_writer;
 
-/// GeoJSON Reader + Writer.
+/// GeoJSON conversions.
 pub mod geojson {
     pub use crate::geojson_reader::*;
     pub use crate::geojson_writer::*;
 }
 
-/// [geo-types](https://github.com/georust/geo) Writer.
+/// [geo-types](https://github.com/georust/geo) conversions.
 pub mod geo_types {
     pub use crate::geo_types_writer::*;
 }
 
-/// WKB Reader.
+/// Well-Known Binary (WKB) conversions.
 pub mod wkb {
     pub use crate::wkb_common::*;
     pub use crate::wkb_reader::*;
     pub use crate::wkb_writer::*;
 }
 
-/// WKT Writer.
+/// Well-Known Text (WKT) conversions.
+///
+/// OpenGIS Simple Features Specification For SQL Revision 1.1, Chapter 3.2.5
 pub mod wkt {
     pub use crate::wkt_writer::*;
 }
 
-/// [GEOS](https://github.com/georust/geos) Reader + Writer.
+/// [GEOS](https://github.com/georust/geos) conversions.
 #[cfg(feature = "geos-lib")]
 pub mod geos {
     pub use crate::geos_reader::*;
     pub use crate::geos_writer::*;
 }
 
-/// [GDAL](https://github.com/georust/gdal) Reader + Writer.
+/// [GDAL](https://github.com/georust/gdal) conversions.
 #[cfg(feature = "gdal-lib")]
 pub mod gdal {
     pub use crate::gdal_reader::*;
     pub use crate::gdal_writer::*;
 }
 
-/// Type conversions for [SQLx](https://github.com/launchbadge/sqlx)
+/// Geopackage geometry type encoding/decoding.
 #[cfg(feature = "gpkg")]
 pub mod gpkg {
     pub use crate::geopackage::*;

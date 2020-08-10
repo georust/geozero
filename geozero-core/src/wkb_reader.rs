@@ -14,7 +14,7 @@ struct WkbInfo {
     envelope: Vec<f64>,
 }
 
-/// OGC WKB header
+/// OGC WKB header.
 fn read_wkb_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
     let byte_order = raw.ioread::<u8>()?;
     let endian = if byte_order == WKBByteOrder::XDR as u8 {
@@ -117,13 +117,13 @@ fn read_gpkg_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
 
 // TODO: Spatialite https://www.gaia-gis.it/gaia-sins/BLOB-Geometry.html
 
-/// Process EWKB geometry
+/// Process EWKB geometry.
 pub fn process_ewkb_geom<R: Read, P: GeomProcessor>(raw: &mut R, processor: &mut P) -> Result<()> {
     let info = read_ewkb_header(raw)?;
     process_wkb_geom_n(raw, &info, read_ewkb_header, 0, processor)
 }
 
-/// Process GPKG geometry
+/// Process GPKG geometry.
 pub fn process_gpkg_geom<R: Read, P: GeomProcessor>(raw: &mut R, processor: &mut P) -> Result<()> {
     let info = read_gpkg_header(raw)?;
     process_wkb_geom_n(raw, &info, read_wkb_header, 0, processor)

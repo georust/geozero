@@ -2,6 +2,7 @@ use geozero::error::Result;
 use geozero::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 use std::io::Write;
 
+/// SVG writer.
 pub struct SvgWriter<'a, W: Write> {
     out: &'a mut W,
     invert_y: bool,
