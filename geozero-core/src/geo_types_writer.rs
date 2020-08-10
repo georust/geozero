@@ -5,6 +5,7 @@ use geozero::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 /// Generator for [geo-types](https://github.com/georust/geo) geometry type
 pub struct Geo {
     geom: Geometry<f64>,
+    // Polygon rings or MultiLineString members
     line_strings: Vec<LineString<f64>>,
 }
 
@@ -12,7 +13,6 @@ impl Geo {
     pub fn new() -> Geo {
         Geo {
             geom: Point::new(0., 0.).into(),
-            // Polygon rings or MultiLineString members
             line_strings: Vec::new(),
         }
     }

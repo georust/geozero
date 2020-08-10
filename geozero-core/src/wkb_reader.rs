@@ -14,7 +14,7 @@ struct WkbInfo {
     envelope: Vec<f64>,
 }
 
-// OGC WKB header
+/// OGC WKB header
 fn read_wkb_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
     let byte_order = raw.ioread::<u8>()?;
     let endian = if byte_order == WKBByteOrder::XDR as u8 {

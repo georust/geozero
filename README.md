@@ -120,7 +120,7 @@ fgb.process_features(&mut json).await?;
 ```
 Full source code: [geojson.rs](./geozero-core/tests/geojson.rs)
 
-Read FlatGeobuf data as rustgeo geometries and calculate label position with [polylabel-rs](https://github.com/urschrei/polylabel-rs):
+Read FlatGeobuf data as geo-types geometries and calculate label position with [polylabel-rs](https://github.com/urschrei/polylabel-rs):
 ```rust
 let mut file = BufReader::new(File::open("countries.fgb")?);
 let mut fgb = FgbReader::open(&mut file)?;
