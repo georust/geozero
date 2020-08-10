@@ -1,9 +1,9 @@
-## 0.5.0 (UNRELEASED)
+## 0.5.0 (2010-08-10)
 
 * Add WKB writer with PostGIS and GeoPackage support
 * Add PostGIS + GeoPackage encoder and decoder for GEOS geometry
 * Support curve and surface types in WKT writer and WKB reader/writer
-* Update to SQLx 0.4
+* Update to SQLx 0.4-beta
 * Update to GEOS bindings 7.0
 * Rename geo::RustGeo to geo_types::Geo
 
