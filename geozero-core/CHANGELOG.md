@@ -1,3 +1,7 @@
+## 0.5.1 (2010-08-12)
+
+* Activate all features for doc.rs
+
 ## 0.5.0 (2010-08-10)
 
 * Add WKB writer with PostGIS and GeoPackage support

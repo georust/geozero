@@ -1,6 +1,6 @@
 [package]
 name = "geozero-core"
-version = "0.5.0"
+version = "0.5.1"
 authors = ["Pirmin Kalberer <pka@sourcepole.ch>"]
 edition = "2018"
 description = "Zero-Copy reading and writing of geospatial data."
@@ -19,7 +19,7 @@ postgis-sqlx = ["sqlx"]
 postgis-postgres = ["postgres-types"]
 
 [package.metadata.docs.rs]
-features = ["gpkg", "postgis-sqlx", "postgis-postgres"]
+all-features = true
 
 [dependencies]
 geozero = { version = "0.5", path = "../geozero" }
@@ -38,6 +38,6 @@ hex = "0.4"
 geo = "0.14"
 kdbush = "0.2"
 polylabel = "2.2"
-flatgeobuf = { git = "https://github.com/pka/flatgeobuf/", branch="geozero" }
+flatgeobuf = "0.3.4"
 postgres = "0.17"
 tokio = { version = "0.2", default-features = false, features = ["rt-threaded"] }
