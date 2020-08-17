@@ -1,0 +1,50 @@
+name: CI-Linux
+
+on: [push, pull_request]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build_and_test:
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          - stable
+
+    name: ${{ matrix.version }} - x86_64-unknown-linux-gnu
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: install dependencies
+        run: |
+          sudo apt-get install -y libgdal-dev libgeos-dev
+
+      # - name: Set up Postgresql with Postgis
+      #   uses: huaxk/postgis-action@v1
+      #   with:
+      #     postgresql user: 'ci'
+      #     postgresql password: 'ci'
+      #     postgresql db: 'test'
+
+      - name: Install ${{ matrix.version }}
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.version }}-x86_64-unknown-linux-gnu
+          profile: minimal
+          override: true
+
+      - name: check build
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: --all --bins --examples --tests --benches
+
+      - name: tests
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --all --all-features

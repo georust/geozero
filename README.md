@@ -1,5 +1,9 @@
 # GeoZero
 
+[![CI build](https://github.com/pka/geozero/workflows/CI-Linux/badge.svg)](https://github.com/pka/geozero/actions)
+[![crates.io version](https://img.shields.io/crates/v/geozero.svg)](https://crates.io/crates/geozero)
+[![docs.rs docs](https://img.shields.io/badge/docs-latest-blue.svg)](https://docs.rs/geozero)
+
 Zero-Copy reading and writing of geospatial data.
 
 GeoZero defines an API for reading geospatial data formats without an intermediate representation.
@@ -15,7 +19,9 @@ Supported dimensions: X, Y, Z, M, T
 
 ## Available implementations
 
-[geozero-core](https://crates.io/crates/geozero-core):
+[geozero-core](https://github.com/pka/geozero/tree/master/geozero-core) [![crates.io version](https://img.shields.io/crates/v/geozero-core.svg)](https://crates.io/crates/geozero-core)
+[![docs.rs docs](https://img.shields.io/badge/docs-latest-blue.svg)](https://docs.rs/geozero-core)
+
 * GeoJSON Reader + Writer
 * [GEOS](https://github.com/georust/geos) Reader + Writer
 * [GDAL](https://github.com/georust/gdal) geometry Reader + Writer
@@ -27,7 +33,8 @@ Supported dimensions: X, Y, Z, M, T
 * [geo-types](https://github.com/georust/geo) Writer
 
 External:
-* [FlatGeobuf Reader](https://github.com/bjornharrtell/flatgeobuf)
+* [FlatGeobuf Reader](https://github.com/bjornharrtell/flatgeobuf) [![crates.io version](https://img.shields.io/crates/v/flatgeobuf.svg)](https://crates.io/crates/flatgeobuf)
+[![docs.rs docs](https://img.shields.io/badge/docs-latest-blue.svg)](https://docs.rs/flatgeobuf)
 
 ## Applications
 
