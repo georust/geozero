@@ -17,6 +17,7 @@ mod geos_writer;
 pub mod postgis;
 /// SVG conversions.
 pub mod svg;
+pub mod tessellator;
 mod wkb_common;
 mod wkb_reader;
 mod wkb_writer;

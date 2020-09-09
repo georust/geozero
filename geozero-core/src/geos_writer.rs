@@ -177,7 +177,6 @@ mod test {
         let geojson = r#"{"type": "LineString", "coordinates": [[1,1], [2,2]]}"#;
         let wkt = "LINESTRING (1.0000000000000000 1.0000000000000000, 2.0000000000000000 2.0000000000000000)";
         let mut geos = Geos::new();
-        read_geojson(geojson.as_bytes(), &mut geos).unwrap();
         assert!(read_geojson(geojson.as_bytes(), &mut geos).is_ok());
         assert_eq!(geos.geometry().to_wkt().unwrap(), wkt);
     }
