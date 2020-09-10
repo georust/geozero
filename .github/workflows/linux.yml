@@ -41,7 +41,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: check
-          args: --all --bins --examples --tests --benches
+          args: --all --all-features --bins --examples --tests --benches
 
       - name: tests
         uses: actions-rs/cargo@v1
