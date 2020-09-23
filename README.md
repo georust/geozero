@@ -3,6 +3,7 @@
 [![CI build](https://github.com/pka/geozero/workflows/CI-Linux/badge.svg)](https://github.com/pka/geozero/actions)
 [![crates.io version](https://img.shields.io/crates/v/geozero.svg)](https://crates.io/crates/geozero)
 [![docs.rs docs](https://img.shields.io/badge/docs-latest-blue.svg)](https://docs.rs/geozero)
+[![Discord Chat](https://img.shields.io/discord/598002550221963289.svg)](https://discord.gg/)
 
 Zero-Copy reading and writing of geospatial data.
 
