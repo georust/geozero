@@ -1,4 +1,4 @@
-use geozero::error::{GeozeroError, Result};
+use geozero::error::Result;
 use geozero::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 use lyon::math::{point, Point};
 use lyon::path::{Builder, Path};
