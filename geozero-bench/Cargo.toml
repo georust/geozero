@@ -11,7 +11,7 @@ license = "MIT/Apache-2.0"
 [dependencies]
 geozero = { version = "0.5", path = "../geozero" }
 geozero-core = { version = "0.5", path = "../geozero-core", features = ["gdal-lib", "geos-lib", "gpkg", "postgis-sqlx", "postgis-postgres"] }
-sqlx = { version = "0.4.0-beta.1", default-features = false, features = [ "runtime-tokio", "postgres", "sqlite" ] }
+sqlx = { version = "0.4.0", default-features = false, features = [ "runtime-tokio-native-tls", "postgres", "sqlite" ] }
 futures-util = "0.3.5"
 geojson = { version = "0.18" }
 criterion = "0.3"

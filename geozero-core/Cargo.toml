@@ -31,7 +31,7 @@ gdal = { version = "0.6", default-features = false, optional = true }
 gdal-sys = { version = "0.2", optional = true }
 lyon = { version = "0.16", optional = true }
 scroll = "0.10"
-sqlx = { version = "0.4.0-beta.1", default-features = false, features = [ "runtime-tokio", "postgres", "sqlite" ], optional = true }
+sqlx = { version = "0.4.0", default-features = false, features = [ "runtime-tokio-native-tls", "postgres", "sqlite" ], optional = true }
 postgres-types = { version = "0.1", optional = true }
 bytes = "0.5"
 
