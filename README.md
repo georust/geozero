@@ -40,7 +40,7 @@ External:
 ## Applications
 
 * [flatgeobuf-gpu](https://github.com/pka/flatgeobuf-gpu): Demo rendering FlatGeobuf to GPU
-* [flatgeobuf-wgpu](https://github.com/pka/flatgeobuf-wgpu): Demo rendering FlatGeobuf with native WebGPU
+* [flatgeobuf-bevy](https://github.com/pka/flatgeobuf-bevy): Demo rendering FlatGeobuf with WebGPU (native platforms) and WebGL2 (Web/WASM)
 * [flatgeobuf-wasm](https://github.com/pka/flatgeobuf-wasm): WASM demo displaying FlatGeobuf as SVG
 
 ## CLI
