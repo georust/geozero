@@ -17,7 +17,7 @@ geojson = { version = "0.18" }
 criterion = "0.3"
 geo-types = { version = "0.5", default-features = false }
 geo = { version = "0.13" }  # , features = ["postgis-integration"] # not compatible with postgis = "0.7"
-flatgeobuf = { git = "https://github.com/pka/flatgeobuf/", branch="geozero" }
+flatgeobuf = "0.3.4"
 seek_bufread = "1.2"
 postgres = "0.17"
 postgis = "0.7"
