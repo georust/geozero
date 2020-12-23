@@ -17,6 +17,7 @@ mod geos_writer;
 pub mod postgis;
 /// SVG conversions.
 pub mod svg;
+#[cfg(feature = "tesselator")]
 pub mod tessellator;
 mod wkb_common;
 mod wkb_reader;
