@@ -1,3 +1,10 @@
+## 0.5.2 (2020-12-24)
+
+* Update URLs to GeoRust organisation
+* Update to georust/gdal 0.7
+* Update to geojson 0.21
+* Add experimental tesselator
+
 ## 0.5.1 (2010-08-12)
 
 * Activate all features for doc.rs

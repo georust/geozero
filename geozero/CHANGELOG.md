@@ -1,3 +1,7 @@
+## 0.5.2 (2020-12-24)
+
+* Update URLs to GeoRust organisation
+
 ## 0.5.1 (2020-07-09)
 
 * Support untagged triangles as parts of a TIN
