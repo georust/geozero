@@ -1,6 +1,6 @@
 # GeoZero
 
-[![CI build](https://github.com/pka/geozero/workflows/CI-Linux/badge.svg)](https://github.com/pka/geozero/actions)
+[![CI build](https://github.com/georust/geozero/workflows/CI-Linux/badge.svg)](https://github.com/georust/geozero/actions)
 [![crates.io version](https://img.shields.io/crates/v/geozero.svg)](https://crates.io/crates/geozero)
 [![docs.rs docs](https://docs.rs/geozero/badge.svg)](https://docs.rs/geozero)
 [![Discord Chat](https://img.shields.io/discord/598002550221963289.svg)](https://discord.gg/Fp2aape)
@@ -20,7 +20,7 @@ Supported dimensions: X, Y, Z, M, T
 
 ## Available implementations
 
-[geozero-core](https://github.com/pka/geozero/tree/master/geozero-core) [![crates.io version](https://img.shields.io/crates/v/geozero-core.svg)](https://crates.io/crates/geozero-core)
+[geozero-core](https://github.com/georust/geozero/tree/master/geozero-core) [![crates.io version](https://img.shields.io/crates/v/geozero-core.svg)](https://crates.io/crates/geozero-core)
 [![docs.rs docs](https://docs.rs/geozero-core/badge.svg)](https://docs.rs/geozero-core)
 
 * GeoJSON Reader + Writer
@@ -34,7 +34,7 @@ Supported dimensions: X, Y, Z, M, T
 * [geo-types](https://github.com/georust/geo) Writer
 
 External:
-* [FlatGeobuf Reader](https://github.com/bjornharrtell/flatgeobuf) [![crates.io version](https://img.shields.io/crates/v/flatgeobuf.svg)](https://crates.io/crates/flatgeobuf)
+* [FlatGeobuf Reader](https://github.com/flatgeobuf/flatgeobuf) [![crates.io version](https://img.shields.io/crates/v/flatgeobuf.svg)](https://crates.io/crates/flatgeobuf)
 [![docs.rs docs](https://docs.rs/flatgeobuf/badge.svg)](https://docs.rs/flatgeobuf)
 
 ## Applications
@@ -119,7 +119,7 @@ Full source code: [flatgeobuf-gpu](https://github.com/pka/flatgeobuf-gpu)
 
 Read a FlatGeobuf dataset with async HTTP client applying a bbox filter and convert to GeoJSON:
 ```rust
-let url = "https://github.com/pka/geozero/raw/master/geozero-core/tests/data/countries.fgb";
+let url = "https://github.com/georust/geozero/raw/master/geozero-core/tests/data/countries.fgb";
 let mut fgb = HttpFgbReader::open(url).await?;
 fgb.select_bbox(8.8, 47.2, 9.5, 55.3).await?;
 

@@ -24,7 +24,7 @@ fn fgb_to_geojson() -> Result<()> {
 
 #[allow(dead_code)]
 async fn http_fbg_to_json() -> Result<()> {
-    let url = "https://github.com/pka/geozero/raw/master/geozero-core/tests/data/countries.fgb";
+    let url = "https://github.com/georust/geozero/raw/master/geozero-core/tests/data/countries.fgb";
     let mut fgb = HttpFgbReader::open(url).await?;
     fgb.select_bbox(8.8, 47.2, 9.5, 55.3).await?;
 

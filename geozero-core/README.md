@@ -1,8 +1,8 @@
 # GeoZero Core
 
-Collection of [GeoZero](https://github.com/pka/geozero) processors for zero-copy reading and writing of geospatial data.
+Collection of [GeoZero](https://github.com/georust/geozero) processors for zero-copy reading and writing of geospatial data.
 
-[Changelog](https://github.com/pka/geozero/blob/master/geozero-core/CHANGELOG.md)
+[Changelog](https://github.com/georust/geozero/blob/master/geozero-core/CHANGELOG.md)
 
 
 ## GeoZero API implementations
