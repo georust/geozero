@@ -1,13 +1,13 @@
 #[cfg(feature = "gdal-lib")]
 mod gdal_examples {
 
-    use gdal::vector::Dataset;
+    use gdal::Dataset;
     use geozero_core::gdal::process_geom;
     use geozero_core::svg::SvgWriter;
     use std::path::Path;
 
     #[test]
-    fn ogr_to_svg() -> Result<(), gdal::errors::Error> {
+    fn ogr_to_svg() -> Result<(), gdal::errors::GdalError> {
         let mut dataset = Dataset::open(Path::new("tests/data/places.json"))?;
         let layer = dataset.layer(0)?;
         let mut out: Vec<u8> = Vec::new();

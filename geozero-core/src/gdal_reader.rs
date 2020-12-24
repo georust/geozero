@@ -19,7 +19,7 @@ fn process_geom_n<P: GeomProcessor>(geo: &Geometry, idx: usize, processor: &mut 
             let n_pts = geo.geometry_count();
             processor.multipoint_begin(n_pts, idx)?;
             for i in 0..n_pts {
-                let pt = unsafe { geo._get_geometry(i) };
+                let pt = unsafe { geo.get_unowned_geometry(i) };
                 if type2d(pt.geometry_type()) != OGRwkbGeometryType::wkbPoint {
                     return Err(GeozeroError::GeometryFormat);
                 }
@@ -34,7 +34,7 @@ fn process_geom_n<P: GeomProcessor>(geo: &Geometry, idx: usize, processor: &mut 
             let n_lines = geo.geometry_count();
             processor.multilinestring_begin(n_lines, idx)?;
             for i in 0..n_lines {
-                let line = unsafe { geo._get_geometry(i) };
+                let line = unsafe { geo.get_unowned_geometry(i) };
                 if type2d(line.geometry_type()) != OGRwkbGeometryType::wkbLineString {
                     return Err(GeozeroError::GeometryFormat);
                 }
@@ -49,7 +49,7 @@ fn process_geom_n<P: GeomProcessor>(geo: &Geometry, idx: usize, processor: &mut 
             let n_polys = geo.geometry_count();
             processor.multipolygon_begin(n_polys, idx)?;
             for i in 0..n_polys {
-                let poly = unsafe { geo._get_geometry(i) };
+                let poly = unsafe { geo.get_unowned_geometry(i) };
                 if type2d(poly.geometry_type()) != OGRwkbGeometryType::wkbPolygon {
                     return Err(GeozeroError::GeometryFormat);
                 }
@@ -61,7 +61,7 @@ fn process_geom_n<P: GeomProcessor>(geo: &Geometry, idx: usize, processor: &mut 
             let n_geoms = geo.geometry_count();
             processor.geometrycollection_begin(n_geoms, idx)?;
             for i in 0..n_geoms {
-                let g = unsafe { geo._get_geometry(i) };
+                let g = unsafe { geo.get_unowned_geometry(i) };
                 process_geom_n(&g, i, processor)?;
             }
             processor.geometrycollection_end(idx)?;
@@ -135,7 +135,7 @@ fn process_polygon<P: GeomProcessor>(
     let ring_count = geo.geometry_count();
     processor.polygon_begin(tagged, ring_count, idx)?;
     for i in 0..ring_count {
-        let ring = unsafe { geo._get_geometry(i) };
+        let ring = unsafe { geo.get_unowned_geometry(i) };
         if type2d(ring.geometry_type()) != OGRwkbGeometryType::wkbLineString {
             return Err(GeozeroError::GeometryFormat);
         }

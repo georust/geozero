@@ -22,7 +22,7 @@ impl<'a> GdalWriter {
     }
 }
 
-pub(crate) fn from_gdal_err(error: gdal::errors::Error) -> GeozeroError {
+pub(crate) fn from_gdal_err(error: gdal::errors::GdalError) -> GeozeroError {
     GeozeroError::Geometry(error.to_string())
 }
 
@@ -71,7 +71,7 @@ impl GeomProcessor for GdalWriter {
                     self.geom.add_geometry(line).map_err(from_gdal_err)?;
 
                     let n = self.geom.geometry_count();
-                    self.line = unsafe { self.geom._get_geometry(n - 1) };
+                    self.line = unsafe { self.geom.get_unowned_geometry(n - 1) };
                 }
                 OGRwkbGeometryType::wkbPolygon => {
                     let ring = Geometry::empty(OGRwkbGeometryType::wkbLinearRing)
@@ -79,17 +79,17 @@ impl GeomProcessor for GdalWriter {
                     self.geom.add_geometry(ring).map_err(from_gdal_err)?;
 
                     let n = self.geom.geometry_count();
-                    self.line = unsafe { self.geom._get_geometry(n - 1) };
+                    self.line = unsafe { self.geom.get_unowned_geometry(n - 1) };
                 }
                 OGRwkbGeometryType::wkbMultiPolygon => {
                     let ring = Geometry::empty(OGRwkbGeometryType::wkbLinearRing)
                         .map_err(from_gdal_err)?;
                     let n = self.geom.geometry_count();
-                    let mut poly = unsafe { self.geom._get_geometry(n - 1) };
+                    let mut poly = unsafe { self.geom.get_unowned_geometry(n - 1) };
                     poly.add_geometry(ring).map_err(from_gdal_err)?;
 
                     let n = poly.geometry_count();
-                    self.line = unsafe { poly._get_geometry(n - 1) };
+                    self.line = unsafe { poly.get_unowned_geometry(n - 1) };
                 }
                 _ => {
                     return Err(GeozeroError::Geometry(
