@@ -3,5 +3,6 @@ members = ["geozero", "geozero-core", "geozero-shp", "geozero-cli", "geozero-ben
 default-members = ["geozero", "geozero-core", "geozero-shp", "geozero-cli"]
 
 [patch.crates-io]
-# Patch geozero dependency (dev only)
+# Patch geozero dependencies (dev only)
 geozero = { path = "geozero" }
+# geozero-core = { path = "geozero-core" }

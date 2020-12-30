@@ -1,6 +1,6 @@
 [package]
 name = "geozero"
-version = "0.5.2"
+version = "0.5.3"
 authors = ["Pirmin Kalberer <pka@sourcepole.ch>"]
 edition = "2018"
 description = "Zero-Copy reading and writing of geospatial data."

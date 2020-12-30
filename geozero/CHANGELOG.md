@@ -1,5 +1,6 @@
-## 0.5.3 (UNRELEASED)
+## 0.6.0 (UNRELEASED)
 
+* Feature access API
 * Add multi_dim function to geometry API
 
 ## 0.5.2 (2020-12-24)
