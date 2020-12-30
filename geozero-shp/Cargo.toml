@@ -1,0 +1,14 @@
+[package]
+name = "geozero-shp"
+version = "0.1.0"
+authors = ["Pirmin Kalberer <pka@sourcepole.ch>"]
+edition = "2018"
+
+[dependencies]
+thiserror = "1.0"
+geozero = "0.5.2"
+byteorder = "1.2.7"
+dbase = "0.0.4"
+
+[dev-dependencies]
+geozero-core = "0.5"
