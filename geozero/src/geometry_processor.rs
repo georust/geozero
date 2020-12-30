@@ -26,6 +26,12 @@ pub trait GeomProcessor {
         }
     }
 
+    /// Request additional dimensions for coordinate processing
+    fn multi_dim(&self) -> bool {
+        let dimensions = self.dimensions();
+        dimensions.z || dimensions.m || dimensions.t || dimensions.tm
+    }
+
     /// SRID of geometries
     ///
     /// Emitted before geometry begin

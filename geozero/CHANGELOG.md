@@ -1,3 +1,7 @@
+## 0.5.3 (UNRELEASED)
+
+* Add multi_dim function to geometry API
+
 ## 0.5.2 (2020-12-24)
 
 * Update URLs to GeoRust organisation
