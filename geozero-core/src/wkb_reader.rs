@@ -139,13 +139,13 @@ fn process_wkb_geom_n<R: Read, P: GeomProcessor>(
     match info.base_type {
         WKBGeometryType::Point => {
             processor.point_begin(idx)?;
-            process_coord(raw, &info, multi_dim(processor), 0, processor)?;
+            process_coord(raw, &info, processor.multi_dim(), 0, processor)?;
             processor.point_end(idx)?;
         }
         WKBGeometryType::MultiPoint => {
             let n_pts = raw.ioread_with::<u32>(info.endian)? as usize;
             processor.multipoint_begin(n_pts, idx)?;
-            let multi = multi_dim(processor);
+            let multi = processor.multi_dim();
             for i in 0..n_pts {
                 let info = read_header(raw)?;
                 process_coord(raw, &info, multi, i, processor)?;
@@ -246,10 +246,6 @@ fn process_wkb_geom_n<R: Read, P: GeomProcessor>(
     Ok(())
 }
 
-fn multi_dim<P: GeomProcessor>(processor: &P) -> bool {
-    processor.dimensions().z || processor.dimensions().m
-}
-
 fn process_coord<R: Read, P: GeomProcessor>(
     raw: &mut R,
     info: &WkbInfo,
@@ -286,7 +282,7 @@ fn process_linestring<R: Read, P: GeomProcessor>(
 ) -> Result<()> {
     let length = raw.ioread_with::<u32>(info.endian)? as usize;
     processor.linestring_begin(tagged, length, idx)?;
-    let multi = multi_dim(processor);
+    let multi = processor.multi_dim();
     for i in 0..length {
         process_coord(raw, info, multi, i, processor)?;
     }
@@ -301,7 +297,7 @@ fn process_circularstring<R: Read, P: GeomProcessor>(
 ) -> Result<()> {
     let length = raw.ioread_with::<u32>(info.endian)? as usize;
     processor.circularstring_begin(length, idx)?;
-    let multi = multi_dim(processor);
+    let multi = processor.multi_dim();
     for i in 0..length {
         process_coord(raw, info, multi, i, processor)?;
     }

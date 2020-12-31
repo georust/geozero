@@ -80,7 +80,6 @@ pub trait Writer {
         Self: Sized;
 }
 
-
 /// Feature processing API
 //TODO: move optional functions into separate traits
 #[allow(unused_variables)]

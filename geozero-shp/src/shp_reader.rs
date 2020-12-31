@@ -109,8 +109,7 @@ fn read_point<P: GeomProcessor, T: Read>(
     };
 
     processor.point_begin(idx)?;
-    let multi_dim = processor.dimensions().z || processor.dimensions().m;
-    if multi_dim {
+    if processor.multi_dim() {
         let z = if processor.dimensions().z { z } else { None };
         let m = if processor.dimensions().m { m } else { None };
         processor.coordinate(x, y, z, m, None, None, 0)?;
@@ -158,7 +157,7 @@ fn read_multipoint<P: GeomProcessor, T: Read>(
         Vec::new()
     };
 
-    let multi_dim = processor.dimensions().z || processor.dimensions().m;
+    let multi_dim = processor.multi_dim();
     let get_z = processor.dimensions().z && z_values.len() > 0;
     let get_m = processor.dimensions().m && m_values.len() > 0;
 

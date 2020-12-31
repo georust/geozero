@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 thiserror = "1.0"
-geozero = "0.5.2"
+geozero = "0.5"
 byteorder = "1.2.7"
 dbase = "0.0.4"
 
