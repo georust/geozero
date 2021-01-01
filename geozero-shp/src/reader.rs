@@ -207,6 +207,15 @@ impl<T: Read> Reader<T> {
     }
 }
 
+impl<T: Read> IntoIterator for Reader<T> {
+    type Item = Result<(), Error>;
+    type IntoIter = ShapeIterator<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter_geometries()
+    }
+}
+
 impl Reader<BufReader<File>> {
     /// Creates a reader from a path to a file
     ///

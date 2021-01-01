@@ -19,7 +19,8 @@ fn read_header() {
 fn iterate() -> Result<(), geozero_shp::Error> {
     let reader = geozero_shp::Reader::from_path("./tests/data/poly.shp")?;
     let mut cnt = 0;
-    for _rec in reader.iter_geometries() {
+    // iter_geometries
+    for _ in reader {
         cnt += 1;
     }
     assert_eq!(cnt, 10);
@@ -45,7 +46,7 @@ fn iterate() -> Result<(), geozero_shp::Error> {
     let source = BufReader::new(File::open("./tests/data/poly.shp")?);
     let reader = geozero_shp::Reader::new(source)?;
     let mut cnt = 0;
-    for _rec in reader.iter_geometries() {
+    for _ in reader.iter_geometries() {
         cnt += 1;
     }
     assert_eq!(cnt, 10);
