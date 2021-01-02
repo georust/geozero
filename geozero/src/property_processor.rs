@@ -52,9 +52,106 @@ impl fmt::Display for ColumnValue<'_> {
     }
 }
 
+#[doc(hidden)]
+pub struct PropertyReader<'a, T: PropertyReadType> {
+    pub name: &'a str,
+    pub value: Option<T>,
+}
+
+#[doc(hidden)]
+pub struct PropertyReaderIdx<T: PropertyReadType> {
+    pub idx: usize,
+    pub value: Option<T>,
+}
+
+pub trait PropertyReadType<T = Self>
+where
+    T: PropertyReadType,
+{
+    fn get_value(v: &ColumnValue) -> Option<T>;
+}
+
+impl<T: PropertyReadType> PropertyProcessor for PropertyReader<'_, T> {
+    fn property(&mut self, _i: usize, name: &str, v: &ColumnValue) -> Result<bool> {
+        if name == self.name {
+            self.value = T::get_value(v);
+            Ok(true) // finish
+        } else {
+            Ok(false)
+        }
+    }
+}
+
+impl<T: PropertyReadType> PropertyProcessor for PropertyReaderIdx<T> {
+    fn property(&mut self, i: usize, _name: &str, v: &ColumnValue) -> Result<bool> {
+        if i == self.idx {
+            self.value = T::get_value(v);
+            Ok(true) // finish
+        } else {
+            Ok(false)
+        }
+    }
+}
+
+macro_rules! impl_scalar_property_reader {
+    ( $t:ty, $e:path ) => {
+        impl From<&ColumnValue<'_>> for Option<$t> {
+            fn from(v: &ColumnValue) -> Option<$t> {
+                match v {
+                    $e(v) => Some(*v),
+                    _ => None,
+                }
+            }
+        }
+        impl PropertyReadType for $t {
+            fn get_value(v: &ColumnValue) -> Option<$t> {
+                v.into()
+            }
+        }
+    };
+}
+
+impl_scalar_property_reader!(i8, ColumnValue::Byte);
+impl_scalar_property_reader!(u8, ColumnValue::UByte);
+impl_scalar_property_reader!(bool, ColumnValue::Bool);
+impl_scalar_property_reader!(i16, ColumnValue::Short);
+impl_scalar_property_reader!(u16, ColumnValue::UShort);
+impl_scalar_property_reader!(i32, ColumnValue::Int);
+impl_scalar_property_reader!(u32, ColumnValue::UInt);
+impl_scalar_property_reader!(i64, ColumnValue::Long);
+impl_scalar_property_reader!(u64, ColumnValue::ULong);
+impl_scalar_property_reader!(f32, ColumnValue::Float);
+impl_scalar_property_reader!(f64, ColumnValue::Double);
+
+impl From<&ColumnValue<'_>> for Option<String> {
+    fn from(v: &ColumnValue) -> Option<String> {
+        Some(v.to_string())
+    }
+}
+
+impl PropertyReadType for String {
+    fn get_value(v: &ColumnValue) -> Option<String> {
+        v.into()
+    }
+}
+
+
 impl PropertyProcessor for HashMap<String, String> {
     fn property(&mut self, _idx: usize, colname: &str, colval: &ColumnValue) -> Result<bool> {
         self.insert(colname.to_string(), colval.to_string());
         Ok(false)
     }
+}
+
+
+#[test]
+fn convert_column_value() {
+    let v = &ColumnValue::Int(42);
+    assert_eq!(Option::<i32>::from(v), Some(42));
+    assert_eq!(Option::<i64>::from(v), None);
+    assert_eq!(Option::<String>::from(v), Some("42".to_string()));
+
+    let v = &ColumnValue::String("Yes");
+    assert_eq!(Option::<i32>::from(v), None);
+    assert_eq!(Option::<String>::from(v), Some("Yes".to_string()));
 }
