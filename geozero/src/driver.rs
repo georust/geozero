@@ -10,10 +10,15 @@
 //! Reader granularity:
 //! * Record access (e.g. FlatGeobuf)
 //! * Full dataset (e.g. GeoJSON)
+//! 
+//! Features are usually consumed by datasource iterators.
+//! The current feature can be processed with `FeatureAccess` processing API methods.
+//! Some datasources process features during consumation (e.g. reading from file). 
 
 use crate::error::Result;
 use crate::feature_processor::FeatureProcessor;
 use crate::geometry_processor::GeomProcessor;
+use crate::property_processor::{PropertyProcessor, PropertyReadType, PropertyReader, PropertyReaderIdx};
 use async_trait::async_trait;
 use std::collections::HashMap;
 use std::io::{Read, Seek};
@@ -81,22 +86,56 @@ pub trait Writer {
 }
 
 /// Feature processing API
-//TODO: move optional functions into separate traits
-#[allow(unused_variables)]
-pub trait Feature {
-    /// Raw geometry access.
-    fn geometry<T>(&self) -> Option<&T> {
-        unimplemented!()
+pub trait FeatureAccess : FeatureProperties + FeatureGeometry {
+    /// Process feature geometries and properties.
+    fn process<P: FeatureProcessor>(&self, processor: &mut P, idx: u64) -> Result<()> {
+        processor.feature_begin(idx)?;
+        processor.properties_begin()?;
+        let _ = self.process_properties(processor)?;
+        processor.properties_end()?;
+        processor.geometry_begin()?;
+        self.process_geom(processor)?;
+        processor.geometry_end()?;
+        processor.feature_end(idx)
     }
-    /// Consume and process feature.
-    // Remark: HTTP reader may require Send
-    fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> Result<()> {
-        unimplemented!()
+}
+
+/// Feature properties processing API
+pub trait FeatureGeometry {
+    /// Process geometry.
+    fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()>;
+}
+
+/// Feature properties processing API
+pub trait FeatureProperties {
+    /// Process feature properties.
+    fn process_properties<P: PropertyProcessor>(&self, processor: &mut P) -> Result<bool>;
+    /// Get property value by name
+    fn property<T: PropertyReadType>(&self, name: &str) -> Option<T> {
+        let mut reader = PropertyReader { name, value: None };
+        if self.process_properties(&mut reader).is_ok() {
+            reader.value
+        } else {
+            None
+        }
     }
-    /// Consume and process geometry.
-    fn process_geom<P: GeomProcessor>(&mut self, processor: &mut P) -> Result<()>;
-    /// Return all properties in a HashMap.
+    /// Get property value by number
+    fn property_n<T: PropertyReadType>(&self, n: usize) -> Option<T> {
+        let mut reader = PropertyReaderIdx {
+            idx: n,
+            value: None,
+        };
+        if self.process_properties(&mut reader).is_ok() {
+            reader.value
+        } else {
+            None
+        }
+    }
+    /// Return all properties in a HashMap
+    /// Use `process_properties` for zero-copy access
     fn properties(&self) -> Result<HashMap<String, String>> {
-        unimplemented!()
+        let mut properties = HashMap::new();
+        let _ = self.process_properties(&mut properties)?;
+        Ok(properties)
     }
 }
