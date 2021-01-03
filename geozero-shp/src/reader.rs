@@ -1,8 +1,7 @@
 use crate::shp_reader::{read_one_shape_as, RecordHeader};
 use crate::shx_reader::{read_index_file, ShapeIndex};
 use crate::{header, Error};
-use geozero::{FeatureProcessor, GeomProcessor};
-use std::collections::HashMap;
+use geozero::GeomProcessor;
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::iter::FusedIterator;
@@ -45,9 +44,12 @@ impl<T: Read> ShapeIterator<T> {
     }
 }
 
-impl<T: Read> geozero::Feature for ShapeIterator<T> {
+impl<T: Read> ShapeIterator<T> {
     /// Consume and process geometry.
-    fn process_geom<P: GeomProcessor>(&mut self, processor: &mut P) -> geozero::error::Result<()> {
+    pub fn process_geom<P: GeomProcessor>(
+        &mut self,
+        processor: &mut P,
+    ) -> geozero::error::Result<()> {
         self.process_shape(processor)
     }
 }
@@ -85,24 +87,12 @@ pub struct ShapeRecordIterator<T: Read> {
     dbf_reader: dbase::Reader<T>,
 }
 
-impl<T: Read> geozero::Feature for ShapeRecordIterator<T> {
-    fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> geozero::error::Result<()> {
-        self.shape_iter.process_shape(processor)
-        // process_properties(&rec, processor) // TODO
-    }
-    /// Consume and process geometry.
-    fn process_geom<P: GeomProcessor>(&mut self, processor: &mut P) -> geozero::error::Result<()> {
-        self.shape_iter.process_shape(processor)
-    }
-    /// Return all properties in a HashMap.
-    fn properties(&self) -> geozero::error::Result<HashMap<String, String>> {
-        // let props = properties(&rec)?; // TODO
-        unimplemented!()
-    }
+pub struct ShapeRecord {
+    pub record: dbase::Record,
 }
 
 impl<T: Read> Iterator for ShapeRecordIterator<T> {
-    type Item = Result<dbase::Record, Error>;
+    type Item = Result<ShapeRecord, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let _shape = match self.shape_iter.next()? {
@@ -115,7 +105,7 @@ impl<T: Read> Iterator for ShapeRecordIterator<T> {
             Ok(rcd) => rcd,
         };
 
-        Some(Ok(record))
+        Some(Ok(ShapeRecord { record }))
     }
 }
 

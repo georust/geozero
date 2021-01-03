@@ -1,7 +1,6 @@
 use dbase::FieldValue;
-use geozero::Feature;
+use geozero::FeatureProperties;
 use geozero_core::wkt::WktWriter;
-use geozero_shp::properties;
 use std::fs::File;
 use std::io::BufReader;
 use std::str::from_utf8;
@@ -27,17 +26,9 @@ fn iterate() -> Result<(), geozero_shp::Error> {
 
     let reader = geozero_shp::Reader::from_path("./tests/data/poly.shp")?;
     let mut cnt = 0;
-    for rec in reader.iter_features()? {
-        if let Ok(rec) = rec {
-            if let Some(FieldValue::Numeric(Some(val))) = rec.get("EAS_ID") {
-                assert!(*val > 0.0);
-            } else {
-                assert!(false, "record field access failed");
-            }
-            let props = properties(&rec)?;
-            assert!(props["EAS_ID"].starts_with("1"));
-        } else {
-            assert!(false, "record field access failed");
+    for feat in reader.iter_features()? {
+        if let Ok(feat) = feat {
+            assert!(feat.property::<f64>("EAS_ID").unwrap() > 100.0);
         }
         cnt += 1;
     }
@@ -47,6 +38,33 @@ fn iterate() -> Result<(), geozero_shp::Error> {
     let reader = geozero_shp::Reader::new(source)?;
     let mut cnt = 0;
     for _ in reader.iter_geometries() {
+        cnt += 1;
+    }
+    assert_eq!(cnt, 10);
+
+    Ok(())
+}
+
+#[test]
+fn property_access() -> Result<(), geozero_shp::Error> {
+    let reader = geozero_shp::Reader::from_path("./tests/data/poly.shp")?;
+    let mut cnt = 0;
+    for feat in reader.iter_features()? {
+        if let Ok(feat) = feat {
+            // Access internal type
+            if let Some(FieldValue::Numeric(Some(val))) = feat.record.get("EAS_ID") {
+                assert!(*val > 100.0);
+            } else {
+                assert!(false, "record field access failed");
+            }
+            // Use String HashMap
+            let props = feat.properties()?;
+            assert!(props["EAS_ID"].starts_with("1"));
+            // field access
+            assert!(feat.property::<f64>("EAS_ID").unwrap() > 100.0);
+        } else {
+            assert!(false, "record field access failed");
+        }
         cnt += 1;
     }
     assert_eq!(cnt, 10);
