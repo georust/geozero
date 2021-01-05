@@ -11,12 +11,11 @@
 //!
 //! Supported dimensions: X, Y, Z, M, T
 //!
-//! ## Installation
+//! Available implementations:
+//! * [geozero-core](https://docs.rs/geozero-core)
+//! * [geozero-shp](https://docs.rs/geozero-shp)
+//! * [flatgeobuf](https://docs.rs/flatgeobuf)
 //!
-//! ```ini
-//! [dependencies]
-//! geozero = "0.2"
-//! ```
 //!
 //! ## Zero-copy geometry reader
 //!
