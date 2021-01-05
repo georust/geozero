@@ -19,9 +19,6 @@ postgis-sqlx = ["sqlx"]
 postgis-postgres = ["postgres-types"]
 tessellator = ["lyon"]
 
-[package.metadata.docs.rs]
-all-features = true
-
 [dependencies]
 geozero = "0.6.0"
 geojson = "0.21"
@@ -43,3 +40,7 @@ polylabel = "2.2"
 flatgeobuf = "0.4.0"
 postgres = "0.17"
 tokio = { version = "0.2", default-features = false, features = ["rt-threaded"] }
+
+[package.metadata.docs.rs]
+all-features = true
+rustc-args = ["--cfg", "docsrs"]
