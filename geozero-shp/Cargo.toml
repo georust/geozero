@@ -3,6 +3,7 @@ name = "geozero-shp"
 version = "0.1.0"
 authors = ["Pirmin Kalberer <pka@sourcepole.ch>"]
 edition = "2018"
+description = "Shapefile reader with GeoZero API."
 homepage = "https://github.com/georust/geozero"
 repository = "https://github.com/georust/geozero"
 readme = "README.md"
@@ -16,4 +17,4 @@ byteorder = "1.2.7"
 dbase = "0.0.4"
 
 [dev-dependencies]
-geozero-core = "0.5"
+geozero-core = "0.6.0"

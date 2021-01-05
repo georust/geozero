@@ -1,6 +1,6 @@
 [package]
 name = "geozero-core"
-version = "0.5.2"
+version = "0.6.0"
 authors = ["Pirmin Kalberer <pka@sourcepole.ch>"]
 edition = "2018"
 description = "Zero-Copy reading and writing of geospatial data."
@@ -23,7 +23,7 @@ tessellator = ["lyon"]
 all-features = true
 
 [dependencies]
-geozero = "0.5"
+geozero = "0.6.0"
 geojson = "0.21"
 geo-types = { version = "0.6", default-features = false }
 geos = { version = "7.0", optional = true }
@@ -40,6 +40,6 @@ hex = "0.4"
 geo = "0.14"
 kdbush = "0.2"
 polylabel = "2.2"
-flatgeobuf = "0.3.4"
+flatgeobuf = "0.4.0"
 postgres = "0.17"
 tokio = { version = "0.2", default-features = false, features = ["rt-threaded"] }

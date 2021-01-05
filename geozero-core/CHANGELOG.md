@@ -1,3 +1,7 @@
+## 0.6.0 (2021-01-05)
+
+* Update to georust 0.6.0
+
 ## 0.5.2 (2020-12-24)
 
 * Update URLs to GeoRust organisation
