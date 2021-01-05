@@ -1,28 +1,28 @@
-use crate::shp_reader::{read_one_shape_as, RecordHeader};
+use crate::shp_reader::{read_shape, RecordHeader};
 use crate::shx_reader::{read_index_file, ShapeIndex};
 use crate::{header, Error};
-use geozero::{FeatureProcessor, GeomProcessor};
+use geozero::{FeatureProcessor, FeatureProperties};
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::iter::FusedIterator;
 use std::path::Path;
 
 /// Struct that handle iteration over the shapes of a .shp file
-pub struct ShapeIterator<P: GeomProcessor, T: Read> {
+pub struct ShapeIterator<P: FeatureProcessor, T: Read> {
     processor: P,
     source: T,
     current_pos: usize,
     file_length: usize,
 }
 
-impl<P: GeomProcessor, T: Read> Iterator for ShapeIterator<P, T> {
+impl<P: FeatureProcessor, T: Read> Iterator for ShapeIterator<P, T> {
     type Item = Result<(), Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.current_pos >= self.file_length {
             None
         } else {
-            let hdr = match read_one_shape_as(&mut self.processor, &mut self.source) {
+            let hdr = match read_shape(&mut self.processor, &mut self.source) {
                 Err(e) => return Some(Err(e)),
                 Ok(hdr_and_shape) => hdr_and_shape,
             };
@@ -33,36 +33,61 @@ impl<P: GeomProcessor, T: Read> Iterator for ShapeIterator<P, T> {
     }
 }
 
-impl<P: GeomProcessor, T: Read> FusedIterator for ShapeIterator<P, T> {}
+impl<P: FeatureProcessor, T: Read> FusedIterator for ShapeIterator<P, T> {}
 
-pub struct ShapeRecordIterator<P: GeomProcessor, T: Read> {
+pub struct ShapeRecordIterator<P: FeatureProcessor, T: Read> {
     shape_iter: ShapeIterator<P, T>,
     dbf_reader: dbase::Reader<T>,
+    featno: u64,
 }
 
 pub struct ShapeRecord {
     pub record: dbase::Record,
 }
 
-impl<P: GeomProcessor, T: Read> Iterator for ShapeRecordIterator<P, T> {
+impl<P: FeatureProcessor, T: Read> Iterator for ShapeRecordIterator<P, T> {
     type Item = Result<ShapeRecord, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let _shape = match self.shape_iter.next()? {
+        if self.featno == 0 {
+            self.shape_iter.processor.dataset_begin(None).ok();
+        }
+        let record = match self.dbf_reader.next() {
+            None => {
+                self.shape_iter.processor.dataset_end().ok();
+                return None;
+            }
+            Some(Err(e)) => return Some(Err(Error::DbaseError(e))),
+            Some(Ok(rcd)) => rcd,
+        };
+        let shprec = ShapeRecord { record };
+
+        {
+            let processor = &mut self.shape_iter.processor;
+            processor.feature_begin(self.featno).ok();
+            processor.properties_begin().ok();
+            if let Err(e) = shprec.process_properties(processor) {
+                return Some(Err(Error::GeozeroError(e)));
+            }
+            processor.properties_end().ok();
+
+            processor.geometry_begin().ok();
+        }
+        let _ = match self.shape_iter.next()? {
             Err(e) => return Some(Err(e)),
-            Ok(shp) => shp,
+            Ok(_) => (),
         };
-
-        let record = match self.dbf_reader.next()? {
-            Err(e) => return Some(Err(Error::DbaseError(e))),
-            Ok(rcd) => rcd,
-        };
-
-        Some(Ok(ShapeRecord { record }))
+        {
+            let processor = &mut self.shape_iter.processor;
+            processor.geometry_end().ok();
+            processor.feature_end(self.featno).ok();
+        }
+        self.featno += 1;
+        Some(Ok(shprec))
     }
 }
 
-impl<P: GeomProcessor, T: Read> FusedIterator for ShapeRecordIterator<P, T> {}
+impl<P: FeatureProcessor, T: Read> FusedIterator for ShapeRecordIterator<P, T> {}
 
 /// struct that reads the content of a shapefile
 pub struct Reader<T: Read> {
@@ -106,7 +131,7 @@ impl<T: Read> Reader<T> {
         dbf_reader.read().or_else(|e| Err(Error::DbaseError(e)))
     }
 
-    pub fn iter_geometries<P: GeomProcessor>(self, processor: P) -> ShapeIterator<P, T> {
+    pub fn iter_geometries<P: FeatureProcessor>(self, processor: P) -> ShapeIterator<P, T> {
         ShapeIterator {
             processor,
             source: self.source,
@@ -130,6 +155,7 @@ impl<T: Read> Reader<T> {
             Ok(ShapeRecordIterator {
                 shape_iter,
                 dbf_reader,
+                featno: 0,
             })
         } else {
             Err(Error::MissingDbf)

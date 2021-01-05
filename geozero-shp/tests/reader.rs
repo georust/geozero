@@ -1,5 +1,6 @@
 use dbase::FieldValue;
 use geozero::{FeatureProperties, ProcessorSink};
+use geozero_core::geojson::GeoJsonWriter;
 use geozero_core::wkt::WktWriter;
 use std::fs::File;
 use std::io::BufReader;
@@ -41,6 +42,26 @@ fn iterate() -> Result<(), geozero_shp::Error> {
     }
     assert_eq!(cnt, 10);
 
+    Ok(())
+}
+
+#[test]
+fn shp_to_json() -> Result<(), geozero_shp::Error> {
+    let reader = geozero_shp::Reader::from_path("./tests/data/poly.shp")?;
+    let mut json: Vec<u8> = Vec::new();
+    let cnt = reader.iter_features(GeoJsonWriter::new(&mut json))?.count();
+    assert_eq!(cnt, 10);
+    assert_eq!(
+        &from_utf8(&json).unwrap()[0..92],
+        r#"{
+"type": "FeatureCollection",
+"name": "",
+"features": [{"type": "Feature", "properties": {""#
+    );
+    assert_eq!(
+        &from_utf8(&json).unwrap()[json.len()-100..],
+        "2],[479658.59375,4764670],[479640.09375,4764721],[479735.90625,4764752],[479750.6875,4764702]]]]}}]}"
+    );
     Ok(())
 }
 

@@ -30,18 +30,18 @@ impl RecordHeader {
     }
 }
 
-/// Reads and returns one shape and its header from the source
-pub(crate) fn read_one_shape_as<P: GeomProcessor, T: Read>(
+/// Read and process one shape record
+pub(crate) fn read_shape<P: GeomProcessor, T: Read>(
     processor: &mut P,
     mut source: &mut T,
 ) -> Result<RecordHeader, Error> {
     let hdr = RecordHeader::read_from(&mut source)?;
     let record_size = hdr.record_size * 2;
-    read_shape_from(processor, &mut source, record_size as usize)?;
+    read_shape_rec(processor, &mut source, record_size as usize)?;
     Ok(hdr)
 }
 
-fn read_shape_from<P: GeomProcessor, T: Read>(
+fn read_shape_rec<P: GeomProcessor, T: Read>(
     processor: &mut P,
     mut source: &mut T,
     record_size: usize,
@@ -94,7 +94,6 @@ fn read_point<P: GeomProcessor, T: Read>(
     if record_size != dims * size_of::<f64>() {
         return Err(Error::InvalidShapeRecordSize);
     }
-    let idx = 0;
     let x = source.read_f64::<LittleEndian>()?;
     let y = source.read_f64::<LittleEndian>()?;
     let z = if has_z {
@@ -108,7 +107,7 @@ fn read_point<P: GeomProcessor, T: Read>(
         None
     };
 
-    processor.point_begin(idx)?;
+    processor.point_begin(0)?;
     if processor.multi_dim() {
         let z = if processor.dimensions().z { z } else { None };
         let m = if processor.dimensions().m { m } else { None };
@@ -116,7 +115,7 @@ fn read_point<P: GeomProcessor, T: Read>(
     } else {
         processor.xy(x, y, 0)?;
     }
-    processor.point_end(idx)?;
+    processor.point_end(0)?;
     Ok(())
 }
 
