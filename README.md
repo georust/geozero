@@ -33,19 +33,21 @@ Supported dimensions: X, Y, Z, M, T
 * SVG Writer
 * [geo-types](https://github.com/georust/geo) Writer
 
-External:
-* [FlatGeobuf Reader](https://github.com/flatgeobuf/flatgeobuf) [![crates.io version](https://img.shields.io/crates/v/flatgeobuf.svg)](https://crates.io/crates/flatgeobuf)
+[geozero-shp](https://github.com/georust/geozero/tree/master/geozero-shp) [![crates.io version](https://img.shields.io/crates/v/geozero-shp.svg)](https://crates.io/crates/geozero-shp)
+[![docs.rs docs](https://docs.rs/geozero-shp/badge.svg)](https://docs.rs/geozero-shp)
+
+* Shapefile Reader
+
+[flatgeobuf](https://github.com/flatgeobuf/flatgeobuf) [![crates.io version](https://img.shields.io/crates/v/flatgeobuf.svg)](https://crates.io/crates/flatgeobuf)
 [![docs.rs docs](https://docs.rs/flatgeobuf/badge.svg)](https://docs.rs/flatgeobuf)
+
+* FlatGeobuf Reader
 
 ## Applications
 
 * [flatgeobuf-gpu](https://github.com/pka/flatgeobuf-gpu): Demo rendering FlatGeobuf to GPU
 * [flatgeobuf-bevy](https://github.com/pka/flatgeobuf-bevy): Demo rendering FlatGeobuf with WebGPU (native platforms) and WebGL2 (Web/WASM)
 * [flatgeobuf-wasm](https://github.com/pka/flatgeobuf-wasm): WASM demo displaying FlatGeobuf as SVG
-
-## CLI
-
-geozero includes an experimental command line interface for converting between supported formats.
 
 ## Usage examples
 
