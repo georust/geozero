@@ -66,6 +66,20 @@ fn shp_to_json() -> Result<(), geozero_shp::Error> {
 }
 
 #[test]
+fn property_filter() -> Result<(), geozero_shp::Error> {
+    let reader = geozero_shp::Reader::from_path("./tests/data/poly.shp")?;
+    let mut json: Vec<u8> = Vec::new();
+    let cnt = reader
+        .iter_features(GeoJsonWriter::new(&mut json))?
+        .filter(|feat| feat.as_ref().unwrap().property::<f64>("AREA").unwrap() > 260000.0)
+        .count();
+    assert_eq!(cnt, 5);
+    // Filter does not work as expected. *All* features are written and converted into GeoJSON!
+    assert!(&from_utf8(&json).unwrap().contains("\"AREA\": 5268.813"));
+    Ok(())
+}
+
+#[test]
 fn property_access() -> Result<(), geozero_shp::Error> {
     let reader = geozero_shp::Reader::from_path("./tests/data/poly.shp")?;
     let mut cnt = 0;
