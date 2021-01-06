@@ -2,9 +2,12 @@
 
 Reading Shapefiles with [GeoZero](https://github.com/georust/geozero) API.
 
-Planned functions:
-* Support for Multipatch types
-* Read spatial index
+Features:
+- [x] Read support for OGC simple feature types
+- [x] Convert to GeoJSON, WKB (PostGIS/GeoPackage), WKT, GEOS, GDAL formats and more
+- [ ] Support for Multipatch types
+- [ ] Read spatial index
+- [ ] Read projection files
 
 For writing Shapefiles either use [shapefile-rs](https://crates.io/crates/shapefile) or the GDAL driver of [GeoZero Core](https://crates.io/crates/geozero-core)
 
