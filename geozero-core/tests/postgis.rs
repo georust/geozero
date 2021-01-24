@@ -38,7 +38,11 @@ mod postgis_postgres {
         )?;
 
         let geom: Geometry = row.get(0);
-        assert_eq!(&format!("{:?}", geom.0), "Polygon(Polygon { exterior: LineString([Coordinate { x: 0.0, y: 0.0 }, Coordinate { x: 2.0, y: 0.0 }, Coordinate { x: 2.0, y: 2.0 }, Coordinate { x: 0.0, y: 2.0 }, Coordinate { x: 0.0, y: 0.0 }]), interiors: [] })");
+        if let geo_types::Geometry::Polygon(poly) = geom.0 {
+            assert_eq!(&format!("{:?}", poly), "Polygon { exterior: LineString([Coordinate { x: 0.0, y: 0.0 }, Coordinate { x: 2.0, y: 0.0 }, Coordinate { x: 2.0, y: 2.0 }, Coordinate { x: 0.0, y: 2.0 }, Coordinate { x: 0.0, y: 0.0 }]), interiors: [] }");
+        } else {
+            assert!(false, "Conversion to geo_types::Geometry failed");
+        }
         Ok(())
     }
 
@@ -163,7 +167,12 @@ mod postgis_sqlx {
                 .fetch_one(&pool)
                 .await?;
 
-        assert_eq!(&format!("{:?}", (row.0).0), "Polygon(Polygon { exterior: LineString([Coordinate { x: 0.0, y: 0.0 }, Coordinate { x: 2.0, y: 0.0 }, Coordinate { x: 2.0, y: 2.0 }, Coordinate { x: 0.0, y: 2.0 }, Coordinate { x: 0.0, y: 0.0 }]), interiors: [] })");
+        let geom = row.0;
+        if let geo_types::Geometry::Polygon(poly) = geom.0 {
+            assert_eq!(&format!("{:?}", poly), "Polygon { exterior: LineString([Coordinate { x: 0.0, y: 0.0 }, Coordinate { x: 2.0, y: 0.0 }, Coordinate { x: 2.0, y: 2.0 }, Coordinate { x: 0.0, y: 2.0 }, Coordinate { x: 0.0, y: 0.0 }]), interiors: [] }");
+        } else {
+            assert!(false, "Conversion to geo_types::Geometry failed");
+        }
 
         let row: (Geometry,) = sqlx::query_as("SELECT NULL::geometry")
             .fetch_one(&pool)
@@ -173,6 +182,17 @@ mod postgis_sqlx {
             &format!("{:?}", (row.0).0),
             "GeometryCollection(GeometryCollection([]))"
         );
+
+        // WKB encoding
+        // geo-types conversion is not implemented yet!
+        // let mut tx = pool.begin().await?;
+        // let geom = geo::Point::new(10.0, 20.0).into();
+        // let _inserted = sqlx::query("INSERT INTO point2d (datetimefield,geom) VALUES(now(),$1)")
+        //     .bind(Geometry(geom))
+        //     .execute(&mut tx)
+        //     .await?;
+        // tx.commit().await?;
+
         Ok(())
     }
 
