@@ -121,6 +121,7 @@ impl FeatureProcessor for Geo {}
 mod test {
     use super::*;
     use crate::geojson_reader::read_geojson;
+    use geo::algorithm::coords_iter::CoordsIter;
 
     #[test]
     fn line_string() -> Result<()> {
@@ -130,7 +131,7 @@ mod test {
         println!("{:?}", geo.geometry());
         match geo.geometry() {
             Geometry::LineString(line) => {
-                assert_eq!(line.num_coords(), 7);
+                assert_eq!(line.coords_count(), 7);
                 assert_eq!(
                     line.points_iter().next().unwrap(),
                     Point::new(1875038.447610231, -3269648.6879248763)

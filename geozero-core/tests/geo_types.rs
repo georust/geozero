@@ -1,4 +1,4 @@
-use geo::algorithm::centroid::Centroid;
+use geo::algorithm::{centroid::Centroid, coords_iter::CoordsIter};
 use geo::simplifyvw::SimplifyVWPreserve;
 use geo::{Geometry, Point};
 use geozero_core::geo_types::Geo;
@@ -23,8 +23,8 @@ fn simplify() {
     let mut geo = Geo::new();
     assert!(read_geojson_geom(geojson.as_bytes(), &mut geo).is_ok());
     if let Geometry::LineString(line) = geo.geometry() {
-        assert_eq!(line.num_coords(), 7);
+        assert_eq!(line.coords_count(), 7);
         let simplified = line.simplifyvw_preserve(&800000.0);
-        assert_eq!(simplified.num_coords(), 4);
+        assert_eq!(simplified.coords_count(), 4);
     }
 }
