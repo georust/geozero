@@ -1,3 +1,11 @@
+## 0.6.2 (UNRELEASED)
+
+* Add geo-types reader
+
+## 0.6.1 (2021-01-06)
+
+* Fix docs.rs
+
 ## 0.6.0 (2021-01-05)
 
 * Update to georust 0.6.0

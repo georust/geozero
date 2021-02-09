@@ -35,6 +35,7 @@ bytes = "0.5"
 [dev-dependencies]
 hex = "0.4"
 geo = "0.17"
+wkt = { git = "https://github.com/georust/wkt.git" } # 0.15
 kdbush = "0.2"
 polylabel = "2.4"
 flatgeobuf = "0.4.0"

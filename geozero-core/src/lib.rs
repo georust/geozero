@@ -4,6 +4,7 @@
 mod gdal_reader;
 #[cfg(feature = "gdal-lib")]
 mod gdal_writer;
+mod geo_types_reader;
 mod geo_types_writer;
 mod geojson_reader;
 mod geojson_writer;
@@ -32,6 +33,7 @@ pub mod geojson {
 
 /// [geo-types](https://github.com/georust/geo) conversions.
 pub mod geo_types {
+    pub use crate::geo_types_reader::*;
     pub use crate::geo_types_writer::*;
 }
 
