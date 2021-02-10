@@ -173,3 +173,38 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
 impl<W: Write> PropertyProcessor for WktWriter<'_, W> {}
 
 impl<W: Write> FeatureProcessor for WktWriter<'_, W> {}
+
+/// Convert to WKT.
+pub trait ToWkt {
+    /// Convert to WKT String.
+    fn to_wkt(&self) -> Result<String>;
+}
+
+impl ToWkt for geo_types::Geometry<f64> {
+    fn to_wkt(&self) -> Result<String> {
+        let mut out: Vec<u8> = Vec::new();
+        crate::geo_types::process_geom(self, &mut WktWriter::new(&mut out))?;
+        String::from_utf8(out).map_err(|_| geozero::error::GeozeroError::GeometryFormat)
+    }
+}
+
+// GEOS has to_wkt method already built-in
+// #[cfg(feature = "geos-lib")]
+// impl ToWkt for geos::Geometry<'_> {
+//     fn to_wkt(&self) -> Result<String> {
+//         let mut out: Vec<u8> = Vec::new();
+//         crate::geos::process_geos(self, &mut WktWriter::new(&mut out))?;
+//         String::from_utf8(out).map_err(|_| geozero::error::GeozeroError::GeometryFormat)
+//     }
+// }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn conversions() {
+        let geom: geo_types::Geometry<f64> = geo_types::Point::new(10.0, 20.0).into();
+        assert_eq!(&geom.to_wkt().unwrap(), "POINT(10 20)");
+    }
+}
