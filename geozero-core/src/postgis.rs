@@ -5,9 +5,11 @@ pub mod postgres {
     // This should be included in georust/geo to avoid a newtype
     /// PostGIS geometry type decoding for [geo-types](https://github.com/georust/geo).
     pub mod geo {
-        use crate::geo_types::Geo;
+        use crate::geo_types::{process_geom, Geo};
         use crate::wkb;
-        use postgres_types::{FromSql, Type};
+        use bytes::{buf::ext::BufMutExt, BytesMut};
+        use postgres_types::{to_sql_checked, FromSql, IsNull, ToSql, Type};
+        use std::fmt;
 
         /// geo-types wrapper for PostGIS geometry decoding.
         pub struct Geometry(pub geo_types::Geometry<f64>);
@@ -32,21 +34,34 @@ pub mod postgres {
             }
         }
 
-        #[test]
-        #[ignore]
-        fn geometry_query() -> Result<(), postgres::error::Error> {
-            use postgres::{Client, NoTls};
+        // required by ToSql
+        impl<'a> fmt::Debug for Geometry {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                self.0.fmt(f)
+            }
+        }
 
-            let mut client = Client::connect(&std::env::var("DATABASE_URL").unwrap(), NoTls)?;
+        impl<'a> ToSql for Geometry {
+            fn to_sql(
+                &self,
+                _ty: &Type,
+                out: &mut BytesMut,
+            ) -> Result<IsNull, Box<dyn std::error::Error + Sync + Send>> {
+                let pgout = &mut out.writer();
+                let mut writer = wkb::WkbWriter::new(pgout, wkb::WkbDialect::Ewkb);
+                //writer.srid = ...
+                process_geom(&self.0, &mut writer)?;
+                Ok(IsNull::No)
+            }
 
-            let row = client.query_one(
-                "SELECT 'SRID=4326;POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))'::geometry",
-                &[],
-            )?;
+            fn accepts(ty: &Type) -> bool {
+                match ty.name() {
+                    "geography" | "geometry" => true,
+                    _ => false,
+                }
+            }
 
-            let geom: Geometry = row.get(0);
-            assert_eq!(&format!("{:?}", geom.0), "Polygon(Polygon { exterior: LineString([Coordinate { x: 0.0, y: 0.0 }, Coordinate { x: 2.0, y: 0.0 }, Coordinate { x: 2.0, y: 2.0 }, Coordinate { x: 0.0, y: 2.0 }, Coordinate { x: 0.0, y: 0.0 }]), interiors: [] })");
-            Ok(())
+            to_sql_checked!();
         }
     }
 
@@ -114,23 +129,6 @@ pub mod postgres {
 
             to_sql_checked!();
         }
-
-        #[test]
-        #[ignore]
-        fn geometry_query() -> Result<(), postgres::error::Error> {
-            use postgres::{Client, NoTls};
-
-            let mut client = Client::connect(&std::env::var("DATABASE_URL").unwrap(), NoTls)?;
-
-            let row = client.query_one(
-                "SELECT 'SRID=4326;POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))'::geometry",
-                &[],
-            )?;
-
-            let geom: Geometry = row.get(0);
-            assert_eq!(geom.0.to_wkt().unwrap(), "POLYGON ((0.0000000000000000 0.0000000000000000, 2.0000000000000000 0.0000000000000000, 2.0000000000000000 2.0000000000000000, 0.0000000000000000 2.0000000000000000, 0.0000000000000000 0.0000000000000000))");
-            Ok(())
-        }
     }
 }
 
@@ -141,10 +139,11 @@ pub mod sqlx {
     // This should be included in georust/geo to avoid a newtype
     /// PostGIS geometry type decoding for [geo-types](https://github.com/georust/geo).
     pub mod geo {
-        use crate::geo_types::Geo;
+        use crate::geo_types::{process_geom, Geo};
         use crate::wkb;
         use sqlx::decode::Decode;
-        use sqlx::postgres::{PgTypeInfo, PgValueRef, Postgres};
+        use sqlx::encode::{Encode, IsNull};
+        use sqlx::postgres::{PgArgumentBuffer, PgTypeInfo, PgValueRef, Postgres};
         use sqlx::ValueRef;
 
         type BoxDynError = Box<dyn std::error::Error + Send + Sync>;
@@ -172,6 +171,18 @@ pub mod sqlx {
                     .map_err(|e| sqlx::Error::Decode(e.to_string().into()))?;
                 let geom = Geometry(geo.geometry().to_owned());
                 Ok(geom)
+            }
+        }
+
+        impl Encode<'_, Postgres> for Geometry {
+            fn encode_by_ref(&self, buf: &mut PgArgumentBuffer) -> IsNull {
+                let mut wkb_out: Vec<u8> = Vec::new();
+                let mut writer = wkb::WkbWriter::new(&mut wkb_out, wkb::WkbDialect::Ewkb);
+                //writer.srid = ...
+                process_geom(&self.0, &mut writer).expect("Failed to encode Geometry");
+                buf.extend(&wkb_out); // Is there a way to write directly into PgArgumentBuffer?
+
+                IsNull::No
             }
         }
     }

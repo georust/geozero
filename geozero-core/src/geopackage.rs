@@ -1,10 +1,12 @@
 // This should be included in georust/geo to avoid a newtype
 /// Geopackage geometry type decoding for [geo-types](https://github.com/georust/geo).
 pub mod geo {
-    use crate::geo_types::Geo;
+    use crate::geo_types::{process_geom, Geo};
     use crate::wkb;
     use sqlx::decode::Decode;
-    use sqlx::sqlite::{Sqlite, SqliteTypeInfo, SqliteValueRef};
+    use sqlx::encode::{Encode, IsNull};
+    use sqlx::sqlite::{Sqlite, SqliteArgumentValue, SqliteTypeInfo, SqliteValueRef};
+    use std::borrow::Cow;
 
     type BoxDynError = Box<dyn std::error::Error + Send + Sync>;
 
@@ -25,6 +27,19 @@ pub mod geo {
                 .map_err(|e| sqlx::Error::Decode(e.to_string().into()))?;
             let geom = Geometry(geo.geometry().to_owned());
             Ok(geom)
+        }
+    }
+
+    impl<'q> Encode<'q, Sqlite> for Geometry {
+        fn encode_by_ref(&self, args: &mut Vec<SqliteArgumentValue<'q>>) -> IsNull {
+            let mut wkb_out: Vec<u8> = Vec::new();
+            let mut writer = wkb::WkbWriter::new(&mut wkb_out, wkb::WkbDialect::Geopackage);
+            // writer.srid = ...
+            process_geom(&self.0, &mut writer).expect("Failed to encode Geometry");
+
+            args.push(SqliteArgumentValue::Blob(Cow::Owned(wkb_out)));
+
+            IsNull::No
         }
     }
 }

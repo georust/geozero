@@ -43,6 +43,14 @@ mod postgis_postgres {
         } else {
             assert!(false, "Conversion to geo_types::Geometry failed");
         }
+
+        // WKB encoding
+        let geom = geo::Point::new(1.0, 3.0).into();
+        let _ = client.execute(
+            "INSERT INTO point2d (datetimefield,geom) VALUES(now(),$1)",
+            &[&Geometry(geom)],
+        );
+
         Ok(())
     }
 
@@ -156,6 +164,7 @@ mod postgis_sqlx {
 
     async fn rust_geo_query() -> Result<(), sqlx::Error> {
         use geozero_core::postgis::sqlx::geo::Geometry;
+        use sqlx::Done;
 
         let pool = PgPoolOptions::new()
             .max_connections(5)
@@ -184,14 +193,15 @@ mod postgis_sqlx {
         );
 
         // WKB encoding
-        // geo-types conversion is not implemented yet!
-        // let mut tx = pool.begin().await?;
-        // let geom = geo::Point::new(10.0, 20.0).into();
-        // let _inserted = sqlx::query("INSERT INTO point2d (datetimefield,geom) VALUES(now(),$1)")
-        //     .bind(Geometry(geom))
-        //     .execute(&mut tx)
-        //     .await?;
-        // tx.commit().await?;
+        let mut tx = pool.begin().await?;
+        let geom = geo::Point::new(10.0, 20.0).into();
+        let inserted = sqlx::query("INSERT INTO point2d (datetimefield,geom) VALUES(now(),$1)")
+            .bind(Geometry(geom))
+            .execute(&mut tx)
+            .await?;
+        tx.commit().await?;
+
+        assert_eq!(inserted.rows_affected(), 1);
 
         Ok(())
     }
