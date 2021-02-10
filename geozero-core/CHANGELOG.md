@@ -1,6 +1,8 @@
 ## 0.6.2 (UNRELEASED)
 
 * Add geo-types reader
+* Implement geo-types to Postgis/GPKG WKB encoding
+* Update sqlx, postgres and bytes dependencies
 
 ## 0.6.1 (2021-01-06)
 

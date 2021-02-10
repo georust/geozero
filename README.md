@@ -190,7 +190,7 @@ Full source code: [geos.rs](./geozero-core/tests/geos.rs)
 
 ## PostGIS Usage examples
 
-Select and insert geo-types geometry with rust-postgis:
+Select and insert geo-types geometries with rust-postgres:
 ```rust
 use geozero_core::postgis::postgres::geo::Geometry;
 
@@ -217,7 +217,7 @@ let _ = client.execute(
 );
 ```
 
-Select and insert geo-types geometry with sqlx:
+Select and insert geo-types geometries with SQLx:
 ```rust
 use geozero_core::postgis::sqlx::geo::Geometry;
 
