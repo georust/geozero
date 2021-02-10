@@ -39,7 +39,10 @@ mod postgis_postgres {
 
         let geom: Geometry = row.get(0);
         if let geo_types::Geometry::Polygon(poly) = geom.0 {
-            assert_eq!(&format!("{:?}", poly), "Polygon { exterior: LineString([Coordinate { x: 0.0, y: 0.0 }, Coordinate { x: 2.0, y: 0.0 }, Coordinate { x: 2.0, y: 2.0 }, Coordinate { x: 0.0, y: 2.0 }, Coordinate { x: 0.0, y: 0.0 }]), interiors: [] }");
+            assert_eq!(
+                *poly.exterior(),
+                vec![(0.0, 0.0), (2.0, 0.0), (2.0, 2.0), (0.0, 2.0), (0.0, 0.0)].into()
+            );
         } else {
             assert!(false, "Conversion to geo_types::Geometry failed");
         }
@@ -47,7 +50,7 @@ mod postgis_postgres {
         // WKB encoding
         let geom = geo::Point::new(1.0, 3.0).into();
         let _ = client.execute(
-            "INSERT INTO point2d (datetimefield,geom) VALUES(now(),$1)",
+            "INSERT INTO point2d (datetimefield,geom) VALUES(now(),ST_SetSRID($1,4326))",
             &[&Geometry(geom)],
         );
 
@@ -178,7 +181,10 @@ mod postgis_sqlx {
 
         let geom = row.0;
         if let geo_types::Geometry::Polygon(poly) = geom.0 {
-            assert_eq!(&format!("{:?}", poly), "Polygon { exterior: LineString([Coordinate { x: 0.0, y: 0.0 }, Coordinate { x: 2.0, y: 0.0 }, Coordinate { x: 2.0, y: 2.0 }, Coordinate { x: 0.0, y: 2.0 }, Coordinate { x: 0.0, y: 0.0 }]), interiors: [] }");
+            assert_eq!(
+                *poly.exterior(),
+                vec![(0.0, 0.0), (2.0, 0.0), (2.0, 2.0), (0.0, 2.0), (0.0, 0.0)].into()
+            );
         } else {
             assert!(false, "Conversion to geo_types::Geometry failed");
         }
@@ -195,10 +201,12 @@ mod postgis_sqlx {
         // WKB encoding
         let mut tx = pool.begin().await?;
         let geom = geo::Point::new(10.0, 20.0).into();
-        let inserted = sqlx::query("INSERT INTO point2d (datetimefield,geom) VALUES(now(),$1)")
-            .bind(Geometry(geom))
-            .execute(&mut tx)
-            .await?;
+        let inserted = sqlx::query(
+            "INSERT INTO point2d (datetimefield,geom) VALUES(now(),ST_SetSRID($1,4326))",
+        )
+        .bind(Geometry(geom))
+        .execute(&mut tx)
+        .await?;
         tx.commit().await?;
 
         assert_eq!(inserted.rows_affected(), 1);

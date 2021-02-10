@@ -186,3 +186,67 @@ let geom2 = geos::Geometry::new_from_wkt("POINT (2.5 2.5)").expect("Invalid geom
 assert_eq!(prepared_geom.contains(&geom2), Ok(true));
 ```
 Full source code: [geos.rs](./geozero-core/tests/geos.rs)
+
+
+## PostGIS Usage examples
+
+Select and insert geo-types geometry with rust-postgis:
+```rust
+use geozero_core::postgis::postgres::geo::Geometry;
+
+let mut client = Client::connect(&std::env::var("DATABASE_URL").unwrap(), NoTls)?;
+
+let row = client.query_one(
+    "SELECT 'SRID=4326;POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))'::geometry",
+    &[],
+)?;
+
+let geom: Geometry = row.get(0);
+if let geo_types::Geometry::Polygon(poly) = geom.0 {
+    assert_eq!(
+        *poly.exterior(),
+        vec![(0.0, 0.0), (2.0, 0.0), (2.0, 2.0), (0.0, 2.0), (0.0, 0.0)].into()
+    );
+}
+
+// Insert geometry
+let geom = geo::Point::new(1.0, 3.0).into();
+let _ = client.execute(
+    "INSERT INTO point2d (datetimefield,geom) VALUES(now(),ST_SetSRID($1,4326))",
+    &[&Geometry(geom)],
+);
+```
+
+Select and insert geo-types geometry with sqlx:
+```rust
+use geozero_core::postgis::sqlx::geo::Geometry;
+
+let pool = PgPoolOptions::new()
+    .max_connections(5)
+    .connect(&env::var("DATABASE_URL").unwrap())
+    .await?;
+
+let row: (Geometry,) =
+    sqlx::query_as("SELECT 'SRID=4326;POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))'::geometry")
+        .fetch_one(&pool)
+        .await?;
+
+let geom = row.0;
+if let geo_types::Geometry::Polygon(poly) = geom.0 {
+    assert_eq!(
+        *poly.exterior(),
+        vec![(0.0, 0.0), (2.0, 0.0), (2.0, 2.0), (0.0, 2.0), (0.0, 0.0)].into()
+    );
+}
+
+// Insert geometry
+let mut tx = pool.begin().await?;
+let geom = geo::Point::new(10.0, 20.0).into();
+let _ = sqlx::query("INSERT INTO point2d (datetimefield,geom) VALUES(now(),ST_SetSRID($1,4326))")
+    .bind(Geometry(geom))
+    .execute(&mut tx)
+    .await?;
+tx.commit().await?;
+```
+
+Full source code: [postgis.rs](./geozero-core/tests/postgis.rs)
