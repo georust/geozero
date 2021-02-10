@@ -167,7 +167,6 @@ mod postgis_sqlx {
 
     async fn rust_geo_query() -> Result<(), sqlx::Error> {
         use geozero_core::postgis::sqlx::geo::Geometry;
-        use sqlx::Done;
 
         let pool = PgPoolOptions::new()
             .max_connections(5)
@@ -246,11 +245,13 @@ mod postgis_sqlx {
         // WKB encoding
         let mut tx = pool.begin().await?;
         let geom = geos::Geometry::new_from_wkt("POINT(1 3)").expect("Invalid geometry");
-        let _inserted = sqlx::query("INSERT INTO point2d (datetimefield,geom) VALUES(now(),$1)")
+        let inserted = sqlx::query("INSERT INTO point2d (datetimefield,geom) VALUES(now(),$1)")
             .bind(Geometry(geom))
             .execute(&mut tx)
             .await?;
         tx.commit().await?;
+
+        assert_eq!(inserted.rows_affected(), 1);
 
         Ok(())
     }

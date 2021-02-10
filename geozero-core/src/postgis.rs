@@ -7,7 +7,7 @@ pub mod postgres {
     pub mod geo {
         use crate::geo_types::{process_geom, Geo};
         use crate::wkb;
-        use bytes::{buf::ext::BufMutExt, BytesMut};
+        use bytes::{BufMut, BytesMut};
         use postgres_types::{to_sql_checked, FromSql, IsNull, ToSql, Type};
         use std::fmt;
 
@@ -71,7 +71,7 @@ pub mod postgres {
     pub mod geos {
         use crate::geos::{process_geos, Geos};
         use crate::wkb;
-        use bytes::{buf::ext::BufMutExt, BytesMut};
+        use bytes::{BufMut, BytesMut};
         use geos::Geom;
         use postgres_types::{to_sql_checked, FromSql, IsNull, ToSql, Type};
         use std::fmt;
