@@ -3,6 +3,19 @@ use geozero::error::{GeozeroError, Result};
 use geozero::{FeatureProcessor, GeomProcessor};
 use std::io::Read;
 
+pub(crate) mod conversion {
+    use geozero::error::Result;
+    use std::io::Read;
+
+    /// Convert from GeoJSON.
+    pub trait FromJson {
+        /// Convert from GeoJSON.
+        fn from_json(reader: &mut dyn Read) -> Result<Self>
+        where
+            Self: Sized;
+    }
+}
+
 /// Read and process GeoJSON.
 pub fn read_geojson<R: Read, P: FeatureProcessor>(mut reader: R, processor: &mut P) -> Result<()> {
     let mut geojson_str = String::new();
@@ -209,6 +222,16 @@ fn process_multi_polygon<P: GeomProcessor>(
     processor.multipolygon_end(idx)
 }
 
+// --- impl conversion traits
+
+/// Convert GeoJSON to WKT String
+pub fn geojson_to_wkt(geojson: &mut dyn Read) -> Result<String> {
+    let mut wkt: Vec<u8> = Vec::new();
+    let mut writer = crate::wkt_writer::WktWriter::new(&mut wkt);
+    read_geojson(geojson, &mut writer)?;
+    String::from_utf8(wkt).map_err(|_| geozero::error::GeozeroError::GeometryFormat)
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -251,5 +274,12 @@ mod test {
             "06510862875),POINT(103.85387481909902 1.294979325105942),POINT(114.18306345846304 22.30692675357551)"
         );
         Ok(())
+    }
+
+    #[test]
+    fn conversions() {
+        let geojson = r#"{"type": "Point", "coordinates": [10,20]}"#;
+        let wkt = geojson_to_wkt(&mut geojson.as_bytes()).unwrap();
+        assert_eq!(wkt, "POINT(10 20)");
     }
 }

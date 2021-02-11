@@ -250,3 +250,14 @@ tx.commit().await?;
 ```
 
 Full source code: [postgis.rs](./geozero-core/tests/postgis.rs)
+
+
+## Conversion API
+
+|    From/To     | GDAL |    geo    | geojson (String) |    geos   | wkb |  wkt (String)  |
+|----------------|------|-----------|------------------|-----------|-----|----------------|
+| GDAL           | -    |           |                  |           |     |                |
+| geo            |      | -         | to_json          |           |     | to_wkt         |
+| geojson (Read) |      | from_json | -                | from_json |     | geojson_to_wkt |
+| geos           |      |           | to_json          | -         |     | (GEOS)         |
+| wkb (Read)     |      |           |                  |           | -   |                |

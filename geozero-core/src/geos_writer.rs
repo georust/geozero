@@ -148,11 +148,24 @@ impl GeomProcessor for Geos<'_> {
 impl PropertyProcessor for Geos<'_> {}
 impl FeatureProcessor for Geos<'_> {}
 
+// --- impl conversion traits
+
+use std::io::Read;
+
+impl crate::FromJson for geos::Geometry<'_> {
+    fn from_json(geojson: &mut dyn Read) -> Result<Self> {
+        let mut geo = Geos::new();
+        crate::geojson_reader::read_geojson(geojson, &mut geo)?;
+        Ok(geo.geom)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
     use crate::geojson_reader::read_geojson;
-    use geos::Geom;
+    use crate::FromJson;
+    use geos::{Geom, Geometry};
 
     #[test]
     fn point_geom() {
@@ -167,18 +180,16 @@ mod test {
     fn multipoint_geom() {
         let geojson = r#"{"type": "MultiPoint", "coordinates": [[1, 1], [2, 2]]}"#;
         let wkt = "MULTIPOINT (1.0000000000000000 1.0000000000000000, 2.0000000000000000 2.0000000000000000)";
-        let mut geos = Geos::new();
-        assert!(read_geojson(geojson.as_bytes(), &mut geos).is_ok());
-        assert_eq!(geos.geometry().to_wkt().unwrap(), wkt);
+        let geom = Geometry::from_json(&mut geojson.as_bytes()).unwrap();
+        assert_eq!(geom.to_wkt().unwrap(), wkt);
     }
 
     #[test]
     fn line_geom() {
         let geojson = r#"{"type": "LineString", "coordinates": [[1,1], [2,2]]}"#;
         let wkt = "LINESTRING (1.0000000000000000 1.0000000000000000, 2.0000000000000000 2.0000000000000000)";
-        let mut geos = Geos::new();
-        assert!(read_geojson(geojson.as_bytes(), &mut geos).is_ok());
-        assert_eq!(geos.geometry().to_wkt().unwrap(), wkt);
+        let geom = Geometry::from_json(&mut geojson.as_bytes()).unwrap();
+        assert_eq!(geom.to_wkt().unwrap(), wkt);
     }
 
     // #[test]
@@ -195,18 +206,16 @@ mod test {
         let geojson =
             r#"{"type": "MultiLineString", "coordinates": [[[1,1],[2,2]],[[3,3],[4,4]]]}"#;
         let wkt = "MULTILINESTRING ((1.0000000000000000 1.0000000000000000, 2.0000000000000000 2.0000000000000000), (3.0000000000000000 3.0000000000000000, 4.0000000000000000 4.0000000000000000))";
-        let mut geos = Geos::new();
-        assert!(read_geojson(geojson.as_bytes(), &mut geos).is_ok());
-        assert_eq!(geos.geometry().to_wkt().unwrap(), wkt);
+        let geom = Geometry::from_json(&mut geojson.as_bytes()).unwrap();
+        assert_eq!(geom.to_wkt().unwrap(), wkt);
     }
 
     #[test]
     fn polygon_geom() {
         let geojson = r#"{"type": "Polygon", "coordinates": [[[0, 0], [0, 3], [3, 3], [3, 0], [0, 0]],[[0.2, 0.2], [0.2, 2], [2, 2], [2, 0.2], [0.2, 0.2]]]}"#;
         let wkt = "POLYGON ((0.0000000000000000 0.0000000000000000, 0.0000000000000000 3.0000000000000000, 3.0000000000000000 3.0000000000000000, 3.0000000000000000 0.0000000000000000, 0.0000000000000000 0.0000000000000000), (0.2000000000000000 0.2000000000000000, 0.2000000000000000 2.0000000000000000, 2.0000000000000000 2.0000000000000000, 2.0000000000000000 0.2000000000000000, 0.2000000000000000 0.2000000000000000))";
-        let mut geos = Geos::new();
-        assert!(read_geojson(geojson.as_bytes(), &mut geos).is_ok());
-        assert_eq!(geos.geometry().to_wkt().unwrap(), wkt);
+        let geom = Geometry::from_json(&mut geojson.as_bytes()).unwrap();
+        assert_eq!(geom.to_wkt().unwrap(), wkt);
     }
 
     #[test]
@@ -214,9 +223,8 @@ mod test {
         let geojson =
             r#"{"type": "MultiPolygon", "coordinates": [[[[0,0],[0,1],[1,1],[1,0],[0,0]]]]}"#;
         let wkt = "MULTIPOLYGON (((0.0000000000000000 0.0000000000000000, 0.0000000000000000 1.0000000000000000, 1.0000000000000000 1.0000000000000000, 1.0000000000000000 0.0000000000000000, 0.0000000000000000 0.0000000000000000)))";
-        let mut geos = Geos::new();
-        assert!(read_geojson(geojson.as_bytes(), &mut geos).is_ok());
-        assert_eq!(geos.geometry().to_wkt().unwrap(), wkt);
+        let geom = Geometry::from_json(&mut geojson.as_bytes()).unwrap();
+        assert_eq!(geom.to_wkt().unwrap(), wkt);
     }
 
     // #[test]

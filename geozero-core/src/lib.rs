@@ -30,6 +30,7 @@ pub mod geojson {
     pub use crate::geojson_reader::*;
     pub use crate::geojson_writer::*;
 }
+pub use crate::geojson_reader::conversion::*;
 pub use crate::geojson_writer::conversion::*;
 
 /// [geo-types](https://github.com/georust/geo) conversions.

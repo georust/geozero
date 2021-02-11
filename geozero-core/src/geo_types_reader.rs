@@ -138,6 +138,7 @@ impl crate::ToWkt for geo_types::Geometry<f64> {
 mod test {
     use super::*;
     use crate::wkt_writer::WktWriter;
+    use crate::ToWkt;
     use std::convert::TryFrom;
 
     #[test]
@@ -156,65 +157,41 @@ mod test {
         let wkt = "MULTIPOINT(1 1,2 2)";
         let geo =
             Geometry::try_from(wkt::Wkt::from_str("MULTIPOINT((1 1),(2 2))").unwrap()).unwrap();
-
-        let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_geom(&geo, &mut WktWriter::new(&mut wkt_data)).is_ok());
-
-        assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), wkt);
+        assert_eq!(geo.to_wkt().unwrap(), wkt);
     }
 
     #[test]
     fn line() {
         let wkt = "LINESTRING(1 1,2 2)";
         let geo = Geometry::try_from(wkt::Wkt::from_str(wkt).unwrap()).unwrap();
-
-        let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_geom(&geo, &mut WktWriter::new(&mut wkt_data)).is_ok());
-
-        assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), wkt);
+        assert_eq!(geo.to_wkt().unwrap(), wkt);
     }
 
     #[test]
     fn multiline() {
         let wkt = "MULTILINESTRING((1 1,2 2),(3 3,4 4))";
         let geo = Geometry::try_from(wkt::Wkt::from_str(wkt).unwrap()).unwrap();
-
-        let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_geom(&geo, &mut WktWriter::new(&mut wkt_data)).is_ok());
-
-        assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), wkt);
+        assert_eq!(geo.to_wkt().unwrap(), wkt);
     }
 
     #[test]
     fn polygon() {
         let wkt = "POLYGON((0 0,0 3,3 3,3 0,0 0),(0.2 0.2,0.2 2,2 2,2 0.2,0.2 0.2))";
         let geo = Geometry::try_from(wkt::Wkt::from_str(wkt).unwrap()).unwrap();
-
-        let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_geom(&geo, &mut WktWriter::new(&mut wkt_data)).is_ok());
-
-        assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), wkt);
+        assert_eq!(geo.to_wkt().unwrap(), wkt);
     }
 
     #[test]
     fn multipolygon() {
         let wkt = "MULTIPOLYGON(((0 0,0 1,1 1,1 0,0 0)))";
         let geo = Geometry::try_from(wkt::Wkt::from_str(wkt).unwrap()).unwrap();
-
-        let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_geom(&geo, &mut WktWriter::new(&mut wkt_data)).is_ok());
-
-        assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), wkt);
+        assert_eq!(geo.to_wkt().unwrap(), wkt);
     }
 
     #[test]
     fn geometry_collection() {
         let wkt = "GEOMETRYCOLLECTION(POINT(1 1),LINESTRING(1 1,2 2))";
         let geo = Geometry::try_from(wkt::Wkt::from_str(wkt).unwrap()).unwrap();
-
-        let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_geom(&geo, &mut WktWriter::new(&mut wkt_data)).is_ok());
-
-        assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), wkt);
+        assert_eq!(geo.to_wkt().unwrap(), wkt);
     }
 }
