@@ -3,6 +3,18 @@ use geos::{CoordDimensions, CoordSeq, GResult, Geometry as GGeometry};
 use geozero::error::{GeozeroError, Result};
 use geozero::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 
+pub(crate) mod conversion {
+    use geozero::error::Result;
+
+    /// Convert from GEOS geometry.
+    pub trait ToGeos {
+        /// Convert from GEOS geometry.
+        fn to_geos(&self) -> Result<geos::Geometry<'_>>
+        where
+            Self: Sized;
+    }
+}
+
 /// Generator for [GEOS](https://github.com/georust/geos) geometry type.
 pub struct Geos<'a> {
     geom: GGeometry<'a>,
@@ -160,6 +172,14 @@ impl crate::FromGeo for geos::Geometry<'_> {
     }
 }
 
+impl crate::ToGeos for geo_types::Geometry<f64> {
+    fn to_geos(&self) -> Result<geos::Geometry<'_>> {
+        let mut geo = Geos::new();
+        crate::geo_types_reader::process_geom(self, &mut geo)?;
+        Ok(geo.geom)
+    }
+}
+
 impl crate::FromJson for geos::Geometry<'_> {
     fn from_json(geojson: &mut dyn Read) -> Result<Self> {
         let mut geo = Geos::new();
@@ -172,7 +192,7 @@ impl crate::FromJson for geos::Geometry<'_> {
 mod test {
     use super::*;
     use crate::geojson_reader::read_geojson;
-    use crate::{FromGeo, FromJson};
+    use crate::{FromGeo, FromJson, ToGeos};
     use geos::{Geom, Geometry};
     use std::convert::TryFrom;
 
@@ -250,6 +270,18 @@ mod test {
         let geo =
             geo_types::Geometry::try_from(wkt::Wkt::from_str("POINT (10 20)").unwrap()).unwrap();
         let geos = Geometry::from_geo(&geo)?;
+        assert_eq!(
+            &geos.to_wkt().unwrap(),
+            "POINT (10.0000000000000000 20.0000000000000000)"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn to_geos() -> Result<()> {
+        let geo =
+            geo_types::Geometry::try_from(wkt::Wkt::from_str("POINT (10 20)").unwrap()).unwrap();
+        let geos = geo.to_geos()?;
         assert_eq!(
             &geos.to_wkt().unwrap(),
             "POINT (10.0000000000000000 20.0000000000000000)"

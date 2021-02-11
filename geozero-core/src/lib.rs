@@ -63,6 +63,8 @@ pub mod geos {
 }
 #[cfg(feature = "geos-lib")]
 pub use crate::geos_reader::conversion::*;
+#[cfg(feature = "geos-lib")]
+pub use crate::geos_writer::conversion::*;
 
 /// [GDAL](https://github.com/georust/gdal) conversions.
 #[cfg(feature = "gdal-lib")]
