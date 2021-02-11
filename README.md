@@ -257,7 +257,7 @@ Full source code: [postgis.rs](./geozero-core/tests/postgis.rs)
 |    From/To     | GDAL |    geo    | geojson (String) |    geos   | wkb |  wkt (String)  |
 |----------------|------|-----------|------------------|-----------|-----|----------------|
 | GDAL           | -    |           |                  |           |     |                |
-| geo            |      | -         | to_json          |           |     | to_wkt         |
+| geo            |      | -         | to_json          | from_geo  |     | to_wkt         |
 | geojson (Read) |      | from_json | -                | from_json |     | geojson_to_wkt |
-| geos           |      |           | to_json          | -         |     | (GEOS)         |
+| geos           |      | from_geos | to_json          | -         |     | (GEOS)         |
 | wkb (Read)     |      |           |                  |           | -   |                |

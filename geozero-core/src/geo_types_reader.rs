@@ -2,6 +2,18 @@ use geo_types::*;
 use geozero::error::Result;
 use geozero::GeomProcessor;
 
+pub(crate) mod conversion {
+    use geozero::error::Result;
+
+    /// Convert from geo-types geometry.
+    pub trait FromGeo {
+        /// Convert from geo-types geometry.
+        fn from_geo(geom: &geo_types::Geometry<f64>) -> Result<Self>
+        where
+            Self: Sized;
+    }
+}
+
 /// Process [geo-types](https://github.com/georust/geo) geometry.
 pub fn process_geom<P: GeomProcessor>(geom: &Geometry<f64>, processor: &mut P) -> Result<()> {
     process_geom_n(geom, 0, processor)

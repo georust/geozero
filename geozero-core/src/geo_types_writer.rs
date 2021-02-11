@@ -129,11 +129,24 @@ impl crate::FromJson for geo_types::Geometry<f64> {
     }
 }
 
+#[cfg(feature = "geos-lib")]
+impl crate::FromGeos for geo_types::Geometry<f64> {
+    fn from_geos(geom: &geos::Geometry) -> Result<Self> {
+        let mut geo = Geo::new();
+        crate::geos_reader::process_geos(geom, &mut geo)?;
+        Ok(geo.geom)
+    }
+}
+
+// In georust/geo we could impl TryFrom instead:
+// impl TryFrom<geos::Geometry<'_>> for geo_types::Geometry<f64> {
+//     fn try_from(geom: geos::Geometry<'_>) -> Result<Self> {
+
 #[cfg(test)]
 mod test {
     use super::*;
     use crate::geojson_reader::read_geojson;
-    use crate::*;
+    use crate::FromJson;
     use geo::algorithm::coords_iter::CoordsIter;
 
     #[test]
@@ -170,6 +183,17 @@ mod test {
             }
             _ => assert!(false),
         }
+        Ok(())
+    }
+
+    #[test]
+    #[cfg(feature = "geos-lib")]
+    fn from_geos() -> Result<()> {
+        use crate::{FromGeos, ToWkt};
+
+        let geos = geos::Geometry::new_from_wkt("POINT (10 20)").expect("Invalid geometry");
+        let geo = Geometry::from_geos(&geos)?;
+        assert_eq!(&geo.to_wkt().unwrap(), "POINT(10 20)");
         Ok(())
     }
 }

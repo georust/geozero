@@ -2,6 +2,18 @@ use geos::{CoordSeq, Geom, Geometry as GGeometry, GeometryTypes};
 use geozero::error::{GeozeroError, Result};
 use geozero::GeomProcessor;
 
+pub(crate) mod conversion {
+    use geozero::error::Result;
+
+    /// Convert from GEOS geometry.
+    pub trait FromGeos {
+        /// Convert from GEOS geometry.
+        fn from_geos(geom: &geos::Geometry) -> Result<Self>
+        where
+            Self: Sized;
+    }
+}
+
 pub(crate) fn from_geos_err(error: geos::Error) -> GeozeroError {
     match error {
         geos::Error::InvalidGeometry(e) => GeozeroError::Geometry(e),

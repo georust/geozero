@@ -38,6 +38,7 @@ pub mod geo_types {
     pub use crate::geo_types_reader::*;
     pub use crate::geo_types_writer::*;
 }
+pub use crate::geo_types_reader::conversion::*;
 
 /// Well-Known Binary (WKB) conversions.
 pub mod wkb {
@@ -60,6 +61,8 @@ pub mod geos {
     pub use crate::geos_reader::*;
     pub use crate::geos_writer::*;
 }
+#[cfg(feature = "geos-lib")]
+pub use crate::geos_reader::conversion::*;
 
 /// [GDAL](https://github.com/georust/gdal) conversions.
 #[cfg(feature = "gdal-lib")]

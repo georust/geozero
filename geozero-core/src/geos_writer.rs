@@ -152,6 +152,14 @@ impl FeatureProcessor for Geos<'_> {}
 
 use std::io::Read;
 
+impl crate::FromGeo for geos::Geometry<'_> {
+    fn from_geo(geom: &geo_types::Geometry<f64>) -> Result<Self> {
+        let mut geo = Geos::new();
+        crate::geo_types_reader::process_geom(geom, &mut geo)?;
+        Ok(geo.geom)
+    }
+}
+
 impl crate::FromJson for geos::Geometry<'_> {
     fn from_json(geojson: &mut dyn Read) -> Result<Self> {
         let mut geo = Geos::new();
@@ -164,8 +172,9 @@ impl crate::FromJson for geos::Geometry<'_> {
 mod test {
     use super::*;
     use crate::geojson_reader::read_geojson;
-    use crate::FromJson;
+    use crate::{FromGeo, FromJson};
     use geos::{Geom, Geometry};
+    use std::convert::TryFrom;
 
     #[test]
     fn point_geom() {
@@ -235,4 +244,16 @@ mod test {
     //     assert!(read_geojson(geojson.as_bytes(), &mut geos).is_ok());
     //     assert_eq!(geos.geometry().to_wkt().unwrap(), wkt);
     // }
+
+    #[test]
+    fn from_geo() -> Result<()> {
+        let geo =
+            geo_types::Geometry::try_from(wkt::Wkt::from_str("POINT (10 20)").unwrap()).unwrap();
+        let geos = Geometry::from_geo(&geo)?;
+        assert_eq!(
+            &geos.to_wkt().unwrap(),
+            "POINT (10.0000000000000000 20.0000000000000000)"
+        );
+        Ok(())
+    }
 }
