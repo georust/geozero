@@ -30,6 +30,7 @@ pub mod geojson {
     pub use crate::geojson_reader::*;
     pub use crate::geojson_writer::*;
 }
+pub use crate::geojson_writer::conversion::*;
 
 /// [geo-types](https://github.com/georust/geo) conversions.
 pub mod geo_types {
@@ -50,6 +51,7 @@ pub mod wkb {
 pub mod wkt {
     pub use crate::wkt_writer::*;
 }
+pub use crate::wkt_writer::conversion::*;
 
 /// [GEOS](https://github.com/georust/geos) conversions.
 #[cfg(feature = "geos-lib")]

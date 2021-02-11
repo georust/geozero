@@ -155,6 +155,25 @@ fn process_polygon<'a, P: GeomProcessor, G: Geom<'a>>(
     processor.polygon_end(tagged, idx)
 }
 
+// --- impl conversion traits
+
+impl crate::ToJson for geos::Geometry<'_> {
+    fn to_json(&self) -> Result<String> {
+        let mut out: Vec<u8> = Vec::new();
+        process_geos(self, &mut crate::geojson::GeoJsonWriter::new(&mut out))?;
+        String::from_utf8(out).map_err(|_| geozero::error::GeozeroError::GeometryFormat)
+    }
+}
+
+// GEOS has to_wkt method already built-in
+// impl crate::ToWkt for geos::Geometry<'_> {
+//     fn to_wkt(&self) -> Result<String> {
+//         let mut out: Vec<u8> = Vec::new();
+//         process_geos(self, &mut crate::wkt::WktWriter::new(&mut out))?;
+//         String::from_utf8(out).map_err(|_| geozero::error::GeozeroError::GeometryFormat)
+//     }
+// }
+
 #[cfg(test)]
 mod test {
     use super::*;

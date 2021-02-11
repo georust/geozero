@@ -3,6 +3,16 @@ use geozero::{ColumnValue, FeatureProcessor, GeomProcessor, PropertyProcessor};
 use std::fmt::Display;
 use std::io::Write;
 
+pub(crate) mod conversion {
+    use geozero::error::Result;
+
+    /// Convert to GeoJSON.
+    pub trait ToJson {
+        /// Convert to GeoJSON String.
+        fn to_json(&self) -> Result<String>;
+    }
+}
+
 /// GeoJSON writer.
 pub struct GeoJsonWriter<'a, W: Write> {
     out: &'a mut W,
@@ -190,32 +200,9 @@ impl<W: Write> PropertyProcessor for GeoJsonWriter<'_, W> {
     }
 }
 
-/// Convert to GeoJSON.
-pub trait ToJson {
-    /// Convert to GeoJSON String.
-    fn to_json(&self) -> Result<String>;
-}
-
-impl ToJson for geo_types::Geometry<f64> {
-    fn to_json(&self) -> Result<String> {
-        let mut out: Vec<u8> = Vec::new();
-        crate::geo_types::process_geom(self, &mut GeoJsonWriter::new(&mut out))?;
-        String::from_utf8(out).map_err(|_| geozero::error::GeozeroError::GeometryFormat)
-    }
-}
-
-#[cfg(feature = "geos-lib")]
-impl ToJson for geos::Geometry<'_> {
-    fn to_json(&self) -> Result<String> {
-        let mut out: Vec<u8> = Vec::new();
-        crate::geos::process_geos(self, &mut GeoJsonWriter::new(&mut out))?;
-        String::from_utf8(out).map_err(|_| geozero::error::GeozeroError::GeometryFormat)
-    }
-}
-
 #[cfg(test)]
 mod test {
-    use super::*;
+    use super::{conversion::*, *};
     use crate::geojson_reader::read_geojson;
 
     #[test]

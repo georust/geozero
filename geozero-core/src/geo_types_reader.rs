@@ -116,6 +116,24 @@ fn process_polygon<P: GeomProcessor>(
     processor.polygon_end(tagged, idx)
 }
 
+// --- impl conversion traits
+
+impl crate::ToJson for geo_types::Geometry<f64> {
+    fn to_json(&self) -> Result<String> {
+        let mut out: Vec<u8> = Vec::new();
+        process_geom(self, &mut crate::geojson::GeoJsonWriter::new(&mut out))?;
+        String::from_utf8(out).map_err(|_| geozero::error::GeozeroError::GeometryFormat)
+    }
+}
+
+impl crate::ToWkt for geo_types::Geometry<f64> {
+    fn to_wkt(&self) -> Result<String> {
+        let mut out: Vec<u8> = Vec::new();
+        process_geom(self, &mut crate::wkt::WktWriter::new(&mut out))?;
+        String::from_utf8(out).map_err(|_| geozero::error::GeozeroError::GeometryFormat)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
