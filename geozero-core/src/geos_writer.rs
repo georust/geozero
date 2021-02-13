@@ -17,7 +17,7 @@ pub(crate) mod conversion {
 
 /// Generator for [GEOS](https://github.com/georust/geos) geometry type.
 pub struct Geos<'a> {
-    geom: GGeometry<'a>,
+    pub(crate) geom: GGeometry<'a>,
     // CoordSeq for Points, Lines and Rings
     cs: Vec<CoordSeq<'a>>,
     // Polygons or MultiPolygons
@@ -152,7 +152,8 @@ impl GeomProcessor for Geos<'_> {
         Ok(())
     }
     fn multipolygon_end(&mut self, _idx: usize) -> Result<()> {
-        self.geom = GGeometry::create_multipolygon(self.polys.to_owned()).map_err(from_geos_err)?;
+        self.geom = GGeometry::create_multipolygon(std::mem::take(&mut self.polys))
+            .map_err(from_geos_err)?;
         Ok(())
     }
 }

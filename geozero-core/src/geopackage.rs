@@ -25,7 +25,7 @@ pub mod geo {
             let mut geo = Geo::new();
             wkb::process_gpkg_geom(&mut blob, &mut geo)
                 .map_err(|e| sqlx::Error::Decode(e.to_string().into()))?;
-            let geom = Geometry(geo.geometry().to_owned());
+            let geom = Geometry(geo.geom);
             Ok(geom)
         }
     }
@@ -78,7 +78,7 @@ pub mod geos {
             let mut geo = Geos::new();
             wkb::process_gpkg_geom(&mut blob, &mut geo)
                 .map_err(|e| sqlx::Error::Decode(e.to_string().into()))?;
-            let geom = Geometry(geo.geometry().to_owned());
+            let geom = Geometry(geo.geom);
             Ok(geom)
         }
     }

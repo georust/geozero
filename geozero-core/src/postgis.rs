@@ -22,7 +22,7 @@ pub mod postgres {
                 let mut rdr = std::io::Cursor::new(raw);
                 let mut geo = Geo::new();
                 wkb::process_ewkb_geom(&mut rdr, &mut geo)?;
-                let geom = Geometry(geo.geometry().to_owned());
+                let geom = Geometry(geo.geom);
                 Ok(geom)
             }
 
@@ -87,7 +87,7 @@ pub mod postgres {
                 let mut rdr = std::io::Cursor::new(raw);
                 let mut geo = Geos::new();
                 wkb::process_ewkb_geom(&mut rdr, &mut geo)?;
-                let geom = Geometry(geo.geometry().to_owned());
+                let geom = Geometry(geo.geom);
                 Ok(geom)
             }
 
@@ -169,7 +169,7 @@ pub mod sqlx {
                 let mut geo = Geo::new();
                 wkb::process_ewkb_geom(&mut blob, &mut geo)
                     .map_err(|e| sqlx::Error::Decode(e.to_string().into()))?;
-                let geom = Geometry(geo.geometry().to_owned());
+                let geom = Geometry(geo.geom);
                 Ok(geom)
             }
         }
@@ -220,7 +220,7 @@ pub mod sqlx {
                 let mut geo = Geos::new();
                 wkb::process_ewkb_geom(&mut blob, &mut geo)
                     .map_err(|e| sqlx::Error::Decode(e.to_string().into()))?;
-                let geom = Geometry(geo.geometry().to_owned());
+                let geom = Geometry(geo.geom);
                 Ok(geom)
             }
         }

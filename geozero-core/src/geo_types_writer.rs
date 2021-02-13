@@ -1,10 +1,11 @@
 use geo_types::*;
 use geozero::error::{GeozeroError, Result};
 use geozero::{FeatureProcessor, GeomProcessor, PropertyProcessor};
+use std::mem;
 
 /// Generator for [geo-types](https://github.com/georust/geo) geometry type
 pub struct Geo {
-    geom: Geometry<f64>,
+    pub(crate) geom: Geometry<f64>,
     // Polygon rings or MultiLineString members
     line_strings: Vec<LineString<f64>>,
 }
@@ -47,14 +48,8 @@ impl GeomProcessor for Geo {
         self.geom = Point::new(0., 0.).into();
         Ok(())
     }
-    fn point_end(&mut self, _idx: usize) -> Result<()> {
-        Ok(())
-    }
     fn multipoint_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
         self.geom = MultiPoint(Vec::<Point<f64>>::with_capacity(size)).into();
-        Ok(())
-    }
-    fn multipoint_end(&mut self, _idx: usize) -> Result<()> {
         Ok(())
     }
     fn linestring_begin(&mut self, tagged: bool, size: usize, _idx: usize) -> Result<()> {
@@ -80,7 +75,7 @@ impl GeomProcessor for Geo {
         Ok(())
     }
     fn multilinestring_end(&mut self, _idx: usize) -> Result<()> {
-        self.geom = MultiLineString(self.line_strings.to_owned()).into();
+        self.geom = MultiLineString(mem::take(&mut self.line_strings)).into();
         Ok(())
     }
     fn polygon_begin(&mut self, _tagged: bool, size: usize, _idx: usize) -> Result<()> {
@@ -92,7 +87,7 @@ impl GeomProcessor for Geo {
             return Err(GeozeroError::Geometry("Missing LineString".to_string()));
         }
         let exterior = self.line_strings.remove(0);
-        let polygon = Polygon::new(exterior, self.line_strings.to_owned());
+        let polygon = Polygon::new(exterior, mem::take(&mut self.line_strings));
         if tagged {
             self.geom = polygon.into();
         } else if let Geometry::MultiPolygon(mp) = &mut self.geom {
@@ -106,9 +101,6 @@ impl GeomProcessor for Geo {
     }
     fn multipolygon_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
         self.geom = MultiPolygon(Vec::<Polygon<f64>>::with_capacity(size)).into();
-        Ok(())
-    }
-    fn multipolygon_end(&mut self, _idx: usize) -> Result<()> {
         Ok(())
     }
 }
