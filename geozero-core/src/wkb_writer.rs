@@ -298,9 +298,74 @@ impl<W: Write> PropertyProcessor for WkbWriter<'_, W> {}
 
 impl<W: Write> FeatureProcessor for WkbWriter<'_, W> {}
 
+pub(crate) mod conversion {
+    use super::*;
+    use crate::GeozeroGeometry;
+
+    /// Convert to WKB.
+    ///
+    /// # Usage example:
+    ///
+    /// Convert a geo-types `Point` to EWKB:
+    ///
+    /// ```
+    /// use geozero_core::ToWkb;
+    /// use geozero::CoordDimensions;
+    ///
+    /// let geom: geo_types::Geometry<f64> = geo_types::Point::new(10.0, -20.0).into();
+    /// let wkb = geom.to_ewkb(CoordDimensions::default(), Some(4326)).unwrap();
+    /// assert_eq!(&wkb, &[1, 1, 0, 0, 32, 230, 16, 0, 0, 0, 0, 0, 0, 0, 0, 36, 64, 0, 0, 0, 0, 0, 0, 52, 192]);
+    /// ```
+    pub trait ToWkb {
+        /// Convert to WKB dialect.
+        fn to_wkb_dialect(
+            &self,
+            dialect: WkbDialect,
+            dims: CoordDimensions,
+            srid: Option<i32>,
+            envelope: Vec<f64>,
+        ) -> Result<Vec<u8>>;
+        /// Convert to OGC WKB.
+        fn to_wkb(&self, dims: CoordDimensions) -> Result<Vec<u8>> {
+            self.to_wkb_dialect(WkbDialect::Wkb, dims, None, Vec::new())
+        }
+        /// Convert to EWKB.
+        fn to_ewkb(&self, dims: CoordDimensions, srid: Option<i32>) -> Result<Vec<u8>> {
+            self.to_wkb_dialect(WkbDialect::Ewkb, dims, srid, Vec::new())
+        }
+        /// Convert to GeoPackage WKB.
+        fn to_gpkg_wkb(
+            &self,
+            dims: CoordDimensions,
+            srid: Option<i32>,
+            envelope: Vec<f64>,
+        ) -> Result<Vec<u8>> {
+            self.to_wkb_dialect(WkbDialect::Geopackage, dims, srid, envelope)
+        }
+    }
+
+    impl<T: GeozeroGeometry + Sized> ToWkb for T {
+        fn to_wkb_dialect(
+            &self,
+            dialect: WkbDialect,
+            dims: CoordDimensions,
+            srid: Option<i32>,
+            envelope: Vec<f64>,
+        ) -> Result<Vec<u8>> {
+            let mut wkb: Vec<u8> = Vec::new();
+            let mut writer = WkbWriter::new(&mut wkb, dialect);
+            writer.dims = dims;
+            writer.srid = srid;
+            writer.envelope = envelope;
+            GeozeroGeometry::process_geom(self, &mut writer)?;
+            Ok(wkb)
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use super::*;
+    use super::{conversion::*, *};
     use crate::wkb::{process_ewkb_geom, process_gpkg_geom};
 
     fn ewkb_roundtrip(ewkbstr: &str, with_z: bool, srid: Option<i32>) -> bool {
@@ -408,5 +473,36 @@ mod test {
         // gc2d
         assert!(gpkg_roundtrip("47500003e6100000000000000000f03f0000000000003640000000000000084000000000000036400107000000020000000101000000000000000000f03f00000000000008400103000000010000000400000000000000000035400000000000003540000000000000364000000000000035400000000000003540000000000000364000000000000035400000000000003540",
             CoordDimensions::default(), Some(4326), vec![1.0, 22.0, 3.0, 22.0]));
+    }
+
+    #[test]
+    fn conversions() {
+        let geom: geo_types::Geometry<f64> = geo_types::Point::new(10.0, -20.0).into();
+        let wkb = geom.to_ewkb(CoordDimensions::default(), None).unwrap();
+        assert_eq!(
+            &wkb,
+            // SELECT 'POINT(10 -20)'::geometry
+            &hex::decode("0101000000000000000000244000000000000034C0").unwrap()
+        );
+        let wkb = geom
+            .to_ewkb(CoordDimensions::default(), Some(4326))
+            .unwrap();
+        assert_eq!(
+            &wkb,
+            &[1, 1, 0, 0, 32, 230, 16, 0, 0, 0, 0, 0, 0, 0, 0, 36, 64, 0, 0, 0, 0, 0, 0, 52, 192]
+        );
+
+        let geom: geo_types::Geometry<f64> = geo_types::Point::new(1.1, 1.1).into();
+        let wkb = geom
+            .to_gpkg_wkb(
+                CoordDimensions::default(),
+                Some(4326),
+                vec![1.1, 1.1, 1.1, 1.1],
+            )
+            .unwrap();
+        assert_eq!(
+            &wkb,
+            &hex::decode("47500003E61000009A9999999999F13F9A9999999999F13F9A9999999999F13F9A9999999999F13F01010000009A9999999999F13F9A9999999999F13F").unwrap()
+        );
     }
 }

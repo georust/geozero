@@ -48,6 +48,7 @@ pub mod wkb {
     pub use crate::wkb_reader::*;
     pub use crate::wkb_writer::*;
 }
+pub use crate::wkb_writer::conversion::*;
 
 /// Well-Known Text (WKT) conversions.
 ///
