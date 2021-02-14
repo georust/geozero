@@ -188,7 +188,9 @@ pub(crate) mod conversion {
         fn to_wkt(&self) -> Result<String> {
             let mut out: Vec<u8> = Vec::new();
             GeozeroGeometry::process_geom(self, &mut WktWriter::new(&mut out))?;
-            String::from_utf8(out).map_err(|_| geozero::error::GeozeroError::GeometryFormat)
+            String::from_utf8(out).map_err(|_| {
+                geozero::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())
+            })
         }
     }
 }

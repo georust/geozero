@@ -6,12 +6,8 @@ use std::io::Write;
 pub struct SvgWriter<'a, W: Write> {
     out: &'a mut W,
     invert_y: bool,
-    xmin: f64,
-    ymin: f64,
-    xmax: f64,
-    ymax: f64,
-    width: u32,
-    height: u32,
+    view_box: Option<(f64, f64, f64, f64)>,
+    size: Option<(u32, u32)>,
 }
 
 impl<'a, W: Write> SvgWriter<'a, W> {
@@ -19,12 +15,8 @@ impl<'a, W: Write> SvgWriter<'a, W> {
         SvgWriter {
             out,
             invert_y,
-            xmin: 0.0,
-            ymin: 0.0,
-            xmax: 0.0,
-            ymax: 0.0,
-            width: 0,
-            height: 0,
+            view_box: None,
+            size: None,
         }
     }
     pub fn set_dimensions(
@@ -36,17 +28,12 @@ impl<'a, W: Write> SvgWriter<'a, W> {
         width: u32,
         height: u32,
     ) {
-        self.xmin = xmin;
-        self.xmax = xmax;
-        if self.invert_y {
-            self.ymin = -ymax;
-            self.ymax = -ymin;
+        self.view_box = if self.invert_y {
+            Some((xmin, -ymax, xmax, -ymin))
         } else {
-            self.ymin = ymin;
-            self.ymax = ymax;
-        }
-        self.width = width;
-        self.height = height;
+            Some((xmin, ymin, xmax, ymax))
+        };
+        self.size = Some((width, height));
     }
 }
 
@@ -56,19 +43,23 @@ impl<W: Write> FeatureProcessor for SvgWriter<'_, W> {
             br#"<?xml version="1.0"?>
 <svg xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny" "#,
         )?;
-        let _ = self
-            .out
-            .write(&format!("width=\"{}\" height=\"{}\" ", self.width, self.height).as_bytes())?;
-        let _ = self.out.write(
-            &format!(
-                "viewBox=\"{} {} {} {}\" ",
-                self.xmin,
-                self.ymin,
-                self.xmax - self.xmin,
-                self.ymax - self.ymin
-            )
-            .as_bytes(),
-        )?;
+        if let Some((width, height)) = self.size {
+            let _ = self
+                .out
+                .write(&format!("width=\"{}\" height=\"{}\" ", width, height).as_bytes())?;
+        }
+        if let Some((xmin, ymin, xmax, ymax)) = self.view_box {
+            let _ = self.out.write(
+                &format!(
+                    "viewBox=\"{} {} {} {}\" ",
+                    xmin,
+                    ymin,
+                    xmax - xmin,
+                    ymax - ymin
+                )
+                .as_bytes(),
+            )?;
+        }
         let _ = self.out.write(
             br#"stroke-linecap="round" stroke-linejoin="round">
 <g id=""#,
@@ -142,10 +133,67 @@ impl<W: Write> GeomProcessor for SvgWriter<'_, W> {
 
 impl<W: Write> PropertyProcessor for SvgWriter<'_, W> {}
 
+pub(crate) mod conversion {
+    use super::*;
+    use crate::GeozeroGeometry;
+
+    /// Convert to SVG.
+    ///
+    /// # Usage example:
+    ///
+    /// Convert a geo-types `Polygon` to an SVG document:
+    ///
+    /// ```
+    /// use geozero_core::ToSvg;
+    /// use geo_types::polygon;
+    ///
+    /// let geom: geo_types::Geometry<f64> = polygon![
+    ///     (x: 220., y: 10.),
+    ///     (x: 300., y: 210.),
+    ///     (x: 170., y: 250.),
+    ///     (x: 123., y: 234.),
+    /// ]
+    /// .into();
+    ///
+    /// println!("{}", &geom.to_svg_document().unwrap());
+    /// ```
+    pub trait ToSvg {
+        /// Convert to SVG geometry.
+        fn to_svg(&self) -> Result<String>;
+        /// Convert to SVG document.
+        fn to_svg_document(&self) -> Result<String>;
+    }
+
+    impl<T: GeozeroGeometry + Sized> ToSvg for T {
+        fn to_svg(&self) -> Result<String> {
+            let mut svg_data: Vec<u8> = Vec::new();
+            let mut svg = SvgWriter::new(&mut svg_data, false);
+            GeozeroGeometry::process_geom(self, &mut svg)?;
+            String::from_utf8(svg_data).map_err(|_| {
+                geozero::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())
+            })
+        }
+        fn to_svg_document(&self) -> Result<String> {
+            let mut svg_data: Vec<u8> = Vec::new();
+            let mut svg = SvgWriter::new(&mut svg_data, false);
+            // svg.set_dimensions(bbox.get(0), bbox.get(1), bbox.get(2), bbox.get(3), 800, 400);
+            svg.dataset_begin(None)?;
+            svg.feature_begin(0)?;
+            GeozeroGeometry::process_geom(self, &mut svg)?;
+            svg.feature_end(0)?;
+            svg.dataset_end()?;
+            String::from_utf8(svg_data).map_err(|_| {
+                geozero::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())
+            })
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use super::*;
+    use super::{conversion::*, *};
     use crate::geojson_reader::read_geojson;
+    use geo_types::polygon;
 
     #[test]
     fn geometries() -> Result<()> {
@@ -221,12 +269,38 @@ mod test {
         assert_eq!(
             std::str::from_utf8(&svg_data).unwrap(),
             r#"<?xml version="1.0"?>
-<svg xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny" width="0" height="0" viewBox="0 0 0 0" stroke-linecap="round" stroke-linejoin="round">
+<svg xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny" stroke-linecap="round" stroke-linejoin="round">
 <g id="">
 <path d="M 173.020375 -40.919052 173.247234 -41.331999 173.958405 -40.926701 174.247587 -41.349155 174.248517 -41.770008 173.876447 -42.233184 173.22274 -42.970038 172.711246 -43.372288 173.080113 -43.853344 172.308584 -43.865694 171.452925 -44.242519 171.185138 -44.897104 170.616697 -45.908929 169.831422 -46.355775 169.332331 -46.641235 168.411354 -46.619945 167.763745 -46.290197 166.676886 -46.219917 166.509144 -45.852705 167.046424 -45.110941 168.303763 -44.123973 168.949409 -43.935819 169.667815 -43.555326 170.52492 -43.031688 171.12509 -42.512754 171.569714 -41.767424 171.948709 -41.514417 172.097227 -40.956104 172.79858 -40.493962 173.020375 -40.919052 Z "/><path d="M 174.612009 -36.156397 175.336616 -37.209098 175.357596 -36.526194 175.808887 -36.798942 175.95849 -37.555382 176.763195 -37.881253 177.438813 -37.961248 178.010354 -37.579825 178.517094 -37.695373 178.274731 -38.582813 177.97046 -39.166343 177.206993 -39.145776 176.939981 -39.449736 177.032946 -39.879943 176.885824 -40.065978 176.508017 -40.604808 176.01244 -41.289624 175.239567 -41.688308 175.067898 -41.425895 174.650973 -41.281821 175.22763 -40.459236 174.900157 -39.908933 173.824047 -39.508854 173.852262 -39.146602 174.574802 -38.797683 174.743474 -38.027808 174.697017 -37.381129 174.292028 -36.711092 174.319004 -36.534824 173.840997 -36.121981 173.054171 -35.237125 172.636005 -34.529107 173.007042 -34.450662 173.551298 -35.006183 174.32939 -35.265496 174.612009 -36.156397 Z "/>
 </g>
 </svg>"#
         );
         Ok(())
+    }
+
+    #[test]
+    fn conversions() {
+        let geom: geo_types::Geometry<f64> = polygon![
+            (x: 220., y: 10.),
+            (x: 300., y: 210.),
+            (x: 170., y: 250.),
+            (x: 123., y: 234.),
+        ]
+        .into();
+
+        assert_eq!(
+            &geom.to_svg().unwrap(),
+            r#"<path d="M 220 10 300 210 170 250 123 234 220 10 Z "/>"#
+        );
+
+        assert_eq!(
+            &geom.to_svg_document().unwrap(),
+            r#"<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny" stroke-linecap="round" stroke-linejoin="round">
+<g id="">
+<path d="M 220 10 300 210 170 250 123 234 220 10 Z "/>
+</g>
+</svg>"#
+        );
     }
 }

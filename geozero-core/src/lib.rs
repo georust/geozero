@@ -78,3 +78,5 @@ pub mod gdal {
 pub mod gpkg {
     pub use crate::geopackage::*;
 }
+
+pub use crate::svg::conversion::*;
