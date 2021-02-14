@@ -1,10 +1,11 @@
 use gdal::vector::Geometry;
 use gdal_sys::OGRwkbGeometryType;
 use geozero::error::{GeozeroError, Result};
-use geozero::{FeatureProcessor, GeomProcessor, PropertyProcessor};
+use geozero::{CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcessor};
 
 /// Generator for [GDAL](https://github.com/georust/gdal) geometry type.
 pub struct GdalWriter {
+    pub dims: CoordDimensions,
     pub(crate) geom: Geometry,
     // current line/ring of geom (non-owned)
     line: Geometry,
@@ -13,6 +14,7 @@ pub struct GdalWriter {
 impl<'a> GdalWriter {
     pub fn new() -> Self {
         GdalWriter {
+            dims: CoordDimensions::default(),
             geom: Geometry::empty(OGRwkbGeometryType::wkbPoint).unwrap(),
             line: Geometry::empty(OGRwkbGeometryType::wkbLineString).unwrap(),
         }
@@ -20,6 +22,23 @@ impl<'a> GdalWriter {
     pub fn geometry(&self) -> &Geometry {
         &self.geom
     }
+    fn wkb_type(&mut self, base: OGRwkbGeometryType::Type) -> OGRwkbGeometryType::Type {
+        let mut type_id = base as u32;
+        if self.dims.z {
+            type_id += 1000;
+        }
+        if self.dims.m {
+            type_id += 2000;
+        }
+        type_id
+    }
+    fn empty_geom(&mut self, base: OGRwkbGeometryType::Type) -> Result<Geometry> {
+        Geometry::empty(self.wkb_type(base)).map_err(from_gdal_err)
+    }
+}
+
+fn wkb_base_type(wkb_type: OGRwkbGeometryType::Type) -> OGRwkbGeometryType::Type {
+    (wkb_type as u32) % 1000
 }
 
 pub(crate) fn from_gdal_err(error: gdal::errors::GdalError) -> GeozeroError {
@@ -27,14 +46,16 @@ pub(crate) fn from_gdal_err(error: gdal::errors::GdalError) -> GeozeroError {
 }
 
 impl GeomProcessor for GdalWriter {
+    fn dimensions(&self) -> CoordDimensions {
+        self.dims
+    }
     fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
         match self.geom.geometry_type() {
             OGRwkbGeometryType::wkbPoint | OGRwkbGeometryType::wkbLineString => {
-                self.geom.set_point_2d(idx, (x, y))
+                self.geom.set_point_2d(idx, (x, y));
             }
             OGRwkbGeometryType::wkbMultiPoint => {
-                let mut point =
-                    Geometry::empty(OGRwkbGeometryType::wkbPoint).map_err(from_gdal_err)?;
+                let mut point = self.empty_geom(OGRwkbGeometryType::wkbPoint)?;
                 point.set_point_2d(0, (x, y));
                 self.geom.add_geometry(point).map_err(from_gdal_err)?;
             }
@@ -45,45 +66,74 @@ impl GeomProcessor for GdalWriter {
             }
             _ => {
                 return Err(GeozeroError::Geometry(
-                    "Unsupported geometry type".to_string(),
+                    format!("Unsupported geometry type {}", self.geom.geometry_type()).to_string(),
+                ))
+            }
+        }
+        Ok(())
+    }
+    fn coordinate(
+        &mut self,
+        x: f64,
+        y: f64,
+        z: Option<f64>,
+        _m: Option<f64>,
+        _t: Option<f64>,
+        _tm: Option<u64>,
+        idx: usize,
+    ) -> Result<()> {
+        let z = z.unwrap_or(0.0);
+        match wkb_base_type(self.geom.geometry_type()) {
+            OGRwkbGeometryType::wkbPoint | OGRwkbGeometryType::wkbLineString => {
+                self.geom.set_point(idx, (x, y, z));
+            }
+            OGRwkbGeometryType::wkbMultiPoint => {
+                let mut point = self.empty_geom(OGRwkbGeometryType::wkbPoint)?;
+                point.set_point(0, (x, y, z));
+                self.geom.add_geometry(point).map_err(from_gdal_err)?;
+            }
+            OGRwkbGeometryType::wkbMultiLineString
+            | OGRwkbGeometryType::wkbPolygon
+            | OGRwkbGeometryType::wkbMultiPolygon => {
+                self.line.set_point(idx, (x, y, z));
+            }
+            _ => {
+                return Err(GeozeroError::Geometry(
+                    format!("Unsupported geometry type {}", self.geom.geometry_type()).to_string(),
                 ))
             }
         }
         Ok(())
     }
     fn point_begin(&mut self, _idx: usize) -> Result<()> {
-        self.geom = Geometry::empty(OGRwkbGeometryType::wkbPoint).map_err(from_gdal_err)?;
+        self.geom = self.empty_geom(OGRwkbGeometryType::wkbPoint)?;
         Ok(())
     }
     fn multipoint_begin(&mut self, _size: usize, _idx: usize) -> Result<()> {
-        self.geom = Geometry::empty(OGRwkbGeometryType::wkbMultiPoint).map_err(from_gdal_err)?;
+        self.geom = self.empty_geom(OGRwkbGeometryType::wkbMultiPoint)?;
         Ok(())
     }
     fn linestring_begin(&mut self, tagged: bool, _size: usize, _idx: usize) -> Result<()> {
         if tagged {
-            self.geom =
-                Geometry::empty(OGRwkbGeometryType::wkbLineString).map_err(from_gdal_err)?;
+            self.geom = self.empty_geom(OGRwkbGeometryType::wkbLineString)?;
         } else {
-            match self.geom.geometry_type() {
+            match wkb_base_type(self.geom.geometry_type()) {
                 OGRwkbGeometryType::wkbMultiLineString => {
-                    let line = Geometry::empty(OGRwkbGeometryType::wkbLineString)
-                        .map_err(from_gdal_err)?;
+                    let line = self.empty_geom(OGRwkbGeometryType::wkbLineString)?;
                     self.geom.add_geometry(line).map_err(from_gdal_err)?;
 
                     let n = self.geom.geometry_count();
                     self.line = unsafe { self.geom.get_unowned_geometry(n - 1) };
                 }
                 OGRwkbGeometryType::wkbPolygon => {
-                    let ring = Geometry::empty(OGRwkbGeometryType::wkbLinearRing)
-                        .map_err(from_gdal_err)?;
+                    let ring = self.empty_geom(OGRwkbGeometryType::wkbLinearRing)?;
                     self.geom.add_geometry(ring).map_err(from_gdal_err)?;
 
                     let n = self.geom.geometry_count();
                     self.line = unsafe { self.geom.get_unowned_geometry(n - 1) };
                 }
                 OGRwkbGeometryType::wkbMultiPolygon => {
-                    let ring = Geometry::empty(OGRwkbGeometryType::wkbLinearRing)
-                        .map_err(from_gdal_err)?;
+                    let ring = self.empty_geom(OGRwkbGeometryType::wkbLinearRing)?;
                     let n = self.geom.geometry_count();
                     let mut poly = unsafe { self.geom.get_unowned_geometry(n - 1) };
                     poly.add_geometry(ring).map_err(from_gdal_err)?;
@@ -101,12 +151,11 @@ impl GeomProcessor for GdalWriter {
         Ok(())
     }
     fn multilinestring_begin(&mut self, _size: usize, _idx: usize) -> Result<()> {
-        self.geom =
-            Geometry::empty(OGRwkbGeometryType::wkbMultiLineString).map_err(from_gdal_err)?;
+        self.geom = self.empty_geom(OGRwkbGeometryType::wkbMultiLineString)?;
         Ok(())
     }
     fn polygon_begin(&mut self, tagged: bool, _size: usize, _idx: usize) -> Result<()> {
-        let poly = Geometry::empty(OGRwkbGeometryType::wkbPolygon).map_err(from_gdal_err)?;
+        let poly = self.empty_geom(OGRwkbGeometryType::wkbPolygon)?;
         if tagged {
             self.geom = poly;
         } else {
@@ -115,7 +164,7 @@ impl GeomProcessor for GdalWriter {
         Ok(())
     }
     fn multipolygon_begin(&mut self, _size: usize, _idx: usize) -> Result<()> {
-        self.geom = Geometry::empty(OGRwkbGeometryType::wkbMultiPolygon).map_err(from_gdal_err)?;
+        self.geom = self.empty_geom(OGRwkbGeometryType::wkbMultiPolygon)?;
         Ok(())
     }
 }
@@ -129,15 +178,23 @@ pub(crate) mod conversion {
 
     /// Convert to GDAL geometry.
     pub trait ToGdal {
-        /// Convert to GDAL geometry.
+        /// Convert to 2D GDAL geometry.
         fn to_gdal(&self) -> Result<Geometry>
+        where
+            Self: Sized;
+        /// Convert to GDAL geometry with dimensions.
+        fn to_gdal_ndim(&self, dims: CoordDimensions) -> Result<Geometry>
         where
             Self: Sized;
     }
 
     impl<T: GeozeroGeometry + Sized> ToGdal for T {
         fn to_gdal(&self) -> Result<Geometry> {
+            self.to_gdal_ndim(CoordDimensions::default())
+        }
+        fn to_gdal_ndim(&self, dims: CoordDimensions) -> Result<Geometry> {
             let mut gdal = GdalWriter::new();
+            gdal.dims = dims;
             GeozeroGeometry::process_geom(self, &mut gdal)?;
             Ok(gdal.geom)
         }
@@ -176,12 +233,19 @@ mod test {
         assert_eq!(geom.wkt().unwrap(), wkt);
     }
 
+    // TODO: 3D output is broken!
     // #[test]
     // fn line_geom_3d() {
-    //     let geojson =
-    //         GeoJson(r#"{"type": "LineString", "coordinates": [[1,1,10], [2,2,20]]}"#.to_string());
     //     let wkt = "LINESTRING (1 1 10, 2 2 20)";
-    //     let geom = geojson.to_gdal().unwrap();
+    //     let gdal = Geometry::from_wkt(wkt).unwrap();
+    //     let geom = gdal
+    //         .to_gdal_ndim(CoordDimensions {
+    //             z: true,
+    //             m: false,
+    //             t: false,
+    //             tm: false,
+    //         })
+    //         .unwrap();
     //     assert_eq!(geom.wkt().unwrap(), wkt);
     // }
 
