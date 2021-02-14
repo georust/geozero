@@ -84,6 +84,8 @@ pub mod gdal {
     pub use crate::gdal_reader::*;
     pub use crate::gdal_writer::*;
 }
+#[cfg(feature = "gdal-lib")]
+pub use crate::gdal_writer::conversion::*;
 
 /// Geopackage geometry type encoding/decoding.
 #[cfg(feature = "gpkg")]

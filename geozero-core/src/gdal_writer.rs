@@ -5,7 +5,7 @@ use geozero::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 
 /// Generator for [GDAL](https://github.com/georust/gdal) geometry type.
 pub struct GdalWriter {
-    geom: Geometry,
+    pub(crate) geom: Geometry,
     // current line/ring of geom (non-owned)
     line: Geometry,
 }
@@ -123,10 +123,31 @@ impl GeomProcessor for GdalWriter {
 impl PropertyProcessor for GdalWriter {}
 impl FeatureProcessor for GdalWriter {}
 
+pub(crate) mod conversion {
+    use super::*;
+    use crate::GeozeroGeometry;
+
+    /// Convert to GDAL geometry.
+    pub trait ToGdal {
+        /// Convert to GDAL geometry.
+        fn to_gdal(&self) -> Result<Geometry>
+        where
+            Self: Sized;
+    }
+
+    impl<T: GeozeroGeometry + Sized> ToGdal for T {
+        fn to_gdal(&self) -> Result<Geometry> {
+            let mut gdal = GdalWriter::new();
+            GeozeroGeometry::process_geom(self, &mut gdal)?;
+            Ok(gdal.geom)
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use super::*;
-    use crate::geojson_reader::read_geojson;
+    use super::{conversion::*, *};
+    use crate::geojson_reader::{read_geojson, GeoJson};
 
     #[test]
     fn point_geom() {
@@ -139,68 +160,67 @@ mod test {
 
     #[test]
     fn multipoint_geom() {
-        let geojson = r#"{"type": "MultiPoint", "coordinates": [[1, 1], [2, 2]]}"#;
+        let geojson =
+            GeoJson(r#"{"type": "MultiPoint", "coordinates": [[1, 1], [2, 2]]}"#.to_string());
         let wkt = "MULTIPOINT (1 1,2 2)";
-        let mut geom = GdalWriter::new();
-        assert!(read_geojson(geojson.as_bytes(), &mut geom).is_ok());
-        assert_eq!(geom.geometry().wkt().unwrap(), wkt);
+        let geom = geojson.to_gdal().unwrap();
+        assert_eq!(geom.wkt().unwrap(), wkt);
     }
 
     #[test]
     fn line_geom() {
-        let geojson = r#"{"type": "LineString", "coordinates": [[1,1], [2,2]]}"#;
+        let geojson =
+            GeoJson(r#"{"type": "LineString", "coordinates": [[1,1], [2,2]]}"#.to_string());
         let wkt = "LINESTRING (1 1,2 2)";
-        let mut geom = GdalWriter::new();
-        read_geojson(geojson.as_bytes(), &mut geom).unwrap();
-        assert!(read_geojson(geojson.as_bytes(), &mut geom).is_ok());
-        assert_eq!(geom.geometry().wkt().unwrap(), wkt);
+        let geom = geojson.to_gdal().unwrap();
+        assert_eq!(geom.wkt().unwrap(), wkt);
     }
 
     // #[test]
     // fn line_geom_3d() {
-    //     let geojson = r#"{"type": "LineString", "coordinates": [[1,1,10], [2,2,20]]}"#;
+    //     let geojson =
+    //         GeoJson(r#"{"type": "LineString", "coordinates": [[1,1,10], [2,2,20]]}"#.to_string());
     //     let wkt = "LINESTRING (1 1 10, 2 2 20)";
-    //     let mut geom = GdalWriter::new();
-    //     assert!(read_geojson(geojson.as_bytes(), &mut geom).is_ok());
-    //     assert_eq!(geom.geometry().wkt().unwrap(), wkt);
+    //     let geom = geojson.to_gdal().unwrap();
+    //     assert_eq!(geom.wkt().unwrap(), wkt);
     // }
 
     #[test]
     fn multiline_geom() {
-        let geojson =
-            r#"{"type": "MultiLineString", "coordinates": [[[1,1],[2,2]],[[3,3],[4,4]]]}"#;
+        let geojson = GeoJson(
+            r#"{"type": "MultiLineString", "coordinates": [[[1,1],[2,2]],[[3,3],[4,4]]]}"#
+                .to_string(),
+        );
         let wkt = "MULTILINESTRING ((1 1,2 2),(3 3,4 4))";
-        let mut geom = GdalWriter::new();
-        assert!(read_geojson(geojson.as_bytes(), &mut geom).is_ok());
-        assert_eq!(geom.geometry().wkt().unwrap(), wkt);
+        let geom = geojson.to_gdal().unwrap();
+        assert_eq!(geom.wkt().unwrap(), wkt);
     }
 
     #[test]
     fn polygon_geom() {
-        let geojson = r#"{"type": "Polygon", "coordinates": [[[0, 0], [0, 3], [3, 3], [3, 0], [0, 0]],[[0.2, 0.2], [0.2, 2], [2, 2], [2, 0.2], [0.2, 0.2]]]}"#;
+        let geojson = GeoJson(r#"{"type": "Polygon", "coordinates": [[[0, 0], [0, 3], [3, 3], [3, 0], [0, 0]],[[0.2, 0.2], [0.2, 2], [2, 2], [2, 0.2], [0.2, 0.2]]]}"#.to_string());
         let wkt = "POLYGON ((0 0,0 3,3 3,3 0,0 0),(0.2 0.2,0.2 2.0,2 2,2.0 0.2,0.2 0.2))";
-        let mut geom = GdalWriter::new();
-        assert!(read_geojson(geojson.as_bytes(), &mut geom).is_ok());
-        assert_eq!(geom.geometry().wkt().unwrap(), wkt);
+        let geom = geojson.to_gdal().unwrap();
+        assert_eq!(geom.wkt().unwrap(), wkt);
     }
 
     #[test]
     fn multipolygon_geom() {
-        let geojson =
-            r#"{"type": "MultiPolygon", "coordinates": [[[[0,0],[0,1],[1,1],[1,0],[0,0]]]]}"#;
+        let geojson = GeoJson(
+            r#"{"type": "MultiPolygon", "coordinates": [[[[0,0],[0,1],[1,1],[1,0],[0,0]]]]}"#
+                .to_string(),
+        );
         let wkt = "MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))";
-        let mut geom = GdalWriter::new();
-        assert!(read_geojson(geojson.as_bytes(), &mut geom).is_ok());
-        assert_eq!(geom.geometry().wkt().unwrap(), wkt);
+        let geom = geojson.to_gdal().unwrap();
+        assert_eq!(geom.wkt().unwrap(), wkt);
     }
 
     // #[test]
     // fn geometry_collection_geom() {
-    //     let geojson = r#"{"type": "Point", "coordinates": [1, 1]}"#;
+    //     let geojson = GeoJson(r#"{"type": "Point", "coordinates": [1, 1]}"#.to_string());
     //     let wkt = "GEOMETRYCOLLECTION(POINT(1 1), LINESTRING(1 1, 2 2))";
-    //     let mut geom = GdalWriter::new();
-    //     assert!(read_geojson(geojson.as_bytes(), &mut geom).is_ok());
-    //     assert_eq!(geom.geometry().wkt().unwrap(), wkt);
+    //     let geom = geojson.to_gdal().unwrap();
+    //     assert_eq!(geom.wkt().unwrap(), wkt);
     // }
 
     #[test]
