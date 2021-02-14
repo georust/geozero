@@ -16,11 +16,11 @@ pub(crate) fn from_geos_err(error: geos::Error) -> GeozeroError {
 }
 
 /// Process GEOS geometry.
-pub fn process_geos<P: GeomProcessor>(ggeom: &GGeometry, processor: &mut P) -> Result<()> {
-    process_geos_n(ggeom, 0, processor)
+pub fn process_geom<P: GeomProcessor>(ggeom: &GGeometry, processor: &mut P) -> Result<()> {
+    process_geom_n(ggeom, 0, processor)
 }
 
-fn process_geos_n<'a, P: GeomProcessor, G: Geom<'a>>(
+fn process_geom_n<'a, P: GeomProcessor, G: Geom<'a>>(
     ggeom: &G,
     idx: usize,
     processor: &mut P,
@@ -69,7 +69,7 @@ fn process_geos_n<'a, P: GeomProcessor, G: Geom<'a>>(
             processor.geometrycollection_begin(n_geoms, idx)?;
             for i in 0..n_geoms {
                 let g = ggeom.get_geometry_n(i).map_err(from_geos_err)?;
-                process_geos_n(&g, i, processor)?;
+                process_geom_n(&g, i, processor)?;
             }
             processor.geometrycollection_end(idx)?;
         }
@@ -160,7 +160,7 @@ fn process_polygon<'a, P: GeomProcessor, G: Geom<'a>>(
 
 impl GeozeroGeometry for geos::Geometry<'_> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
-        process_geos(self, processor)
+        process_geom(self, processor)
     }
 }
 
@@ -175,7 +175,7 @@ mod test {
         let ggeom = GGeometry::new_from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_geos(&ggeom, &mut WktWriter::new(&mut wkt_data)).is_ok());
+        assert!(process_geom(&ggeom, &mut WktWriter::new(&mut wkt_data)).is_ok());
 
         assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), wkt);
     }
@@ -187,7 +187,7 @@ mod test {
         let ggeom = GGeometry::new_from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_geos(&ggeom, &mut WktWriter::new(&mut wkt_data)).is_ok());
+        assert!(process_geom(&ggeom, &mut WktWriter::new(&mut wkt_data)).is_ok());
 
         assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), wkt);
     }
@@ -198,7 +198,7 @@ mod test {
         let ggeom = GGeometry::new_from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_geos(&ggeom, &mut WktWriter::new(&mut wkt_data)).is_ok());
+        assert!(process_geom(&ggeom, &mut WktWriter::new(&mut wkt_data)).is_ok());
 
         assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), wkt);
     }
@@ -211,7 +211,7 @@ mod test {
         let mut wkt_data: Vec<u8> = Vec::new();
         let mut writer = WktWriter::new(&mut wkt_data);
         writer.dims.z = true;
-        assert!(process_geos(&ggeom, &mut writer).is_ok());
+        assert!(process_geom(&ggeom, &mut writer).is_ok());
 
         assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), wkt);
     }
@@ -222,7 +222,7 @@ mod test {
         let ggeom = GGeometry::new_from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_geos(&ggeom, &mut WktWriter::new(&mut wkt_data)).is_ok());
+        assert!(process_geom(&ggeom, &mut WktWriter::new(&mut wkt_data)).is_ok());
 
         assert_eq!(
             std::str::from_utf8(&wkt_data).unwrap(),
@@ -236,7 +236,7 @@ mod test {
         let ggeom = GGeometry::new_from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_geos(&ggeom, &mut WktWriter::new(&mut wkt_data)).is_ok());
+        assert!(process_geom(&ggeom, &mut WktWriter::new(&mut wkt_data)).is_ok());
 
         assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), wkt);
     }
@@ -247,7 +247,7 @@ mod test {
         let ggeom = GGeometry::new_from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_geos(&ggeom, &mut WktWriter::new(&mut wkt_data)).is_ok());
+        assert!(process_geom(&ggeom, &mut WktWriter::new(&mut wkt_data)).is_ok());
 
         assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), wkt);
     }
@@ -258,7 +258,7 @@ mod test {
         let ggeom = GGeometry::new_from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_geos(&ggeom, &mut WktWriter::new(&mut wkt_data)).is_ok());
+        assert!(process_geom(&ggeom, &mut WktWriter::new(&mut wkt_data)).is_ok());
 
         assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), wkt);
     }
@@ -269,7 +269,7 @@ mod test {
         let ggeom = GGeometry::new_from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_geos(&ggeom, &mut WktWriter::new(&mut wkt_data)).is_ok());
+        assert!(process_geom(&ggeom, &mut WktWriter::new(&mut wkt_data)).is_ok());
 
         assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), wkt);
     }

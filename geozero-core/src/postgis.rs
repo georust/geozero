@@ -69,7 +69,7 @@ pub mod postgres {
     /// PostGIS geometry type encoding/decoding for [GEOS](https://github.com/georust/geos).
     #[cfg(feature = "geos-lib")]
     pub mod geos {
-        use crate::geos::{process_geos, Geos};
+        use crate::geos::{process_geom, Geos};
         use crate::wkb;
         use bytes::{BufMut, BytesMut};
         use geos::Geom;
@@ -116,7 +116,7 @@ pub mod postgres {
                 let mut writer = wkb::WkbWriter::new(pgout, wkb::WkbDialect::Ewkb);
                 writer.dims.z = self.0.has_z().unwrap_or(false);
                 writer.srid = self.0.get_srid().map(|srid| srid as i32).ok();
-                process_geos(&self.0, &mut writer)?;
+                process_geom(&self.0, &mut writer)?;
                 Ok(IsNull::No)
             }
 
@@ -191,7 +191,7 @@ pub mod sqlx {
     /// PostGIS geometry type encoding/decoding for [GEOS](https://github.com/georust/geos).
     #[cfg(feature = "geos-lib")]
     pub mod geos {
-        use crate::geos::{process_geos, Geos};
+        use crate::geos::{process_geom, Geos};
         use crate::wkb;
         use geos::Geom;
         use sqlx::decode::Decode;
@@ -231,7 +231,7 @@ pub mod sqlx {
                 let mut writer = wkb::WkbWriter::new(&mut wkb_out, wkb::WkbDialect::Ewkb);
                 writer.dims.z = self.0.has_z().unwrap_or(false);
                 writer.srid = self.0.get_srid().map(|srid| srid as i32).ok();
-                process_geos(&self.0, &mut writer).expect("Failed to encode Geometry");
+                process_geom(&self.0, &mut writer).expect("Failed to encode Geometry");
                 buf.extend(&wkb_out); // Is there a way to write directly into PgArgumentBuffer?
 
                 IsNull::No

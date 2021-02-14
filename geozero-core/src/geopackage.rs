@@ -48,7 +48,7 @@ pub mod geo {
 /// Geopackage geometry type encoding/decoding for [GEOS](https://github.com/georust/geos).
 #[cfg(feature = "geos-lib")]
 pub mod geos {
-    use crate::geos::{process_geos, Geos};
+    use crate::geos::{process_geom, Geos};
     use crate::wkb;
     use geos::Geom;
     use sqlx::decode::Decode;
@@ -89,7 +89,7 @@ pub mod geos {
             let mut writer = wkb::WkbWriter::new(&mut wkb_out, wkb::WkbDialect::Geopackage);
             writer.dims.z = self.0.has_z().unwrap_or(false);
             writer.srid = self.0.get_srid().map(|srid| srid as i32).ok();
-            process_geos(&self.0, &mut writer).expect("Failed to encode Geometry");
+            process_geom(&self.0, &mut writer).expect("Failed to encode Geometry");
 
             args.push(SqliteArgumentValue::Blob(Cow::Owned(wkb_out)));
 
