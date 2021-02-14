@@ -180,14 +180,21 @@ pub(crate) mod conversion {
 
     /// Convert to WKT.
     pub trait ToWkt {
-        /// Convert to WKT String.
+        /// Convert to 2D WKT String.
         fn to_wkt(&self) -> Result<String>;
+        /// Convert to WKT String with dimensions.
+        fn to_wkt_ndim(&self, dims: CoordDimensions) -> Result<String>;
     }
 
     impl<T: GeozeroGeometry + Sized> ToWkt for T {
         fn to_wkt(&self) -> Result<String> {
+            self.to_wkt_ndim(CoordDimensions::default())
+        }
+        fn to_wkt_ndim(&self, dims: CoordDimensions) -> Result<String> {
             let mut out: Vec<u8> = Vec::new();
-            GeozeroGeometry::process_geom(self, &mut WktWriter::new(&mut out))?;
+            let mut writer = WktWriter::new(&mut out);
+            writer.dims = dims;
+            GeozeroGeometry::process_geom(self, &mut writer)?;
             String::from_utf8(out).map_err(|_| {
                 geozero::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())
             })

@@ -254,10 +254,10 @@ Full source code: [postgis.rs](./geozero-core/tests/postgis.rs)
 
 ## Conversion API
 
-|  From/To   | GDAL |  geo   | geojson (String) |   geos  | wkb | wkt (String) |
-|------------|------|--------|------------------|---------|-----|--------------|
-| GDAL       | -    |        |                  |         |     |              |
-| geo        |      | -      | to_json          | to_geos |     | to_wkt       |
-| geojson    |      | to_geo | -                | to_geos |     | to_wkt       |
-| geos       |      | to_geo | to_json          | -       |     | (GEOS)       |
-| wkb (Read) |      |        |                  |         | -   |              |
+| From/To | GDAL |  geo   | geojson (String) |   geos  |  wkb   | wkt (String) |
+|---------|------|--------|------------------|---------|--------|--------------|
+| GDAL    | -    | to_geo | to_json          | to_geos | to_wkb | to_wkt       |
+| geo     |      | -      | to_json          | to_geos | to_wkb | to_wkt       |
+| geojson |      | to_geo | -                | to_geos | to_wkb | to_wkt       |
+| geos    |      | to_geo | to_json          | -       | to_wkb | (GEOS)       |
+| wkb     |      | to_geo | to_json          | to_geos | -      | to_wkt       |

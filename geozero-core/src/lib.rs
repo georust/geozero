@@ -43,6 +43,17 @@ pub mod geo_types {
 pub use crate::geo_types_writer::conversion::*;
 
 /// Well-Known Binary (WKB) conversions.
+///
+/// # Usage examples:
+///
+/// Convert a EWKB geometry to WKT:
+///
+/// ```
+/// use geozero_core::{ToWkt, wkb::Ewkb};
+///
+/// let wkb = Ewkb(vec![1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 64, 0, 0, 0, 0, 0, 0, 52, 192]);
+/// assert_eq!(wkb.to_wkt().unwrap(), "POINT(10 -20)");
+/// ```
 pub mod wkb {
     pub use crate::wkb_common::*;
     pub use crate::wkb_reader::*;

@@ -1,3 +1,4 @@
+use crate::GeozeroGeometry;
 use gdal::vector::Geometry;
 use gdal_sys::{self, OGRwkbGeometryType};
 use geozero::error::{GeozeroError, Result};
@@ -144,10 +145,20 @@ fn process_polygon<P: GeomProcessor>(
     processor.polygon_end(tagged, idx)
 }
 
+// --- impl conversion traits
+
+impl GeozeroGeometry for Geometry {
+    fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
+        process_geom(self, processor)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
     use crate::wkt_writer::WktWriter;
+    use crate::ToWkt;
+    use geozero::CoordDimensions;
 
     #[test]
     fn point() {
@@ -164,78 +175,57 @@ mod test {
     fn multipoint() {
         let wkt = "MULTIPOINT(1 1,2 2)";
         let geo = Geometry::from_wkt(wkt).unwrap();
-
-        let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_geom(&geo, &mut WktWriter::new(&mut wkt_data)).is_ok());
-
-        assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), wkt);
+        assert_eq!(geo.to_wkt().unwrap(), wkt);
     }
 
     #[test]
     fn line() {
         let wkt = "LINESTRING(1 1,2 2)";
         let geo = Geometry::from_wkt(wkt).unwrap();
-
-        let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_geom(&geo, &mut WktWriter::new(&mut wkt_data)).is_ok());
-
-        assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), wkt);
+        assert_eq!(geo.to_wkt().unwrap(), wkt);
     }
 
     #[test]
     fn line_3d() {
         let wkt = "LINESTRING(1 1 10,2 2 20)";
         let geo = Geometry::from_wkt(wkt).unwrap();
-
-        let mut wkt_data: Vec<u8> = Vec::new();
-        let mut writer = WktWriter::new(&mut wkt_data);
-        writer.dims.z = true;
-        assert!(process_geom(&geo, &mut writer).is_ok());
-
-        assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), wkt);
+        assert_eq!(
+            geo.to_wkt_ndim(CoordDimensions {
+                z: true,
+                m: false,
+                t: false,
+                tm: false
+            })
+            .unwrap(),
+            wkt
+        );
     }
 
     #[test]
     fn multiline() {
         let wkt = "MULTILINESTRING((1 1,2 2),(3 3,4 4))";
         let geo = Geometry::from_wkt(wkt).unwrap();
-
-        let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_geom(&geo, &mut WktWriter::new(&mut wkt_data)).is_ok());
-
-        assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), wkt);
+        assert_eq!(geo.to_wkt().unwrap(), wkt);
     }
 
     #[test]
     fn polygon() {
         let wkt = "POLYGON((0 0,0 3,3 3,3 0,0 0),(0.2 0.2,0.2 2,2 2,2 0.2,0.2 0.2))";
         let geo = Geometry::from_wkt(wkt).unwrap();
-
-        let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_geom(&geo, &mut WktWriter::new(&mut wkt_data)).is_ok());
-
-        assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), wkt);
+        assert_eq!(geo.to_wkt().unwrap(), wkt);
     }
 
     #[test]
     fn multipolygon() {
         let wkt = "MULTIPOLYGON(((0 0,0 1,1 1,1 0,0 0)))";
         let geo = Geometry::from_wkt(wkt).unwrap();
-
-        let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_geom(&geo, &mut WktWriter::new(&mut wkt_data)).is_ok());
-
-        assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), wkt);
+        assert_eq!(geo.to_wkt().unwrap(), wkt);
     }
 
     #[test]
     fn geometry_collection() {
         let wkt = "GEOMETRYCOLLECTION(POINT(1 1),LINESTRING(1 1,2 2))";
         let geo = Geometry::from_wkt(wkt).unwrap();
-
-        let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_geom(&geo, &mut WktWriter::new(&mut wkt_data)).is_ok());
-
-        assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), wkt);
+        assert_eq!(geo.to_wkt().unwrap(), wkt);
     }
 }

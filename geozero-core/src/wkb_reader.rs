@@ -1,8 +1,27 @@
 use crate::wkb_common::{WKBByteOrder, WKBGeometryType};
+use crate::GeozeroGeometry;
 use geozero::error::{GeozeroError, Result};
 use geozero::GeomProcessor;
 use scroll::IOread;
 use std::io::Read;
+
+/// Process WKB geometry.
+pub fn process_wkb_geom<R: Read, P: GeomProcessor>(raw: &mut R, processor: &mut P) -> Result<()> {
+    let info = read_wkb_header(raw)?;
+    process_wkb_geom_n(raw, &info, read_wkb_header, 0, processor)
+}
+
+/// Process EWKB geometry.
+pub fn process_ewkb_geom<R: Read, P: GeomProcessor>(raw: &mut R, processor: &mut P) -> Result<()> {
+    let info = read_ewkb_header(raw)?;
+    process_wkb_geom_n(raw, &info, read_ewkb_header, 0, processor)
+}
+
+/// Process GPKG geometry.
+pub fn process_gpkg_geom<R: Read, P: GeomProcessor>(raw: &mut R, processor: &mut P) -> Result<()> {
+    let info = read_gpkg_header(raw)?;
+    process_wkb_geom_n(raw, &info, read_wkb_header, 0, processor)
+}
 
 #[derive(Debug)]
 struct WkbInfo {
@@ -116,18 +135,6 @@ fn read_gpkg_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
 }
 
 // TODO: Spatialite https://www.gaia-gis.it/gaia-sins/BLOB-Geometry.html
-
-/// Process EWKB geometry.
-pub fn process_ewkb_geom<R: Read, P: GeomProcessor>(raw: &mut R, processor: &mut P) -> Result<()> {
-    let info = read_ewkb_header(raw)?;
-    process_wkb_geom_n(raw, &info, read_ewkb_header, 0, processor)
-}
-
-/// Process GPKG geometry.
-pub fn process_gpkg_geom<R: Read, P: GeomProcessor>(raw: &mut R, processor: &mut P) -> Result<()> {
-    let info = read_gpkg_header(raw)?;
-    process_wkb_geom_n(raw, &info, read_wkb_header, 0, processor)
-}
 
 fn process_wkb_geom_n<R: Read, P: GeomProcessor>(
     raw: &mut R,
@@ -395,10 +402,40 @@ fn process_curvepolygon<R: Read, P: GeomProcessor>(
     processor.curvepolygon_end(idx)
 }
 
+// --- impl conversion traits
+
+/// WKB reader.
+pub struct Wkb(pub Vec<u8>);
+
+impl GeozeroGeometry for Wkb {
+    fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
+        process_wkb_geom(&mut self.0.as_slice(), processor)
+    }
+}
+
+/// EWKB reader.
+pub struct Ewkb(pub Vec<u8>);
+
+impl GeozeroGeometry for Ewkb {
+    fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
+        process_ewkb_geom(&mut self.0.as_slice(), processor)
+    }
+}
+
+/// GepPackage WKB reader.
+pub struct GpkgWkb(pub Vec<u8>);
+
+impl GeozeroGeometry for GpkgWkb {
+    fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
+        process_gpkg_geom(&mut self.0.as_slice(), processor)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
     use crate::wkt_writer::WktWriter;
+    use crate::ToWkt;
 
     #[test]
     fn ewkb_format() {
@@ -608,5 +645,19 @@ mod test {
     fn scroll_error() {
         let err = read_ewkb_header(&mut std::io::Cursor::new(b"")).unwrap_err();
         assert_eq!(err.to_string(), "I/O error");
+    }
+
+    #[test]
+    fn conversions() {
+        let wkb = Ewkb(hex::decode("0101000000000000000000244000000000000034C0").unwrap());
+        assert_eq!(wkb.to_wkt().unwrap(), "POINT(10 -20)");
+
+        let wkb = Ewkb(vec![
+            1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 64, 0, 0, 0, 0, 0, 0, 52, 192,
+        ]);
+        assert_eq!(wkb.to_wkt().unwrap(), "POINT(10 -20)");
+
+        let wkb = GpkgWkb(hex::decode("47500003E61000009A9999999999F13F9A9999999999F13F9A9999999999F13F9A9999999999F13F01010000009A9999999999F13F9A9999999999F13F").unwrap());
+        assert_eq!(wkb.to_wkt().unwrap(), "POINT(1.1 1.1)");
     }
 }
