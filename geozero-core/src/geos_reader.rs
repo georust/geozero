@@ -1,18 +1,7 @@
+use crate::GeozeroGeometry;
 use geos::{CoordSeq, Geom, Geometry as GGeometry, GeometryTypes};
 use geozero::error::{GeozeroError, Result};
 use geozero::GeomProcessor;
-
-pub(crate) mod conversion {
-    use geozero::error::Result;
-
-    /// Convert from GEOS geometry.
-    pub trait FromGeos {
-        /// Convert from GEOS geometry.
-        fn from_geos(geom: &geos::Geometry) -> Result<Self>
-        where
-            Self: Sized;
-    }
-}
 
 pub(crate) fn from_geos_err(error: geos::Error) -> GeozeroError {
     match error {
@@ -169,22 +158,11 @@ fn process_polygon<'a, P: GeomProcessor, G: Geom<'a>>(
 
 // --- impl conversion traits
 
-impl crate::ToJson for geos::Geometry<'_> {
-    fn to_json(&self) -> Result<String> {
-        let mut out: Vec<u8> = Vec::new();
-        process_geos(self, &mut crate::geojson::GeoJsonWriter::new(&mut out))?;
-        String::from_utf8(out).map_err(|_| geozero::error::GeozeroError::GeometryFormat)
+impl GeozeroGeometry for geos::Geometry<'_> {
+    fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
+        process_geos(self, processor)
     }
 }
-
-// GEOS has to_wkt method already built-in
-// impl crate::ToWkt for geos::Geometry<'_> {
-//     fn to_wkt(&self) -> Result<String> {
-//         let mut out: Vec<u8> = Vec::new();
-//         process_geos(self, &mut crate::wkt::WktWriter::new(&mut out))?;
-//         String::from_utf8(out).map_err(|_| geozero::error::GeozeroError::GeometryFormat)
-//     }
-// }
 
 #[cfg(test)]
 mod test {

@@ -1,18 +1,7 @@
+use crate::GeozeroGeometry;
 use geo_types::*;
 use geozero::error::Result;
 use geozero::GeomProcessor;
-
-pub(crate) mod conversion {
-    use geozero::error::Result;
-
-    /// Convert from geo-types geometry.
-    pub trait FromGeo {
-        /// Convert from geo-types geometry.
-        fn from_geo(geom: &geo_types::Geometry<f64>) -> Result<Self>
-        where
-            Self: Sized;
-    }
-}
 
 /// Process [geo-types](https://github.com/georust/geo) geometry.
 pub fn process_geom<P: GeomProcessor>(geom: &Geometry<f64>, processor: &mut P) -> Result<()> {
@@ -130,19 +119,9 @@ fn process_polygon<P: GeomProcessor>(
 
 // --- impl conversion traits
 
-impl crate::ToJson for geo_types::Geometry<f64> {
-    fn to_json(&self) -> Result<String> {
-        let mut out: Vec<u8> = Vec::new();
-        process_geom(self, &mut crate::geojson::GeoJsonWriter::new(&mut out))?;
-        String::from_utf8(out).map_err(|_| geozero::error::GeozeroError::GeometryFormat)
-    }
-}
-
-impl crate::ToWkt for geo_types::Geometry<f64> {
-    fn to_wkt(&self) -> Result<String> {
-        let mut out: Vec<u8> = Vec::new();
-        process_geom(self, &mut crate::wkt::WktWriter::new(&mut out))?;
-        String::from_utf8(out).map_err(|_| geozero::error::GeozeroError::GeometryFormat)
+impl GeozeroGeometry for geo_types::Geometry<f64> {
+    fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
+        process_geom(self, processor)
     }
 }
 

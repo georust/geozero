@@ -1,27 +1,15 @@
-use geojson::{GeoJson, Geometry, Value};
+use crate::GeozeroGeometry;
+use geojson::{GeoJson as GeoGeoJson, Geometry, Value};
 use geozero::error::{GeozeroError, Result};
 use geozero::{FeatureProcessor, GeomProcessor};
 use std::io::Read;
-
-pub(crate) mod conversion {
-    use geozero::error::Result;
-    use std::io::Read;
-
-    /// Convert from GeoJSON.
-    pub trait FromJson {
-        /// Convert from GeoJSON.
-        fn from_json(reader: &mut dyn Read) -> Result<Self>
-        where
-            Self: Sized;
-    }
-}
 
 /// Read and process GeoJSON.
 pub fn read_geojson<R: Read, P: FeatureProcessor>(mut reader: R, processor: &mut P) -> Result<()> {
     let mut geojson_str = String::new();
     reader.read_to_string(&mut geojson_str)?;
     let geojson = geojson_str
-        .parse::<GeoJson>()
+        .parse::<GeoGeoJson>()
         .map_err(|_| GeozeroError::GeometryFormat)?;
     process_geojson(&geojson, processor)
 }
@@ -34,15 +22,15 @@ pub fn read_geojson_geom<R: Read, P: GeomProcessor>(
     let mut geojson_str = String::new();
     reader.read_to_string(&mut geojson_str)?;
     let geojson = geojson_str
-        .parse::<GeoJson>()
+        .parse::<GeoGeoJson>()
         .map_err(|_| GeozeroError::GeometryFormat)?;
     process_geojson_geom(&geojson, processor)
 }
 
 /// Process top-level GeoJSON items
-fn process_geojson<P: FeatureProcessor>(gj: &GeoJson, processor: &mut P) -> Result<()> {
+fn process_geojson<P: FeatureProcessor>(gj: &GeoGeoJson, processor: &mut P) -> Result<()> {
     match *gj {
-        GeoJson::FeatureCollection(ref collection) => {
+        GeoGeoJson::FeatureCollection(ref collection) => {
             processor.dataset_begin(None)?;
             for (idx, geometry) in collection
                 .features
@@ -62,7 +50,7 @@ fn process_geojson<P: FeatureProcessor>(gj: &GeoJson, processor: &mut P) -> Resu
             }
             processor.dataset_end()?;
         }
-        GeoJson::Feature(ref feature) => {
+        GeoGeoJson::Feature(ref feature) => {
             processor.dataset_begin(None)?;
             if let Some(ref geometry) = feature.geometry {
                 processor.feature_begin(0)?;
@@ -76,7 +64,7 @@ fn process_geojson<P: FeatureProcessor>(gj: &GeoJson, processor: &mut P) -> Resu
             }
             processor.dataset_end()?;
         }
-        GeoJson::Geometry(ref geometry) => {
+        GeoGeoJson::Geometry(ref geometry) => {
             process_geojson_geom_n(geometry, 0, processor)?;
         }
     }
@@ -84,9 +72,9 @@ fn process_geojson<P: FeatureProcessor>(gj: &GeoJson, processor: &mut P) -> Resu
 }
 
 /// Process top-level GeoJSON items (geometry only)
-fn process_geojson_geom<P: GeomProcessor>(gj: &GeoJson, processor: &mut P) -> Result<()> {
+fn process_geojson_geom<P: GeomProcessor>(gj: &GeoGeoJson, processor: &mut P) -> Result<()> {
     match *gj {
-        GeoJson::FeatureCollection(ref collection) => {
+        GeoGeoJson::FeatureCollection(ref collection) => {
             for (idx, geometry) in collection
                 .features
                 .iter()
@@ -97,12 +85,12 @@ fn process_geojson_geom<P: GeomProcessor>(gj: &GeoJson, processor: &mut P) -> Re
                 process_geojson_geom_n(geometry, idx, processor)?;
             }
         }
-        GeoJson::Feature(ref feature) => {
+        GeoGeoJson::Feature(ref feature) => {
             if let Some(ref geometry) = feature.geometry {
                 process_geojson_geom_n(geometry, 0, processor)?;
             }
         }
-        GeoJson::Geometry(ref geometry) => {
+        GeoGeoJson::Geometry(ref geometry) => {
             process_geojson_geom_n(geometry, 0, processor)?;
         }
     }
@@ -224,18 +212,20 @@ fn process_multi_polygon<P: GeomProcessor>(
 
 // --- impl conversion traits
 
-/// Convert GeoJSON to WKT String
-pub fn geojson_to_wkt(geojson: &mut dyn Read) -> Result<String> {
-    let mut wkt: Vec<u8> = Vec::new();
-    let mut writer = crate::wkt_writer::WktWriter::new(&mut wkt);
-    read_geojson(geojson, &mut writer)?;
-    String::from_utf8(wkt).map_err(|_| geozero::error::GeozeroError::GeometryFormat)
+/// GeoJSON reader.
+pub struct GeoJson(pub String); // TODO: use Read instead of String and implement Into for String
+
+impl GeozeroGeometry for GeoJson {
+    fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
+        read_geojson_geom((&self.0 as &str).as_bytes(), processor)
+    }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
     use crate::wkt_writer::WktWriter;
+    use crate::ToWkt;
     use std::fs::File;
 
     #[test]
@@ -278,8 +268,7 @@ mod test {
 
     #[test]
     fn conversions() {
-        let geojson = r#"{"type": "Point", "coordinates": [10,20]}"#;
-        let wkt = geojson_to_wkt(&mut geojson.as_bytes()).unwrap();
-        assert_eq!(wkt, "POINT(10 20)");
+        let geojson = GeoJson(r#"{"type": "Point", "coordinates": [10,20]}"#.to_string());
+        assert_eq!(geojson.to_wkt().unwrap(), "POINT(10 20)");
     }
 }

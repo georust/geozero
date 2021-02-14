@@ -14,6 +14,7 @@ mod geopackage;
 mod geos_reader;
 #[cfg(feature = "geos-lib")]
 mod geos_writer;
+mod geozero;
 /// PostGIS geometry type encoding/decoding.
 pub mod postgis;
 /// SVG conversions.
@@ -25,12 +26,13 @@ mod wkb_reader;
 mod wkb_writer;
 mod wkt_writer;
 
+pub use crate::geozero::*;
+
 /// GeoJSON conversions.
 pub mod geojson {
     pub use crate::geojson_reader::*;
     pub use crate::geojson_writer::*;
 }
-pub use crate::geojson_reader::conversion::*;
 pub use crate::geojson_writer::conversion::*;
 
 /// [geo-types](https://github.com/georust/geo) conversions.
@@ -38,7 +40,7 @@ pub mod geo_types {
     pub use crate::geo_types_reader::*;
     pub use crate::geo_types_writer::*;
 }
-pub use crate::geo_types_reader::conversion::*;
+pub use crate::geo_types_writer::conversion::*;
 
 /// Well-Known Binary (WKB) conversions.
 pub mod wkb {
@@ -61,8 +63,6 @@ pub mod geos {
     pub use crate::geos_reader::*;
     pub use crate::geos_writer::*;
 }
-#[cfg(feature = "geos-lib")]
-pub use crate::geos_reader::conversion::*;
 #[cfg(feature = "geos-lib")]
 pub use crate::geos_writer::conversion::*;
 

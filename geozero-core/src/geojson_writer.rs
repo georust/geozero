@@ -3,16 +3,6 @@ use geozero::{ColumnValue, FeatureProcessor, GeomProcessor, PropertyProcessor};
 use std::fmt::Display;
 use std::io::Write;
 
-pub(crate) mod conversion {
-    use geozero::error::Result;
-
-    /// Convert to GeoJSON.
-    pub trait ToJson {
-        /// Convert to GeoJSON String.
-        fn to_json(&self) -> Result<String>;
-    }
-}
-
 /// GeoJSON writer.
 pub struct GeoJsonWriter<'a, W: Write> {
     out: &'a mut W,
@@ -197,6 +187,26 @@ impl<W: Write> PropertyProcessor for GeoJsonWriter<'_, W> {
             ColumnValue::Binary(_v) => (),
         };
         Ok(false)
+    }
+}
+
+pub(crate) mod conversion {
+    use super::*;
+    use crate::GeozeroGeometry;
+
+    /// Convert to GeoJSON.
+    pub trait ToJson {
+        /// Convert to GeoJSON String.
+        fn to_json(&self) -> Result<String>;
+    }
+
+    impl<T: GeozeroGeometry + Sized> ToJson for T {
+        fn to_json(&self) -> Result<String> {
+            let mut out: Vec<u8> = Vec::new();
+            let mut p = GeoJsonWriter::new(&mut out);
+            GeozeroGeometry::process_geom(self, &mut p)?;
+            String::from_utf8(out).map_err(|_| geozero::error::GeozeroError::GeometryFormat)
+        }
     }
 }
 
