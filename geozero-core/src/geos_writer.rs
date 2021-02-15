@@ -4,7 +4,7 @@ use geozero::error::{GeozeroError, Result};
 use geozero::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 
 /// Generator for [GEOS](https://github.com/georust/geos) geometry type.
-pub struct Geos<'a> {
+pub struct GeosWriter<'a> {
     pub(crate) geom: GGeometry<'a>,
     // CoordSeq for Points, Lines and Rings
     cs: Vec<CoordSeq<'a>>,
@@ -12,9 +12,9 @@ pub struct Geos<'a> {
     polys: Vec<GGeometry<'a>>,
 }
 
-impl<'a> Geos<'a> {
+impl<'a> GeosWriter<'a> {
     pub fn new() -> Self {
-        Geos {
+        GeosWriter {
             geom: GGeometry::create_empty_point().unwrap(),
             cs: Vec::new(),
             polys: Vec::new(),
@@ -30,7 +30,7 @@ impl<'a> Geos<'a> {
     }
 }
 
-impl GeomProcessor for Geos<'_> {
+impl GeomProcessor for GeosWriter<'_> {
     fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
         if self.cs.is_empty() {
             return Err(GeozeroError::Geometry("CoordSeq missing".to_string()));
@@ -146,8 +146,8 @@ impl GeomProcessor for Geos<'_> {
     }
 }
 
-impl PropertyProcessor for Geos<'_> {}
-impl FeatureProcessor for Geos<'_> {}
+impl PropertyProcessor for GeosWriter<'_> {}
+impl FeatureProcessor for GeosWriter<'_> {}
 
 pub(crate) mod conversion {
     use super::*;
@@ -163,7 +163,7 @@ pub(crate) mod conversion {
 
     impl<T: GeozeroGeometry + Sized> ToGeos for T {
         fn to_geos(&self) -> Result<geos::Geometry<'_>> {
-            let mut geos = Geos::new();
+            let mut geos = GeosWriter::new();
             GeozeroGeometry::process_geom(self, &mut geos)?;
             Ok(geos.geom)
         }
@@ -182,7 +182,7 @@ mod test {
     fn point_geom() {
         let geojson = r#"{"type": "Point", "coordinates": [1, 1]}"#;
         let wkt = "POINT (1.0000000000000000 1.0000000000000000)";
-        let mut geos = Geos::new();
+        let mut geos = GeosWriter::new();
         assert!(read_geojson(geojson.as_bytes(), &mut geos).is_ok());
         assert_eq!(geos.geometry().to_wkt().unwrap(), wkt);
     }

@@ -3,13 +3,13 @@ mod geos_examples {
 
     use geos::Geom;
     use geozero_core::geojson::read_geojson;
-    use geozero_core::geos::Geos;
+    use geozero_core::geos::GeosWriter;
 
     #[test]
     fn prepared_geom() {
         let geojson =
             r#"{"type": "Polygon", "coordinates": [[[0, 0], [10, 0], [10, 6], [0, 6], [0, 0]]]}"#;
-        let mut geos = Geos::new();
+        let mut geos = GeosWriter::new();
         assert!(read_geojson(geojson.as_bytes(), &mut geos).is_ok());
         let prepared_geom = geos
             .geometry()

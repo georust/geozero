@@ -48,7 +48,7 @@ pub mod geo {
 /// Geopackage geometry type encoding/decoding for [GEOS](https://github.com/georust/geos).
 #[cfg(feature = "geos-lib")]
 pub mod geos {
-    use crate::geos::{process_geom, Geos};
+    use crate::geos::{process_geom, GeosWriter};
     use crate::wkb;
     use geos::Geom;
     use sqlx::decode::Decode;
@@ -75,7 +75,7 @@ pub mod geos {
                 return Ok(Geometry(geos::Geometry::create_empty_point().unwrap()));
             }
             let mut blob = <&[u8] as Decode<Sqlite>>::decode(value)?;
-            let mut geo = Geos::new();
+            let mut geo = GeosWriter::new();
             wkb::process_gpkg_geom(&mut blob, &mut geo)
                 .map_err(|e| sqlx::Error::Decode(e.to_string().into()))?;
             let geom = Geometry(geo.geom);

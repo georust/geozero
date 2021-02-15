@@ -69,7 +69,7 @@ pub mod postgres {
     /// PostGIS geometry type encoding/decoding for [GEOS](https://github.com/georust/geos).
     #[cfg(feature = "geos-lib")]
     pub mod geos {
-        use crate::geos::{process_geom, Geos};
+        use crate::geos::{process_geom, GeosWriter};
         use crate::wkb;
         use bytes::{BufMut, BytesMut};
         use geos::Geom;
@@ -85,7 +85,7 @@ pub mod postgres {
                 raw: &[u8],
             ) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
                 let mut rdr = std::io::Cursor::new(raw);
-                let mut geo = Geos::new();
+                let mut geo = GeosWriter::new();
                 wkb::process_ewkb_geom(&mut rdr, &mut geo)?;
                 let geom = Geometry(geo.geom);
                 Ok(geom)
@@ -191,7 +191,7 @@ pub mod sqlx {
     /// PostGIS geometry type encoding/decoding for [GEOS](https://github.com/georust/geos).
     #[cfg(feature = "geos-lib")]
     pub mod geos {
-        use crate::geos::{process_geom, Geos};
+        use crate::geos::{process_geom, GeosWriter};
         use crate::wkb;
         use geos::Geom;
         use sqlx::decode::Decode;
@@ -217,7 +217,7 @@ pub mod sqlx {
                     return Ok(Geometry(geos::Geometry::create_empty_point().unwrap()));
                 }
                 let mut blob = <&[u8] as Decode<Postgres>>::decode(value)?;
-                let mut geo = Geos::new();
+                let mut geo = GeosWriter::new();
                 wkb::process_ewkb_geom(&mut blob, &mut geo)
                     .map_err(|e| sqlx::Error::Decode(e.to_string().into()))?;
                 let geom = Geometry(geo.geom);
