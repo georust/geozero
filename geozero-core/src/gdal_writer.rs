@@ -65,9 +65,10 @@ impl GeomProcessor for GdalWriter {
                 self.line.set_point_2d(idx, (x, y));
             }
             _ => {
-                return Err(GeozeroError::Geometry(
-                    format!("Unsupported geometry type {}", self.geom.geometry_type()).to_string(),
-                ))
+                return Err(GeozeroError::Geometry(format!(
+                    "Unsupported geometry type {}",
+                    self.geom.geometry_type()
+                )))
             }
         }
         Ok(())
@@ -98,9 +99,10 @@ impl GeomProcessor for GdalWriter {
                 self.line.set_point(idx, (x, y, z));
             }
             _ => {
-                return Err(GeozeroError::Geometry(
-                    format!("Unsupported geometry type {}", self.geom.geometry_type()).to_string(),
-                ))
+                return Err(GeozeroError::Geometry(format!(
+                    "Unsupported geometry type {}",
+                    self.geom.geometry_type()
+                )))
             }
         }
         Ok(())
@@ -142,9 +144,10 @@ impl GeomProcessor for GdalWriter {
                     self.line = unsafe { poly.get_unowned_geometry(n - 1) };
                 }
                 _ => {
-                    return Err(GeozeroError::Geometry(
-                        "Unsupported geometry type".to_string(),
-                    ))
+                    return Err(GeozeroError::Geometry(format!(
+                        "Unsupported geometry type {}",
+                        self.geom.geometry_type()
+                    )))
                 }
             };
         }
