@@ -1,7 +1,7 @@
 // This should be included in georust/geo to avoid a newtype
 /// Geopackage geometry type decoding for [geo-types](https://github.com/georust/geo).
 pub mod geo {
-    use crate::geo_types::{process_geom, Geo};
+    use crate::geo_types::{process_geom, GeoWriter};
     use crate::wkb;
     use sqlx::decode::Decode;
     use sqlx::encode::{Encode, IsNull};
@@ -22,7 +22,7 @@ pub mod geo {
     impl<'de> Decode<'de, Sqlite> for Geometry {
         fn decode(value: SqliteValueRef<'de>) -> Result<Self, BoxDynError> {
             let mut blob = <&[u8] as Decode<Sqlite>>::decode(value)?;
-            let mut geo = Geo::new();
+            let mut geo = GeoWriter::new();
             wkb::process_gpkg_geom(&mut blob, &mut geo)
                 .map_err(|e| sqlx::Error::Decode(e.to_string().into()))?;
             let geom = Geometry(geo.geom);

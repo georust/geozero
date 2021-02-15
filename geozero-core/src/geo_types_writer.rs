@@ -4,15 +4,15 @@ use geozero::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 use std::mem;
 
 /// Generator for [geo-types](https://github.com/georust/geo) geometry type
-pub struct Geo {
+pub struct GeoWriter {
     pub(crate) geom: Geometry<f64>,
     // Polygon rings or MultiLineString members
     line_strings: Vec<LineString<f64>>,
 }
 
-impl Geo {
-    pub fn new() -> Geo {
-        Geo {
+impl GeoWriter {
+    pub fn new() -> GeoWriter {
+        GeoWriter {
             geom: Point::new(0., 0.).into(),
             line_strings: Vec::new(),
         }
@@ -22,7 +22,7 @@ impl Geo {
     }
 }
 
-impl GeomProcessor for Geo {
+impl GeomProcessor for GeoWriter {
     fn xy(&mut self, x: f64, y: f64, _idx: usize) -> Result<()> {
         if self.line_strings.len() > 0 {
             let idx = self.line_strings.len() - 1;
@@ -105,9 +105,9 @@ impl GeomProcessor for Geo {
     }
 }
 
-impl PropertyProcessor for Geo {}
+impl PropertyProcessor for GeoWriter {}
 
-impl FeatureProcessor for Geo {}
+impl FeatureProcessor for GeoWriter {}
 
 // --- impl conversion traits
 
@@ -123,7 +123,7 @@ pub(crate) mod conversion {
 
     impl<T: GeozeroGeometry + Sized> ToGeo for T {
         fn to_geo(&self) -> Result<geo_types::Geometry<f64>> {
-            let mut geo = Geo::new();
+            let mut geo = GeoWriter::new();
             GeozeroGeometry::process_geom(self, &mut geo)?;
             Ok(geo.geom)
         }
@@ -140,7 +140,7 @@ mod test {
     #[test]
     fn line_string() -> Result<()> {
         let geojson = r#"{"type": "LineString", "coordinates": [[1875038.447610231,-3269648.6879248763],[1874359.641504197,-3270196.812984864],[1874141.0428635243,-3270953.7840121365],[1874440.1778162003,-3271619.4315206874],[1876396.0598222911,-3274138.747656357],[1876442.0805243007,-3275052.60551469],[1874739.312657555,-3275457.333765534]]}"#;
-        let mut geo = Geo::new();
+        let mut geo = GeoWriter::new();
         assert!(read_geojson(geojson.as_bytes(), &mut geo).is_ok());
         println!("{:?}", geo.geometry());
         match geo.geometry() {

@@ -20,7 +20,7 @@ mod fgb {
         } else {
             fgb.select_all()?;
         }
-        let mut geo = Geo::new();
+        let mut geo = GeoWriter::new();
         fgb.process_features(&mut geo)?;
         assert_eq!(fgb.features_count(), count);
         Ok(())
@@ -39,7 +39,7 @@ mod fgb {
         } else {
             fgb.select_all().await?;
         }
-        let mut geo = Geo::new();
+        let mut geo = GeoWriter::new();
         fgb.process_features(&mut geo).await?;
         assert_eq!(fgb.features_count(), count);
         Ok(())
