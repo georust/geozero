@@ -344,7 +344,7 @@ pub(crate) mod conversion {
         }
     }
 
-    impl<T: GeozeroGeometry + Sized> ToWkb for T {
+    impl<T: GeozeroGeometry> ToWkb for T {
         fn to_wkb_dialect(
             &self,
             dialect: WkbDialect,

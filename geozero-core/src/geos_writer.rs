@@ -156,12 +156,10 @@ pub(crate) mod conversion {
     /// Convert to GEOS geometry.
     pub trait ToGeos {
         /// Convert to GEOS geometry.
-        fn to_geos(&self) -> Result<geos::Geometry<'_>>
-        where
-            Self: Sized;
+        fn to_geos(&self) -> Result<geos::Geometry<'_>>;
     }
 
-    impl<T: GeozeroGeometry + Sized> ToGeos for T {
+    impl<T: GeozeroGeometry> ToGeos for T {
         fn to_geos(&self) -> Result<geos::Geometry<'_>> {
             let mut geos = GeosWriter::new();
             GeozeroGeometry::process_geom(self, &mut geos)?;

@@ -164,7 +164,7 @@ pub(crate) mod conversion {
         fn to_svg_document(&self) -> Result<String>;
     }
 
-    impl<T: GeozeroGeometry + Sized> ToSvg for T {
+    impl<T: GeozeroGeometry> ToSvg for T {
         fn to_svg(&self) -> Result<String> {
             let mut svg_data: Vec<u8> = Vec::new();
             let mut svg = SvgWriter::new(&mut svg_data, false);

@@ -121,7 +121,7 @@ pub(crate) mod conversion {
         fn to_geo(&self) -> Result<geo_types::Geometry<f64>>;
     }
 
-    impl<T: GeozeroGeometry + Sized> ToGeo for T {
+    impl<T: GeozeroGeometry> ToGeo for T {
         fn to_geo(&self) -> Result<geo_types::Geometry<f64>> {
             let mut geo = GeoWriter::new();
             GeozeroGeometry::process_geom(self, &mut geo)?;

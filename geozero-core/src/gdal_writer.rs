@@ -182,16 +182,12 @@ pub(crate) mod conversion {
     /// Convert to GDAL geometry.
     pub trait ToGdal {
         /// Convert to 2D GDAL geometry.
-        fn to_gdal(&self) -> Result<Geometry>
-        where
-            Self: Sized;
+        fn to_gdal(&self) -> Result<Geometry>;
         /// Convert to GDAL geometry with dimensions.
-        fn to_gdal_ndim(&self, dims: CoordDimensions) -> Result<Geometry>
-        where
-            Self: Sized;
+        fn to_gdal_ndim(&self, dims: CoordDimensions) -> Result<Geometry>;
     }
 
-    impl<T: GeozeroGeometry + Sized> ToGdal for T {
+    impl<T: GeozeroGeometry> ToGdal for T {
         fn to_gdal(&self) -> Result<Geometry> {
             self.to_gdal_ndim(CoordDimensions::default())
         }

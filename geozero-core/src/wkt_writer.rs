@@ -186,7 +186,7 @@ pub(crate) mod conversion {
         fn to_wkt_ndim(&self, dims: CoordDimensions) -> Result<String>;
     }
 
-    impl<T: GeozeroGeometry + Sized> ToWkt for T {
+    impl<T: GeozeroGeometry> ToWkt for T {
         fn to_wkt(&self) -> Result<String> {
             self.to_wkt_ndim(CoordDimensions::default())
         }

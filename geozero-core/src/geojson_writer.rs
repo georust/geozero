@@ -200,7 +200,7 @@ pub(crate) mod conversion {
         fn to_json(&self) -> Result<String>;
     }
 
-    impl<T: GeozeroGeometry + Sized> ToJson for T {
+    impl<T: GeozeroGeometry> ToJson for T {
         fn to_json(&self) -> Result<String> {
             let mut out: Vec<u8> = Vec::new();
             let mut p = GeoJsonWriter::new(&mut out);
