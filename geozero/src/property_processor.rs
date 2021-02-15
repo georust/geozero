@@ -135,14 +135,12 @@ impl PropertyReadType for String {
     }
 }
 
-
 impl PropertyProcessor for HashMap<String, String> {
     fn property(&mut self, _idx: usize, colname: &str, colval: &ColumnValue) -> Result<bool> {
         self.insert(colname.to_string(), colval.to_string());
         Ok(false)
     }
 }
-
 
 #[test]
 fn convert_column_value() {

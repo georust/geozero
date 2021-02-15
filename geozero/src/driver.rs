@@ -10,15 +10,17 @@
 //! Reader granularity:
 //! * Record access (e.g. FlatGeobuf)
 //! * Full dataset (e.g. GeoJSON)
-//! 
+//!
 //! Features are usually consumed by datasource iterators.
 //! The current feature can be processed with `FeatureAccess` processing API methods.
-//! Some datasources process features during consumation (e.g. reading from file). 
+//! Some datasources process features during consumation (e.g. reading from file).
 
 use crate::error::Result;
 use crate::feature_processor::FeatureProcessor;
 use crate::geometry_processor::GeomProcessor;
-use crate::property_processor::{PropertyProcessor, PropertyReadType, PropertyReader, PropertyReaderIdx};
+use crate::property_processor::{
+    PropertyProcessor, PropertyReadType, PropertyReader, PropertyReaderIdx,
+};
 use async_trait::async_trait;
 use std::collections::HashMap;
 use std::io::{Read, Seek};
@@ -86,7 +88,7 @@ pub trait Writer {
 }
 
 /// Feature processing API
-pub trait FeatureAccess : FeatureProperties + FeatureGeometry {
+pub trait FeatureAccess: FeatureProperties + FeatureGeometry {
     /// Process feature geometries and properties.
     fn process<P: FeatureProcessor>(&self, processor: &mut P, idx: u64) -> Result<()> {
         processor.feature_begin(idx)?;

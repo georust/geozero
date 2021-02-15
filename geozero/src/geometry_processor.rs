@@ -13,17 +13,47 @@ pub struct CoordDimensions {
     pub tm: bool,
 }
 
-/// Geometry processing trait
-#[allow(unused_variables)]
-pub trait GeomProcessor {
-    /// Additional dimensions requested when processing coordinates
-    fn dimensions(&self) -> CoordDimensions {
+impl CoordDimensions {
+    pub fn xy() -> Self {
         CoordDimensions {
             z: false,
             m: false,
             t: false,
             tm: false,
         }
+    }
+    pub fn xyz() -> Self {
+        CoordDimensions {
+            z: true,
+            m: false,
+            t: false,
+            tm: false,
+        }
+    }
+    pub fn xyzm() -> Self {
+        CoordDimensions {
+            z: true,
+            m: true,
+            t: false,
+            tm: false,
+        }
+    }
+    pub fn xym() -> Self {
+        CoordDimensions {
+            z: false,
+            m: true,
+            t: false,
+            tm: false,
+        }
+    }
+}
+
+/// Geometry processing trait
+#[allow(unused_variables)]
+pub trait GeomProcessor {
+    /// Additional dimensions requested when processing coordinates
+    fn dimensions(&self) -> CoordDimensions {
+        CoordDimensions::xy()
     }
 
     /// Request additional dimensions for coordinate processing
