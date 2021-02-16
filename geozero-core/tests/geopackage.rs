@@ -64,16 +64,15 @@ mod gpkg_sqlx {
     }
 
     async fn rust_geo_query() -> Result<(), sqlx::Error> {
-        use geozero_core::gpkg::geo::Geometry;
-
         let pool = SqlitePoolOptions::new()
             .max_connections(5)
             .connect("sqlite://tests/data/gpkg_test.gpkg")
             .await?;
 
-        let row: (Geometry,) = sqlx::query_as("SELECT geom FROM pt2d")
-            .fetch_one(&pool)
-            .await?;
+        let row: (wkb::Geometry<geo_types::Geometry<f64>>,) =
+            sqlx::query_as("SELECT geom FROM pt2d")
+                .fetch_one(&pool)
+                .await?;
         let geom = row.0;
         assert_eq!(
             &format!("{:?}", geom.0),
@@ -97,14 +96,13 @@ mod gpkg_sqlx {
     #[cfg(feature = "geos-lib")]
     async fn geos_query() -> Result<(), sqlx::Error> {
         use geos::Geom;
-        use geozero_core::gpkg::geos::Geometry;
 
         let pool = SqlitePoolOptions::new()
             .max_connections(5)
             .connect("sqlite://tests/data/gpkg_test.gpkg")
             .await?;
 
-        let row: (Geometry,) = sqlx::query_as("SELECT geom FROM pt2d")
+        let row: (wkb::Geometry<geos::Geometry>,) = sqlx::query_as("SELECT geom FROM pt2d")
             .fetch_one(&pool)
             .await?;
         let geom = row.0;
@@ -113,9 +111,10 @@ mod gpkg_sqlx {
             "POINT (1.1000000000000001 1.1000000000000001)"
         );
 
-        let row: (Geometry,) = sqlx::query_as("SELECT geom FROM pt2d WHERE geom IS NULL")
-            .fetch_one(&pool)
-            .await?;
+        let row: (wkb::Geometry<geos::Geometry>,) =
+            sqlx::query_as("SELECT geom FROM pt2d WHERE geom IS NULL")
+                .fetch_one(&pool)
+                .await?;
         let geom = row.0;
         assert_eq!(geom.0.to_wkt().unwrap(), "POINT EMPTY");
 
@@ -124,7 +123,7 @@ mod gpkg_sqlx {
         // let geom = geos::Geometry::new_from_wkt("POINT(1 3)").expect("Invalid geometry");
         // // Requires loading an extension (e.g. SpatiaLite) providing functions like ST_SRID
         // let _inserted = sqlx::query("INSERT INTO pt2d (name,geom) VALUES('WKB Test',$1)")
-        //     .bind(Geometry(geom))
+        //     .bind(wkb::Geometry(geom))
         //     .execute(&mut tx)
         //     .await?;
         // tx.commit().await?;

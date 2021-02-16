@@ -1,4 +1,4 @@
-use crate::wkb_common::{WKBByteOrder, WKBGeometryType};
+use crate::wkb::{WKBByteOrder, WKBGeometryType, WkbDialect};
 use crate::GeozeroGeometry;
 use geozero::error::{GeozeroError, Result};
 use geozero::GeomProcessor;
@@ -21,6 +21,19 @@ pub fn process_ewkb_geom<R: Read, P: GeomProcessor>(raw: &mut R, processor: &mut
 pub fn process_gpkg_geom<R: Read, P: GeomProcessor>(raw: &mut R, processor: &mut P) -> Result<()> {
     let info = read_gpkg_header(raw)?;
     process_wkb_geom_n(raw, &info, read_wkb_header, 0, processor)
+}
+
+/// Process WKB type geometry..
+pub fn process_wkb_type_geom<R: Read, P: GeomProcessor>(
+    raw: &mut R,
+    processor: &mut P,
+    dialect: WkbDialect,
+) -> Result<()> {
+    match dialect {
+        WkbDialect::Wkb => process_wkb_geom(raw, processor),
+        WkbDialect::Ewkb => process_ewkb_geom(raw, processor),
+        WkbDialect::Geopackage => process_gpkg_geom(raw, processor),
+    }
 }
 
 #[derive(Debug)]
@@ -411,6 +424,9 @@ impl GeozeroGeometry for Wkb {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
         process_wkb_geom(&mut self.0.as_slice(), processor)
     }
+    fn empty() -> Self {
+        Wkb(Vec::new())
+    }
 }
 
 /// EWKB reader.
@@ -420,6 +436,9 @@ impl GeozeroGeometry for Ewkb {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
         process_ewkb_geom(&mut self.0.as_slice(), processor)
     }
+    fn empty() -> Self {
+        Ewkb(Vec::new())
+    }
 }
 
 /// GepPackage WKB reader.
@@ -428,6 +447,9 @@ pub struct GpkgWkb(pub Vec<u8>);
 impl GeozeroGeometry for GpkgWkb {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
         process_gpkg_geom(&mut self.0.as_slice(), processor)
+    }
+    fn empty() -> Self {
+        GpkgWkb(Vec::new())
     }
 }
 

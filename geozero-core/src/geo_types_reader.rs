@@ -123,6 +123,9 @@ impl GeozeroGeometry for geo_types::Geometry<f64> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
         process_geom(self, processor)
     }
+    fn empty() -> Self {
+        geo_types::Geometry::GeometryCollection(geo_types::GeometryCollection::new())
+    }
 }
 
 #[cfg(test)]

@@ -219,6 +219,9 @@ impl GeozeroGeometry for GeoJson {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
         read_geojson_geom((&self.0 as &str).as_bytes(), processor)
     }
+    fn empty() -> Self {
+        GeoJson("".to_string())
+    }
 }
 
 #[cfg(test)]

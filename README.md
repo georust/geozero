@@ -192,8 +192,6 @@ Full source code: [geos.rs](./geozero-core/tests/geos.rs)
 
 Select and insert geo-types geometries with rust-postgres:
 ```rust
-use geozero_core::postgis::postgres::geo::Geometry;
-
 let mut client = Client::connect(&std::env::var("DATABASE_URL").unwrap(), NoTls)?;
 
 let row = client.query_one(
@@ -201,7 +199,7 @@ let row = client.query_one(
     &[],
 )?;
 
-let geom: Geometry = row.get(0);
+let geom: wkb::Geometry<geo_types::Geometry<f64>> = row.get(0);
 if let geo_types::Geometry::Polygon(poly) = geom.0 {
     assert_eq!(
         *poly.exterior(),
@@ -210,23 +208,21 @@ if let geo_types::Geometry::Polygon(poly) = geom.0 {
 }
 
 // Insert geometry
-let geom = geo::Point::new(1.0, 3.0).into();
+let geom: geo_types::Geometry<f64> = geo::Point::new(1.0, 3.0).into();
 let _ = client.execute(
     "INSERT INTO point2d (datetimefield,geom) VALUES(now(),ST_SetSRID($1,4326))",
-    &[&Geometry(geom)],
+    &[&wkb::Geometry(geom)],
 );
 ```
 
 Select and insert geo-types geometries with SQLx:
 ```rust
-use geozero_core::postgis::sqlx::geo::Geometry;
-
 let pool = PgPoolOptions::new()
     .max_connections(5)
     .connect(&env::var("DATABASE_URL").unwrap())
     .await?;
 
-let row: (Geometry,) =
+let row: (wkb::Geometry<geo_types::Geometry<f64>>,) =
     sqlx::query_as("SELECT 'SRID=4326;POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))'::geometry")
         .fetch_one(&pool)
         .await?;
@@ -241,11 +237,13 @@ if let geo_types::Geometry::Polygon(poly) = geom.0 {
 
 // Insert geometry
 let mut tx = pool.begin().await?;
-let geom = geo::Point::new(10.0, 20.0).into();
-let _ = sqlx::query("INSERT INTO point2d (datetimefield,geom) VALUES(now(),ST_SetSRID($1,4326))")
-    .bind(Geometry(geom))
-    .execute(&mut tx)
-    .await?;
+let geom: geo_types::Geometry<f64> = geo::Point::new(10.0, 20.0).into();
+let _ = sqlx::query(
+    "INSERT INTO point2d (datetimefield,geom) VALUES(now(),ST_SetSRID($1,4326))",
+)
+.bind(wkb::Geometry(geom))
+.execute(&mut tx)
+.await?;
 tx.commit().await?;
 ```
 

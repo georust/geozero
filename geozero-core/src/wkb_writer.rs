@@ -1,4 +1,4 @@
-use crate::wkb_common::{WKBByteOrder, WKBGeometryType};
+use crate::wkb::{WKBByteOrder, WKBGeometryType, WkbDialect};
 use geozero::error::Result;
 use geozero::{CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcessor};
 use scroll::IOwrite;
@@ -21,14 +21,6 @@ pub struct WkbWriter<'a, W: Write> {
     first_header: bool,
     geom_state: GeomState,
     out: &'a mut W,
-}
-
-/// WKB dialect.
-#[derive(PartialEq, Debug)]
-pub enum WkbDialect {
-    Wkb,
-    Ewkb,
-    Geopackage,
 }
 
 #[derive(PartialEq, Debug)]

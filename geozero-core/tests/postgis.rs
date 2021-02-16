@@ -28,8 +28,6 @@ mod postgis_postgres {
     #[test]
     #[ignore]
     fn rust_geo_query() -> Result<(), postgres::error::Error> {
-        use geozero_core::postgis::postgres::geo::Geometry;
-
         let mut client = Client::connect(&std::env::var("DATABASE_URL").unwrap(), NoTls)?;
 
         let row = client.query_one(
@@ -37,7 +35,7 @@ mod postgis_postgres {
             &[],
         )?;
 
-        let geom: Geometry = row.get(0);
+        let geom: wkb::Geometry<geo_types::Geometry<f64>> = row.get(0);
         if let geo_types::Geometry::Polygon(poly) = geom.0 {
             assert_eq!(
                 *poly.exterior(),
@@ -48,10 +46,10 @@ mod postgis_postgres {
         }
 
         // WKB encoding
-        let geom = geo::Point::new(1.0, 3.0).into();
+        let geom: geo_types::Geometry<f64> = geo::Point::new(1.0, 3.0).into();
         let _ = client.execute(
             "INSERT INTO point2d (datetimefield,geom) VALUES(now(),ST_SetSRID($1,4326))",
-            &[&Geometry(geom)],
+            &[&wkb::Geometry(geom)],
         );
 
         Ok(())
@@ -62,7 +60,6 @@ mod postgis_postgres {
     #[cfg(feature = "geos-lib")]
     fn geos_query() -> Result<(), postgres::error::Error> {
         use geos::Geom;
-        use geozero_core::postgis::postgres::geos::Geometry;
 
         let mut client = Client::connect(&std::env::var("DATABASE_URL").unwrap(), NoTls)?;
 
@@ -71,14 +68,14 @@ mod postgis_postgres {
             &[],
         )?;
 
-        let geom: Geometry = row.get(0);
+        let geom: wkb::Geometry<geos::Geometry> = row.get(0);
         assert_eq!(geom.0.to_wkt().unwrap(), "POLYGON ((0.0000000000000000 0.0000000000000000, 2.0000000000000000 0.0000000000000000, 2.0000000000000000 2.0000000000000000, 0.0000000000000000 2.0000000000000000, 0.0000000000000000 0.0000000000000000))");
 
         // WKB encoding
         let geom = geos::Geometry::new_from_wkt("POINT(1 3)").expect("Invalid geometry");
         let _ = client.execute(
             "INSERT INTO point2d (datetimefield,geom) VALUES(now(),$1)",
-            &[&Geometry(geom)],
+            &[&wkb::Geometry(geom)],
         );
 
         Ok(())
@@ -166,14 +163,12 @@ mod postgis_sqlx {
     }
 
     async fn rust_geo_query() -> Result<(), sqlx::Error> {
-        use geozero_core::postgis::sqlx::geo::Geometry;
-
         let pool = PgPoolOptions::new()
             .max_connections(5)
             .connect(&env::var("DATABASE_URL").unwrap())
             .await?;
 
-        let row: (Geometry,) =
+        let row: (wkb::Geometry<geo_types::Geometry<f64>>,) =
             sqlx::query_as("SELECT 'SRID=4326;POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))'::geometry")
                 .fetch_one(&pool)
                 .await?;
@@ -188,9 +183,10 @@ mod postgis_sqlx {
             assert!(false, "Conversion to geo_types::Geometry failed");
         }
 
-        let row: (Geometry,) = sqlx::query_as("SELECT NULL::geometry")
-            .fetch_one(&pool)
-            .await?;
+        let row: (wkb::Geometry<geo_types::Geometry<f64>>,) =
+            sqlx::query_as("SELECT NULL::geometry")
+                .fetch_one(&pool)
+                .await?;
 
         assert_eq!(
             &format!("{:?}", (row.0).0),
@@ -199,11 +195,11 @@ mod postgis_sqlx {
 
         // WKB encoding
         let mut tx = pool.begin().await?;
-        let geom = geo::Point::new(10.0, 20.0).into();
+        let geom: geo_types::Geometry<f64> = geo::Point::new(10.0, 20.0).into();
         let inserted = sqlx::query(
             "INSERT INTO point2d (datetimefield,geom) VALUES(now(),ST_SetSRID($1,4326))",
         )
-        .bind(Geometry(geom))
+        .bind(wkb::Geometry(geom))
         .execute(&mut tx)
         .await?;
         tx.commit().await?;
@@ -222,21 +218,20 @@ mod postgis_sqlx {
     #[cfg(feature = "geos-lib")]
     async fn geos_query() -> Result<(), sqlx::Error> {
         use geos::Geom;
-        use geozero_core::postgis::sqlx::geos::Geometry;
 
         let pool = PgPoolOptions::new()
             .max_connections(5)
             .connect(&env::var("DATABASE_URL").unwrap())
             .await?;
 
-        let row: (Geometry,) =
+        let row: (wkb::Geometry<geos::Geometry>,) =
             sqlx::query_as("SELECT 'SRID=4326;POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))'::geometry")
                 .fetch_one(&pool)
                 .await?;
         let geom = row.0;
         assert_eq!(geom.0.to_wkt().unwrap(), "POLYGON ((0.0000000000000000 0.0000000000000000, 2.0000000000000000 0.0000000000000000, 2.0000000000000000 2.0000000000000000, 0.0000000000000000 2.0000000000000000, 0.0000000000000000 0.0000000000000000))");
 
-        let row: (Geometry,) = sqlx::query_as("SELECT NULL::geometry")
+        let row: (wkb::Geometry<geos::Geometry>,) = sqlx::query_as("SELECT NULL::geometry")
             .fetch_one(&pool)
             .await?;
         let geom = row.0;
@@ -246,7 +241,7 @@ mod postgis_sqlx {
         let mut tx = pool.begin().await?;
         let geom = geos::Geometry::new_from_wkt("POINT(1 3)").expect("Invalid geometry");
         let inserted = sqlx::query("INSERT INTO point2d (datetimefield,geom) VALUES(now(),$1)")
-            .bind(Geometry(geom))
+            .bind(wkb::Geometry(geom))
             .execute(&mut tx)
             .await?;
         tx.commit().await?;

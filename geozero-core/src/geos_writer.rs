@@ -151,7 +151,9 @@ impl FeatureProcessor for GeosWriter<'_> {}
 
 pub(crate) mod conversion {
     use super::*;
+    use crate::wkb::{FromWkb, WkbDialect};
     use crate::GeozeroGeometry;
+    use std::io::Read;
 
     /// Convert to GEOS geometry.
     pub trait ToGeos {
@@ -163,6 +165,14 @@ pub(crate) mod conversion {
         fn to_geos(&self) -> Result<geos::Geometry<'_>> {
             let mut geos = GeosWriter::new();
             GeozeroGeometry::process_geom(self, &mut geos)?;
+            Ok(geos.geom)
+        }
+    }
+
+    impl FromWkb for geos::Geometry<'_> {
+        fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> Result<Self> {
+            let mut geos = GeosWriter::new();
+            crate::wkb::process_wkb_type_geom(rdr, &mut geos, dialect)?;
             Ok(geos.geom)
         }
     }

@@ -1,3 +1,26 @@
+use crate::GeozeroGeometry;
+use geozero::error::Result;
+use std::io::Read;
+
+/// Geometry type wrapper for WKB encoding/decoding.
+pub struct Geometry<T: GeozeroGeometry + Sized>(pub T);
+
+/// Convert from WKB.
+pub trait FromWkb {
+    /// Convert from WKB.
+    fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> Result<Self>
+    where
+        Self: Sized;
+}
+
+/// WKB dialect.
+#[derive(PartialEq, Debug)]
+pub enum WkbDialect {
+    Wkb,
+    Ewkb,
+    Geopackage,
+}
+
 /// WKB Types according to OGC 06-103r4 (https://www.ogc.org/standards/sfa)
 #[derive(PartialEq, Clone, Debug)]
 pub enum WKBGeometryType {

@@ -151,6 +151,9 @@ impl GeozeroGeometry for Geometry {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
         process_geom(self, processor)
     }
+    fn empty() -> Self {
+        Geometry::empty(OGRwkbGeometryType::wkbPoint).unwrap()
+    }
 }
 
 #[cfg(test)]
