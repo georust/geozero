@@ -1,4 +1,4 @@
-/// Geopackage geometry type encoding/decoding for [GEOS](https://github.com/georust/geos).
+/// Geopackage geometry type encoding/decoding.
 use crate::wkb::{self, FromWkb};
 use crate::GeozeroGeometry;
 use sqlx::decode::Decode;
