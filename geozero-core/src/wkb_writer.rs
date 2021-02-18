@@ -349,7 +349,7 @@ pub(crate) mod conversion {
             writer.dims = dims;
             writer.srid = srid;
             writer.envelope = envelope;
-            GeozeroGeometry::process_geom(self, &mut writer)?;
+            T::process_geom(self, &mut writer)?;
             Ok(wkb)
         }
     }

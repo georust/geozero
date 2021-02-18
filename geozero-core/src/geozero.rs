@@ -1,5 +1,6 @@
 use geozero::error::Result;
 use geozero::{CoordDimensions, GeomProcessor};
+use std::io::Read;
 
 /// Geometry processing trait.
 pub trait GeozeroGeometry {
@@ -19,4 +20,9 @@ pub trait GeozeroGeometry {
     fn srid(&self) -> Option<i32> {
         None
     }
+}
+
+/// Geometry reader trait.
+pub trait GeozeroGeometryReader {
+    fn read_geom<R: Read, P: GeomProcessor>(reader: R, processor: &mut P) -> Result<()>;
 }

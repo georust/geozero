@@ -168,7 +168,7 @@ pub(crate) mod conversion {
         fn to_svg(&self) -> Result<String> {
             let mut svg_data: Vec<u8> = Vec::new();
             let mut svg = SvgWriter::new(&mut svg_data, false);
-            GeozeroGeometry::process_geom(self, &mut svg)?;
+            T::process_geom(self, &mut svg)?;
             String::from_utf8(svg_data).map_err(|_| {
                 geozero::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())
             })
@@ -179,7 +179,7 @@ pub(crate) mod conversion {
             // svg.set_dimensions(bbox.get(0), bbox.get(1), bbox.get(2), bbox.get(3), 800, 400);
             svg.dataset_begin(None)?;
             svg.feature_begin(0)?;
-            GeozeroGeometry::process_geom(self, &mut svg)?;
+            T::process_geom(self, &mut svg)?;
             svg.feature_end(0)?;
             svg.dataset_end()?;
             String::from_utf8(svg_data).map_err(|_| {

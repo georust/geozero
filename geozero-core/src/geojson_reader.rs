@@ -1,4 +1,4 @@
-use crate::GeozeroGeometry;
+use crate::{GeozeroGeometry, GeozeroGeometryReader};
 use geojson::{GeoJson as GeoGeoJson, Geometry, Value};
 use geozero::error::{GeozeroError, Result};
 use geozero::{FeatureProcessor, GeomProcessor};
@@ -224,11 +224,17 @@ impl GeozeroGeometry for GeoJson<'_> {
     }
 }
 
+impl GeozeroGeometryReader for GeoJson<'_> {
+    fn read_geom<R: Read, P: GeomProcessor>(mut reader: R, processor: &mut P) -> Result<()> {
+        read_geojson_geom(&mut reader, processor)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
     use crate::wkt_writer::WktWriter;
-    use crate::ToWkt;
+    use crate::{ReadAsWkt, ToWkt};
     use std::fs::File;
 
     #[test]
@@ -270,8 +276,17 @@ mod test {
     }
 
     #[test]
-    fn conversions() {
+    fn conversions() -> Result<()> {
         let geojson = GeoJson(r#"{"type": "Point", "coordinates": [10,20]}"#);
         assert_eq!(geojson.to_wkt().unwrap(), "POINT(10 20)");
+
+        let f = File::open("tests/data/places.json")?;
+        let wkt = GeoJson::read_as_wkt(f).unwrap();
+        assert_eq!(
+            &wkt[0..100],
+            "POINT(32.533299524864844 0.583299105614628),POINT(30.27500161597942 0.671004121125236),POINT(15.7989"
+        );
+
+        Ok(())
     }
 }

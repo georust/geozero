@@ -194,7 +194,7 @@ pub(crate) mod conversion {
         fn to_gdal_ndim(&self, dims: CoordDimensions) -> Result<Geometry> {
             let mut gdal = GdalWriter::new();
             gdal.dims = dims;
-            GeozeroGeometry::process_geom(self, &mut gdal)?;
+            T::process_geom(self, &mut gdal)?;
             Ok(gdal.geom)
         }
     }

@@ -114,7 +114,7 @@ impl FeatureProcessor for GeoWriter {}
 pub(crate) mod conversion {
     use super::*;
     use crate::wkb::{FromWkb, WkbDialect};
-    use crate::GeozeroGeometry;
+    use crate::{GeozeroGeometry, GeozeroGeometryReader};
     use std::io::Read;
 
     /// Convert to geo-types Geometry.
@@ -126,7 +126,21 @@ pub(crate) mod conversion {
     impl<T: GeozeroGeometry> ToGeo for T {
         fn to_geo(&self) -> Result<geo_types::Geometry<f64>> {
             let mut geo = GeoWriter::new();
-            GeozeroGeometry::process_geom(self, &mut geo)?;
+            T::process_geom(self, &mut geo)?;
+            Ok(geo.geom)
+        }
+    }
+
+    /// Read as geo-types Geometry.
+    pub trait ReadAsGeo {
+        /// Read as geo-types Geometry.
+        fn read_as_geo<R: Read>(reader: R) -> Result<geo_types::Geometry<f64>>;
+    }
+
+    impl<T: GeozeroGeometryReader> ReadAsGeo for T {
+        fn read_as_geo<R: Read>(reader: R) -> Result<geo_types::Geometry<f64>> {
+            let mut geo = GeoWriter::new();
+            T::read_geom(reader, &mut geo)?;
             Ok(geo.geom)
         }
     }
@@ -144,7 +158,7 @@ pub(crate) mod conversion {
 mod test {
     use super::*;
     use crate::geojson_reader::{read_geojson, GeoJson};
-    use crate::ToGeo;
+    use crate::{ReadAsGeo, ToGeo};
     use geo::algorithm::coords_iter::CoordsIter;
 
     #[test]
@@ -190,6 +204,19 @@ mod test {
     fn to_geo() -> Result<()> {
         let geom: geo_types::Geometry<f64> = geo_types::Point::new(10.0, 20.0).into();
         assert_eq!(geom.clone().to_geo().unwrap(), geom);
+        Ok(())
+    }
+
+    #[test]
+    fn read_as_geo() -> Result<()> {
+        let geojson = r#"{"type": "LineString", "coordinates": [[1875038.447610231,-3269648.6879248763],[1874359.641504197,-3270196.812984864],[1874141.0428635243,-3270953.7840121365],[1874440.1778162003,-3271619.4315206874],[1876396.0598222911,-3274138.747656357],[1876442.0805243007,-3275052.60551469],[1874739.312657555,-3275457.333765534]]}"#;
+        let geo = GeoJson::read_as_geo(geojson.as_bytes()).unwrap();
+        match geo {
+            Geometry::LineString(line) => {
+                assert_eq!(line.coords_count(), 7);
+            }
+            _ => assert!(false),
+        }
         Ok(())
     }
 }
