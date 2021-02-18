@@ -7,20 +7,17 @@ mod postgis_postgres {
     #[test]
     #[ignore]
     fn blob_query() -> Result<(), postgres::error::Error> {
+        use geozero_core::ToWkt;
+
         let mut client = Client::connect(&std::env::var("DATABASE_URL").unwrap(), NoTls)?;
 
         let row = client.query_one(
             "SELECT 'SRID=4326;POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))'::geometry::bytea",
             &[],
         )?;
-        let mut geom: &[u8] = row.get(0);
-        let mut wkt_data: Vec<u8> = Vec::new();
-        let mut writer = WktWriter::new(&mut wkt_data);
-        assert!(wkb::process_ewkb_geom(&mut geom, &mut writer).is_ok());
-        assert_eq!(
-            std::str::from_utf8(&wkt_data).unwrap(),
-            "POLYGON((0 0,2 0,2 2,0 2,0 0))"
-        );
+        let blob: &[u8] = row.get(0);
+        let wkt = wkb::Ewkb(blob.to_vec()).to_wkt().expect("to_wkt failed");
+        assert_eq!(&wkt, "POLYGON((0 0,2 0,2 2,0 2,0 0))");
 
         Ok(())
     }
@@ -128,12 +125,13 @@ mod postgis_postgres {
 #[cfg(feature = "postgis-sqlx")]
 mod postgis_sqlx {
     use geozero_core::wkb;
-    use geozero_core::wkt::WktWriter;
     use sqlx::postgres::PgPoolOptions;
     use std::env;
     use tokio::runtime::Runtime;
 
     async fn blob_query() -> Result<(), sqlx::Error> {
+        use geozero_core::ToWkt;
+
         let pool = PgPoolOptions::new()
             .max_connections(5)
             .connect(&env::var("DATABASE_URL").unwrap())
@@ -145,13 +143,8 @@ mod postgis_sqlx {
         .fetch_one(&pool)
         .await?;
 
-        let mut wkt_data: Vec<u8> = Vec::new();
-        let mut writer = WktWriter::new(&mut wkt_data);
-        assert!(wkb::process_ewkb_geom(&mut row.0.as_slice(), &mut writer).is_ok());
-        assert_eq!(
-            std::str::from_utf8(&wkt_data).unwrap(),
-            "POLYGON((0 0,2 0,2 2,0 2,0 0))"
-        );
+        let wkt = wkb::Ewkb(row.0).to_wkt().expect("to_wkt failed");
+        assert_eq!(&wkt, "POLYGON((0 0,2 0,2 2,0 2,0 0))");
 
         Ok(())
     }
@@ -266,32 +259,33 @@ mod postgis_sqlx {
 
     mod register_type {
         use super::*;
+        use geozero_core::wkt::WktWriter;
         use sqlx::decode::Decode;
         use sqlx::postgres::{PgTypeInfo, PgValueRef, Postgres};
         use sqlx::ValueRef;
 
         type BoxDynError = Box<dyn std::error::Error + Send + Sync>;
 
-        struct Wkt(String);
+        struct Text(String);
 
-        impl sqlx::Type<Postgres> for Wkt {
+        impl sqlx::Type<Postgres> for Text {
             fn type_info() -> PgTypeInfo {
                 PgTypeInfo::with_name("geometry")
             }
         }
 
-        impl<'de> Decode<'de, Postgres> for Wkt {
+        impl<'de> Decode<'de, Postgres> for Text {
             fn decode(value: PgValueRef) -> Result<Self, BoxDynError> {
                 if value.is_null() {
-                    return Ok(Wkt("EMPTY".to_string()));
+                    return Ok(Text("EMPTY".to_string()));
                 }
                 let mut blob = <&[u8] as Decode<Postgres>>::decode(value)?;
-                let mut wkt_data: Vec<u8> = Vec::new();
-                let mut writer = WktWriter::new(&mut wkt_data);
+                let mut data: Vec<u8> = Vec::new();
+                let mut writer = WktWriter::new(&mut data);
                 wkb::process_ewkb_geom(&mut blob, &mut writer)
                     .map_err(|e| sqlx::Error::Decode(e.to_string().into()))?;
-                let wkt = Wkt(std::str::from_utf8(&wkt_data).unwrap().to_string());
-                Ok(wkt)
+                let text = Text(std::str::from_utf8(&data).unwrap().to_string());
+                Ok(text)
             }
         }
 
@@ -301,13 +295,13 @@ mod postgis_sqlx {
                 .connect(&env::var("DATABASE_URL").unwrap())
                 .await?;
 
-            let row: (Wkt,) =
+            let row: (Text,) =
                 sqlx::query_as("SELECT 'SRID=4326;POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))'::geometry")
                     .fetch_one(&pool)
                     .await?;
             assert_eq!((row.0).0, "POLYGON((0 0,2 0,2 2,0 2,0 0))");
 
-            let row: (Wkt,) = sqlx::query_as("SELECT NULL::geometry")
+            let row: (Text,) = sqlx::query_as("SELECT NULL::geometry")
                 .fetch_one(&pool)
                 .await?;
             assert_eq!((row.0).0, "EMPTY");

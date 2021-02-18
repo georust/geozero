@@ -1,7 +1,6 @@
 #[cfg(feature = "gpkg")]
 mod gpkg_sqlx {
     use geozero_core::wkb;
-    use geozero_core::wkt::WktWriter;
     use sqlx::sqlite::SqlitePoolOptions;
     use tokio::runtime::Runtime;
 
@@ -35,6 +34,8 @@ mod gpkg_sqlx {
     }
 
     async fn blob_query() -> Result<(), sqlx::Error> {
+        use geozero_core::ToWkt;
+
         let pool = SqlitePoolOptions::new()
             .max_connections(5)
             .connect("sqlite://tests/data/gpkg_test.gpkg")
@@ -44,10 +45,8 @@ mod gpkg_sqlx {
             .fetch_one(&pool)
             .await?;
 
-        let mut wkt_data: Vec<u8> = Vec::new();
-        let mut writer = WktWriter::new(&mut wkt_data);
-        assert!(wkb::process_gpkg_geom(&mut row.0.as_slice(), &mut writer).is_ok());
-        assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), "POINT(1.1 1.1)");
+        let wkt = wkb::GpkgWkb(row.0).to_wkt().unwrap();
+        assert_eq!(&wkt, "POINT(1.1 1.1)");
 
         Ok(())
     }

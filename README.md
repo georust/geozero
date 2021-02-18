@@ -49,7 +49,93 @@ Supported dimensions: X, Y, Z, M, T
 * [flatgeobuf-bevy](https://github.com/pka/flatgeobuf-bevy): Demo rendering FlatGeobuf with WebGPU (native platforms) and WebGL2 (Web/WASM)
 * [flatgeobuf-wasm](https://github.com/pka/flatgeobuf-wasm): WASM demo displaying FlatGeobuf as SVG
 
-## Usage examples
+
+## Conversion API
+
+Convert a GeoJSON polygon to geo-types and calculate centroid:
+```rust
+let geojson = GeoJson(r#"{"type": "Polygon", "coordinates": [[[0, 0], [10, 0], [10, 6], [0, 6], [0, 0]]]}"#.to_string());
+if let Ok(Geometry::Polygon(poly)) = geojson.to_geo() {
+    assert_eq!(poly.centroid().unwrap(), Point::new(5.0, 3.0));
+}
+```
+Full source code: [geo_types.rs](./geozero-core/tests/geo_types.rs)
+
+
+Convert GeoJSON to a [GEOS](https://github.com/georust/geos) prepared geometry:
+```rust
+let geojson = GeoJson(r#"{"type": "Polygon", "coordinates": [[[0, 0], [10, 0], [10, 6], [0, 6], [0, 0]]]}"#.to_string());
+let geom = geojson.to_geos().expect("GEOS conversion failed");
+let prepared_geom = geom.to_prepared_geom().expect("to_prepared_geom failed");
+let geom2 = geos::Geometry::new_from_wkt("POINT (2.5 2.5)").expect("Invalid geometry");
+assert_eq!(prepared_geom.contains(&geom2), Ok(true));
+```
+Full source code: [geos.rs](./geozero-core/tests/geos.rs)
+
+
+## PostGIS Usage examples
+
+Select and insert geo-types geometries with rust-postgres:
+```rust
+let mut client = Client::connect(&std::env::var("DATABASE_URL").unwrap(), NoTls)?;
+
+let row = client.query_one(
+    "SELECT 'SRID=4326;POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))'::geometry",
+    &[],
+)?;
+
+let geom: wkb::Geometry<geo_types::Geometry<f64>> = row.get(0);
+if let geo_types::Geometry::Polygon(poly) = geom.0 {
+    assert_eq!(
+        *poly.exterior(),
+        vec![(0.0, 0.0), (2.0, 0.0), (2.0, 2.0), (0.0, 2.0), (0.0, 0.0)].into()
+    );
+}
+
+// Insert geometry
+let geom: geo_types::Geometry<f64> = geo::Point::new(1.0, 3.0).into();
+let _ = client.execute(
+    "INSERT INTO point2d (datetimefield,geom) VALUES(now(),ST_SetSRID($1,4326))",
+    &[&wkb::Geometry(geom)],
+);
+```
+
+Select and insert geo-types geometries with SQLx:
+```rust
+let pool = PgPoolOptions::new()
+    .max_connections(5)
+    .connect(&env::var("DATABASE_URL").unwrap())
+    .await?;
+
+let row: (wkb::Geometry<geo_types::Geometry<f64>>,) =
+    sqlx::query_as("SELECT 'SRID=4326;POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))'::geometry")
+        .fetch_one(&pool)
+        .await?;
+
+let geom = row.0;
+if let geo_types::Geometry::Polygon(poly) = geom.0 {
+    assert_eq!(
+        *poly.exterior(),
+        vec![(0.0, 0.0), (2.0, 0.0), (2.0, 2.0), (0.0, 2.0), (0.0, 0.0)].into()
+    );
+}
+
+// Insert geometry
+let mut tx = pool.begin().await?;
+let geom: geo_types::Geometry<f64> = geo::Point::new(10.0, 20.0).into();
+let _ = sqlx::query(
+    "INSERT INTO point2d (datetimefield,geom) VALUES(now(),ST_SetSRID($1,4326))",
+)
+.bind(wkb::Geometry(geom))
+.execute(&mut tx)
+.await?;
+tx.commit().await?;
+```
+
+Full source code: [postgis.rs](./geozero-core/tests/postgis.rs)
+
+
+## Processing API
 
 Count vertices of an input geometry:
 ```rust
@@ -174,88 +260,3 @@ read_geojson_geom(f, &mut points)?;
 points.index.build_index();
 ```
 Full source code: [kdbush.rs](./geozero-core/tests/kdbush.rs)
-
-
-Use [GEOS](https://github.com/georust/geos) with prepared geometries:
-```rust
-let geojson = r#"{"type": "Polygon", "coordinates": [[[0, 0], [10, 0], [10, 6], [0, 6], [0, 0]]]}"#;
-let mut geos = Geos::new();
-read_geojson(geojson.as_bytes(), &mut geos).unwrap();
-let prepared_geom = geos.geometry().to_prepared_geom().expect("to_prepared_geom failed");
-let geom2 = geos::Geometry::new_from_wkt("POINT (2.5 2.5)").expect("Invalid geometry");
-assert_eq!(prepared_geom.contains(&geom2), Ok(true));
-```
-Full source code: [geos.rs](./geozero-core/tests/geos.rs)
-
-
-## PostGIS Usage examples
-
-Select and insert geo-types geometries with rust-postgres:
-```rust
-let mut client = Client::connect(&std::env::var("DATABASE_URL").unwrap(), NoTls)?;
-
-let row = client.query_one(
-    "SELECT 'SRID=4326;POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))'::geometry",
-    &[],
-)?;
-
-let geom: wkb::Geometry<geo_types::Geometry<f64>> = row.get(0);
-if let geo_types::Geometry::Polygon(poly) = geom.0 {
-    assert_eq!(
-        *poly.exterior(),
-        vec![(0.0, 0.0), (2.0, 0.0), (2.0, 2.0), (0.0, 2.0), (0.0, 0.0)].into()
-    );
-}
-
-// Insert geometry
-let geom: geo_types::Geometry<f64> = geo::Point::new(1.0, 3.0).into();
-let _ = client.execute(
-    "INSERT INTO point2d (datetimefield,geom) VALUES(now(),ST_SetSRID($1,4326))",
-    &[&wkb::Geometry(geom)],
-);
-```
-
-Select and insert geo-types geometries with SQLx:
-```rust
-let pool = PgPoolOptions::new()
-    .max_connections(5)
-    .connect(&env::var("DATABASE_URL").unwrap())
-    .await?;
-
-let row: (wkb::Geometry<geo_types::Geometry<f64>>,) =
-    sqlx::query_as("SELECT 'SRID=4326;POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))'::geometry")
-        .fetch_one(&pool)
-        .await?;
-
-let geom = row.0;
-if let geo_types::Geometry::Polygon(poly) = geom.0 {
-    assert_eq!(
-        *poly.exterior(),
-        vec![(0.0, 0.0), (2.0, 0.0), (2.0, 2.0), (0.0, 2.0), (0.0, 0.0)].into()
-    );
-}
-
-// Insert geometry
-let mut tx = pool.begin().await?;
-let geom: geo_types::Geometry<f64> = geo::Point::new(10.0, 20.0).into();
-let _ = sqlx::query(
-    "INSERT INTO point2d (datetimefield,geom) VALUES(now(),ST_SetSRID($1,4326))",
-)
-.bind(wkb::Geometry(geom))
-.execute(&mut tx)
-.await?;
-tx.commit().await?;
-```
-
-Full source code: [postgis.rs](./geozero-core/tests/postgis.rs)
-
-
-## Conversion API
-
-| From/To |   GDAL  |  geo   | geojson (String) |   geos  |  wkb   | wkt (String) |
-|---------|---------|--------|------------------|---------|--------|--------------|
-| GDAL    | -       | to_geo | to_json          | to_geos | to_wkb | to_wkt       |
-| geo     | to_gdal | -      | to_json          | to_geos | to_wkb | to_wkt       |
-| geojson | to_gdal | to_geo | -                | to_geos | to_wkb | to_wkt       |
-| geos    | to_gdal | to_geo | to_json          | -       | to_wkb | to_wkt       |
-| wkb     | to_gdal | to_geo | to_json          | to_geos | -      | to_wkt       |
