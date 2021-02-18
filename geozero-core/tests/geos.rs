@@ -8,8 +8,7 @@ mod geos_examples {
     #[test]
     fn prepared_geom() {
         let geojson = GeoJson(
-            r#"{"type": "Polygon", "coordinates": [[[0, 0], [10, 0], [10, 6], [0, 6], [0, 0]]]}"#
-                .to_string(),
+            r#"{"type": "Polygon", "coordinates": [[[0, 0], [10, 0], [10, 6], [0, 6], [0, 0]]]}"#,
         );
         let geom = geojson.to_geos().expect("GEOS conversion failed");
         let prepared_geom = geom.to_prepared_geom().expect("to_prepared_geom failed");

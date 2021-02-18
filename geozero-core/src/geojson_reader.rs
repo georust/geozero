@@ -212,15 +212,15 @@ fn process_multi_polygon<P: GeomProcessor>(
 
 // --- impl conversion traits
 
-/// GeoJSON reader.
-pub struct GeoJson(pub String); // TODO: use Read instead of String and implement Into for String
+/// GeoJSON String.
+pub struct GeoJson<'a>(pub &'a str);
 
-impl GeozeroGeometry for GeoJson {
+impl GeozeroGeometry for GeoJson<'_> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
-        read_geojson_geom((&self.0 as &str).as_bytes(), processor)
+        read_geojson_geom((self.0).as_bytes(), processor)
     }
     fn empty() -> Self {
-        GeoJson("".to_string())
+        GeoJson("")
     }
 }
 
@@ -271,7 +271,7 @@ mod test {
 
     #[test]
     fn conversions() {
-        let geojson = GeoJson(r#"{"type": "Point", "coordinates": [10,20]}"#.to_string());
+        let geojson = GeoJson(r#"{"type": "Point", "coordinates": [10,20]}"#);
         assert_eq!(geojson.to_wkt().unwrap(), "POINT(10 20)");
     }
 }

@@ -54,7 +54,7 @@ Supported dimensions: X, Y, Z, M, T
 
 Convert a GeoJSON polygon to geo-types and calculate centroid:
 ```rust
-let geojson = GeoJson(r#"{"type": "Polygon", "coordinates": [[[0, 0], [10, 0], [10, 6], [0, 6], [0, 0]]]}"#.to_string());
+let geojson = GeoJson(r#"{"type": "Polygon", "coordinates": [[[0, 0], [10, 0], [10, 6], [0, 6], [0, 0]]]}"#);
 if let Ok(Geometry::Polygon(poly)) = geojson.to_geo() {
     assert_eq!(poly.centroid().unwrap(), Point::new(5.0, 3.0));
 }
@@ -64,7 +64,7 @@ Full source code: [geo_types.rs](./geozero-core/tests/geo_types.rs)
 
 Convert GeoJSON to a [GEOS](https://github.com/georust/geos) prepared geometry:
 ```rust
-let geojson = GeoJson(r#"{"type": "Polygon", "coordinates": [[[0, 0], [10, 0], [10, 6], [0, 6], [0, 0]]]}"#.to_string());
+let geojson = GeoJson(r#"{"type": "Polygon", "coordinates": [[[0, 0], [10, 0], [10, 6], [0, 6], [0, 0]]]}"#);
 let geom = geojson.to_geos().expect("GEOS conversion failed");
 let prepared_geom = geom.to_prepared_geom().expect("to_prepared_geom failed");
 let geom2 = geos::Geometry::new_from_wkt("POINT (2.5 2.5)").expect("Invalid geometry");
