@@ -91,7 +91,7 @@ pub use crate::formats::geo_types_writer::conversion::*;
 /// Convert a EWKB geometry to WKT:
 ///
 /// ```
-/// use geozero_core::{ToWkt, wkb::Ewkb};
+/// use geozero::{ToWkt, wkb::Ewkb};
 ///
 /// let wkb = Ewkb(vec![1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 64, 0, 0, 0, 0, 0, 0, 52, 192]);
 /// assert_eq!(wkb.to_wkt().unwrap(), "POINT(10 -20)");

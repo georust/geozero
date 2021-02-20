@@ -144,7 +144,7 @@ pub(crate) mod conversion {
     /// Convert a geo-types `Polygon` to an SVG document:
     ///
     /// ```
-    /// use geozero_core::ToSvg;
+    /// use geozero::ToSvg;
     /// use geo_types::polygon;
     ///
     /// let geom: geo_types::Geometry<f64> = polygon![
