@@ -12,7 +12,6 @@
 //! Supported dimensions: X, Y, Z, M, T
 //!
 //! Available implementations:
-//! * [geozero-core](https://docs.rs/geozero-core)
 //! * [geozero-shp](https://docs.rs/geozero-shp)
 //! * [flatgeobuf](https://docs.rs/flatgeobuf)
 //!

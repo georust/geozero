@@ -22,12 +22,12 @@
 * Update to geojson 0.21
 * Add experimental tesselator
 
-## 0.5.1 (2010-08-12)
+## 0.5.1 (2020-07-09)
 
 * Support untagged triangles as parts of a TIN
 * Activate all features for doc.rs
 
-## 0.5.0 (2010-08-10)
+## 0.5.0 (2020-07-03)
 
 * Add curve type processing methods
 * Add triangle/polyhedralsurface/tin processing methods

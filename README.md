@@ -20,9 +20,6 @@ Supported dimensions: X, Y, Z, M, T
 
 ## Available implementations
 
-[geozero-core](https://github.com/georust/geozero/tree/master/geozero-core) [![crates.io version](https://img.shields.io/crates/v/geozero-core.svg)](https://crates.io/crates/geozero-core)
-[![docs.rs docs](https://docs.rs/geozero-core/badge.svg)](https://docs.rs/geozero-core)
-
 * GeoJSON Reader + Writer
 * [GEOS](https://github.com/georust/geos) Reader + Writer
 * [GDAL](https://github.com/georust/gdal) geometry Reader + Writer
@@ -31,7 +28,7 @@ Supported dimensions: X, Y, Z, M, T
   - GeoPackage geometries for [SQLx](https://github.com/launchbadge/sqlx)
 * WKT Writer
 * SVG Writer
-* [geo-types](https://github.com/georust/geo) Writer
+* [geo-types](https://github.com/georust/geo) Reader + Writer
 
 [geozero-shp](https://github.com/georust/geozero/tree/master/geozero-shp) [![crates.io version](https://img.shields.io/crates/v/geozero-shp.svg)](https://crates.io/crates/geozero-shp)
 [![docs.rs docs](https://docs.rs/geozero-shp/badge.svg)](https://docs.rs/geozero-shp)
