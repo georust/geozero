@@ -5,7 +5,7 @@ mod polylabel_example {
     use geo::contains::Contains;
     use geo::Geometry;
     use geozero::error::Result;
-    use geozero::geo_types::GeoWriter;
+    use geozero::ToGeo;
     use polylabel::polylabel;
     use std::fs::File;
     use std::io::BufReader;
@@ -17,10 +17,7 @@ mod polylabel_example {
         fgb.select_all()?;
         while let Some(feature) = fgb.next()? {
             let props = feature.properties()?;
-            let geometry = feature.geometry().unwrap();
-            let mut geo = GeoWriter::new();
-            geometry.process(&mut geo, GeometryType::MultiPolygon)?;
-            if let Geometry::MultiPolygon(mpoly) = geo.geometry() {
+            if let Ok(Geometry::MultiPolygon(mpoly)) = feature.to_geo() {
                 if let Some(poly) = &mpoly.0.iter().next() {
                     let label_pos = polylabel(&poly, &0.10).unwrap();
                     println!("{}: {:?}", props["name"], label_pos);
