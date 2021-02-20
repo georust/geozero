@@ -53,6 +53,7 @@
 mod driver;
 pub mod error;
 mod feature_processor;
+#[cfg(feature = "core")]
 mod formats;
 mod geometry_processor;
 mod multiplex;
@@ -60,23 +61,28 @@ mod property_processor;
 
 pub use driver::*;
 pub use feature_processor::*;
+#[cfg(feature = "core")]
 pub use formats::*;
 pub use geometry_processor::*;
 pub use multiplex::*;
 pub use property_processor::*;
 
 /// GeoJSON conversions.
+#[cfg(feature = "core")]
 pub mod geojson {
     pub use crate::formats::geojson_reader::*;
     pub use crate::formats::geojson_writer::*;
 }
+#[cfg(feature = "core")]
 pub use crate::formats::geojson_writer::conversion::*;
 
 /// [geo-types](https://github.com/georust/geo) conversions.
+#[cfg(feature = "core")]
 pub mod geo_types {
     pub use crate::formats::geo_types_reader::*;
     pub use crate::formats::geo_types_writer::*;
 }
+#[cfg(feature = "core")]
 pub use crate::formats::geo_types_writer::conversion::*;
 
 /// Well-Known Binary (WKB) conversions.
@@ -91,19 +97,23 @@ pub use crate::formats::geo_types_writer::conversion::*;
 /// let wkb = Ewkb(vec![1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 64, 0, 0, 0, 0, 0, 0, 52, 192]);
 /// assert_eq!(wkb.to_wkt().unwrap(), "POINT(10 -20)");
 /// ```
+#[cfg(feature = "core")]
 pub mod wkb {
     pub use crate::formats::wkb_common::*;
     pub use crate::formats::wkb_reader::*;
     pub use crate::formats::wkb_writer::*;
 }
+#[cfg(feature = "core")]
 pub use crate::formats::wkb_writer::conversion::*;
 
 /// Well-Known Text (WKT) conversions.
 ///
 /// OpenGIS Simple Features Specification For SQL Revision 1.1, Chapter 3.2.5
+#[cfg(feature = "core")]
 pub mod wkt {
     pub use crate::formats::wkt_writer::*;
 }
+#[cfg(feature = "core")]
 pub use crate::formats::wkt_writer::conversion::*;
 
 /// [GEOS](https://github.com/georust/geos) conversions.
@@ -130,6 +140,7 @@ pub mod gpkg {
     pub use crate::formats::geopackage::*;
 }
 
+#[cfg(feature = "core")]
 pub use crate::formats::svg::conversion::*;
 
 /// Empty processor implementation
