@@ -70,6 +70,24 @@ assert_eq!(prepared_geom.contains(&geom2), Ok(true));
 Full source code: [geos.rs](./geozero/tests/geos.rs)
 
 
+Read FlatGeobuf data as geo-types geometries and calculate label position with [polylabel-rs](https://github.com/urschrei/polylabel-rs):
+```rust
+let mut file = BufReader::new(File::open("countries.fgb")?);
+let mut fgb = FgbReader::open(&mut file)?;
+fgb.select_all()?;
+while let Some(feature) = fgb.next()? {
+    let props = feature.properties()?;
+    if let Ok(Geometry::MultiPolygon(mpoly)) = feature.to_geo() {
+        if let Some(poly) = &mpoly.0.iter().next() {
+            let label_pos = polylabel(&poly, &0.10).unwrap();
+            println!("{}: {:?}", props["name"], label_pos);
+        }
+    }
+}
+```
+Full source code: [polylabel.rs](./geozero-core/tests/polylabel.rs)
+
+
 ## PostGIS usage examples
 
 Select and insert geo-types geometries with rust-postgres:

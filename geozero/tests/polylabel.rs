@@ -1,8 +1,8 @@
-use flatgeobuf::{FallibleStreamingIterator, FeatureProperties, FgbReader, GeometryType};
+use flatgeobuf::{FallibleStreamingIterator, FeatureProperties, FgbReader};
 use geo::contains::Contains;
 use geo::Geometry;
+use geozero::ToGeo;
 use geozero::error::Result;
-use geozero::geo_types::GeoWriter;
 use polylabel::polylabel;
 use std::fs::File;
 use std::io::BufReader;
@@ -14,10 +14,7 @@ fn country_labels() -> Result<()> {
     fgb.select_all()?;
     while let Some(feature) = fgb.next()? {
         let props = feature.properties()?;
-        let geometry = feature.geometry().unwrap();
-        let mut geo = GeoWriter::new();
-        geometry.process(&mut geo, GeometryType::MultiPolygon)?;
-        if let Geometry::MultiPolygon(mpoly) = geo.geometry() {
+        if let Ok(Geometry::MultiPolygon(mpoly)) = feature.to_geo() {
             if let Some(poly) = &mpoly.0.iter().next() {
                 let label_pos = polylabel(&poly, &0.10).unwrap();
                 println!("{}: {:?}", props["name"], label_pos);
