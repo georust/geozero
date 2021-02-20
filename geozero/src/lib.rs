@@ -53,15 +53,84 @@
 mod driver;
 pub mod error;
 mod feature_processor;
+mod formats;
 mod geometry_processor;
 mod multiplex;
 mod property_processor;
 
 pub use driver::*;
 pub use feature_processor::*;
+pub use formats::*;
 pub use geometry_processor::*;
 pub use multiplex::*;
 pub use property_processor::*;
+
+/// GeoJSON conversions.
+pub mod geojson {
+    pub use crate::formats::geojson_reader::*;
+    pub use crate::formats::geojson_writer::*;
+}
+pub use crate::formats::geojson_writer::conversion::*;
+
+/// [geo-types](https://github.com/georust/geo) conversions.
+pub mod geo_types {
+    pub use crate::formats::geo_types_reader::*;
+    pub use crate::formats::geo_types_writer::*;
+}
+pub use crate::formats::geo_types_writer::conversion::*;
+
+/// Well-Known Binary (WKB) conversions.
+///
+/// # Usage examples:
+///
+/// Convert a EWKB geometry to WKT:
+///
+/// ```
+/// use geozero_core::{ToWkt, wkb::Ewkb};
+///
+/// let wkb = Ewkb(vec![1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 64, 0, 0, 0, 0, 0, 0, 52, 192]);
+/// assert_eq!(wkb.to_wkt().unwrap(), "POINT(10 -20)");
+/// ```
+pub mod wkb {
+    pub use crate::formats::wkb_common::*;
+    pub use crate::formats::wkb_reader::*;
+    pub use crate::formats::wkb_writer::*;
+}
+pub use crate::formats::wkb_writer::conversion::*;
+
+/// Well-Known Text (WKT) conversions.
+///
+/// OpenGIS Simple Features Specification For SQL Revision 1.1, Chapter 3.2.5
+pub mod wkt {
+    pub use crate::formats::wkt_writer::*;
+}
+pub use crate::formats::wkt_writer::conversion::*;
+
+/// [GEOS](https://github.com/georust/geos) conversions.
+#[cfg(feature = "geos-lib")]
+pub mod geos {
+    pub use crate::formats::geos_reader::*;
+    pub use crate::formats::geos_writer::*;
+}
+#[cfg(feature = "geos-lib")]
+pub use crate::formats::geos_writer::conversion::*;
+
+/// [GDAL](https://github.com/georust/gdal) conversions.
+#[cfg(feature = "gdal-lib")]
+pub mod gdal {
+    pub use crate::formats::gdal_reader::*;
+    pub use crate::formats::gdal_writer::*;
+}
+#[cfg(feature = "gdal-lib")]
+pub use crate::formats::gdal_writer::conversion::*;
+
+/// Geopackage geometry type encoding/decoding.
+#[cfg(feature = "gpkg")]
+pub mod gpkg {
+    pub use crate::formats::geopackage::*;
+}
+
+pub use crate::formats::svg::conversion::*;
 
 /// Empty processor implementation
 pub struct ProcessorSink;

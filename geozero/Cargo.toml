@@ -1,6 +1,6 @@
 [package]
 name = "geozero"
-version = "0.6.0"
+version = "0.7.0-pre"
 authors = ["Pirmin Kalberer <pka@sourcepole.ch>"]
 edition = "2018"
 description = "Zero-Copy reading and writing of geospatial data."
@@ -8,9 +8,46 @@ homepage = "https://github.com/georust/geozero"
 repository = "https://github.com/georust/geozero"
 readme = "../README.md"
 license = "MIT/Apache-2.0"
-keywords = ["geo", "spatial"]
+keywords = ["geo", "geojson", "gdal", "geos", "postgis"]
+
+[features]
+default = []
+gdal-lib = ["gdal", "gdal-sys"]
+geos-lib = ["geos"]
+gpkg = ["sqlx"]
+postgis-sqlx = ["sqlx"]
+postgis-postgres = ["postgres-types"]
+tessellator = ["lyon"]
 
 [dependencies]
 thiserror = "1.0"
 async-trait = "0.1"
 seek_bufread = "1.2"
+geojson = "0.22"
+geo-types = { version = "0.7", default-features = false }
+geos = { version = "7.0", optional = true }
+gdal = { version = "0.7", default-features = false, optional = true }
+gdal-sys = { version = "0.3", optional = true }
+lyon = { version = "0.16", optional = true }
+scroll = "0.10"
+sqlx = { version = "0.5", default-features = false, features = [ "postgres", "sqlite" ], optional = true }
+postgres-types = { version = "0.2", optional = true }
+bytes = "1.0"
+
+[dev-dependencies]
+hex = "0.4"
+geo = "0.17"
+wkt = "0.9"
+kdbush = "0.2"
+polylabel = "2.4"
+flatgeobuf = "0.5.0"
+postgres = "0.19"
+sqlx = { version = "0.5", default-features = false, features = [ "runtime-tokio-native-tls", "postgres", "sqlite" ] }
+tokio = { version = "1.2.0", default-features = false, features = ["rt-multi-thread"] }
+
+[lib]
+doctest = false
+
+[package.metadata.docs.rs]
+all-features = true
+rustc-args = ["--cfg", "docsrs"]

@@ -17,14 +17,39 @@
 
 use crate::error::Result;
 use crate::feature_processor::FeatureProcessor;
-use crate::geometry_processor::GeomProcessor;
 use crate::property_processor::{
     PropertyProcessor, PropertyReadType, PropertyReader, PropertyReaderIdx,
 };
+use crate::{CoordDimensions, GeomProcessor};
 use async_trait::async_trait;
 use std::collections::HashMap;
 use std::io::{Read, Seek};
 use std::path::Path;
+
+/// Geometry processing trait.
+pub trait GeozeroGeometry {
+    /// Process geometry.
+    fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()>
+    where
+        Self: Sized;
+    /// Empty geometry.
+    fn empty() -> Self
+    where
+        Self: Sized;
+    /// Dimensions of geometry
+    fn dims(&self) -> CoordDimensions {
+        CoordDimensions::xy()
+    }
+    /// SRID of geometry
+    fn srid(&self) -> Option<i32> {
+        None
+    }
+}
+
+/// Geometry reader trait.
+pub trait GeozeroGeometryReader {
+    fn read_geom<R: Read, P: GeomProcessor>(reader: R, processor: &mut P) -> Result<()>;
+}
 
 // --- *Draft* datasource reader + writer API ---
 
@@ -88,9 +113,12 @@ pub trait Writer {
 }
 
 /// Feature processing API
-pub trait FeatureAccess: FeatureProperties + FeatureGeometry {
+pub trait FeatureAccess: FeatureProperties + GeozeroGeometry {
     /// Process feature geometries and properties.
-    fn process<P: FeatureProcessor>(&self, processor: &mut P, idx: u64) -> Result<()> {
+    fn process<P: FeatureProcessor>(&self, processor: &mut P, idx: u64) -> Result<()>
+    where
+        Self: Sized,
+    {
         processor.feature_begin(idx)?;
         processor.properties_begin()?;
         let _ = self.process_properties(processor)?;
@@ -100,12 +128,6 @@ pub trait FeatureAccess: FeatureProperties + FeatureGeometry {
         processor.geometry_end()?;
         processor.feature_end(idx)
     }
-}
-
-/// Feature properties processing API
-pub trait FeatureGeometry {
-    /// Process geometry.
-    fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()>;
 }
 
 /// Feature properties processing API

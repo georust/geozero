@@ -1,0 +1,30 @@
+#[cfg(feature = "gpkg")]
+mod gpkg_sqlx {
+
+    async fn sqlx_doctest() {
+        use sqlx::decode::Decode;
+        use sqlx::sqlite::{Sqlite, SqliteTypeInfo, SqliteValueRef};
+
+        type BoxDynError = Box<dyn std::error::Error + Send + Sync>;
+
+        pub struct HexBlob(pub String);
+
+        impl sqlx::Type<Sqlite> for HexBlob {
+            fn type_info() -> SqliteTypeInfo {
+                <Vec<u8> as sqlx::Type<Sqlite>>::type_info()
+            }
+        }
+
+        impl<'de> Decode<'de, Sqlite> for HexBlob {
+            fn decode(value: SqliteValueRef<'de>) -> Result<Self, BoxDynError> {
+                let blob = <Vec<u8> as Decode<Sqlite>>::decode(value)?;
+                let hex = blob
+                    .into_iter()
+                    .map(|b| format!("{:x}", b))
+                    .collect::<Vec<String>>()
+                    .join("");
+                Ok(HexBlob(hex))
+            }
+        }
+    }
+}
