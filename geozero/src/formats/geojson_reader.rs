@@ -1,6 +1,8 @@
 use crate::error::{GeozeroError, Result};
-use crate::{FeatureProcessor, GeomProcessor};
-use crate::{GeozeroGeometry, GeozeroGeometryReader};
+use crate::{
+    FeatureProcessor, GeomProcessor, GeozeroDatasourceReader, GeozeroGeometry,
+    GeozeroGeometryReader,
+};
 use geojson::{GeoJson as GeoGeoJson, Geometry, Value};
 use std::io::Read;
 
@@ -230,11 +232,17 @@ impl GeozeroGeometryReader for GeoJson<'_> {
     }
 }
 
+impl GeozeroDatasourceReader for GeoJson<'_> {
+    fn read<R: Read, P: FeatureProcessor>(mut reader: R, processor: &mut P) -> Result<()> {
+        read_geojson(&mut reader, processor)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
     use crate::wkt_writer::WktWriter;
-    use crate::{ReadAsWkt, ToWkt};
+    use crate::{ReadAsSvg, ReadAsWkt, ToWkt};
     use std::fs::File;
 
     #[test]
@@ -285,6 +293,17 @@ mod test {
         assert_eq!(
             &wkt[0..100],
             "POINT(32.533299524864844 0.583299105614628),POINT(30.27500161597942 0.671004121125236),POINT(15.7989"
+        );
+
+        let f = File::open("tests/data/places.json")?;
+        let svg = GeoJson::read_as_svg(f).unwrap();
+        println!("{}", &svg[svg.len() - 100..]);
+        assert_eq!(
+            &svg[svg.len() - 100..],
+            r#"387481909902 1.294979325105942 Z"/>
+<path d="M 114.18306345846304 22.30692675357551 Z"/>
+</g>
+</svg>"#
         );
 
         Ok(())

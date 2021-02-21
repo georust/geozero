@@ -42,7 +42,7 @@ pub mod postgres {
             let mut writer = wkb::WkbWriter::new(pgout, wkb::WkbDialect::Ewkb);
             writer.dims = self.0.dims();
             writer.srid = self.0.srid();
-            T::process_geom(&self.0, &mut writer)?;
+            self.0.process_geom(&mut writer)?;
             Ok(IsNull::No)
         }
 
@@ -94,7 +94,9 @@ pub mod sqlx {
             let mut writer = wkb::WkbWriter::new(&mut wkb_out, wkb::WkbDialect::Ewkb);
             writer.dims = self.0.dims();
             writer.srid = self.0.srid();
-            T::process_geom(&self.0, &mut writer).expect("Failed to encode Geometry");
+            self.0
+                .process_geom(&mut writer)
+                .expect("Failed to encode Geometry");
             buf.extend(&wkb_out); // Is there a way to write directly into PgArgumentBuffer?
 
             IsNull::No

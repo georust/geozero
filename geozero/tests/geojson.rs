@@ -4,6 +4,7 @@ mod geojson_examples {
     use flatgeobuf::*;
     use geozero::error::Result;
     use geozero::geojson::GeoJsonWriter;
+    use geozero::ProcessToJson;
     use std::fs::File;
     use std::io::{BufReader, BufWriter};
 
@@ -11,16 +12,14 @@ mod geojson_examples {
     fn fgb_to_geojson() -> Result<()> {
         let mut filein = BufReader::new(File::open("tests/data/countries.fgb")?);
         let mut fgb = FgbReader::open(&mut filein)?;
-        fgb.select_all()?;
-        let mut json_data: Vec<u8> = Vec::new();
-        let mut json = GeoJsonWriter::new(&mut json_data);
-        fgb.process_features(&mut json)?;
+        fgb.select_bbox(8.8, 47.2, 9.5, 55.3)?;
+        let json = fgb.to_json()?;
         assert_eq!(
-            &std::str::from_utf8(&json_data).unwrap()[0..215],
+            &json[0..215],
             r#"{
 "type": "FeatureCollection",
 "name": "countries",
-"features": [{"type": "Feature", "properties": {"id": "ATA", "name": "Antarctica"}, "geometry": {"type": "MultiPolygon", "coordinates": [[[[-59.572095,-80.040179],"#
+"features": [{"type": "Feature", "properties": {"id": "DNK", "name": "Denmark"}, "geometry": {"type": "MultiPolygon", "coordinates": [[[[12.690006,55.609991],[12.0"#
         );
         Ok(())
     }

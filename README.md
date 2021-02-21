@@ -70,6 +70,17 @@ assert_eq!(prepared_geom.contains(&geom2), Ok(true));
 Full source code: [geos.rs](./geozero/tests/geos.rs)
 
 
+Read FlatGeobuf subset as GeoJSON:
+```rust
+let mut file = BufReader::new(File::open("countries.fgb")?);
+let mut fgb = FgbReader::open(&mut file)?;
+fgb.select_bbox(8.8, 47.2, 9.5, 55.3)?;
+let json = fgb.to_json()?;
+println!("{}", &json);
+```
+Full source code: [geos.rs](./geozero/tests/jeojson.rs)
+
+
 Read FlatGeobuf data as geo-types geometries and calculate label position with [polylabel-rs](https://github.com/urschrei/polylabel-rs):
 ```rust
 let mut file = BufReader::new(File::open("countries.fgb")?);

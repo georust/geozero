@@ -51,6 +51,16 @@ pub trait GeozeroGeometryReader {
     fn read_geom<R: Read, P: GeomProcessor>(reader: R, processor: &mut P) -> Result<()>;
 }
 
+/// Datasource feature consumer trait.
+pub trait GeozeroDatasource {
+    /// Consume and process all selected features.
+    fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> Result<()>;
+}
+
+pub trait GeozeroDatasourceReader {
+    fn read<R: Read, P: FeatureProcessor>(reader: R, processor: &mut P) -> Result<()>;
+}
+
 // --- *Draft* datasource reader + writer API ---
 
 pub struct OpenOpts {} //TBD: read_only, etc.

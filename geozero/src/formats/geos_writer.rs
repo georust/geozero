@@ -164,7 +164,7 @@ pub(crate) mod conversion {
     impl<T: GeozeroGeometry> ToGeos for T {
         fn to_geos(&self) -> Result<geos::Geometry<'_>> {
             let mut geos = GeosWriter::new();
-            T::process_geom(self, &mut geos)?;
+            self.process_geom(&mut geos)?;
             Ok(geos.geom)
         }
     }

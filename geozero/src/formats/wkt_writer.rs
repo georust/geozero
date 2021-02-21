@@ -195,7 +195,7 @@ pub(crate) mod conversion {
             let mut out: Vec<u8> = Vec::new();
             let mut writer = WktWriter::new(&mut out);
             writer.dims = dims;
-            T::process_geom(self, &mut writer)?;
+            self.process_geom(&mut writer)?;
             String::from_utf8(out).map_err(|_| {
                 crate::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())
             })
