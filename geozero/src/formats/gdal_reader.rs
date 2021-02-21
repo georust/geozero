@@ -1,6 +1,5 @@
 use crate::error::{GeozeroError, Result};
-use crate::GeomProcessor;
-use crate::GeozeroGeometry;
+use crate::{GeomProcessor, GeozeroGeometry};
 use gdal::vector::Geometry;
 use gdal_sys::{self, OGRwkbGeometryType};
 

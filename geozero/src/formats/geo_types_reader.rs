@@ -1,6 +1,5 @@
 use crate::error::Result;
-use crate::GeomProcessor;
-use crate::GeozeroGeometry;
+use crate::{GeomProcessor, GeozeroGeometry};
 use geo_types::*;
 
 /// Process [geo-types](https://github.com/georust/geo) geometry.

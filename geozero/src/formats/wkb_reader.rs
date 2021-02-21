@@ -1,7 +1,6 @@
 use crate::error::{GeozeroError, Result};
 use crate::wkb::{WKBByteOrder, WKBGeometryType, WkbDialect};
-use crate::GeomProcessor;
-use crate::GeozeroGeometry;
+use crate::{GeomProcessor, GeozeroGeometry};
 use scroll::IOread;
 use std::io::Read;
 

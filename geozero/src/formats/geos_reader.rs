@@ -1,6 +1,5 @@
 use crate::error::{GeozeroError, Result};
-use crate::GeozeroGeometry;
-use crate::{CoordDimensions, GeomProcessor};
+use crate::{CoordDimensions, GeomProcessor, GeozeroGeometry};
 use geos::{CoordSeq, Geom, Geometry as GGeometry, GeometryTypes};
 
 pub(crate) fn from_geos_err(error: geos::Error) -> GeozeroError {
