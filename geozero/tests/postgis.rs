@@ -1,13 +1,13 @@
 #[cfg(feature = "postgis-postgres")]
 mod postgis_postgres {
-    use geozero_core::wkb;
-    use geozero_core::wkt::WktWriter;
+    use geozero::wkb;
+    use geozero::wkt::WktWriter;
     use postgres::{Client, NoTls};
 
     #[test]
     #[ignore]
     fn blob_query() -> Result<(), postgres::error::Error> {
-        use geozero_core::ToWkt;
+        use geozero::ToWkt;
 
         let mut client = Client::connect(&std::env::var("DATABASE_URL").unwrap(), NoTls)?;
 
@@ -124,13 +124,13 @@ mod postgis_postgres {
 
 #[cfg(feature = "postgis-sqlx")]
 mod postgis_sqlx {
-    use geozero_core::wkb;
+    use geozero::wkb;
     use sqlx::postgres::PgPoolOptions;
     use std::env;
     use tokio::runtime::Runtime;
 
     async fn blob_query() -> Result<(), sqlx::Error> {
-        use geozero_core::ToWkt;
+        use geozero::ToWkt;
 
         let pool = PgPoolOptions::new()
             .max_connections(5)
@@ -259,7 +259,7 @@ mod postgis_sqlx {
 
     mod register_type {
         use super::*;
-        use geozero_core::wkt::WktWriter;
+        use geozero::wkt::WktWriter;
         use sqlx::decode::Decode;
         use sqlx::postgres::{PgTypeInfo, PgValueRef, Postgres};
         use sqlx::ValueRef;

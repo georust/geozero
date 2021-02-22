@@ -1,6 +1,6 @@
+use crate::error::{GeozeroError, Result};
+use crate::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 use geo_types::*;
-use geozero::error::{GeozeroError, Result};
-use geozero::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 use std::mem;
 
 /// Generator for [geo-types](https://github.com/georust/geo) geometry type

@@ -1,7 +1,7 @@
+use crate::error::{GeozeroError, Result};
 use crate::geos_reader::from_geos_err;
+use crate::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 use geos::{CoordDimensions, CoordSeq, GResult, Geometry as GGeometry};
-use geozero::error::{GeozeroError, Result};
-use geozero::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 
 /// Generator for [GEOS](https://github.com/georust/geos) geometry type.
 pub struct GeosWriter<'a> {

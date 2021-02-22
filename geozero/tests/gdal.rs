@@ -2,8 +2,8 @@
 mod gdal_examples {
 
     use gdal::Dataset;
-    use geozero_core::gdal::process_geom;
-    use geozero_core::svg::SvgWriter;
+    use geozero::gdal::process_geom;
+    use geozero::svg::SvgWriter;
     use std::path::Path;
 
     #[test]

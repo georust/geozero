@@ -1,8 +1,8 @@
 use geo::algorithm::{centroid::Centroid, coords_iter::CoordsIter};
 use geo::simplifyvw::SimplifyVWPreserve;
 use geo::{Geometry, Point};
-use geozero_core::geojson::GeoJson;
-use geozero_core::ToGeo;
+use geozero::geojson::GeoJson;
+use geozero::ToGeo;
 
 #[test]
 fn centroid() {

@@ -2,8 +2,8 @@
 mod geos_examples {
 
     use geos::Geom;
-    use geozero_core::geojson::GeoJson;
-    use geozero_core::ToGeos;
+    use geozero::geojson::GeoJson;
+    use geozero::ToGeos;
 
     #[test]
     fn prepared_geom() {

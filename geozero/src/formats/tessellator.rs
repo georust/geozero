@@ -1,5 +1,5 @@
-use geozero::error::Result;
-use geozero::{FeatureProcessor, GeomProcessor, PropertyProcessor};
+use crate::error::Result;
+use crate::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 use lyon::math::{point, Point};
 use lyon::path::{Builder, Path};
 use lyon::tessellation::geometry_builder::simple_builder;

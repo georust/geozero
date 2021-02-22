@@ -1,6 +1,6 @@
-use flatgeobuf::*;
+use flatgeobuf::{Header, FgbReader};
 use geozero::error::Result;
-use geozero_core::svg::SvgWriter;
+use geozero::svg::SvgWriter;
 use std::fs::File;
 use std::io::{BufReader, Write};
 

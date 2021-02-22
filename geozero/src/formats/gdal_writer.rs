@@ -1,7 +1,7 @@
+use crate::error::{GeozeroError, Result};
+use crate::{CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcessor};
 use gdal::vector::Geometry;
 use gdal_sys::OGRwkbGeometryType;
-use geozero::error::{GeozeroError, Result};
-use geozero::{CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcessor};
 
 /// Generator for [GDAL](https://github.com/georust/gdal) geometry type.
 pub struct GdalWriter {

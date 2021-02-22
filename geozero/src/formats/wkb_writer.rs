@@ -1,6 +1,6 @@
+use crate::error::Result;
 use crate::wkb::{WKBByteOrder, WKBGeometryType, WkbDialect};
-use geozero::error::Result;
-use geozero::{CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcessor};
+use crate::{CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcessor};
 use scroll::IOwrite;
 use std::io::Write;
 
@@ -301,11 +301,10 @@ pub(crate) mod conversion {
     /// Convert a geo-types `Point` to EWKB:
     ///
     /// ```
-    /// use geozero_core::ToWkb;
-    /// use geozero::CoordDimensions;
+    /// use geozero::{CoordDimensions, ToWkb};
     ///
     /// let geom: geo_types::Geometry<f64> = geo_types::Point::new(10.0, -20.0).into();
-    /// let wkb = geom.to_ewkb(CoordDimensions::default(), Some(4326)).unwrap();
+    /// let wkb = geom.to_ewkb(CoordDimensions::xy(), Some(4326)).unwrap();
     /// assert_eq!(&wkb, &[1, 1, 0, 0, 32, 230, 16, 0, 0, 0, 0, 0, 0, 0, 0, 36, 64, 0, 0, 0, 0, 0, 0, 52, 192]);
     /// ```
     pub trait ToWkb {

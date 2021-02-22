@@ -1,5 +1,5 @@
+use crate::error::Result;
 use crate::GeozeroGeometry;
-use geozero::error::Result;
 use std::io::Read;
 
 /// Geometry type wrapper for WKB encoding/decoding.

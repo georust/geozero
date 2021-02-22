@@ -1,8 +1,7 @@
-use crate::GeozeroGeometry;
+use crate::error::{GeozeroError, Result};
+use crate::{GeomProcessor, GeozeroGeometry};
 use gdal::vector::Geometry;
 use gdal_sys::{self, OGRwkbGeometryType};
-use geozero::error::{GeozeroError, Result};
-use geozero::GeomProcessor;
 
 /// Process GDAL/OGR geometry.
 pub fn process_geom<P: GeomProcessor>(geo: &Geometry, processor: &mut P) -> Result<()> {
@@ -160,8 +159,8 @@ impl GeozeroGeometry for Geometry {
 mod test {
     use super::*;
     use crate::wkt_writer::WktWriter;
+    use crate::CoordDimensions;
     use crate::ToWkt;
-    use geozero::CoordDimensions;
 
     #[test]
     fn point() {

@@ -1,7 +1,7 @@
+use crate::error::{GeozeroError, Result};
+use crate::{FeatureProcessor, GeomProcessor};
 use crate::{GeozeroGeometry, GeozeroGeometryReader};
 use geojson::{GeoJson as GeoGeoJson, Geometry, Value};
-use geozero::error::{GeozeroError, Result};
-use geozero::{FeatureProcessor, GeomProcessor};
 use std::io::Read;
 
 /// Read and process GeoJSON.

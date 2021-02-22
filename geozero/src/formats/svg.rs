@@ -1,5 +1,5 @@
-use geozero::error::Result;
-use geozero::{FeatureProcessor, GeomProcessor, PropertyProcessor};
+use crate::error::Result;
+use crate::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 use std::io::Write;
 
 /// SVG writer.
@@ -144,7 +144,7 @@ pub(crate) mod conversion {
     /// Convert a geo-types `Polygon` to an SVG document:
     ///
     /// ```
-    /// use geozero_core::ToSvg;
+    /// use geozero::ToSvg;
     /// use geo_types::polygon;
     ///
     /// let geom: geo_types::Geometry<f64> = polygon![
@@ -170,7 +170,7 @@ pub(crate) mod conversion {
             let mut svg = SvgWriter::new(&mut svg_data, false);
             T::process_geom(self, &mut svg)?;
             String::from_utf8(svg_data).map_err(|_| {
-                geozero::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())
+                crate::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())
             })
         }
         fn to_svg_document(&self) -> Result<String> {
@@ -183,7 +183,7 @@ pub(crate) mod conversion {
             svg.feature_end(0)?;
             svg.dataset_end()?;
             String::from_utf8(svg_data).map_err(|_| {
-                geozero::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())
+                crate::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())
             })
         }
     }

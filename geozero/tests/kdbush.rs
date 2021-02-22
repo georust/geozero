@@ -1,5 +1,5 @@
 use geozero::error::Result;
-use geozero_core::geojson::read_geojson_geom;
+use geozero::geojson::read_geojson_geom;
 use kdbush::*;
 use std::fs::File;
 

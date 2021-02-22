@@ -1,4 +1,4 @@
-use flatgeobuf::*;
+use flatgeobuf::{FallibleStreamingIterator, FeatureProperties, FgbReader, GeometryType};
 use geozero::error::Result;
 use geozero::{ColumnValue, CoordDimensions, GeomProcessor, PropertyProcessor};
 use std::fs::File;

@@ -1,5 +1,5 @@
-use geozero::error::Result;
-use geozero::{CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcessor};
+use crate::error::Result;
+use crate::{CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcessor};
 use std::io::Write;
 
 /// WKT Writer.
@@ -197,7 +197,7 @@ pub(crate) mod conversion {
             writer.dims = dims;
             T::process_geom(self, &mut writer)?;
             String::from_utf8(out).map_err(|_| {
-                geozero::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())
+                crate::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())
             })
         }
     }
@@ -219,7 +219,7 @@ pub(crate) mod conversion {
             writer.dims = dims;
             T::read_geom(reader, &mut writer)?;
             String::from_utf8(out).map_err(|_| {
-                geozero::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())
+                crate::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())
             })
         }
     }

@@ -1,5 +1,5 @@
-use geozero::error::Result;
-use geozero::{ColumnValue, FeatureProcessor, GeomProcessor, PropertyProcessor};
+use crate::error::Result;
+use crate::{ColumnValue, FeatureProcessor, GeomProcessor, PropertyProcessor};
 use std::fmt::Display;
 use std::io::Write;
 
@@ -206,7 +206,7 @@ pub(crate) mod conversion {
             let mut p = GeoJsonWriter::new(&mut out);
             T::process_geom(self, &mut p)?;
             String::from_utf8(out).map_err(|_| {
-                geozero::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())
+                crate::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())
             })
         }
     }

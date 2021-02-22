@@ -1,6 +1,6 @@
 #[cfg(feature = "gpkg")]
 mod gpkg_sqlx {
-    use geozero_core::wkb;
+    use geozero::wkb;
     use sqlx::sqlite::SqlitePoolOptions;
     use tokio::runtime::Runtime;
 
@@ -34,7 +34,7 @@ mod gpkg_sqlx {
     }
 
     async fn blob_query() -> Result<(), sqlx::Error> {
-        use geozero_core::ToWkt;
+        use geozero::ToWkt;
 
         let pool = SqlitePoolOptions::new()
             .max_connections(5)
