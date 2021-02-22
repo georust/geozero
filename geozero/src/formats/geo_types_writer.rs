@@ -126,7 +126,7 @@ pub(crate) mod conversion {
     impl<T: GeozeroGeometry> ToGeo for T {
         fn to_geo(&self) -> Result<geo_types::Geometry<f64>> {
             let mut geo = GeoWriter::new();
-            T::process_geom(self, &mut geo)?;
+            self.process_geom(&mut geo)?;
             Ok(geo.geom)
         }
     }
@@ -210,9 +210,9 @@ mod test {
     #[test]
     fn read_as_geo() -> Result<()> {
         let geojson = r#"{"type": "LineString", "coordinates": [[1875038.447610231,-3269648.6879248763],[1874359.641504197,-3270196.812984864],[1874141.0428635243,-3270953.7840121365],[1874440.1778162003,-3271619.4315206874],[1876396.0598222911,-3274138.747656357],[1876442.0805243007,-3275052.60551469],[1874739.312657555,-3275457.333765534]]}"#;
-        let geo = GeoJson::read_as_geo(geojson.as_bytes()).unwrap();
+        let geo = GeoJson::read_as_geo(geojson.as_bytes());
         match geo {
-            Geometry::LineString(line) => {
+            Ok(Geometry::LineString(line)) => {
                 assert_eq!(line.coords_count(), 7);
             }
             _ => assert!(false),

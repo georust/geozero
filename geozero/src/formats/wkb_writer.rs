@@ -348,7 +348,7 @@ pub(crate) mod conversion {
             writer.dims = dims;
             writer.srid = srid;
             writer.envelope = envelope;
-            T::process_geom(self, &mut writer)?;
+            self.process_geom(&mut writer)?;
             Ok(wkb)
         }
     }

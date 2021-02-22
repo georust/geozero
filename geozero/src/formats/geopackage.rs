@@ -34,7 +34,9 @@ impl<'q, T: GeozeroGeometry + Sized> Encode<'q, Sqlite> for wkb::Geometry<T> {
         let mut writer = wkb::WkbWriter::new(&mut wkb_out, wkb::WkbDialect::Geopackage);
         writer.dims = self.0.dims();
         writer.srid = self.0.srid();
-        T::process_geom(&self.0, &mut writer).expect("Failed to encode Geometry");
+        self.0
+            .process_geom(&mut writer)
+            .expect("Failed to encode Geometry");
         args.push(SqliteArgumentValue::Blob(Cow::Owned(wkb_out)));
         IsNull::No
     }
