@@ -175,35 +175,11 @@ impl GeomProcessor for GdalWriter {
 impl PropertyProcessor for GdalWriter {}
 impl FeatureProcessor for GdalWriter {}
 
-pub(crate) mod conversion {
-    use super::*;
-    use crate::GeozeroGeometry;
-
-    /// Convert to GDAL geometry.
-    pub trait ToGdal {
-        /// Convert to 2D GDAL geometry.
-        fn to_gdal(&self) -> Result<Geometry>;
-        /// Convert to GDAL geometry with dimensions.
-        fn to_gdal_ndim(&self, dims: CoordDimensions) -> Result<Geometry>;
-    }
-
-    impl<T: GeozeroGeometry> ToGdal for T {
-        fn to_gdal(&self) -> Result<Geometry> {
-            self.to_gdal_ndim(CoordDimensions::default())
-        }
-        fn to_gdal_ndim(&self, dims: CoordDimensions) -> Result<Geometry> {
-            let mut gdal = GdalWriter::new();
-            gdal.dims = dims;
-            self.process_geom(&mut gdal)?;
-            Ok(gdal.geom)
-        }
-    }
-}
-
 #[cfg(test)]
 mod test {
-    use super::{conversion::*, *};
-    use crate::geojson_reader::{read_geojson, GeoJson};
+    use super::*;
+    use crate::geojson::{read_geojson, GeoJson};
+    use crate::ToGdal;
 
     #[test]
     fn point_geom() {

@@ -78,7 +78,7 @@ fgb.select_bbox(8.8, 47.2, 9.5, 55.3)?;
 let json = fgb.to_json()?;
 println!("{}", &json);
 ```
-Full source code: [geos.rs](./geozero/tests/jeojson.rs)
+Full source code: [geojson.rs](./geozero/tests/geojson.rs)
 
 
 Read FlatGeobuf data as geo-types geometries and calculate label position with [polylabel-rs](https://github.com/urschrei/polylabel-rs):

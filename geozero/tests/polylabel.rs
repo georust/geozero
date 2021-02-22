@@ -1,8 +1,8 @@
 use flatgeobuf::{FallibleStreamingIterator, FeatureProperties, FgbReader};
 use geo::contains::Contains;
 use geo::Geometry;
-use geozero::ToGeo;
 use geozero::error::Result;
+use geozero::ToGeo;
 use polylabel::polylabel;
 use std::fs::File;
 use std::io::BufReader;

@@ -241,7 +241,7 @@ impl GeozeroDatasourceReader for GeoJson<'_> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::wkt_writer::WktWriter;
+    use crate::wkt::WktWriter;
     use crate::{ReadAsSvg, ReadAsWkt, ToWkt};
     use std::fs::File;
 

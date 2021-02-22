@@ -1,5 +1,5 @@
+use super::geos_reader::from_geos_err;
 use crate::error::{GeozeroError, Result};
-use crate::geos_reader::from_geos_err;
 use crate::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 use geos::{CoordDimensions, CoordSeq, GResult, Geometry as GGeometry};
 
@@ -149,39 +149,10 @@ impl GeomProcessor for GeosWriter<'_> {
 impl PropertyProcessor for GeosWriter<'_> {}
 impl FeatureProcessor for GeosWriter<'_> {}
 
-pub(crate) mod conversion {
-    use super::*;
-    use crate::wkb::{FromWkb, WkbDialect};
-    use crate::GeozeroGeometry;
-    use std::io::Read;
-
-    /// Convert to GEOS geometry.
-    pub trait ToGeos {
-        /// Convert to GEOS geometry.
-        fn to_geos(&self) -> Result<geos::Geometry<'_>>;
-    }
-
-    impl<T: GeozeroGeometry> ToGeos for T {
-        fn to_geos(&self) -> Result<geos::Geometry<'_>> {
-            let mut geos = GeosWriter::new();
-            self.process_geom(&mut geos)?;
-            Ok(geos.geom)
-        }
-    }
-
-    impl FromWkb for geos::Geometry<'_> {
-        fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> Result<Self> {
-            let mut geos = GeosWriter::new();
-            crate::wkb::process_wkb_type_geom(rdr, &mut geos, dialect)?;
-            Ok(geos.geom)
-        }
-    }
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::geojson_reader::{read_geojson, GeoJson};
+    use crate::geojson::geojson_reader::{read_geojson, GeoJson};
     use crate::ToGeos;
     use geos::Geom;
     use std::convert::TryFrom;

@@ -178,7 +178,7 @@ impl GeozeroGeometry for geos::Geometry<'_> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::wkt_writer::WktWriter;
+    use crate::wkt::WktWriter;
 
     #[test]
     fn point_geom() {

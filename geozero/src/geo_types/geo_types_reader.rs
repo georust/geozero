@@ -130,7 +130,7 @@ impl GeozeroGeometry for geo_types::Geometry<f64> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::wkt_writer::WktWriter;
+    use crate::wkt::WktWriter;
     use crate::ToWkt;
     use std::convert::TryFrom;
 

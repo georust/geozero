@@ -1,4 +1,4 @@
-use flatgeobuf::{Header, FgbReader};
+use flatgeobuf::{FgbReader, Header};
 use geozero::error::Result;
 use geozero::svg::SvgWriter;
 use std::fs::File;

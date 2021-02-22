@@ -158,9 +158,8 @@ impl GeozeroGeometry for Geometry {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::wkt_writer::WktWriter;
-    use crate::CoordDimensions;
-    use crate::ToWkt;
+    use crate::wkt::WktWriter;
+    use crate::{CoordDimensions, ToWkt};
 
     #[test]
     fn point() {
