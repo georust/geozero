@@ -453,6 +453,7 @@ impl GeozeroGeometry for GpkgWkb {
 }
 
 #[cfg(test)]
+#[cfg(feature = "with-wkt")]
 mod test {
     use super::*;
     use crate::wkt::WktWriter;

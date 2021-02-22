@@ -54,7 +54,7 @@ mod postgis_postgres {
 
     #[test]
     #[ignore]
-    #[cfg(feature = "geos-lib")]
+    #[cfg(feature = "with-geos")]
     fn geos_query() -> Result<(), postgres::error::Error> {
         use geos::Geom;
 
@@ -208,7 +208,7 @@ mod postgis_sqlx {
         assert!(Runtime::new().unwrap().block_on(rust_geo_query()).is_ok());
     }
 
-    #[cfg(feature = "geos-lib")]
+    #[cfg(feature = "with-geos")]
     async fn geos_query() -> Result<(), sqlx::Error> {
         use geos::Geom;
 
@@ -246,7 +246,7 @@ mod postgis_sqlx {
 
     #[test]
     #[ignore]
-    #[cfg(feature = "geos-lib")]
+    #[cfg(feature = "with-geos")]
     fn async_geos_query() {
         assert_eq!(
             Runtime::new()

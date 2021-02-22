@@ -1,6 +1,7 @@
 ## 0.7.0 (UNRELEASED)
 
 * Merge geozero-core into geozero crate
+* Add feature flags for all formats
 * Add geo-types reader
 * Implement geo-types to Postgis/GPKG WKB encoding
 * Update sqlx, postgres and bytes dependencies

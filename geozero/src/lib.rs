@@ -62,48 +62,48 @@ pub use geometry_processor::*;
 pub use multiplex::*;
 pub use property_processor::*;
 
-#[cfg(feature = "gdal")]
+#[cfg(feature = "with-gdal")]
 pub mod gdal;
-#[cfg(feature = "gdal")]
+#[cfg(feature = "with-gdal")]
 pub use crate::gdal::conversion::*;
 
-#[cfg(feature = "core")]
+#[cfg(feature = "with-geo")]
 pub mod geo_types;
-#[cfg(feature = "core")]
+#[cfg(feature = "with-geo")]
 pub use crate::geo_types::conversion::*;
 
-#[cfg(feature = "core")]
+#[cfg(feature = "with-geojson")]
 pub mod geojson;
-#[cfg(feature = "core")]
+#[cfg(feature = "with-geojson")]
 pub use crate::geojson::conversion::*;
 
-#[cfg(feature = "geos-lib")]
+#[cfg(feature = "with-geos")]
 pub mod geos;
-#[cfg(feature = "geos-lib")]
+#[cfg(feature = "with-geos")]
 pub use crate::geos::conversion::*;
 
-#[cfg(feature = "gpkg")]
+#[cfg(feature = "with-gpkg")]
 pub mod gpkg;
 
-#[cfg(any(feature = "postgis-postgres", feature = "postgis-sqlx"))]
+#[cfg(any(feature = "with-postgis-postgres", feature = "with-postgis-sqlx"))]
 pub mod postgis;
 
-#[cfg(feature = "core")]
+#[cfg(feature = "with-svg")]
 pub mod svg;
-#[cfg(feature = "core")]
+#[cfg(feature = "with-svg")]
 pub use crate::svg::conversion::*;
 
-#[cfg(feature = "tesselator")]
+#[cfg(feature = "with-tesselator")]
 pub mod tessellator;
 
-#[cfg(feature = "core")]
+#[cfg(feature = "with-wkb")]
 pub mod wkb;
-#[cfg(feature = "core")]
+#[cfg(feature = "with-wkb")]
 pub use crate::wkb::conversion::*;
 
-#[cfg(feature = "core")]
+#[cfg(feature = "with-wkt")]
 pub mod wkt;
-#[cfg(feature = "core")]
+#[cfg(feature = "with-wkt")]
 pub use crate::wkt::conversion::*;
 
 /// Empty processor implementation

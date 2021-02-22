@@ -11,14 +11,18 @@ license = "MIT/Apache-2.0"
 keywords = ["geo", "geojson", "gdal", "geos", "postgis"]
 
 [features]
-default = ["core"]
-core = ["geo-types", "geojson", "scroll", "bytes"]
-gdal-lib = ["gdal", "gdal-sys"]
-geos-lib = ["geos"]
-gpkg = ["sqlx"]
-postgis-sqlx = ["sqlx"]
-postgis-postgres = ["postgres-types"]
-tessellator = ["lyon"]
+default = ["with-svg", "with-wkt", "with-geo", "with-geojson"]
+with-svg = []
+with-wkt = []
+with-geo = ["geo-types"]
+with-geojson = ["geojson"]
+with-gdal = ["gdal", "gdal-sys"]
+with-geos = ["geos"]
+with-wkb = ["scroll"]
+with-gpkg = ["with-wkb", "sqlx"]
+with-postgis-sqlx = ["with-wkb", "sqlx"]
+with-postgis-postgres = ["with-wkb", "with-wkt", "postgres-types", "bytes"]
+with-tessellator = ["lyon"]
 
 [dependencies]
 thiserror = "1.0"
@@ -50,3 +54,53 @@ tokio = { version = "1.2.0", default-features = false, features = ["rt-multi-thr
 [package.metadata.docs.rs]
 all-features = true
 rustc-args = ["--cfg", "docsrs"]
+
+[[test]]
+name = "gdal"
+path = "tests/gdal.rs"
+required-features = ["with-gdal"]
+
+[[test]]
+name = "geojson"
+path = "tests/geojson.rs"
+required-features = ["with-geojson"]
+
+[[test]]
+name = "geopackage"
+path = "tests/geopackage.rs"
+required-features = ["with-gpkg", "with-wkt", "with-geo"]
+
+[[test]]
+name = "geos"
+path = "tests/geos.rs"
+required-features = ["with-geos"]
+
+[[test]]
+name = "geo_types"
+path = "tests/geo_types.rs"
+required-features = ["with-geo", "with-geojson"]
+
+[[test]]
+name = "geozero-api"
+path = "tests/geozero-api.rs"
+required-features = []
+
+[[test]]
+name = "kdbush"
+path = "tests/kdbush.rs"
+required-features = ["with-geojson"]
+
+[[test]]
+name = "polylabel"
+path = "tests/polylabel.rs"
+required-features = ["with-geo"]
+
+[[test]]
+name = "postgis"
+path = "tests/postgis.rs"
+required-features = ["with-postgis-postgres", "with-postgis-sqlx", "with-wkt", "with-geo"]
+
+[[test]]
+name = "svg"
+path = "tests/svg.rs"
+required-features = ["with-svg"]

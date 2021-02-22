@@ -110,6 +110,7 @@ impl PropertyProcessor for GeoWriter {}
 impl FeatureProcessor for GeoWriter {}
 
 #[cfg(test)]
+#[cfg(feature = "with-geojson")]
 mod test {
     use super::*;
     use crate::geojson::{read_geojson, GeoJson};

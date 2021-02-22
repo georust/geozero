@@ -8,9 +8,7 @@ pub use geos_writer::*;
 pub(crate) mod conversion {
     use super::geos_writer::*;
     use crate::error::Result;
-    use crate::wkb::{FromWkb, WkbDialect};
     use crate::GeozeroGeometry;
-    use std::io::Read;
 
     /// Convert to GEOS geometry.
     pub trait ToGeos {
@@ -25,6 +23,14 @@ pub(crate) mod conversion {
             Ok(geos.geom)
         }
     }
+}
+
+#[cfg(feature = "with-wkb")]
+mod wkb {
+    use super::geos_writer::*;
+    use crate::error::Result;
+    use crate::wkb::{FromWkb, WkbDialect};
+    use std::io::Read;
 
     impl FromWkb for geos::Geometry<'_> {
         fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> Result<Self> {

@@ -179,6 +179,7 @@ mod test {
     use crate::ToWkt;
 
     #[test]
+    #[cfg(feature = "with-geo")]
     fn to_wkt() {
         let geom: geo_types::Geometry<f64> = geo_types::Point::new(10.0, 20.0).into();
         assert_eq!(&geom.to_wkt().unwrap(), "POINT(10 20)");

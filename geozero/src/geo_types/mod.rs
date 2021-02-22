@@ -8,7 +8,6 @@ pub use geo_types_writer::*;
 pub(crate) mod conversion {
     use super::geo_types_writer::*;
     use crate::error::Result;
-    use crate::wkb::{FromWkb, WkbDialect};
     use crate::{GeozeroGeometry, GeozeroGeometryReader};
     use std::io::Read;
 
@@ -39,6 +38,14 @@ pub(crate) mod conversion {
             Ok(geo.geom)
         }
     }
+}
+
+#[cfg(feature = "with-wkb")]
+mod wkb {
+    use super::geo_types_writer::*;
+    use crate::error::Result;
+    use crate::wkb::{FromWkb, WkbDialect};
+    use std::io::Read;
 
     impl FromWkb for geo_types::Geometry<f64> {
         fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> Result<Self> {

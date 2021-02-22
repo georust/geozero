@@ -404,6 +404,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "with-geo")]
     fn conversions() {
         let geom: geo_types::Geometry<f64> = geo_types::Point::new(10.0, -20.0).into();
         let wkb = geom.to_ewkb(CoordDimensions::default(), None).unwrap();

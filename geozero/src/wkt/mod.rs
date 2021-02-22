@@ -2,6 +2,7 @@
 //!
 //! OpenGIS Simple Features Specification For SQL Revision 1.1, Chapter 3.2.5
 pub(crate) mod wkt_writer;
+
 pub use wkt_writer::*;
 
 pub(crate) mod conversion {

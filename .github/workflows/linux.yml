@@ -41,10 +41,10 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: check
-          args: --all --all-features --bins --examples --tests --benches
+          args: --workspace --all-features --bins --examples --tests --benches
 
       - name: tests
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --all --all-features
+        run: |
+          cargo test --workspace --all-features
+          cargo test --manifest-path geozero/Cargo.toml
+          cargo test --manifest-path geozero/Cargo.toml --no-default-features

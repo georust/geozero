@@ -176,6 +176,7 @@ impl PropertyProcessor for GdalWriter {}
 impl FeatureProcessor for GdalWriter {}
 
 #[cfg(test)]
+#[cfg(all(feature = "with-wkt", feature = "with-geojson"))]
 mod test {
     use super::*;
     use crate::geojson::{read_geojson, GeoJson};

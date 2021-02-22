@@ -128,6 +128,7 @@ impl GeozeroGeometry for geo_types::Geometry<f64> {
 }
 
 #[cfg(test)]
+#[cfg(feature = "with-wkt")]
 mod test {
     use super::*;
     use crate::wkt::WktWriter;

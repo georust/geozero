@@ -134,9 +134,10 @@ impl<W: Write> GeomProcessor for SvgWriter<'_, W> {
 impl<W: Write> PropertyProcessor for SvgWriter<'_, W> {}
 
 #[cfg(test)]
+#[cfg(feature = "with-geojson")]
 mod test {
     use super::*;
-    use crate::geojson::geojson_reader::read_geojson;
+    use crate::geojson::read_geojson;
     use crate::ToSvg;
     use geo_types::polygon;
 

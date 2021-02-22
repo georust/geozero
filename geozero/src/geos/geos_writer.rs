@@ -150,9 +150,10 @@ impl PropertyProcessor for GeosWriter<'_> {}
 impl FeatureProcessor for GeosWriter<'_> {}
 
 #[cfg(test)]
+#[cfg(feature = "with-geojson")]
 mod test {
     use super::*;
-    use crate::geojson::geojson_reader::{read_geojson, GeoJson};
+    use crate::geojson::{read_geojson, GeoJson};
     use crate::ToGeos;
     use geos::Geom;
     use std::convert::TryFrom;
@@ -228,6 +229,7 @@ mod test {
     // }
 
     #[test]
+    #[cfg(feature = "with-geo")]
     fn geo_to_geos() -> Result<()> {
         let geo =
             geo_types::Geometry::try_from(wkt::Wkt::from_str("POINT (10 20)").unwrap()).unwrap();
