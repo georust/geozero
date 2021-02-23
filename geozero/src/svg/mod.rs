@@ -7,8 +7,7 @@ pub(crate) mod conversion {
     use super::svg::*;
     use crate::error::Result;
     use crate::FeatureProcessor;
-    use crate::{GeozeroDatasource, GeozeroDatasourceReader, GeozeroGeometry};
-    use std::io::Read;
+    use crate::{GeozeroDatasource, GeozeroGeometry};
 
     /// Convert to SVG.
     ///
@@ -72,23 +71,6 @@ pub(crate) mod conversion {
             let mut svg_data: Vec<u8> = Vec::new();
             let mut svg = SvgWriter::new(&mut svg_data, false);
             self.process(&mut svg)?;
-            String::from_utf8(svg_data).map_err(|_| {
-                crate::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())
-            })
-        }
-    }
-
-    /// Read features as SVG.
-    pub trait ReadAsSvg {
-        /// Consume features as SVG String.
-        fn read_as_svg<R: Read>(reader: R) -> Result<String>;
-    }
-
-    impl<T: GeozeroDatasourceReader> ReadAsSvg for T {
-        fn read_as_svg<R: Read>(reader: R) -> Result<String> {
-            let mut svg_data: Vec<u8> = Vec::new();
-            let mut svg = SvgWriter::new(&mut svg_data, false);
-            T::read(reader, &mut svg)?;
             String::from_utf8(svg_data).map_err(|_| {
                 crate::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())
             })

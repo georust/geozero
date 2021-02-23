@@ -1,8 +1,5 @@
 use crate::error::{GeozeroError, Result};
-use crate::{
-    FeatureProcessor, GeomProcessor, GeozeroDatasourceReader, GeozeroGeometry,
-    GeozeroGeometryReader,
-};
+use crate::{FeatureProcessor, GeomProcessor, GeozeroDatasource, GeozeroGeometry};
 use geojson::{GeoJson as GeoGeoJson, Geometry, Value};
 use std::io::Read;
 
@@ -18,7 +15,7 @@ pub fn read_geojson<R: Read, P: FeatureProcessor>(mut reader: R, processor: &mut
 
 /// Read and process GeoJSON geometry.
 pub fn read_geojson_geom<R: Read, P: GeomProcessor>(
-    mut reader: R,
+    reader: &mut R,
     processor: &mut P,
 ) -> Result<()> {
     let mut geojson_str = String::new();
@@ -219,22 +216,19 @@ pub struct GeoJson<'a>(pub &'a str);
 
 impl GeozeroGeometry for GeoJson<'_> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
-        read_geojson_geom((self.0).as_bytes(), processor)
+        read_geojson_geom(&mut self.0.as_bytes(), processor)
     }
     fn empty() -> Self {
         GeoJson("")
     }
 }
 
-impl GeozeroGeometryReader for GeoJson<'_> {
-    fn read_geom<R: Read, P: GeomProcessor>(mut reader: R, processor: &mut P) -> Result<()> {
-        read_geojson_geom(&mut reader, processor)
-    }
-}
+/// GeoJSON Reader.
+pub struct GeoJsonReader<'a, R: Read>(pub &'a mut R);
 
-impl GeozeroDatasourceReader for GeoJson<'_> {
-    fn read<R: Read, P: FeatureProcessor>(mut reader: R, processor: &mut P) -> Result<()> {
-        read_geojson(&mut reader, processor)
+impl<'a, R: Read> GeozeroDatasource for GeoJsonReader<'a, R> {
+    fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> Result<()> {
+        read_geojson(&mut self.0, processor)
     }
 }
 
@@ -242,14 +236,16 @@ impl GeozeroDatasourceReader for GeoJson<'_> {
 mod test {
     use super::*;
     use crate::wkt::WktWriter;
-    use crate::{ReadAsSvg, ReadAsWkt, ToWkt};
+    use crate::{ProcessToSvg, ToWkt};
     use std::fs::File;
 
     #[test]
     fn line_string() -> Result<()> {
         let geojson = r#"{"type": "LineString", "coordinates": [[1875038.447610231,-3269648.6879248763],[1874359.641504197,-3270196.812984864],[1874141.0428635243,-3270953.7840121365],[1874440.1778162003,-3271619.4315206874],[1876396.0598222911,-3274138.747656357],[1876442.0805243007,-3275052.60551469],[1874739.312657555,-3275457.333765534]]}"#;
         let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(read_geojson_geom(geojson.as_bytes(), &mut WktWriter::new(&mut wkt_data)).is_ok());
+        assert!(
+            read_geojson_geom(&mut geojson.as_bytes(), &mut WktWriter::new(&mut wkt_data)).is_ok()
+        );
         let wkt = std::str::from_utf8(&wkt_data).unwrap();
         assert_eq!(wkt, "LINESTRING(1875038.447610231 -3269648.6879248763,1874359.641504197 -3270196.812984864,1874141.0428635243 -3270953.7840121365,1874440.1778162003 -3271619.4315206874,1876396.0598222911 -3274138.747656357,1876442.0805243007 -3275052.60551469,1874739.312657555 -3275457.333765534)"
     );
@@ -288,15 +284,8 @@ mod test {
         let geojson = GeoJson(r#"{"type": "Point", "coordinates": [10,20]}"#);
         assert_eq!(geojson.to_wkt().unwrap(), "POINT(10 20)");
 
-        let f = File::open("tests/data/places.json")?;
-        let wkt = GeoJson::read_as_wkt(f).unwrap();
-        assert_eq!(
-            &wkt[0..100],
-            "POINT(32.533299524864844 0.583299105614628),POINT(30.27500161597942 0.671004121125236),POINT(15.7989"
-        );
-
-        let f = File::open("tests/data/places.json")?;
-        let svg = GeoJson::read_as_svg(f).unwrap();
+        let mut f = File::open("tests/data/places.json")?;
+        let svg = GeoJsonReader(&mut f).to_svg().unwrap();
         println!("{}", &svg[svg.len() - 100..]);
         assert_eq!(
             &svg[svg.len() - 100..],

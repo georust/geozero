@@ -8,8 +8,7 @@ pub use geo_types_writer::*;
 pub(crate) mod conversion {
     use super::geo_types_writer::*;
     use crate::error::Result;
-    use crate::{GeozeroGeometry, GeozeroGeometryReader};
-    use std::io::Read;
+    use crate::GeozeroGeometry;
 
     /// Convert to geo-types Geometry.
     pub trait ToGeo {
@@ -21,20 +20,6 @@ pub(crate) mod conversion {
         fn to_geo(&self) -> Result<geo_types::Geometry<f64>> {
             let mut geo = GeoWriter::new();
             self.process_geom(&mut geo)?;
-            Ok(geo.geom)
-        }
-    }
-
-    /// Read as geo-types Geometry.
-    pub trait ReadAsGeo {
-        /// Read as geo-types Geometry.
-        fn read_as_geo<R: Read>(reader: R) -> Result<geo_types::Geometry<f64>>;
-    }
-
-    impl<T: GeozeroGeometryReader> ReadAsGeo for T {
-        fn read_as_geo<R: Read>(reader: R) -> Result<geo_types::Geometry<f64>> {
-            let mut geo = GeoWriter::new();
-            T::read_geom(reader, &mut geo)?;
             Ok(geo.geom)
         }
     }

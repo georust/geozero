@@ -263,7 +263,7 @@ let mut points = PointIndex {
     pos: 0,
     index: KDBush::new(1249, DEFAULT_NODE_SIZE),
 };
-read_geojson_geom(f, &mut points)?;
+read_geojson_geom(&mut f, &mut points)?;
 points.index.build_index();
 ```
 Full source code: [kdbush.rs](./geozero/tests/kdbush.rs)

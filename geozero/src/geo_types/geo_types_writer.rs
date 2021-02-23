@@ -114,7 +114,7 @@ impl FeatureProcessor for GeoWriter {}
 mod test {
     use super::*;
     use crate::geojson::{read_geojson, GeoJson};
-    use crate::{ReadAsGeo, ToGeo};
+    use crate::ToGeo;
     use geo::algorithm::coords_iter::CoordsIter;
 
     #[test]
@@ -160,19 +160,6 @@ mod test {
     fn to_geo() -> Result<()> {
         let geom: geo_types::Geometry<f64> = geo_types::Point::new(10.0, 20.0).into();
         assert_eq!(geom.clone().to_geo().unwrap(), geom);
-        Ok(())
-    }
-
-    #[test]
-    fn read_as_geo() -> Result<()> {
-        let geojson = r#"{"type": "LineString", "coordinates": [[1875038.447610231,-3269648.6879248763],[1874359.641504197,-3270196.812984864],[1874141.0428635243,-3270953.7840121365],[1874440.1778162003,-3271619.4315206874],[1876396.0598222911,-3274138.747656357],[1876442.0805243007,-3275052.60551469],[1874739.312657555,-3275457.333765534]]}"#;
-        let geo = GeoJson::read_as_geo(geojson.as_bytes());
-        match geo {
-            Ok(Geometry::LineString(line)) => {
-                assert_eq!(line.coords_count(), 7);
-            }
-            _ => assert!(false),
-        }
         Ok(())
     }
 }

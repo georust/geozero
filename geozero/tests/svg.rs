@@ -1,8 +1,26 @@
 use flatgeobuf::{FgbReader, Header};
 use geozero::error::Result;
+use geozero::geojson::GeoJsonReader;
 use geozero::svg::SvgWriter;
+use geozero::ProcessToSvg;
 use std::fs::File;
 use std::io::{BufReader, Write};
+
+#[test]
+fn json_to_svg() -> Result<()> {
+    let mut f = File::open("tests/data/places.json")?;
+    let svg = GeoJsonReader(&mut f).to_svg().unwrap();
+    println!("{}", &svg);
+    assert_eq!(
+        &svg[svg.len() - 100..],
+        r#"387481909902 1.294979325105942 Z"/>
+<path d="M 114.18306345846304 22.30692675357551 Z"/>
+</g>
+</svg>"#
+    );
+
+    Ok(())
+}
 
 fn invert_y(header: &Header) -> bool {
     if let Some(crs) = header.crs() {
