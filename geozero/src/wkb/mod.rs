@@ -1,6 +1,6 @@
 //! Well-Known Binary (WKB) conversions.
 //!
-//! # Usage examples:
+//! # Usage example:
 //!
 //! Convert a EWKB geometry to WKT:
 //!

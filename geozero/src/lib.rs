@@ -15,39 +15,17 @@
 //! * [geozero-shp](https://docs.rs/geozero-shp)
 //! * [flatgeobuf](https://docs.rs/flatgeobuf)
 //!
+//! ## Format conversion overview
 //!
-//! ## Zero-copy geometry reader
-//!
-//! Geometries can be accessed by implementing the `GeomProcessor` trait.
-//!
-//! ```rust
-//! use geozero::{GeomProcessor, error::Result};
-//!
-//! struct CoordPrinter;
-//!
-//! impl GeomProcessor for CoordPrinter {
-//!     fn xy(&mut self, x: f64, y: f64, _idx: usize) -> Result<()> {
-//!         Ok(println!("({} {})", x, y))
-//!     }
-//! }
-//! ```
-//!
-//! ## Zero-copy feature access
-//!
-//! Properties can be accessed by implementing the `PropertyProcessor` trait.
-//!
-//! ```rust
-//! use geozero::{PropertyProcessor, ColumnValue, error::Result};
-//!
-//! struct PropertyPrinter;
-//!
-//! impl PropertyProcessor for PropertyPrinter {
-//!     fn property(&mut self, i: usize, n: &str, v: &ColumnValue) -> Result<bool> {
-//!         println!("columnidx: {} name: {} value: {:?}", i, n, v);
-//!         Ok(false) // don't abort
-//!     }
-//! }
-//! ```
+//! | Format / trait |            [GeozeroGeometry]            |             [GeozeroDatasource]              |     [GeomProcessor]      | Geometry Conversion |
+//! |----------------|-----------------------------------------|----------------------------------------------|--------------------------|---------------------|
+//! | geo-types      | `geo_types::Geometry<f64>`              | -                                            | [geo_types::GeoWriter]   | [ToGeo]             |
+//! | GeoJSON        | `GeoJson`                               | [geojson::GeoJsonReader], [geojson::GeoJson] | [geojson::GeoJsonWriter] | [ToJson]            |
+//! | GDAL           | `gdal::vector::Geometry`                | -                                            | [gdal::GdalWriter]       | [ToGdal]            |
+//! | GEOS           | `geos::Geometry`                        | -                                            | [geos::GeosWriter]       | [ToGeos]            |
+//! | SVG            | -                                       | -                                            | [svg::SvgWriter]         | [ToSvg]             |
+//! | WKB            | [wkb::Wkb], [wkb::Ewkb], [wkb::GpkgWkb] | -                                            | [wkb::WkbWriter]         | [ToWkb]             |
+//! | WKT            | -                                       | -                                            | [wkt::WktWriter]         | [ToWkt]             |
 
 mod api;
 pub mod error;

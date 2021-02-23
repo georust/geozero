@@ -49,6 +49,20 @@ impl CoordDimensions {
 }
 
 /// Geometry processing trait
+///
+/// # Usage example:
+///
+/// ```rust
+/// use geozero::{GeomProcessor, error::Result};
+///
+/// struct CoordPrinter;
+///
+/// impl GeomProcessor for CoordPrinter {
+///     fn xy(&mut self, x: f64, y: f64, _idx: usize) -> Result<()> {
+///         Ok(println!("({} {})", x, y))
+///     }
+/// }
+/// ```
 #[allow(unused_variables)]
 pub trait GeomProcessor {
     /// Additional dimensions requested when processing coordinates

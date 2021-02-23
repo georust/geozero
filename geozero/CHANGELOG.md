@@ -1,6 +1,7 @@
-## 0.7.0 (UNRELEASED)
+## 0.7.0 (2021-02-24)
 
 * Merge geozero-core into geozero crate
+* Format conversion traits
 * Add feature flags for all formats
 * Add geo-types reader
 * Implement geo-types to Postgis/GPKG WKB encoding

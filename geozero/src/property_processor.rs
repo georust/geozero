@@ -22,6 +22,21 @@ pub enum ColumnValue<'a> {
 }
 
 /// Feature property processing trait
+///
+/// # Usage example:
+///
+/// ```rust
+/// use geozero::{PropertyProcessor, ColumnValue, error::Result};
+///
+/// struct PropertyPrinter;
+///
+/// impl PropertyProcessor for PropertyPrinter {
+///     fn property(&mut self, i: usize, n: &str, v: &ColumnValue) -> Result<bool> {
+///         println!("columnidx: {} name: {} value: {:?}", i, n, v);
+///         Ok(false) // don't abort
+///     }
+/// }
+/// ```
 #[allow(unused_variables)]
 pub trait PropertyProcessor {
     /// Process property value. Abort processing, if return value is true.
