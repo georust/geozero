@@ -223,6 +223,12 @@ impl GeozeroGeometry for GeoJson<'_> {
     }
 }
 
+impl GeozeroDatasource for GeoJson<'_> {
+    fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> Result<()> {
+        read_geojson(&mut self.0.as_bytes(), processor)
+    }
+}
+
 /// GeoJSON Reader.
 pub struct GeoJsonReader<'a, R: Read>(pub &'a mut R);
 
