@@ -49,14 +49,14 @@
 //! }
 //! ```
 
-mod driver;
+mod api;
 pub mod error;
 mod feature_processor;
 mod geometry_processor;
 mod multiplex;
 mod property_processor;
 
-pub use driver::*;
+pub use api::*;
 pub use feature_processor::*;
 pub use geometry_processor::*;
 pub use multiplex::*;

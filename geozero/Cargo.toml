@@ -26,7 +26,6 @@ with-tessellator = ["lyon"]
 
 [dependencies]
 thiserror = "1.0"
-async-trait = "0.1"
 seek_bufread = "1.2"
 geojson = { version = "0.22", optional = true }
 geo-types = { version = "0.7", default-features = false, optional = true }

@@ -3,6 +3,5 @@ members = ["geozero", "geozero-shp", "geozero-cli", "geozero-bench"]
 default-members = ["geozero", "geozero-shp", "geozero-cli"]
 
 [patch.crates-io]
-# Patch geozero dependencies (dev only)
 geozero = { path = "geozero" }
 #flatgeobuf = { path = "../../gis/flatgeobuf/src/rust" }

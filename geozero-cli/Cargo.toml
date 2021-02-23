@@ -10,8 +10,9 @@ name = "geozero"
 path = "src/main.rs"
 
 [dependencies]
-geozero = "0.6.0"
-geozero-core = "0.6.0"
-flatgeobuf = "0.4.1"
+geozero = "0.7.0-pre"
+#flatgeobuf = "0.5.0"
+flatgeobuf = { version = "0.5.0", git = "https://github.com/pka/flatgeobuf", branch = "geozero-0.7" }
+async-trait = "0.1"
 structopt = "0.3"
-tokio = { version = "0.2", features = ["full"] }
+tokio = { version = "1.2.0", features = ["full"] }
