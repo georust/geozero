@@ -1,3 +1,4 @@
+//! Error and Result types.
 use thiserror::Error;
 
 #[derive(Error, Debug)]

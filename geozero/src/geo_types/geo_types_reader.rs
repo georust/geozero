@@ -2,7 +2,7 @@ use crate::error::Result;
 use crate::{GeomProcessor, GeozeroGeometry};
 use geo_types::*;
 
-/// Process [geo-types](https://github.com/georust/geo) geometry.
+/// Process geo-types geometry.
 pub fn process_geom<P: GeomProcessor>(geom: &Geometry<f64>, processor: &mut P) -> Result<()> {
     process_geom_n(geom, 0, processor)
 }

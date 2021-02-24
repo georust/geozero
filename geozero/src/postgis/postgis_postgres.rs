@@ -1,4 +1,3 @@
-/// PostGIS geometry type encoding/decoding for [rust-postgres](https://github.com/sfackler/rust-postgres).
 use crate::wkb::{self, FromWkb};
 use crate::{GeozeroGeometry, ToWkt};
 use bytes::{BufMut, BytesMut};

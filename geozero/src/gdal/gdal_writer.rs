@@ -3,7 +3,7 @@ use crate::{CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcessor}
 use gdal::vector::Geometry;
 use gdal_sys::OGRwkbGeometryType;
 
-/// Generator for [GDAL](https://github.com/georust/gdal) geometry type.
+/// Generator for GDAL geometry type.
 pub struct GdalWriter {
     pub dims: CoordDimensions,
     pub(crate) geom: Geometry,

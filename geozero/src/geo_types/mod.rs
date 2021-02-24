@@ -1,4 +1,4 @@
-//! [geo-types](https://github.com/georust/geo) conversions.
+//! geo-types conversions.
 pub(crate) mod geo_types_reader;
 pub(crate) mod geo_types_writer;
 

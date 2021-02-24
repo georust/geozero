@@ -3,7 +3,7 @@ use crate::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 use geo_types::*;
 use std::mem;
 
-/// Generator for [geo-types](https://github.com/georust/geo) geometry type
+/// Generator for geo-types geometry type.
 pub struct GeoWriter {
     pub(crate) geom: Geometry<f64>,
     // Polygon rings or MultiLineString members

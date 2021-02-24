@@ -32,8 +32,8 @@ mod postgis_postgres {
             &[],
         )?;
 
-        let geom: wkb::Geometry<geo_types::Geometry<f64>> = row.get(0);
-        if let geo_types::Geometry::Polygon(poly) = geom.0 {
+        let wkbgeom: wkb::Geometry<geo_types::Geometry<f64>> = row.get(0);
+        if let geo_types::Geometry::Polygon(poly) = wkbgeom.0 {
             assert_eq!(
                 *poly.exterior(),
                 vec![(0.0, 0.0), (2.0, 0.0), (2.0, 2.0), (0.0, 2.0), (0.0, 0.0)].into()
@@ -65,8 +65,8 @@ mod postgis_postgres {
             &[],
         )?;
 
-        let geom: wkb::Geometry<geos::Geometry> = row.get(0);
-        assert_eq!(geom.0.to_wkt().unwrap(), "POLYGON ((0.0000000000000000 0.0000000000000000, 2.0000000000000000 0.0000000000000000, 2.0000000000000000 2.0000000000000000, 0.0000000000000000 2.0000000000000000, 0.0000000000000000 0.0000000000000000))");
+        let wkbgeom: wkb::Geometry<geos::Geometry> = row.get(0);
+        assert_eq!(wkbgeom.0.to_wkt().unwrap(), "POLYGON ((0.0000000000000000 0.0000000000000000, 2.0000000000000000 0.0000000000000000, 2.0000000000000000 2.0000000000000000, 0.0000000000000000 2.0000000000000000, 0.0000000000000000 0.0000000000000000))");
 
         // WKB encoding
         let geom = geos::Geometry::new_from_wkt("POINT(1 3)").expect("Invalid geometry");
@@ -116,7 +116,7 @@ mod postgis_postgres {
             )?;
 
             let geom: Wkt = row.get(0);
-            assert_eq!(&geom.0, "POLYGON((0 0,2 0,2 2,0 2,0 0))");
+            assert_eq!(&wkbgeom.0, "POLYGON((0 0,2 0,2 2,0 2,0 0))");
             Ok(())
         }
     }
@@ -166,8 +166,8 @@ mod postgis_sqlx {
                 .fetch_one(&pool)
                 .await?;
 
-        let geom = row.0;
-        if let geo_types::Geometry::Polygon(poly) = geom.0 {
+        let wkbgeom = row.0;
+        if let geo_types::Geometry::Polygon(poly) = wkbgeom.0 {
             assert_eq!(
                 *poly.exterior(),
                 vec![(0.0, 0.0), (2.0, 0.0), (2.0, 2.0), (0.0, 2.0), (0.0, 0.0)].into()
@@ -221,14 +221,14 @@ mod postgis_sqlx {
             sqlx::query_as("SELECT 'SRID=4326;POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))'::geometry")
                 .fetch_one(&pool)
                 .await?;
-        let geom = row.0;
-        assert_eq!(geom.0.to_wkt().unwrap(), "POLYGON ((0.0000000000000000 0.0000000000000000, 2.0000000000000000 0.0000000000000000, 2.0000000000000000 2.0000000000000000, 0.0000000000000000 2.0000000000000000, 0.0000000000000000 0.0000000000000000))");
+        let wkbgeom = row.0;
+        assert_eq!(wkbgeom.0.to_wkt().unwrap(), "POLYGON ((0.0000000000000000 0.0000000000000000, 2.0000000000000000 0.0000000000000000, 2.0000000000000000 2.0000000000000000, 0.0000000000000000 2.0000000000000000, 0.0000000000000000 0.0000000000000000))");
 
         let row: (wkb::Geometry<geos::Geometry>,) = sqlx::query_as("SELECT NULL::geometry")
             .fetch_one(&pool)
             .await?;
-        let geom = row.0;
-        assert_eq!(geom.0.to_wkt().unwrap(), "POINT EMPTY");
+        let wkbgeom = row.0;
+        assert_eq!(wkbgeom.0.to_wkt().unwrap(), "POINT EMPTY");
 
         // WKB encoding
         let mut tx = pool.begin().await?;

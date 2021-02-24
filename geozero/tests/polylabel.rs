@@ -13,12 +13,12 @@ fn country_labels() -> Result<()> {
     let mut fgb = FgbReader::open(&mut file)?;
     fgb.select_all()?;
     while let Some(feature) = fgb.next()? {
-        let props = feature.properties()?;
+        let name: String = feature.property("name").unwrap();
         if let Ok(Geometry::MultiPolygon(mpoly)) = feature.to_geo() {
             if let Some(poly) = &mpoly.0.iter().next() {
                 let label_pos = polylabel(&poly, &0.10).unwrap();
-                println!("{}: {:?}", props["name"], label_pos);
-                if !vec!["Bermuda", "Falkland Islands"].contains(&props["name"].as_str()) {
+                println!("{}: {:?}", name, label_pos);
+                if !vec!["Bermuda", "Falkland Islands"].contains(&name.as_str()) {
                     assert!(mpoly.contains(&label_pos));
                 }
             }

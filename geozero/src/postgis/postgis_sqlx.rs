@@ -1,4 +1,3 @@
-/// PostGIS geometry type encoding/decoding for [SQLx](https://github.com/launchbadge/sqlx).
 use crate::wkb::{self, FromWkb};
 use crate::GeozeroGeometry;
 use sqlx::decode::Decode;

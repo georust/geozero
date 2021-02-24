@@ -3,6 +3,7 @@ use crate::feature_processor::FeatureProcessor;
 use crate::geometry_processor::GeomProcessor;
 use crate::property_processor::{ColumnValue, PropertyProcessor};
 
+#[doc(hidden)]
 pub struct Multiplexer<P1: FeatureProcessor, P2: FeatureProcessor> {
     p1: P1,
     p2: P2,

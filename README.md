@@ -87,16 +87,16 @@ let mut file = BufReader::new(File::open("countries.fgb")?);
 let mut fgb = FgbReader::open(&mut file)?;
 fgb.select_all()?;
 while let Some(feature) = fgb.next()? {
-    let props = feature.properties()?;
+    let name: String = feature.property("name").unwrap();
     if let Ok(Geometry::MultiPolygon(mpoly)) = feature.to_geo() {
         if let Some(poly) = &mpoly.0.iter().next() {
             let label_pos = polylabel(&poly, &0.10).unwrap();
-            println!("{}: {:?}", props["name"], label_pos);
+            println!("{}: {:?}", name, label_pos);
         }
     }
 }
 ```
-Full source code: [polylabel.rs](./geozero-core/tests/polylabel.rs)
+Full source code: [polylabel.rs](./geozero/tests/polylabel.rs)
 
 
 ## PostGIS usage examples
@@ -110,8 +110,8 @@ let row = client.query_one(
     &[],
 )?;
 
-let geom: wkb::Geometry<geo_types::Geometry<f64>> = row.get(0);
-if let geo_types::Geometry::Polygon(poly) = geom.0 {
+let wkbgeom: wkb::Geometry<geo_types::Geometry<f64>> = row.get(0);
+if let geo_types::Geometry::Polygon(poly) = wkbgeom.0 {
     assert_eq!(
         *poly.exterior(),
         vec![(0.0, 0.0), (2.0, 0.0), (2.0, 2.0), (0.0, 2.0), (0.0, 0.0)].into()
@@ -138,8 +138,8 @@ let row: (wkb::Geometry<geo_types::Geometry<f64>>,) =
         .fetch_one(&pool)
         .await?;
 
-let geom = row.0;
-if let geo_types::Geometry::Polygon(poly) = geom.0 {
+let wkbgeom = row.0;
+if let geo_types::Geometry::Polygon(poly) = wkbgeom.0 {
     assert_eq!(
         *poly.exterior(),
         vec![(0.0, 0.0), (2.0, 0.0), (2.0, 2.0), (0.0, 2.0), (0.0, 0.0)].into()

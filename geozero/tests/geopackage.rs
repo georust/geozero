@@ -61,6 +61,8 @@ fn async_blob_query() {
 }
 
 async fn rust_geo_query() -> Result<(), sqlx::Error> {
+    use geozero::ToWkt;
+
     let pool = SqlitePoolOptions::new()
         .max_connections(5)
         .connect("sqlite://tests/data/gpkg_test.gpkg")
@@ -69,9 +71,10 @@ async fn rust_geo_query() -> Result<(), sqlx::Error> {
     let row: (wkb::Geometry<geo_types::Geometry<f64>>,) = sqlx::query_as("SELECT geom FROM pt2d")
         .fetch_one(&pool)
         .await?;
-    let geom = row.0;
+    let wkbgeom = row.0;
+    println!("{}", wkbgeom.0.to_wkt().unwrap());
     assert_eq!(
-        &format!("{:?}", geom.0),
+        &format!("{:?}", wkbgeom.0),
         "Point(Point(Coordinate { x: 1.1, y: 1.1 }))"
     );
 
@@ -101,9 +104,9 @@ async fn geos_query() -> Result<(), sqlx::Error> {
     let row: (wkb::Geometry<geos::Geometry>,) = sqlx::query_as("SELECT geom FROM pt2d")
         .fetch_one(&pool)
         .await?;
-    let geom = row.0;
+    let wkbgeom = row.0;
     assert_eq!(
-        geom.0.to_wkt().unwrap(),
+        wkbgeom.0.to_wkt().unwrap(),
         "POINT (1.1000000000000001 1.1000000000000001)"
     );
 
@@ -111,8 +114,8 @@ async fn geos_query() -> Result<(), sqlx::Error> {
         sqlx::query_as("SELECT geom FROM pt2d WHERE geom IS NULL")
             .fetch_one(&pool)
             .await?;
-    let geom = row.0;
-    assert_eq!(geom.0.to_wkt().unwrap(), "POINT EMPTY");
+    let wkbgeom = row.0;
+    assert_eq!(wkbgeom.0.to_wkt().unwrap(), "POINT EMPTY");
 
     // WKB encoding
     // let mut tx = pool.begin().await?;

@@ -3,7 +3,7 @@ use crate::error::{GeozeroError, Result};
 use crate::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 use geos::{CoordDimensions, CoordSeq, GResult, Geometry as GGeometry};
 
-/// Generator for [GEOS](https://github.com/georust/geos) geometry type.
+/// Generator for GEOS geometry type.
 pub struct GeosWriter<'a> {
     pub(crate) geom: GGeometry<'a>,
     // CoordSeq for Points, Lines and Rings

@@ -1,4 +1,4 @@
-//! [GEOS](https://github.com/georust/geos) conversions.
+//! GEOS conversions.
 pub(crate) mod geos_reader;
 pub(crate) mod geos_writer;
 

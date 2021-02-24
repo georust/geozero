@@ -1,4 +1,3 @@
-/// Geopackage geometry type encoding/decoding.
 use crate::wkb::{self, FromWkb};
 use crate::GeozeroGeometry;
 use sqlx::decode::Decode;

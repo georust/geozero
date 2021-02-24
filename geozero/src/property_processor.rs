@@ -2,6 +2,7 @@ use crate::error::Result;
 use std::collections::HashMap;
 use std::fmt;
 
+/// Feature property value.
 #[derive(PartialEq, Debug)]
 pub enum ColumnValue<'a> {
     Byte(i8),
@@ -21,7 +22,7 @@ pub enum ColumnValue<'a> {
     Binary(&'a [u8]),
 }
 
-/// Feature property processing trait
+/// Feature property processing trait.
 ///
 /// # Usage example:
 ///
@@ -79,10 +80,12 @@ pub struct PropertyReaderIdx<T: PropertyReadType> {
     pub value: Option<T>,
 }
 
+/// Get property value as Rust type.
 pub trait PropertyReadType<T = Self>
 where
     T: PropertyReadType,
 {
+    /// Get property value as Rust type.
     fn get_value(v: &ColumnValue) -> Option<T>;
 }
 

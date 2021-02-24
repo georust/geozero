@@ -1,4 +1,4 @@
-//! [GDAL](https://github.com/georust/gdal) conversions.
+//! GDAL conversions.
 pub(crate) mod gdal_reader;
 pub(crate) mod gdal_writer;
 
