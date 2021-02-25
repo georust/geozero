@@ -1,4 +1,4 @@
-#[cfg(feature = "postgis-postgres")]
+#[cfg(feature = "with-postgis-postgres")]
 mod postgis_postgres {
     use geozero::wkb;
     use geozero::wkt::WktWriter;
@@ -115,14 +115,14 @@ mod postgis_postgres {
                 &[],
             )?;
 
-            let geom: Wkt = row.get(0);
-            assert_eq!(&wkbgeom.0, "POLYGON((0 0,2 0,2 2,0 2,0 0))");
+            let wktgeom: Wkt = row.get(0);
+            assert_eq!(&wktgeom.0, "POLYGON((0 0,2 0,2 2,0 2,0 0))");
             Ok(())
         }
     }
 }
 
-#[cfg(feature = "postgis-sqlx")]
+#[cfg(feature = "with-postgis-sqlx")]
 mod postgis_sqlx {
     use geozero::wkb;
     use sqlx::postgres::PgPoolOptions;
