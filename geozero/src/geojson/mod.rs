@@ -44,3 +44,24 @@ pub(crate) mod conversion {
         }
     }
 }
+
+// #[cfg(feature = "with-wkb")]
+// mod wkb {
+//     use super::geojson_writer::*;
+//     use crate::error::Result;
+//     use crate::geojson::GeoJson;
+//     use crate::wkb::{FromWkb, WkbDialect};
+//     use std::io::Read;
+
+//     impl FromWkb for GeoJson<'_> {
+//         fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> Result<Self> {
+//             let mut out: Vec<u8> = Vec::new();
+//             let mut p = GeoJsonWriter::new(&mut out);
+//             crate::wkb::process_wkb_type_geom(rdr, &mut p, dialect)?;
+//             let json = String::from_utf8(out).map_err(|_| {
+//                 crate::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())
+//             })?;
+//             Ok(GeoJson(&json))
+//         }
+//     }
+// }

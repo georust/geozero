@@ -31,3 +31,19 @@ pub(crate) mod conversion {
         }
     }
 }
+
+#[cfg(feature = "with-wkb")]
+mod wkb {
+    use super::gdal_writer::*;
+    use crate::error::Result;
+    use crate::wkb::{FromWkb, WkbDialect};
+    use std::io::Read;
+
+    impl FromWkb for gdal::vector::Geometry {
+        fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> Result<Self> {
+            let mut geos = GdalWriter::new();
+            crate::wkb::process_wkb_type_geom(rdr, &mut geos, dialect)?;
+            Ok(geos.geom)
+        }
+    }
+}
