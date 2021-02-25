@@ -155,6 +155,37 @@ mod postgis_sqlx {
         assert!(Runtime::new().unwrap().block_on(blob_query()).is_ok());
     }
 
+    async fn point3d_query() -> Result<(), sqlx::Error> {
+        use super::PointZ;
+
+        let pool = PgPoolOptions::new()
+            .max_connections(5)
+            .connect(&env::var("DATABASE_URL").unwrap())
+            .await?;
+
+        let row: (wkb::Geometry<PointZ>,) = sqlx::query_as("SELECT 'POINT(1 2 3)'::geometry")
+            .fetch_one(&pool)
+            .await?;
+
+        let ewkb = row.0;
+        assert_eq!(
+            ewkb.0,
+            PointZ {
+                x: 1.0,
+                y: 2.0,
+                z: 3.0
+            }
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    #[ignore]
+    fn async_point3d_query() {
+        assert!(Runtime::new().unwrap().block_on(point3d_query()).is_ok());
+    }
+
     async fn rust_geo_query() -> Result<(), sqlx::Error> {
         let pool = PgPoolOptions::new()
             .max_connections(5)
@@ -314,5 +345,64 @@ mod postgis_sqlx {
         fn postgis_geometry_query() {
             assert!(Runtime::new().unwrap().block_on(geometry_query()).is_ok());
         }
+    }
+}
+
+// --- Minimal geometry implementation with PostGIS/GPKG support
+
+use geozero::wkb::{FromWkb, WkbDialect};
+use geozero::{CoordDimensions, GeomProcessor, GeozeroGeometry};
+use std::io::Read;
+
+#[derive(Debug, PartialEq, Default)]
+struct PointZ {
+    x: f64,
+    y: f64,
+    z: f64,
+}
+
+impl GeomProcessor for PointZ {
+    fn dimensions(&self) -> CoordDimensions {
+        CoordDimensions::xyz()
+    }
+    fn coordinate(
+        &mut self,
+        x: f64,
+        y: f64,
+        z: Option<f64>,
+        _m: Option<f64>,
+        _t: Option<f64>,
+        _tm: Option<u64>,
+        _idx: usize,
+    ) -> geozero::error::Result<()> {
+        self.x = x;
+        self.y = y;
+        self.z = z.unwrap_or(0.0);
+        Ok(())
+    }
+}
+
+impl GeozeroGeometry for PointZ {
+    fn process_geom<P: GeomProcessor>(
+        &self,
+        processor: &mut P,
+    ) -> std::result::Result<(), geozero::error::GeozeroError> {
+        processor.point_begin(0)?;
+        processor.coordinate(self.x, self.y, Some(self.z), None, None, None, 0)?;
+        processor.point_end(0)
+    }
+    fn empty() -> Self {
+        PointZ::default()
+    }
+    fn dims(&self) -> CoordDimensions {
+        CoordDimensions::xyz()
+    }
+}
+
+impl FromWkb for PointZ {
+    fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> geozero::error::Result<Self> {
+        let mut pt = PointZ::default();
+        geozero::wkb::process_wkb_type_geom(rdr, &mut pt, dialect)?;
+        Ok(pt)
     }
 }
