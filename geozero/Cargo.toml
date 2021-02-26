@@ -1,6 +1,6 @@
 [package]
 name = "geozero"
-version = "0.7.1"
+version = "0.7.2"
 authors = ["Pirmin Kalberer <pka@sourcepole.ch>"]
 edition = "2018"
 description = "Zero-Copy reading and writing of geospatial data."
@@ -51,6 +51,7 @@ tokio = { version = "1.2.0", default-features = false, features = ["rt-multi-thr
 
 [package.metadata.docs.rs]
 all-features = true
+rustc-args = ["--cfg", "docsrs"] 
 
 
 [[test]]
