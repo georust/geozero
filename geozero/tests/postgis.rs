@@ -32,8 +32,8 @@ mod postgis_postgres {
             &[],
         )?;
 
-        let wkbgeom: wkb::Decode<geo_types::Geometry<f64>> = row.get(0);
-        if let Some(geo_types::Geometry::Polygon(poly)) = wkbgeom.geometry {
+        let value: wkb::Decode<geo_types::Geometry<f64>> = row.get(0);
+        if let Some(geo_types::Geometry::Polygon(poly)) = value.geometry {
             assert_eq!(
                 *poly.exterior(),
                 vec![(0.0, 0.0), (2.0, 0.0), (2.0, 2.0), (0.0, 2.0), (0.0, 0.0)].into()
@@ -43,11 +43,11 @@ mod postgis_postgres {
         }
 
         let row = client.query_one("SELECT NULL::geometry", &[])?;
-        let wkbgeom: wkb::Decode<geo_types::Geometry<f64>> = row.get(0);
-        assert!(wkbgeom.geometry.is_none());
+        let value: wkb::Decode<geo_types::Geometry<f64>> = row.get(0);
+        assert!(value.geometry.is_none());
         let row = client.query_one("SELECT NULL::geometry", &[])?;
-        let wkbgeom: Result<wkb::Decode<geo_types::Geometry<f64>>, _> = row.try_get(0);
-        assert!(wkbgeom.unwrap().geometry.is_none());
+        let value: Result<wkb::Decode<geo_types::Geometry<f64>>, _> = row.try_get(0);
+        assert!(value.unwrap().geometry.is_none());
 
         // WKB encoding
         let geom: geo_types::Geometry<f64> = geo::Point::new(1.0, 3.0).into();
@@ -72,8 +72,8 @@ mod postgis_postgres {
             &[],
         )?;
 
-        let wkbgeom: wkb::Decode<geos::Geometry> = row.get(0);
-        assert_eq!(wkbgeom.geometry.unwrap().to_wkt().unwrap(), "POLYGON ((0.0000000000000000 0.0000000000000000, 2.0000000000000000 0.0000000000000000, 2.0000000000000000 2.0000000000000000, 0.0000000000000000 2.0000000000000000, 0.0000000000000000 0.0000000000000000))");
+        let value: wkb::Decode<geos::Geometry> = row.get(0);
+        assert_eq!(value.geometry.unwrap().to_wkt().unwrap(), "POLYGON ((0.0000000000000000 0.0000000000000000, 2.0000000000000000 0.0000000000000000, 2.0000000000000000 2.0000000000000000, 0.0000000000000000 2.0000000000000000, 0.0000000000000000 0.0000000000000000))");
 
         // WKB encoding
         let geom = geos::Geometry::new_from_wkt("POINT(1 3)").expect("Invalid geometry");
@@ -174,9 +174,9 @@ mod postgis_sqlx {
             .fetch_one(&pool)
             .await?;
 
-        let ewkb = row.0;
+        let value = row.0;
         assert_eq!(
-            ewkb.geometry.unwrap(),
+            value.geometry.unwrap(),
             PointZ {
                 x: 1.0,
                 y: 2.0,
@@ -204,8 +204,8 @@ mod postgis_sqlx {
                 .fetch_one(&pool)
                 .await?;
 
-        let wkbgeom = row.0;
-        if let Some(geo_types::Geometry::Polygon(poly)) = wkbgeom.geometry {
+        let value = row.0;
+        if let Some(geo_types::Geometry::Polygon(poly)) = value.geometry {
             assert_eq!(
                 *poly.exterior(),
                 vec![(0.0, 0.0), (2.0, 0.0), (2.0, 2.0), (0.0, 2.0), (0.0, 0.0)].into()
@@ -254,14 +254,14 @@ mod postgis_sqlx {
             sqlx::query_as("SELECT 'SRID=4326;POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))'::geometry")
                 .fetch_one(&pool)
                 .await?;
-        let wkbgeom = row.0;
-        assert_eq!(wkbgeom.geometry.unwrap().to_wkt().unwrap(), "POLYGON ((0.0000000000000000 0.0000000000000000, 2.0000000000000000 0.0000000000000000, 2.0000000000000000 2.0000000000000000, 0.0000000000000000 2.0000000000000000, 0.0000000000000000 0.0000000000000000))");
+        let value = row.0;
+        assert_eq!(value.geometry.unwrap().to_wkt().unwrap(), "POLYGON ((0.0000000000000000 0.0000000000000000, 2.0000000000000000 0.0000000000000000, 2.0000000000000000 2.0000000000000000, 0.0000000000000000 2.0000000000000000, 0.0000000000000000 0.0000000000000000))");
 
         let row: (wkb::Decode<geos::Geometry>,) = sqlx::query_as("SELECT NULL::geometry")
             .fetch_one(&pool)
             .await?;
-        let wkbgeom = row.0;
-        assert!(wkbgeom.geometry.is_none());
+        let value = row.0;
+        assert!(value.geometry.is_none());
 
         // WKB encoding
         let mut tx = pool.begin().await?;

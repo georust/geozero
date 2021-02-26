@@ -110,8 +110,8 @@ let row = client.query_one(
     &[],
 )?;
 
-let wkbgeom: wkb::Decode<geo_types::Geometry<f64>> = row.get(0);
-if let Some(geo_types::Geometry::Polygon(poly)) = wkbgeom.geometry {
+let value: wkb::Decode<geo_types::Geometry<f64>> = row.get(0);
+if let Some(geo_types::Geometry::Polygon(poly)) = value.geometry {
     assert_eq!(
         *poly.exterior(),
         vec![(0.0, 0.0), (2.0, 0.0), (2.0, 2.0), (0.0, 2.0), (0.0, 0.0)].into()
@@ -137,8 +137,8 @@ let row: (wkb::Decode<geo_types::Geometry<f64>>,) =
     sqlx::query_as("SELECT 'SRID=4326;POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))'::geometry")
         .fetch_one(&pool)
         .await?;
-let wkbgeom = row.0;
-if let Some(geo_types::Geometry::Polygon(poly)) = wkbgeom.geometry {
+let value = row.0;
+if let Some(geo_types::Geometry::Polygon(poly)) = value.geometry {
     assert_eq!(
         *poly.exterior(),
         vec![(0.0, 0.0), (2.0, 0.0), (2.0, 2.0), (0.0, 2.0), (0.0, 0.0)].into()

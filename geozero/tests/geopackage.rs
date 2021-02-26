@@ -114,8 +114,8 @@ async fn geos_query() -> Result<(), sqlx::Error> {
         sqlx::query_as("SELECT geom FROM pt2d WHERE geom IS NULL")
             .fetch_one(&pool)
             .await?;
-    let wkbgeom = row.0;
-    assert!(wkbgeom.geometry.is_none());
+    let value = row.0;
+    assert!(value.geometry.is_none());
 
     // WKB encoding
     // let mut tx = pool.begin().await?;
