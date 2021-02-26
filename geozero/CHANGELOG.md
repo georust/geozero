@@ -1,3 +1,8 @@
+## 0.7.1 (UNRELEASED)
+
+* Split wkb::Geometry into wkb::Encode and wkb::Decode
+  with support for NULL value decoding
+
 ## 0.7.0 (2021-02-24)
 
 * Merge geozero-core into geozero crate

@@ -68,13 +68,13 @@ async fn rust_geo_query() -> Result<(), sqlx::Error> {
         .connect("sqlite://tests/data/gpkg_test.gpkg")
         .await?;
 
-    let row: (wkb::Geometry<geo_types::Geometry<f64>>,) = sqlx::query_as("SELECT geom FROM pt2d")
+    let row: (wkb::Decode<geo_types::Geometry<f64>>,) = sqlx::query_as("SELECT geom FROM pt2d")
         .fetch_one(&pool)
         .await?;
-    let wkbgeom = row.0;
-    println!("{}", wkbgeom.0.to_wkt().unwrap());
+    let geom = row.0.geometry.unwrap();
+    println!("{}", geom.to_wkt().unwrap());
     assert_eq!(
-        &format!("{:?}", wkbgeom.0),
+        &format!("{:?}", geom),
         "Point(Point(Coordinate { x: 1.1, y: 1.1 }))"
     );
 
@@ -101,28 +101,28 @@ async fn geos_query() -> Result<(), sqlx::Error> {
         .connect("sqlite://tests/data/gpkg_test.gpkg")
         .await?;
 
-    let row: (wkb::Geometry<geos::Geometry>,) = sqlx::query_as("SELECT geom FROM pt2d")
+    let row: (wkb::Decode<geos::Geometry>,) = sqlx::query_as("SELECT geom FROM pt2d")
         .fetch_one(&pool)
         .await?;
-    let wkbgeom = row.0;
+    let geom = row.0.geometry.unwrap();
     assert_eq!(
-        wkbgeom.0.to_wkt().unwrap(),
+        geom.to_wkt().unwrap(),
         "POINT (1.1000000000000001 1.1000000000000001)"
     );
 
-    let row: (wkb::Geometry<geos::Geometry>,) =
+    let row: (wkb::Decode<geos::Geometry>,) =
         sqlx::query_as("SELECT geom FROM pt2d WHERE geom IS NULL")
             .fetch_one(&pool)
             .await?;
     let wkbgeom = row.0;
-    assert_eq!(wkbgeom.0.to_wkt().unwrap(), "POINT EMPTY");
+    assert!(wkbgeom.geometry.is_none());
 
     // WKB encoding
     // let mut tx = pool.begin().await?;
     // let geom = geos::Geometry::new_from_wkt("POINT(1 3)").expect("Invalid geometry");
     // // Requires loading an extension (e.g. SpatiaLite) providing functions like ST_SRID
     // let _inserted = sqlx::query("INSERT INTO pt2d (name,geom) VALUES('WKB Test',$1)")
-    //     .bind(wkb::Geometry(geom))
+    //     .bind(wkb::Encode(geom))
     //     .execute(&mut tx)
     //     .await?;
     // tx.commit().await?;

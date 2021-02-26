@@ -110,8 +110,8 @@ let row = client.query_one(
     &[],
 )?;
 
-let wkbgeom: wkb::Geometry<geo_types::Geometry<f64>> = row.get(0);
-if let geo_types::Geometry::Polygon(poly) = wkbgeom.0 {
+let wkbgeom: wkb::Decode<geo_types::Geometry<f64>> = row.get(0);
+if let Some(geo_types::Geometry::Polygon(poly)) = wkbgeom.geometry {
     assert_eq!(
         *poly.exterior(),
         vec![(0.0, 0.0), (2.0, 0.0), (2.0, 2.0), (0.0, 2.0), (0.0, 0.0)].into()
@@ -122,7 +122,7 @@ if let geo_types::Geometry::Polygon(poly) = wkbgeom.0 {
 let geom: geo_types::Geometry<f64> = geo::Point::new(1.0, 3.0).into();
 let _ = client.execute(
     "INSERT INTO point2d (datetimefield,geom) VALUES(now(),ST_SetSRID($1,4326))",
-    &[&wkb::Geometry(geom)],
+    &[&wkb::Encode(geom)],
 );
 ```
 
@@ -133,13 +133,12 @@ let pool = PgPoolOptions::new()
     .connect(&env::var("DATABASE_URL").unwrap())
     .await?;
 
-let row: (wkb::Geometry<geo_types::Geometry<f64>>,) =
+let row: (wkb::Decode<geo_types::Geometry<f64>>,) =
     sqlx::query_as("SELECT 'SRID=4326;POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))'::geometry")
         .fetch_one(&pool)
         .await?;
-
 let wkbgeom = row.0;
-if let geo_types::Geometry::Polygon(poly) = wkbgeom.0 {
+if let Some(geo_types::Geometry::Polygon(poly)) = wkbgeom.geometry {
     assert_eq!(
         *poly.exterior(),
         vec![(0.0, 0.0), (2.0, 0.0), (2.0, 2.0), (0.0, 2.0), (0.0, 0.0)].into()
@@ -152,7 +151,7 @@ let geom: geo_types::Geometry<f64> = geo::Point::new(10.0, 20.0).into();
 let _ = sqlx::query(
     "INSERT INTO point2d (datetimefield,geom) VALUES(now(),ST_SetSRID($1,4326))",
 )
-.bind(wkb::Geometry(geom))
+.bind(wkb::Encode(geom))
 .execute(&mut tx)
 .await?;
 tx.commit().await?;

@@ -2,6 +2,12 @@ use crate::error::Result;
 use crate::{GeomProcessor, GeozeroGeometry};
 use geo_types::*;
 
+impl GeozeroGeometry for geo_types::Geometry<f64> {
+    fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
+        process_geom(self, processor)
+    }
+}
+
 /// Process geo-types geometry.
 pub fn process_geom<P: GeomProcessor>(geom: &Geometry<f64>, processor: &mut P) -> Result<()> {
     process_geom_n(geom, 0, processor)
@@ -114,17 +120,6 @@ fn process_polygon<P: GeomProcessor>(
         process_linestring(&ring, false, i + 1, processor)?;
     }
     processor.polygon_end(tagged, idx)
-}
-
-// --- impl conversion traits
-
-impl GeozeroGeometry for geo_types::Geometry<f64> {
-    fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
-        process_geom(self, processor)
-    }
-    fn empty() -> Self {
-        geo_types::Geometry::GeometryCollection(geo_types::GeometryCollection::new())
-    }
 }
 
 #[cfg(test)]

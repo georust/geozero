@@ -3,6 +3,12 @@ use crate::{GeomProcessor, GeozeroGeometry};
 use gdal::vector::Geometry;
 use gdal_sys::{self, OGRwkbGeometryType};
 
+impl GeozeroGeometry for Geometry {
+    fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
+        process_geom(self, processor)
+    }
+}
+
 /// Process GDAL/OGR geometry.
 pub fn process_geom<P: GeomProcessor>(geo: &Geometry, processor: &mut P) -> Result<()> {
     process_geom_n(geo, 0, processor)
@@ -142,17 +148,6 @@ fn process_polygon<P: GeomProcessor>(
         process_linestring(&ring, false, i, processor)?;
     }
     processor.polygon_end(tagged, idx)
-}
-
-// --- impl conversion traits
-
-impl GeozeroGeometry for Geometry {
-    fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
-        process_geom(self, processor)
-    }
-    fn empty() -> Self {
-        Geometry::empty(OGRwkbGeometryType::wkbPoint).unwrap()
-    }
 }
 
 #[cfg(test)]

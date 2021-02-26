@@ -2,8 +2,13 @@ use crate::error::Result;
 use crate::GeozeroGeometry;
 use std::io::Read;
 
-/// Geometry type wrapper for WKB encoding/decoding.
-pub struct Geometry<T: GeozeroGeometry + Sized>(pub T);
+/// Encode to WKB
+pub struct Encode<T: GeozeroGeometry>(pub T);
+
+/// Decode from WKB
+pub struct Decode<T: FromWkb> {
+    pub geometry: Option<T>,
+}
 
 /// Convert from WKB.
 pub trait FromWkb {

@@ -4,6 +4,33 @@ use crate::{GeomProcessor, GeozeroGeometry};
 use scroll::IOread;
 use std::io::Read;
 
+/// WKB reader.
+pub struct Wkb(pub Vec<u8>);
+
+impl GeozeroGeometry for Wkb {
+    fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
+        process_wkb_geom(&mut self.0.as_slice(), processor)
+    }
+}
+
+/// EWKB reader.
+pub struct Ewkb(pub Vec<u8>);
+
+impl GeozeroGeometry for Ewkb {
+    fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
+        process_ewkb_geom(&mut self.0.as_slice(), processor)
+    }
+}
+
+/// GepPackage WKB reader.
+pub struct GpkgWkb(pub Vec<u8>);
+
+impl GeozeroGeometry for GpkgWkb {
+    fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
+        process_gpkg_geom(&mut self.0.as_slice(), processor)
+    }
+}
+
 /// Process WKB geometry.
 pub fn process_wkb_geom<R: Read, P: GeomProcessor>(raw: &mut R, processor: &mut P) -> Result<()> {
     let info = read_wkb_header(raw)?;
@@ -412,44 +439,6 @@ fn process_curvepolygon<R: Read, P: GeomProcessor>(
         process_curve(raw, read_header, i, processor)?;
     }
     processor.curvepolygon_end(idx)
-}
-
-// --- impl conversion traits
-
-/// WKB reader.
-pub struct Wkb(pub Vec<u8>);
-
-impl GeozeroGeometry for Wkb {
-    fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
-        process_wkb_geom(&mut self.0.as_slice(), processor)
-    }
-    fn empty() -> Self {
-        Wkb(Vec::new())
-    }
-}
-
-/// EWKB reader.
-pub struct Ewkb(pub Vec<u8>);
-
-impl GeozeroGeometry for Ewkb {
-    fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
-        process_ewkb_geom(&mut self.0.as_slice(), processor)
-    }
-    fn empty() -> Self {
-        Ewkb(Vec::new())
-    }
-}
-
-/// GepPackage WKB reader.
-pub struct GpkgWkb(pub Vec<u8>);
-
-impl GeozeroGeometry for GpkgWkb {
-    fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
-        process_gpkg_geom(&mut self.0.as_slice(), processor)
-    }
-    fn empty() -> Self {
-        GpkgWkb(Vec::new())
-    }
 }
 
 #[cfg(test)]

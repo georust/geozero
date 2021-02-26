@@ -4,11 +4,13 @@ use bytes::{BufMut, BytesMut};
 use postgres_types::{to_sql_checked, FromSql, IsNull, ToSql, Type};
 use std::fmt;
 
-impl<T: GeozeroGeometry + FromWkb + Sized> FromSql<'_> for wkb::Geometry<T> {
+impl<T: FromWkb + Sized> FromSql<'_> for wkb::Decode<T> {
     fn from_sql(_ty: &Type, raw: &[u8]) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
         let mut rdr = std::io::Cursor::new(raw);
         let geom = T::from_wkb(&mut rdr, wkb::WkbDialect::Ewkb)?;
-        Ok(wkb::Geometry(geom))
+        Ok(wkb::Decode {
+            geometry: Some(geom),
+        })
     }
 
     fn accepts(ty: &Type) -> bool {
@@ -20,13 +22,13 @@ impl<T: GeozeroGeometry + FromWkb + Sized> FromSql<'_> for wkb::Geometry<T> {
 }
 
 // required by ToSql
-impl<'a, T: GeozeroGeometry + Sized> fmt::Debug for wkb::Geometry<T> {
+impl<'a, T: GeozeroGeometry + Sized> fmt::Debug for wkb::Encode<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(&self.0.to_wkt().unwrap_or("<unkown geometry>".to_string()))
     }
 }
 
-impl<'a, T: GeozeroGeometry + Sized> ToSql for wkb::Geometry<T> {
+impl<'a, T: GeozeroGeometry + Sized> ToSql for wkb::Encode<T> {
     fn to_sql(
         &self,
         _ty: &Type,

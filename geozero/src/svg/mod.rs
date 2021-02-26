@@ -77,3 +77,23 @@ pub(crate) mod conversion {
         }
     }
 }
+
+#[cfg(feature = "with-wkb")]
+mod wkb {
+    use super::svg::*;
+    use crate::error::Result;
+    use crate::wkb::{FromWkb, WkbDialect};
+    use std::io::Read;
+
+    impl FromWkb for SvgString {
+        fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> Result<Self> {
+            let mut svg_data: Vec<u8> = Vec::new();
+            let mut writer = SvgWriter::new(&mut svg_data, false);
+            crate::wkb::process_wkb_type_geom(rdr, &mut writer, dialect)?;
+            let svg = String::from_utf8(svg_data).map_err(|_| {
+                crate::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())
+            })?;
+            Ok(SvgString(svg))
+        }
+    }
+}

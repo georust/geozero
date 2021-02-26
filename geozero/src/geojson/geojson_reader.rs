@@ -3,6 +3,39 @@ use crate::{FeatureProcessor, GeomProcessor, GeozeroDatasource, GeozeroGeometry}
 use geojson::{GeoJson as GeoGeoJson, Geometry, Value};
 use std::io::Read;
 
+/// GeoJSON String.
+pub struct GeoJsonString(pub String);
+
+impl GeozeroGeometry for GeoJsonString {
+    fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
+        read_geojson_geom(&mut self.0.as_bytes(), processor)
+    }
+}
+
+/// GeoJSON String slice.
+pub struct GeoJson<'a>(pub &'a str);
+
+impl GeozeroGeometry for GeoJson<'_> {
+    fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
+        read_geojson_geom(&mut self.0.as_bytes(), processor)
+    }
+}
+
+impl GeozeroDatasource for GeoJson<'_> {
+    fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> Result<()> {
+        read_geojson(&mut self.0.as_bytes(), processor)
+    }
+}
+
+/// GeoJSON Reader.
+pub struct GeoJsonReader<'a, R: Read>(pub &'a mut R);
+
+impl<'a, R: Read> GeozeroDatasource for GeoJsonReader<'a, R> {
+    fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> Result<()> {
+        read_geojson(&mut self.0, processor)
+    }
+}
+
 /// Read and process GeoJSON.
 pub fn read_geojson<R: Read, P: FeatureProcessor>(mut reader: R, processor: &mut P) -> Result<()> {
     let mut geojson_str = String::new();
@@ -207,35 +240,6 @@ fn process_multi_polygon<P: GeomProcessor>(
         process_polygon(&polygon_type, false, idxp, processor)?;
     }
     processor.multipolygon_end(idx)
-}
-
-// --- impl conversion traits
-
-/// GeoJSON String.
-pub struct GeoJson<'a>(pub &'a str);
-
-impl GeozeroGeometry for GeoJson<'_> {
-    fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
-        read_geojson_geom(&mut self.0.as_bytes(), processor)
-    }
-    fn empty() -> Self {
-        GeoJson("")
-    }
-}
-
-impl GeozeroDatasource for GeoJson<'_> {
-    fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> Result<()> {
-        read_geojson(&mut self.0.as_bytes(), processor)
-    }
-}
-
-/// GeoJSON Reader.
-pub struct GeoJsonReader<'a, R: Read>(pub &'a mut R);
-
-impl<'a, R: Read> GeozeroDatasource for GeoJsonReader<'a, R> {
-    fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> Result<()> {
-        read_geojson(&mut self.0, processor)
-    }
 }
 
 #[cfg(test)]

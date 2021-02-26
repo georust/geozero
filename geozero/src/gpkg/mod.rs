@@ -17,11 +17,12 @@
 //!     .connect("sqlite://points.gpkg")
 //!     .await?;
 //!
-//! let row: (wkb::Geometry<geo_types::Geometry<f64>>,) = sqlx::query_as("SELECT geom FROM pt2d")
+//! let row: (wkb::Decode<geo_types::Geometry<f64>>,) = sqlx::query_as("SELECT geom FROM pt2d")
 //!     .fetch_one(&pool)
 //!     .await?;
-//! let wkbgeom = row.0;
-//! println!("{}", wkbgeom.0.to_wkt().unwrap());
+//! if let Some(geom) = row.0.geometry {
+//!     println!("{}", geom.to_wkt().unwrap());
+//! }
 //! # Ok(())
 //! # }
 //! ```

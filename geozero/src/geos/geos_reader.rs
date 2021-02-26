@@ -2,6 +2,21 @@ use crate::error::{GeozeroError, Result};
 use crate::{CoordDimensions, GeomProcessor, GeozeroGeometry};
 use geos::{CoordSeq, Geom, Geometry as GGeometry, GeometryTypes};
 
+impl GeozeroGeometry for geos::Geometry<'_> {
+    fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
+        process_geom(self, processor)
+    }
+    fn dims(&self) -> CoordDimensions {
+        CoordDimensions {
+            z: self.has_z().unwrap_or(false),
+            ..Default::default()
+        }
+    }
+    fn srid(&self) -> Option<i32> {
+        self.get_srid().map(|srid| srid as i32).ok()
+    }
+}
+
 pub(crate) fn from_geos_err(error: geos::Error) -> GeozeroError {
     match error {
         geos::Error::InvalidGeometry(e) => GeozeroError::Geometry(e),
@@ -153,26 +168,6 @@ fn process_polygon<'a, P: GeomProcessor, G: Geom<'a>>(
         process_linestring(&ring, false, ix_interior + 1, processor)?;
     }
     processor.polygon_end(tagged, idx)
-}
-
-// --- impl conversion traits
-
-impl GeozeroGeometry for geos::Geometry<'_> {
-    fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
-        process_geom(self, processor)
-    }
-    fn empty() -> Self {
-        GGeometry::create_empty_point().unwrap()
-    }
-    fn dims(&self) -> CoordDimensions {
-        CoordDimensions {
-            z: self.has_z().unwrap_or(false),
-            ..Default::default()
-        }
-    }
-    fn srid(&self) -> Option<i32> {
-        self.get_srid().map(|srid| srid as i32).ok()
-    }
 }
 
 #[cfg(test)]
