@@ -2,6 +2,8 @@
 
 * Split wkb::Geometry into wkb::Encode and wkb::Decode
   with support for NULL value decoding
+* Implement FromWkb for GeoJsonString, GDAL, SvgString and WktString
+* Improve crate documentation
 
 ## 0.7.0 (2021-02-24)
 

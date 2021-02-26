@@ -33,3 +33,23 @@ pub(crate) mod conversion {
         }
     }
 }
+
+#[cfg(feature = "with-wkb")]
+mod wkb {
+    use super::wkt_writer::*;
+    use crate::error::Result;
+    use crate::wkb::{FromWkb, WkbDialect};
+    use std::io::Read;
+
+    impl FromWkb for WktString {
+        fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> Result<Self> {
+            let mut out: Vec<u8> = Vec::new();
+            let mut writer = WktWriter::new(&mut out);
+            crate::wkb::process_wkb_type_geom(rdr, &mut writer, dialect)?;
+            let wkt = String::from_utf8(out).map_err(|_| {
+                crate::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())
+            })?;
+            Ok(WktString(wkt))
+        }
+    }
+}

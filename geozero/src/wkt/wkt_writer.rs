@@ -2,6 +2,9 @@ use crate::error::Result;
 use crate::{CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcessor};
 use std::io::Write;
 
+/// WKT String.
+pub struct WktString(pub String);
+
 /// WKT Writer.
 pub struct WktWriter<'a, W: Write> {
     pub dims: CoordDimensions,
