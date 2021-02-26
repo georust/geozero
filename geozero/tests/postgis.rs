@@ -43,8 +43,11 @@ mod postgis_postgres {
         }
 
         let row = client.query_one("SELECT NULL::geometry", &[])?;
+        let wkbgeom: wkb::Decode<geo_types::Geometry<f64>> = row.get(0);
+        assert!(wkbgeom.geometry.is_none());
+        let row = client.query_one("SELECT NULL::geometry", &[])?;
         let wkbgeom: Result<wkb::Decode<geo_types::Geometry<f64>>, _> = row.try_get(0);
-        assert!(wkbgeom.is_err());
+        assert!(wkbgeom.unwrap().geometry.is_none());
 
         // WKB encoding
         let geom: geo_types::Geometry<f64> = geo::Point::new(1.0, 3.0).into();

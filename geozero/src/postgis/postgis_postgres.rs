@@ -13,6 +13,10 @@ impl<T: FromWkb + Sized> FromSql<'_> for wkb::Decode<T> {
         })
     }
 
+    fn from_sql_null(_ty: &Type) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
+        Ok(wkb::Decode { geometry: None })
+    }
+
     fn accepts(ty: &Type) -> bool {
         match ty.name() {
             "geography" | "geometry" => true,
