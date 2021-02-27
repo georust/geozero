@@ -17,15 +17,15 @@
 //!
 //! ## Format conversion overview
 //!
-//! | Format / trait |            [GeozeroGeometry]            |             [GeozeroDatasource]              |     [GeomProcessor]      | Geometry Conversion |
-//! |----------------|-----------------------------------------|----------------------------------------------|--------------------------|---------------------|
-//! | geo-types      | `geo_types::Geometry<f64>`              | -                                            | [geo_types::GeoWriter]   | [ToGeo]             |
-//! | GeoJSON        | `GeoJson`                               | [geojson::GeoJsonReader], [geojson::GeoJson] | [geojson::GeoJsonWriter] | [ToJson]            |
-//! | GDAL           | `gdal::vector::Geometry`                | -                                            | [gdal::GdalWriter]       | [ToGdal]            |
-//! | GEOS           | `geos::Geometry`                        | -                                            | [geos::GeosWriter]       | [ToGeos]            |
-//! | SVG            | -                                       | -                                            | [svg::SvgWriter]         | [ToSvg]             |
-//! | WKB            | [wkb::Wkb], [wkb::Ewkb], [wkb::GpkgWkb] | -                                            | [wkb::WkbWriter]         | [ToWkb]             |
-//! | WKT            | -                                       | -                                            | [wkt::WktWriter]         | [ToWkt]             |
+//! |           |                          [GeozeroGeometry]                           |                         [GeozeroDatasource]                          | Geometry Conversion |             [GeomProcessor]             |
+//! |-----------|----------------------------------------------------------------------|----------------------------------------------------------------------|---------------------|-----------------------------------------|
+//! | geo-types | `geo_types::Geometry<f64>`                                           | -                                                                    | [ToGeo]             | [GeoWriter](geo_types::GeoWriter)       |
+//! | GeoJSON   | [GeoJson](geojson::GeoJson), [GeoJsonString](geojson::GeoJsonString) | [GeoJsonReader](geojson::GeoJsonReader), [GeoJson](geojson::GeoJson) | [ToJson]            | [GeoJsonWriter](geojson::GeoJsonWriter) |
+//! | GDAL      | `gdal::vector::Geometry`                                             | -                                                                    | [ToGdal]            | [GdalWriter](gdal::GdalWriter)          |
+//! | GEOS      | `geos::Geometry`                                                     | -                                                                    | [ToGeos]            | [GeosWriter](geos::GeosWriter)          |
+//! | SVG       | -                                                                    | -                                                                    | [ToSvg]             | [SvgWriter](svg::SvgWriter)             |
+//! | WKB       | [Wkb](wkb::Wkb), [Ewkb](wkb::Ewkb), [GpkgWkb](wkb::GpkgWkb)          | -                                                                    | [ToWkb]             | [WkbWriter](wkb::WkbWriter)             |
+//! | WKT       | -                                                                    | -                                                                    | [ToWkt]             | [WktWriter](wkt::WktWriter)             |
 
 mod api;
 pub mod error;

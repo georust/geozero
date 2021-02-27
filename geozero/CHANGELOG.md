@@ -1,4 +1,8 @@
-## 0.7.1 (UNRELEASED)
+## 0.7.3 (2021-02-27)
+
+* Fix docs.rs build
+
+## 0.7.1 (2021-02-27)
 
 * Split wkb::Geometry into wkb::Encode and wkb::Decode
   with support for NULL value decoding

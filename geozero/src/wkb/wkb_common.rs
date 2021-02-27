@@ -26,7 +26,7 @@ pub enum WkbDialect {
     Geopackage,
 }
 
-/// WKB Types according to OGC 06-103r4 (https://www.ogc.org/standards/sfa)
+/// WKB Types according to OGC 06-103r4 (<https://www.ogc.org/standards/sfa>)
 #[derive(PartialEq, Clone, Debug)]
 pub enum WKBGeometryType {
     Unknown = 0,
