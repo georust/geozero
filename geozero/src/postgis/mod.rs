@@ -1,8 +1,8 @@
 //! PostGIS geometry type encoding/decoding.
 //!
-//! All geometry types implementing [GeozeroGeometry](crate::GeozeroGeometry) can be encoded as PostGIS EWKB geometry.
+//! All geometry types implementing [GeozeroGeometry](crate::GeozeroGeometry) can be encoded as PostGIS EWKB geometry using [wkb::Encode](crate::wkb::Encode).
 //!
-//! Geometry types implementing [FromWkb](crate::wkb::FromWkb) can be decoded from PostGIS geometries.
+//! Geometry types implementing [FromWkb](crate::wkb::FromWkb) can be decoded from PostGIS geometries using [wkb::Decode](crate::wkb::Decode).
 #[cfg(feature = "with-postgis-postgres")]
 mod postgis_postgres;
 #[cfg(feature = "with-postgis-sqlx")]

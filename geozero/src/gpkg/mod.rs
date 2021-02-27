@@ -1,8 +1,8 @@
 //! Geopackage geometry type encoding/decoding.
 //!
-//! All geometry types implementing [GeozeroGeometry](crate::GeozeroGeometry) can be encoded as Geopackage WKB geometry.
+//! All geometry types implementing [GeozeroGeometry](crate::GeozeroGeometry) can be encoded as Geopackage WKB geometry using [wkb::Encode](crate::wkb::Encode).
 //!
-//! Geometry types implementing [FromWkb](crate::wkb::FromWkb) can be decoded from Geopackage geometries.
+//! Geometry types implementing [FromWkb](crate::wkb::FromWkb) can be decoded from Geopackage geometries using [wkb::Decode](crate::wkb::Decode).
 //!
 //! # Usage example
 //!
