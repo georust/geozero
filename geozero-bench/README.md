@@ -82,6 +82,10 @@ Remark: All data is converted from the FlatGeobuf file and therefore has the sam
 
 ## Running the benchmark
 
+Install cargo-criterion:
+
+    cargo install cargo-criterion
+
 Prepare data:
 
     cd tests/data
@@ -94,10 +98,10 @@ Create PostGIS database:
 
 Start web server:
 
-    docker-compose up -d
     cd ../..
+    docker-compose up -d
 
 Run benchmark:
 
     export DATABASE_URL=postgresql://$USER@localhost/geozerobench?sslmode=disable
-    cargo bench
+    cargo criterion

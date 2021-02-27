@@ -318,15 +318,16 @@ fn countries_bbox_benchmark(c: &mut Criterion) {
             ))
         })
     });
-    group.bench_function("3-gpkg_gdal", |b| {
-        b.iter(|| {
-            gdal::gdal_read(
-                "tests/data/countries.gpkg",
-                &bbox,
-                3, // != 6!
-            )
-        })
-    });
+    // signal: 11, SIGSEGV: invalid memory reference
+    // group.bench_function("3-gpkg_gdal", |b| {
+    //     b.iter(|| {
+    //         gdal::gdal_read(
+    //             "tests/data/countries.gpkg",
+    //             &bbox,
+    //             3, // != 6!
+    //         )
+    //     })
+    // });
     group.bench_function("4-geojson", |b| {
         b.iter(|| gdal::gdal_read("tests/data/countries.json", &bbox, 3))
     });
@@ -474,9 +475,10 @@ fn buildings_bbox_benchmark(c: &mut Criterion) {
             ))
         })
     });
-    group.bench_function("3-gpkg_gdal", |b| {
-        b.iter(|| gdal::gdal_read("tests/data/osm-buildings-3857-ch.gpkg", &bbox, 54351))
-    });
+    // signal: 11, SIGSEGV: invalid memory reference
+    // group.bench_function("3-gpkg_gdal", |b| {
+    //     b.iter(|| gdal::gdal_read("tests/data/osm-buildings-3857-ch.gpkg", &bbox, 54351))
+    // });
     group.bench_function("6-fgb_http", |b| {
         b.iter(|| {
             rt.block_on(fgb::fgb_http_to_geo(

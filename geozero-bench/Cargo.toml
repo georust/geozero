@@ -14,7 +14,7 @@ geozero-core = { version = "0.5", features = ["gdal-lib", "geos-lib", "gpkg", "p
 sqlx = { version = "0.4.0", default-features = false, features = [ "runtime-tokio-native-tls", "postgres", "sqlite" ] }
 futures-util = "0.3.5"
 geojson = "0.18"
-criterion = "0.3"
+criterion = "0.3.3"
 geo-types = { version = "0.5", default-features = false }
 geo = { version = "0.13" }  # , features = ["postgis-integration"] # not compatible with postgis = "0.7"
 flatgeobuf = "0.3.4"
