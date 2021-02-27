@@ -1,12 +1,18 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use geozero::error::Result;
-use geozero::Extent;
-use geozero_core::geo_types::Geo;
+use geozero::ToGeo;
+
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub struct Extent {
+    pub minx: f64,
+    pub miny: f64,
+    pub maxx: f64,
+    pub maxy: f64,
+}
 
 mod fgb {
     use super::*;
     use flatgeobuf::*;
-    use geozero::Extent;
     use std::fs::File;
     // seek_bufread::BufReader is much faster for bbox queries,
     // because seek resets buffer of std::io::BufReader
@@ -20,9 +26,12 @@ mod fgb {
         } else {
             fgb.select_all()?;
         }
-        let mut geo = Geo::new();
-        fgb.process_features(&mut geo)?;
-        assert_eq!(fgb.features_count(), count);
+        let mut cnt = 0;
+        while let Some(feature) = fgb.next()? {
+            let _geom = feature.to_geo()?;
+            cnt += 1;
+        }
+        assert_eq!(cnt, count);
         Ok(())
     }
 
@@ -39,16 +48,19 @@ mod fgb {
         } else {
             fgb.select_all().await?;
         }
-        let mut geo = Geo::new();
-        fgb.process_features(&mut geo).await?;
-        assert_eq!(fgb.features_count(), count);
+        let mut cnt = 0;
+        while let Some(feature) = fgb.next().await? {
+            let _geom = feature.to_geo()?;
+            cnt += 1;
+        }
+        assert_eq!(cnt, count);
         Ok(())
     }
 }
 
 mod postgis_postgres {
-    use geozero::Extent;
-    use geozero_core::postgis::postgres::geo::Geometry as GeoZeroGeometry;
+    use super::Extent;
+    use geozero::wkb;
     use postgres::{self, Client, NoTls};
 
     // export DATABASE_URL=postgresql://pi@%2Fvar%2Frun%2Fpostgresql/testdb
@@ -75,7 +87,7 @@ mod postgis_postgres {
 
         let mut cnt = 0;
         for row in client.query(sql.as_str(), &[]).unwrap() {
-            let _geom: GeoZeroGeometry = row.get(0);
+            let _value: wkb::Decode<geo_types::Geometry<f64>> = row.get(0);
             cnt += 1;
         }
         assert_eq!(cnt, count);
@@ -84,7 +96,7 @@ mod postgis_postgres {
 }
 
 mod rust_postgis {
-    use geozero::Extent;
+    use super::Extent;
     // use geo::algorithm::from_postgis::FromPostgis;
     use postgis::ewkb;
     use postgres::{self, Client};
@@ -116,8 +128,9 @@ mod rust_postgis {
 }
 
 mod postgis_sqlx {
+    use super::Extent;
     use futures_util::stream::TryStreamExt;
-    use geozero::Extent;
+    use geozero::wkb;
     use sqlx::postgres::PgConnection;
     use sqlx::prelude::*;
 
@@ -135,8 +148,6 @@ mod postgis_sqlx {
         srid: i32,
         count: usize,
     ) -> std::result::Result<(), sqlx::Error> {
-        use geozero_core::postgis::sqlx::geo::Geometry as GeoZeroGeometry;
-
         let mut sql = format!("SELECT geom FROM {}", table);
         if let Some(bbox) = bbox {
             sql += &format!(
@@ -147,9 +158,14 @@ mod postgis_sqlx {
         let mut cursor = sqlx::query(&sql).fetch(conn);
 
         let mut cnt = 0;
+
         while let Some(row) = cursor.try_next().await? {
-            let _geom = row.get::<GeoZeroGeometry, _>(0);
-            cnt += 1;
+            if let Some(_geom) = row
+                .get::<wkb::Decode<geo_types::Geometry<f64>>, _>(0)
+                .geometry
+            {
+                cnt += 1;
+            }
         }
         assert_eq!(cnt, count);
 
@@ -158,8 +174,9 @@ mod postgis_sqlx {
 }
 
 mod gpkg {
+    use super::Extent;
     use futures_util::stream::TryStreamExt;
-    use geozero::Extent;
+    use geozero::wkb;
     use sqlx::prelude::*;
     use sqlx::sqlite::SqliteConnection;
 
@@ -169,8 +186,6 @@ mod gpkg {
         bbox: &Option<Extent>,
         count: usize,
     ) -> std::result::Result<(), sqlx::Error> {
-        use geozero_core::gpkg::geo::Geometry as GeoZeroGeometry;
-
         let mut conn = SqliteConnection::connect(&format!("sqlite://{}", fpath)).await?;
 
         // http://erouault.blogspot.com/2017/03/dealing-with-huge-vector-geopackage.html
@@ -186,8 +201,12 @@ mod gpkg {
         let mut cursor = sqlx::query(&sql).fetch(&mut conn);
         let mut cnt = 0;
         while let Some(row) = cursor.try_next().await? {
-            let _geom = row.get::<GeoZeroGeometry, _>(0);
-            cnt += 1;
+            if let Some(_geom) = row
+                .get::<wkb::Decode<geo_types::Geometry<f64>>, _>(0)
+                .geometry
+            {
+                cnt += 1;
+            }
         }
         assert_eq!(cnt, count);
         Ok(())
@@ -195,15 +214,16 @@ mod gpkg {
 }
 
 mod gdal {
-    use gdal::vector::{Dataset, Geometry, Layer};
-    use geozero::Extent;
+    use super::Extent;
+    use gdal::vector::{Geometry, Layer};
+    use gdal::Dataset;
     use std::path::Path;
 
     pub(super) fn gdal_read(
         fpath: &str,
         bbox: &Option<Extent>,
         count: usize,
-    ) -> std::result::Result<(), gdal::errors::Error> {
+    ) -> std::result::Result<(), gdal::errors::GdalError> {
         let mut dataset = Dataset::open(Path::new(fpath))?;
         let layer = dataset.layer(0)?;
         // omit fields when fetching features
@@ -235,7 +255,7 @@ mod gdal {
 
 fn countries_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("countries");
-    let mut rt = tokio::runtime::Runtime::new().unwrap();
+    let rt = tokio::runtime::Runtime::new().unwrap();
     let bbox = None;
     let srid = 4326;
     group.bench_function("1-shp", |b| {
@@ -258,10 +278,10 @@ fn countries_benchmark(c: &mut Criterion) {
         b.iter(|| gdal::gdal_read("tests/data/countries.json", &bbox, 179))
     });
     group.bench_function("5-geojson_http", |b| {
-        b.iter(|| gdal::gdal_read("http://127.0.0.1:3333/countries.json", &bbox, 179))
+        b.iter(|| gdal::gdal_read("/vsicurl/http://127.0.0.1:3333/countries.json", &bbox, 179))
     });
     group.bench_function("5-geojson_http_gz", |b| {
-        b.iter(|| gdal::gdal_read("http://127.0.0.1:3333/countries-gz.json", &bbox, 179))
+        b.iter(|| gdal::gdal_read("/vsicurl/http://127.0.0.1:3333/countries-gz.json", &bbox, 179))
     });
     group.bench_function("6-fgb_http", |b| {
         b.iter(|| rt.block_on(fgb::fgb_http_to_geo("countries.fgb", &bbox, 179)));
@@ -293,7 +313,7 @@ fn countries_benchmark(c: &mut Criterion) {
 
 fn countries_bbox_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("countries_bbox");
-    let mut rt = tokio::runtime::Runtime::new().unwrap();
+    let rt = tokio::runtime::Runtime::new().unwrap();
     let bbox = Some(Extent {
         minx: 8.8,
         miny: 47.2,
@@ -332,10 +352,10 @@ fn countries_bbox_benchmark(c: &mut Criterion) {
         b.iter(|| gdal::gdal_read("tests/data/countries.json", &bbox, 3))
     });
     group.bench_function("5-geojson_http", |b| {
-        b.iter(|| gdal::gdal_read("http://127.0.0.1:3333/countries.json", &bbox, 3))
+        b.iter(|| gdal::gdal_read("/vsicurl/http://127.0.0.1:3333/countries.json", &bbox, 3))
     });
     group.bench_function("5-geojson_http_gz", |b| {
-        b.iter(|| gdal::gdal_read("http://127.0.0.1:3333/countries-gz.json", &bbox, 3))
+        b.iter(|| gdal::gdal_read("/vsicurl/http://127.0.0.1:3333/countries-gz.json", &bbox, 3))
     });
     group.bench_function("6-fgb_http", |b| {
         b.iter(|| rt.block_on(fgb::fgb_http_to_geo("countries.fgb", &bbox, 6)));
@@ -367,7 +387,7 @@ fn countries_bbox_benchmark(c: &mut Criterion) {
 
 fn buildings_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("buildings");
-    let mut rt = tokio::runtime::Runtime::new().unwrap();
+    let rt = tokio::runtime::Runtime::new().unwrap();
     let bbox = None;
     let srid = 3857;
     group.bench_function("2-fgb", |b| {
@@ -403,7 +423,7 @@ fn buildings_benchmark(c: &mut Criterion) {
     // group.bench_function("5-geojson_http", |b| {
     //     b.iter(|| {
     //         gdal::gdal_read(
-    //             "http://127.0.0.1:3333/osm-buildings-3857-ch.json",
+    //             "/vsicurl/http://127.0.0.1:3333/osm-buildings-3857-ch.json",
     //             &bbox,
     //             2407771,
     //         )
@@ -450,7 +470,7 @@ fn buildings_benchmark(c: &mut Criterion) {
 }
 
 fn buildings_bbox_benchmark(c: &mut Criterion) {
-    let mut rt = tokio::runtime::Runtime::new().unwrap();
+    let rt = tokio::runtime::Runtime::new().unwrap();
     let mut group = c.benchmark_group("buildings_bbox");
     let bbox = Some(Extent {
         minx: 939651.0,

@@ -1,6 +1,6 @@
 [package]
 name = "geozero-bench"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Pirmin Kalberer <pka@sourcepole.ch>"]
 edition = "2018"
 description = "GeoZero benchmark."
@@ -9,21 +9,20 @@ repository = "https://github.com/georust/geozero"
 license = "MIT/Apache-2.0"
 
 [dependencies]
-geozero = "0.5"
-geozero-core = { version = "0.5", features = ["gdal-lib", "geos-lib", "gpkg", "postgis-sqlx", "postgis-postgres"] }
-sqlx = { version = "0.4.0", default-features = false, features = [ "runtime-tokio-native-tls", "postgres", "sqlite" ] }
+geozero = { version = "0.7.0", features = ["with-geo", "with-geojson", "with-geos", "with-gpkg", "with-postgis-sqlx", "with-postgis-postgres"] }
+sqlx = { version = "0.5", default-features = false, features = [ "runtime-tokio-native-tls", "postgres", "sqlite" ] }
 futures-util = "0.3.5"
-geojson = "0.18"
+geojson = "0.22"
 criterion = "0.3.3"
-geo-types = { version = "0.5", default-features = false }
-geo = { version = "0.13" }  # , features = ["postgis-integration"] # not compatible with postgis = "0.7"
-flatgeobuf = "0.3.4"
+geo-types = { version = "0.7", default-features = false }
+geo = "0.17" # { version = "0.17", features = ["postgis-integration"] }
+flatgeobuf = "0.5.0"
 seek_bufread = "1.2"
-postgres = "0.17"
-postgis = "0.7"
-gdal = { version = "0.6", default-features = false }
-gdal-sys = { version = "0.2" }
-tokio = { version = "0.2", default-features = false, features = ["rt-threaded"] }
+postgres = "0.19"
+postgis = "0.8.0"
+gdal = { version = "0.7", default-features = false }
+gdal-sys = { version = "0.3" }
+tokio = { version = "1.2.0", default-features = false, features = ["rt-multi-thread"] }
 
 [[bench]]
 name = "geobench"
