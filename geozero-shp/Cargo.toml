@@ -1,6 +1,6 @@
 [package]
 name = "geozero-shp"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Pirmin Kalberer <pka@sourcepole.ch>"]
 edition = "2018"
 description = "Shapefile reader with GeoZero API."
@@ -12,9 +12,9 @@ keywords = ["geo", "shapefile"]
 
 [dependencies]
 thiserror = "1.0"
-geozero = "0.6.0"
+geozero = { version = "0.7.1", default-features = false }
 byteorder = "1.2.7"
 dbase = "0.0.4"
 
 [dev-dependencies]
-geozero-core = "0.6.0"
+geozero = { version = "0.7.1", default-features = true }

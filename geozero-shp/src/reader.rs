@@ -1,21 +1,21 @@
 use crate::shp_reader::{read_shape, RecordHeader};
 use crate::shx_reader::{read_index_file, ShapeIndex};
 use crate::{header, Error};
-use geozero::{FeatureProcessor, FeatureProperties};
+use geozero::{FeatureProcessor, FeatureProperties, GeomProcessor};
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::iter::FusedIterator;
 use std::path::Path;
 
 /// Struct that handle iteration over the shapes of a .shp file
-pub struct ShapeIterator<P: FeatureProcessor, T: Read> {
+pub struct ShapeIterator<P: GeomProcessor, T: Read> {
     processor: P,
     source: T,
     current_pos: usize,
     file_length: usize,
 }
 
-impl<P: FeatureProcessor, T: Read> Iterator for ShapeIterator<P, T> {
+impl<P: GeomProcessor, T: Read> Iterator for ShapeIterator<P, T> {
     type Item = Result<(), Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -205,3 +205,28 @@ impl Reader<BufReader<File>> {
         Ok(reader)
     }
 }
+
+// Does not work, because iter_features requires P instead of &mut P
+// impl<T: Read> GeozeroDatasource for Reader<T> {
+//     fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> geozero::error::Result<()> {
+//         self.iter_features(*processor).unwrap().all();
+//         Ok(())
+//     }
+// }
+
+// Does not work, because &mut self is required
+// impl<P: GeomProcessor, T: Read> GeozeroGeometry for ShapeIterator<P, T> {
+//     fn process_geom<G: GeomProcessor>(&self, processor: &mut G) -> geozero::error::Result<()> {
+//         if self.current_pos >= self.file_length {
+//             Ok(())
+//         } else {
+//             let hdr = match read_shape(processor, &mut self.source) {
+//                 Err(e) => return Ok(()), //FIXME Err(e),
+//                 Ok(hdr_and_shape) => hdr_and_shape,
+//             };
+//             self.current_pos += RecordHeader::SIZE;
+//             self.current_pos += hdr.record_size as usize * 2;
+//             Ok(())
+//         }
+//     }
+// }

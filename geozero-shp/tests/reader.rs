@@ -1,7 +1,7 @@
 use dbase::FieldValue;
+use geozero::geojson::GeoJsonWriter;
+use geozero::wkt::WktWriter;
 use geozero::{FeatureProperties, ProcessorSink};
-use geozero_core::geojson::GeoJsonWriter;
-use geozero_core::wkt::WktWriter;
 use std::fs::File;
 use std::io::BufReader;
 use std::str::from_utf8;

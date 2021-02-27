@@ -1,8 +1,8 @@
 use crate::point_z::BBoxZ;
 use crate::Error;
-use byteorder::{BigEndian, LittleEndian, ReadBytesExt, WriteBytesExt};
+use byteorder::{BigEndian, LittleEndian, ReadBytesExt};
 use std::fmt;
-use std::io::{Read, Write};
+use std::io::Read;
 
 pub(crate) const HEADER_SIZE: i32 = 100;
 const FILE_CODE: i32 = 9994;
@@ -68,29 +68,6 @@ impl Header {
         hdr.bbox.max.m = source.read_f64::<LittleEndian>()?;
 
         Ok(hdr)
-    }
-
-    #[allow(dead_code)]
-    pub(crate) fn write_to<T: Write>(&self, dest: &mut T) -> Result<(), std::io::Error> {
-        dest.write_i32::<BigEndian>(FILE_CODE)?;
-
-        let skip: [u8; SIZE_OF_SKIP] = [0; SIZE_OF_SKIP];
-        dest.write_all(&skip)?;
-
-        dest.write_i32::<BigEndian>(self.file_length)?;
-        dest.write_i32::<LittleEndian>(self.version)?;
-        dest.write_i32::<LittleEndian>(self.shape_type as i32)?;
-
-        dest.write_f64::<LittleEndian>(self.bbox.min.x)?;
-        dest.write_f64::<LittleEndian>(self.bbox.min.y)?;
-        dest.write_f64::<LittleEndian>(self.bbox.max.x)?;
-        dest.write_f64::<LittleEndian>(self.bbox.max.y)?;
-        dest.write_f64::<LittleEndian>(self.bbox.min.z)?;
-        dest.write_f64::<LittleEndian>(self.bbox.max.z)?;
-        dest.write_f64::<LittleEndian>(self.bbox.min.m)?;
-        dest.write_f64::<LittleEndian>(self.bbox.max.m)?;
-
-        Ok(())
     }
 }
 
