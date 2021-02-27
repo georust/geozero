@@ -1,5 +1,6 @@
 use geozero::error::Result;
-use geozero::geojson::read_geojson_geom;
+use geozero::geojson::GeoJsonReader;
+use geozero::GeozeroDatasource;
 use kdbush::*;
 use std::fs::File;
 
@@ -19,11 +20,12 @@ impl geozero::GeomProcessor for PointIndex {
 #[test]
 fn create() -> Result<()> {
     let mut f = File::open("tests/data/places.json")?;
+    let mut reader = GeoJsonReader(&mut f);
     let mut points = PointIndex {
         pos: 0,
         index: KDBush::new(1249, DEFAULT_NODE_SIZE),
     };
-    read_geojson_geom(&mut f, &mut points)?;
+    reader.process_geom(&mut points)?;
     points.index.build_index();
     let mut cnt = 0;
     points.index.within(8.53, 47.37, 5.0, |_id| cnt += 1);

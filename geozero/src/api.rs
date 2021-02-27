@@ -42,6 +42,10 @@ pub trait GeozeroGeometry {
 pub trait GeozeroDatasource {
     /// Consume and process all selected features.
     fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> Result<()>;
+    /// Consume and process geometries of all selected features.
+    fn process_geom<P: GeomProcessor>(&mut self, _processor: &mut P) -> Result<()> {
+        unimplemented!() // will be mandatory in 0.8
+    }
 }
 
 /// Feature processing API

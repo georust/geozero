@@ -34,6 +34,10 @@ impl<'a, R: Read> GeozeroDatasource for GeoJsonReader<'a, R> {
     fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> Result<()> {
         read_geojson(&mut self.0, processor)
     }
+    /// Consume and process all selected features.
+    fn process_geom<P: GeomProcessor>(&mut self, processor: &mut P) -> Result<()> {
+        read_geojson_geom(&mut self.0, processor)
+    }
 }
 
 /// Read and process GeoJSON.
