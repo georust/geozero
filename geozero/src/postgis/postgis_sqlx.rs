@@ -47,3 +47,73 @@ impl<T: GeozeroGeometry + Sized> Encode<'_, Postgres> for wkb::Encode<T> {
         IsNull::No
     }
 }
+
+// Same as macros for geometry types without wrapper
+// Limitations:
+// - Can only be used with self defined types
+// - Decode does not support NULL values
+
+/// impl sqlx::Type for geometry type
+#[macro_export]
+macro_rules! impl_sqlx_postgis_type_info {
+    ( $t:ty ) => {
+        impl sqlx::Type<sqlx::postgres::Postgres> for $t {
+            fn type_info() -> sqlx::postgres::PgTypeInfo {
+                sqlx::postgres::PgTypeInfo::with_name("geometry")
+            }
+        }
+    };
+}
+
+/// impl sqlx::decode::Decode for geometry type implementing `FromWkb`
+/// CAUTION: Does not support decoding NULL value!
+#[macro_export]
+macro_rules! impl_sqlx_postgis_decode {
+    ( $t:ty ) => {
+        impl<'de> sqlx::decode::Decode<'de, sqlx::postgres::Postgres> for $t {
+            fn decode(
+                value: sqlx::postgres::PgValueRef<'de>,
+            ) -> std::result::Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+                use sqlx::ValueRef;
+                if value.is_null() {
+                    return Err(Box::new(sqlx::Error::Decode(
+                        "Cannot decode NULL value".into(),
+                    )));
+                }
+                let mut blob =
+                    <&[u8] as sqlx::decode::Decode<sqlx::postgres::Postgres>>::decode(value)?;
+                let geom = <$t as $crate::wkb::FromWkb>::from_wkb(
+                    &mut blob,
+                    $crate::wkb::WkbDialect::Ewkb,
+                )
+                .map_err(|e| sqlx::Error::Decode(e.to_string().into()))?;
+                Ok(geom)
+            }
+        }
+    };
+}
+
+/// impl sqlx::decode::Decode for geometry type implementing `GeozeroGeometry`
+#[macro_export]
+macro_rules! impl_sqlx_postgis_encode {
+    ( $t:ty ) => {
+        impl sqlx::encode::Encode<'_, sqlx::postgres::Postgres> for $t {
+            fn encode_by_ref(
+                &self,
+                buf: &mut sqlx::postgres::PgArgumentBuffer,
+            ) -> sqlx::encode::IsNull {
+                use crate::GeozeroGeometry;
+                let mut wkb_out: Vec<u8> = Vec::new();
+                let mut writer =
+                    $crate::wkb::WkbWriter::new(&mut wkb_out, $crate::wkb::WkbDialect::Ewkb);
+                writer.dims = self.dims();
+                writer.srid = self.srid();
+                self.process_geom(&mut writer)
+                    .expect("Failed to encode Geometry");
+                buf.extend(&wkb_out); // Is there a way to write directly into PgArgumentBuffer?
+
+                sqlx::encode::IsNull::No
+            }
+        }
+    };
+}

@@ -47,3 +47,74 @@ impl<'q, T: GeozeroGeometry + Sized> Encode<'q, Sqlite> for wkb::Encode<T> {
         IsNull::No
     }
 }
+
+// Same as macros for geometry types without wrapper
+// Limitations:
+// - Can only be used with self defined types
+// - Decode does not support NULL values
+
+/// impl sqlx::Type for geometry type
+#[macro_export]
+macro_rules! impl_sqlx_gpkg_type_info {
+    ( $t:ty ) => {
+        impl sqlx::Type<sqlx::sqlite::Sqlite> for $t {
+            fn type_info() -> sqlx::sqlite::SqliteTypeInfo {
+                <Vec<u8> as sqlx::Type<sqlx::sqlite::Sqlite>>::type_info()
+            }
+        }
+    };
+}
+
+/// impl sqlx::decode::Decode for geometry type implementing `FromWkb`
+/// CAUTION: Does not support decoding NULL value!
+#[macro_export]
+macro_rules! impl_sqlx_gpkg_decode {
+    ( $t:ty ) => {
+        impl<'de> sqlx::decode::Decode<'de, sqlx::sqlite::Sqlite> for $t {
+            fn decode(
+                value: sqlx::sqlite::SqliteValueRef<'de>,
+            ) -> std::result::Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+                use sqlx::ValueRef;
+                if value.is_null() {
+                    return Err(Box::new(sqlx::Error::Decode(
+                        "Cannot decode NULL value".into(),
+                    )));
+                }
+                let mut blob =
+                    <&[u8] as sqlx::decode::Decode<sqlx::sqlite::Sqlite>>::decode(value)?;
+                let geom = <$t as $crate::wkb::FromWkb>::from_wkb(
+                    &mut blob,
+                    $crate::wkb::WkbDialect::Ewkb,
+                )
+                .map_err(|e| sqlx::Error::Decode(e.to_string().into()))?;
+                Ok(geom)
+            }
+        }
+    };
+}
+
+/// impl sqlx::decode::Decode for geometry type implementing `GeozeroGeometry`
+#[macro_export]
+macro_rules! impl_sqlx_gpkg_encode {
+    ( $t:ty ) => {
+        impl<'q> sqlx::encode::Encode<'q, sqlx::sqlite::Sqlite> for $t {
+            fn encode_by_ref(
+                &self,
+                args: &mut Vec<sqlx::sqlite::SqliteArgumentValue<'q>>,
+            ) -> sqlx::encode::IsNull {
+                use crate::GeozeroGeometry;
+                let mut wkb_out: Vec<u8> = Vec::new();
+                let mut writer =
+                    $crate::wkb::WkbWriter::new(&mut wkb_out, $crate::wkb::WkbDialect::Geopackage);
+                writer.dims = self.dims();
+                writer.srid = self.srid();
+                self.process_geom(&mut writer)
+                    .expect("Failed to encode Geometry");
+                args.push(sqlx::sqlite::SqliteArgumentValue::Blob(
+                    std::borrow::Cow::Owned(wkb_out),
+                ));
+                sqlx::encode::IsNull::No
+            }
+        }
+    };
+}

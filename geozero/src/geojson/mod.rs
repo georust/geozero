@@ -64,4 +64,11 @@ mod wkb {
             Ok(GeoJsonString(json))
         }
     }
+
+    // crate::impl_sqlx_postgis_type_info!(GeoJsonString);
+    // crate::impl_sqlx_postgis_decode!(GeoJsonString);
+    // crate::impl_sqlx_postgis_encode!(GeoJsonString);
+    // crate::impl_sqlx_gpkg_type_info!(GeoJsonString);
+    // crate::impl_sqlx_gpkg_decode!(GeoJsonString);
+    // crate::impl_sqlx_gpkg_encode!(GeoJsonString);
 }

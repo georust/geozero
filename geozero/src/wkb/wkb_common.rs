@@ -1,13 +1,31 @@
 use crate::error::Result;
-use crate::GeozeroGeometry;
+use crate::{GeozeroGeometry, ToWkt};
+use std::fmt;
 use std::io::Read;
 
 /// Encode to WKB
+// Used to impl encoding for foreign types
 pub struct Encode<T: GeozeroGeometry>(pub T);
 
 /// Decode from WKB
+// Used to impl deccoding for foreign types
 pub struct Decode<T: FromWkb> {
+    /// Decoded geometry. `None` for `NULL` value.
     pub geometry: Option<T>,
+}
+
+// required by postgres ToSql
+impl<'a, T: GeozeroGeometry + Sized> fmt::Debug for Encode<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.0.to_wkt().unwrap_or("<unkown geometry>".to_string()))
+    }
+}
+
+// required by SQLx macros
+impl<T: FromWkb + Sized> fmt::Debug for Decode<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("<geometry>")
+    }
 }
 
 /// Convert from WKB.

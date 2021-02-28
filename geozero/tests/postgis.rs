@@ -170,13 +170,13 @@ mod postgis_sqlx {
             .connect(&env::var("DATABASE_URL").unwrap())
             .await?;
 
-        let row: (wkb::Decode<PointZ>,) = sqlx::query_as("SELECT 'POINT(1 2 3)'::geometry")
+        let row: (PointZ,) = sqlx::query_as("SELECT 'POINT(1 2 3)'::geometry")
             .fetch_one(&pool)
             .await?;
 
-        let value = row.0;
+        let geom = row.0;
         assert_eq!(
-            value.geometry.unwrap(),
+            geom,
             PointZ {
                 x: 1.0,
                 y: 2.0,
@@ -470,3 +470,7 @@ impl FromWkb for PointZ {
         Ok(pt)
     }
 }
+
+geozero::impl_sqlx_postgis_type_info!(PointZ);
+geozero::impl_sqlx_postgis_decode!(PointZ);
+geozero::impl_sqlx_postgis_encode!(PointZ);

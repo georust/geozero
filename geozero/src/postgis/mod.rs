@@ -89,21 +89,3 @@ pub mod postgres {
 pub mod sqlx {
     pub use super::postgis_sqlx::*;
 }
-
-use crate::wkb::{self, FromWkb};
-use crate::{GeozeroGeometry, ToWkt};
-use std::fmt;
-
-// required by SQLx macros
-impl<T: FromWkb + Sized> fmt::Debug for wkb::Decode<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str("<geometry>")
-    }
-}
-
-// required by postgres ToSql
-impl<'a, T: GeozeroGeometry + Sized> fmt::Debug for wkb::Encode<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&self.0.to_wkt().unwrap_or("<unkown geometry>".to_string()))
-    }
-}
