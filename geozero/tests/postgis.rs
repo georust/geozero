@@ -223,7 +223,7 @@ mod postgis_sqlx {
         let mut tx = pool.begin().await?;
         let geom: geo_types::Geometry<f64> = geo::Point::new(10.0, 20.0).into();
         let inserted = sqlx::query(
-            "INSERT INTO point2d (datetimefield,geom) VALUES(now(),ST_SetSRID($1,4326))",
+            "INSERT INTO point2d (datetimefield, geom) VALUES(now(), ST_SetSRID($1,4326))",
         )
         .bind(wkb::Encode(geom))
         .execute(&mut tx)
@@ -232,6 +232,23 @@ mod postgis_sqlx {
 
         assert_eq!(inserted.rows_affected(), 1);
 
+        // Requires DATABASE_URL at compile time
+        // use sqlx::types::time::OffsetDateTime;
+        // struct PointRec {
+        //     pub geom: wkb::Decode<geo_types::Geometry<f64>>,
+        //     pub datetimefield: Option<OffsetDateTime>,
+        // }
+        // // https://docs.rs/sqlx/0.5.1/sqlx/macro.query.html#force-a-differentcustom-type
+        // let rec = sqlx::query_as!(
+        //     PointRec,
+        //     r#"SELECT datetimefield, geom as "geom!: _" FROM point2d"#
+        // )
+        // .fetch_one(&pool)
+        // .await?;
+        // assert_eq!(
+        //     rec.geom.geometry.unwrap(),
+        //     geo::Point::new(10.0, 20.0).into()
+        // );
         Ok(())
     }
 

@@ -157,6 +157,25 @@ let _ = sqlx::query(
 tx.commit().await?;
 ```
 
+Using compile-time verification: 
+```rust
+struct PointRec {
+    pub geom: wkb::Decode<geo_types::Geometry<f64>>,
+    pub datetimefield: Option<OffsetDateTime>,
+}
+// https://docs.rs/sqlx/0.5.1/sqlx/macro.query.html#force-a-differentcustom-type
+let rec = sqlx::query_as!(
+    PointRec,
+    r#"SELECT datetimefield, geom as "geom!: _" FROM point2d"#
+)
+.fetch_one(&pool)
+.await?;
+assert_eq!(
+    rec.geom.geometry.unwrap(),
+    geo::Point::new(10.0, 20.0).into()
+);
+```
+
 Full source code: [postgis.rs](./geozero/tests/postgis.rs)
 
 

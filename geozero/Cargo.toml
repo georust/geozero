@@ -46,7 +46,7 @@ kdbush = "0.2"
 polylabel = "2.4"
 flatgeobuf = "0.5.0"
 postgres = "0.19"
-sqlx = { version = "0.5", default-features = false, features = [ "runtime-tokio-native-tls", "postgres", "sqlite" ] }
+sqlx = { version = "0.5", default-features = false, features = [ "runtime-tokio-native-tls", "macros", "time", "postgres", "sqlite" ] }
 tokio = { version = "1.2.0", default-features = false, features = ["rt-multi-thread"] }
 
 [package.metadata.docs.rs]
