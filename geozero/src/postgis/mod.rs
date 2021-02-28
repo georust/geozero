@@ -75,15 +75,13 @@ pub mod postgres {
 /// }
 ///
 /// // Insert geometry
-/// let mut tx = pool.begin().await?;
 /// let geom: geo_types::Geometry<f64> = geo::Point::new(10.0, 20.0).into();
 /// let _ = sqlx::query(
 ///     "INSERT INTO point2d (datetimefield,geom) VALUES(now(),ST_SetSRID($1,4326))",
 /// )
 /// .bind(wkb::Encode(geom))
-/// .execute(&mut tx)
+/// .execute(&pool)
 /// .await?;
-/// tx.commit().await?;
 /// # Ok(())
 /// # }
 /// ```

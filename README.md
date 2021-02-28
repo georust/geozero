@@ -146,24 +146,28 @@ if let Some(geo_types::Geometry::Polygon(poly)) = value.geometry {
 }
 
 // Insert geometry
-let mut tx = pool.begin().await?;
 let geom: geo_types::Geometry<f64> = geo::Point::new(10.0, 20.0).into();
 let _ = sqlx::query(
     "INSERT INTO point2d (datetimefield,geom) VALUES(now(),ST_SetSRID($1,4326))",
 )
 .bind(wkb::Encode(geom))
-.execute(&mut tx)
+.execute(&pool)
 .await?;
-tx.commit().await?;
 ```
 
-Using compile-time verification: 
+Using compile-time verification requires [type overrides](https://docs.rs/sqlx/0.5.1/sqlx/macro.query.html?search=insert#force-a-differentcustom-type): 
 ```rust
+let _ = sqlx::query!(
+    "INSERT INTO point2d (datetimefield, geom) VALUES(now(), $1::geometry)",
+    wkb::Encode(geom) as _
+)
+.execute(&pool)
+.await?;
+
 struct PointRec {
     pub geom: wkb::Decode<geo_types::Geometry<f64>>,
     pub datetimefield: Option<OffsetDateTime>,
 }
-// https://docs.rs/sqlx/0.5.1/sqlx/macro.query.html#force-a-differentcustom-type
 let rec = sqlx::query_as!(
     PointRec,
     r#"SELECT datetimefield, geom as "geom!: _" FROM point2d"#

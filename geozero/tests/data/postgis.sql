@@ -4,7 +4,7 @@
 -- psql postgistest -f tests/data/postgis.sql
 --
 -- DATABASE_URL="postgresql://$USER@localhost/postgistest?sslmode=disable"
--- cargo test --all-features -- --ignored postgis
+-- cargo test --all-features -- --ignored postgis --test-threads 1
 
 CREATE EXTENSION postgis;
 

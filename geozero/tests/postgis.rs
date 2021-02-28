@@ -49,7 +49,7 @@ mod postgis_postgres {
         let value: Result<wkb::Decode<geo_types::Geometry<f64>>, _> = row.try_get(0);
         assert!(value.unwrap().geometry.is_none());
 
-        // WKB encoding
+        // Insert geometry
         let geom: geo_types::Geometry<f64> = geo::Point::new(1.0, 3.0).into();
         let _ = client.execute(
             "INSERT INTO point2d (datetimefield,geom) VALUES(now(),ST_SetSRID($1,4326))",
@@ -75,7 +75,7 @@ mod postgis_postgres {
         let value: wkb::Decode<geos::Geometry> = row.get(0);
         assert_eq!(value.geometry.unwrap().to_wkt().unwrap(), "POLYGON ((0.0000000000000000 0.0000000000000000, 2.0000000000000000 0.0000000000000000, 2.0000000000000000 2.0000000000000000, 0.0000000000000000 2.0000000000000000, 0.0000000000000000 0.0000000000000000))");
 
-        // WKB encoding
+        // Insert geometry
         let geom = geos::Geometry::new_from_wkt("POINT(1 3)").expect("Invalid geometry");
         let _ = client.execute(
             "INSERT INTO point2d (datetimefield,geom) VALUES(now(),$1)",
@@ -219,36 +219,16 @@ mod postgis_sqlx {
             .await?;
         assert!(row.0.geometry.is_none());
 
-        // WKB encoding
-        let mut tx = pool.begin().await?;
+        // Insert geometry
         let geom: geo_types::Geometry<f64> = geo::Point::new(10.0, 20.0).into();
         let inserted = sqlx::query(
             "INSERT INTO point2d (datetimefield, geom) VALUES(now(), ST_SetSRID($1,4326))",
         )
         .bind(wkb::Encode(geom))
-        .execute(&mut tx)
+        .execute(&pool)
         .await?;
-        tx.commit().await?;
 
         assert_eq!(inserted.rows_affected(), 1);
-
-        // Requires DATABASE_URL at compile time
-        // use sqlx::types::time::OffsetDateTime;
-        // struct PointRec {
-        //     pub geom: wkb::Decode<geo_types::Geometry<f64>>,
-        //     pub datetimefield: Option<OffsetDateTime>,
-        // }
-        // // https://docs.rs/sqlx/0.5.1/sqlx/macro.query.html#force-a-differentcustom-type
-        // let rec = sqlx::query_as!(
-        //     PointRec,
-        //     r#"SELECT datetimefield, geom as "geom!: _" FROM point2d"#
-        // )
-        // .fetch_one(&pool)
-        // .await?;
-        // assert_eq!(
-        //     rec.geom.geometry.unwrap(),
-        //     geo::Point::new(10.0, 20.0).into()
-        // );
         Ok(())
     }
 
@@ -257,6 +237,76 @@ mod postgis_sqlx {
     fn async_rust_geo_query() {
         assert!(Runtime::new().unwrap().block_on(rust_geo_query()).is_ok());
     }
+
+    // Requires DATABASE_URL at compile time
+    // async fn rust_geo_macro_query() -> Result<(), sqlx::Error> {
+    //     use sqlx::types::time::OffsetDateTime;
+
+    //     let pool = PgPoolOptions::new()
+    //         .max_connections(3)
+    //         .connect(&env::var("DATABASE_URL").unwrap())
+    //         .await?;
+
+    //     let mut tx = pool.begin().await?;
+
+    //     let _ = sqlx::query!("DELETE FROM point2d",)
+    //         .execute(&mut tx)
+    //         .await?;
+
+    //     let rec = sqlx::query!("SELECT count(*) as count FROM point2d")
+    //         .fetch_one(&mut tx)
+    //         .await?;
+    //     assert_eq!(rec.count, Some(0));
+
+    //     let geom: geo_types::Geometry<f64> = geo::Point::new(10.0, 20.0).into();
+    //     // https://docs.rs/sqlx/0.5.1/sqlx/macro.query.html?search=insert#type-overrides-bind-parameters-postgres-only
+    //     let inserted = sqlx::query!(
+    //         "INSERT INTO point2d (datetimefield, geom) VALUES(now(), ST_SetSRID($1::geometry,4326))",
+    //         wkb::Encode(geom) as _
+    //     )
+    //     .execute(&mut tx)
+    //     .await?;
+
+    //     assert_eq!(inserted.rows_affected(), 1);
+
+    //     // https://docs.rs/sqlx/0.5.1/sqlx/macro.query.html#force-a-differentcustom-type
+    //     let rec = sqlx::query!(
+    //         r#"SELECT datetimefield, geom as "geom!: wkb::Decode<geo_types::Geometry<f64>>" FROM point2d"#
+    //     )
+    //     .fetch_one(&mut tx)
+    //     .await?;
+    //     assert_eq!(
+    //         rec.geom.geometry.unwrap(),
+    //         geo::Point::new(10.0, 20.0).into()
+    //     );
+
+    //     struct PointRec {
+    //         pub geom: wkb::Decode<geo_types::Geometry<f64>>,
+    //         pub datetimefield: Option<OffsetDateTime>,
+    //     }
+    //     let rec = sqlx::query_as!(
+    //         PointRec,
+    //         r#"SELECT datetimefield, geom as "geom!: _" FROM point2d"#
+    //     )
+    //     .fetch_one(&mut tx)
+    //     .await?;
+    //     assert_eq!(
+    //         rec.geom.geometry.unwrap(),
+    //         geo::Point::new(10.0, 20.0).into()
+    //     );
+
+    //     tx.rollback().await?;
+    //     Ok(())
+    // }
+
+    // #[test]
+    // #[ignore]
+    // fn async_rust_geo_macro_query() {
+    //     assert!(Runtime::new()
+    //         .unwrap()
+    //         .block_on(rust_geo_macro_query())
+    //         .is_ok());
+    // }
 
     #[cfg(feature = "with-geos")]
     async fn geos_query() -> Result<(), sqlx::Error> {
@@ -280,14 +330,12 @@ mod postgis_sqlx {
         let value = row.0;
         assert!(value.geometry.is_none());
 
-        // WKB encoding
-        let mut tx = pool.begin().await?;
+        // Insert geometry
         let geom = geos::Geometry::new_from_wkt("POINT(1 3)").expect("Invalid geometry");
         let inserted = sqlx::query("INSERT INTO point2d (datetimefield,geom) VALUES(now(),$1)")
             .bind(wkb::Encode(geom))
-            .execute(&mut tx)
+            .execute(&pool)
             .await?;
-        tx.commit().await?;
 
         assert_eq!(inserted.rows_affected(), 1);
 
