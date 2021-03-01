@@ -65,6 +65,8 @@ mod wkb {
         }
     }
 
+    // crate::impl_postgres_postgis_decode!(GeoJsonString);
+    // crate::impl_postgres_postgis_encode!(GeoJsonString);
     // crate::impl_sqlx_postgis_type_info!(GeoJsonString);
     // crate::impl_sqlx_postgis_decode!(GeoJsonString);
     // crate::impl_sqlx_postgis_encode!(GeoJsonString);

@@ -66,6 +66,7 @@ macro_rules! impl_sqlx_gpkg_type_info {
 }
 
 /// impl sqlx::decode::Decode for geometry type implementing `FromWkb`
+///
 /// CAUTION: Does not support decoding NULL value!
 #[macro_export]
 macro_rules! impl_sqlx_gpkg_decode {
@@ -75,6 +76,7 @@ macro_rules! impl_sqlx_gpkg_decode {
                 value: sqlx::sqlite::SqliteValueRef<'de>,
             ) -> std::result::Result<Self, Box<dyn std::error::Error + Send + Sync>> {
                 use sqlx::ValueRef;
+                use $crate::wkb::FromWkb;
                 if value.is_null() {
                     return Err(Box::new(sqlx::Error::Decode(
                         "Cannot decode NULL value".into(),
@@ -82,11 +84,8 @@ macro_rules! impl_sqlx_gpkg_decode {
                 }
                 let mut blob =
                     <&[u8] as sqlx::decode::Decode<sqlx::sqlite::Sqlite>>::decode(value)?;
-                let geom = <$t as $crate::wkb::FromWkb>::from_wkb(
-                    &mut blob,
-                    $crate::wkb::WkbDialect::Ewkb,
-                )
-                .map_err(|e| sqlx::Error::Decode(e.to_string().into()))?;
+                let geom = <$t>::from_wkb(&mut blob, $crate::wkb::WkbDialect::Ewkb)
+                    .map_err(|e| sqlx::Error::Decode(e.to_string().into()))?;
                 Ok(geom)
             }
         }
@@ -102,7 +101,7 @@ macro_rules! impl_sqlx_gpkg_encode {
                 &self,
                 args: &mut Vec<sqlx::sqlite::SqliteArgumentValue<'q>>,
             ) -> sqlx::encode::IsNull {
-                use crate::GeozeroGeometry;
+                use $crate::GeozeroGeometry;
                 let mut wkb_out: Vec<u8> = Vec::new();
                 let mut writer =
                     $crate::wkb::WkbWriter::new(&mut wkb_out, $crate::wkb::WkbDialect::Geopackage);

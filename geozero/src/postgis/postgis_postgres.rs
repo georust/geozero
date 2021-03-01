@@ -47,3 +47,69 @@ impl<'a, T: GeozeroGeometry + Sized> ToSql for wkb::Encode<T> {
 
     to_sql_checked!();
 }
+
+// Same as macros for geometry types without wrapper
+// Limitations:
+// - Can only be used with self defined types
+// - Decode does not support NULL values
+
+/// impl FromSql for geometry type implementing `FromWkb`
+///
+/// CAUTION: Does not support decoding NULL value!
+#[macro_export]
+macro_rules! impl_postgres_postgis_decode {
+    ( $t:ty ) => {
+        impl postgres_types::FromSql<'_> for $t {
+            fn from_sql(
+                _ty: &postgres_types::Type,
+                raw: &[u8],
+            ) -> std::result::Result<Self, Box<dyn std::error::Error + Sync + Send>> {
+                use $crate::wkb::FromWkb;
+                let mut rdr = std::io::Cursor::new(raw);
+                let geom = <$t>::from_wkb(&mut rdr, $crate::wkb::WkbDialect::Ewkb)?;
+                Ok(geom)
+            }
+
+            fn accepts(ty: &postgres_types::Type) -> bool {
+                match ty.name() {
+                    "geography" | "geometry" => true,
+                    _ => false,
+                }
+            }
+        }
+    };
+}
+
+/// impl ToSql for geometry type implementing `GeozeroGeometry`
+#[macro_export]
+macro_rules! impl_postgres_postgis_encode {
+    ( $t:ty ) => {
+        impl<'a> postgres_types::ToSql for $t {
+            fn to_sql(
+                &self,
+                _ty: &postgres_types::Type,
+                out: &mut bytes::BytesMut,
+            ) -> std::result::Result<postgres_types::IsNull, Box<dyn std::error::Error + Sync + Send>>
+            {
+                use $crate::GeozeroGeometry;
+                use bytes::BufMut;
+
+                let pgout = &mut out.writer();
+                let mut writer = $crate::wkb::WkbWriter::new(pgout, $crate::wkb::WkbDialect::Ewkb);
+                writer.dims = self.dims();
+                writer.srid = self.srid();
+                self.process_geom(&mut writer)?;
+                Ok(postgres_types::IsNull::No)
+            }
+
+            fn accepts(ty: &postgres_types::Type) -> bool {
+                match ty.name() {
+                    "geography" | "geometry" => true,
+                    _ => false,
+                }
+            }
+
+            postgres_types::to_sql_checked!();
+        }
+    };
+}

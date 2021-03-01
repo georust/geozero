@@ -4,6 +4,7 @@ use geojson::{GeoJson as GeoGeoJson, Geometry, Value};
 use std::io::Read;
 
 /// GeoJSON String.
+#[derive(Debug)]
 pub struct GeoJsonString(pub String);
 
 impl GeozeroGeometry for GeoJsonString {

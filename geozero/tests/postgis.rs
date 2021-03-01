@@ -471,6 +471,20 @@ impl FromWkb for PointZ {
     }
 }
 
-geozero::impl_sqlx_postgis_type_info!(PointZ);
-geozero::impl_sqlx_postgis_decode!(PointZ);
-geozero::impl_sqlx_postgis_encode!(PointZ);
+#[cfg(feature = "with-postgis-postgres")]
+mod postgis_postgres_macros {
+    geozero::impl_postgres_postgis_decode!(super::PointZ);
+    geozero::impl_postgres_postgis_encode!(super::PointZ);
+}
+#[cfg(feature = "with-postgis-sqlx")]
+mod postgis_sqlx_macros {
+    geozero::impl_sqlx_postgis_type_info!(super::PointZ);
+    geozero::impl_sqlx_postgis_decode!(super::PointZ);
+    geozero::impl_sqlx_postgis_encode!(super::PointZ);
+}
+#[cfg(feature = "with-gpkg")]
+mod gpkg_sqlx_macros {
+    geozero::impl_sqlx_gpkg_type_info!(super::PointZ);
+    geozero::impl_sqlx_gpkg_decode!(super::PointZ);
+    geozero::impl_sqlx_gpkg_encode!(super::PointZ);
+}

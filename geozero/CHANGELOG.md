@@ -1,3 +1,8 @@
+## 0.7.4 (UNRELEASED)
+
+* Support for SQLx macros
+* Provide macros for PostGIS/GPKG-Encoding/Decoding
+
 ## 0.7.3 (2021-02-27)
 
 * Fix docs.rs build
