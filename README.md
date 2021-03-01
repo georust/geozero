@@ -23,7 +23,7 @@ Supported dimensions: X, Y, Z, M, T
 * GeoJSON Reader + Writer
 * [GEOS](https://github.com/georust/geos) Reader + Writer
 * [GDAL](https://github.com/georust/gdal) geometry Reader + Writer
-* WKB Reader supporting
+* WKB Reader + Writer supporting
   - PostGIS geometries for [rust-postgres](https://github.com/sfackler/rust-postgres) and [SQLx](https://github.com/launchbadge/sqlx)
   - GeoPackage geometries for [SQLx](https://github.com/launchbadge/sqlx)
 * WKT Writer
@@ -75,8 +75,7 @@ Read FlatGeobuf subset as GeoJSON:
 let mut file = BufReader::new(File::open("countries.fgb")?);
 let mut fgb = FgbReader::open(&mut file)?;
 fgb.select_bbox(8.8, 47.2, 9.5, 55.3)?;
-let json = fgb.to_json()?;
-println!("{}", &json);
+println!("{}", fgb.to_json()?);
 ```
 Full source code: [geojson.rs](./geozero/tests/geojson.rs)
 
@@ -232,10 +231,6 @@ struct PathDrawer<'a> {
 }
 
 impl<'a> GeomProcessor for PathDrawer<'a> {
-    fn linestring_begin(&mut self, _tagged: bool, _size: usize, _idx: usize) -> Result<()> {
-        self.path = Path2D::new();
-        Ok(())
-    }
     fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
         if idx == 0 {
             self.path.move_to(vec2f(x, y));
@@ -246,7 +241,10 @@ impl<'a> GeomProcessor for PathDrawer<'a> {
     }
     fn linestring_end(&mut self, _tagged: bool, _idx: usize) -> Result<()> {
         self.path.close_path();
-        self.canvas.fill_path(self.path.to_owned(), FillRule::Winding);
+        self.canvas.fill_path(
+            mem::replace(&mut self.path, Path2D::new()),
+            FillRule::Winding,
+        );
         Ok(())
     }
 }
