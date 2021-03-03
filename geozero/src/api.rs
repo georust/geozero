@@ -22,6 +22,7 @@ pub trait GeozeroGeometry {
         since = "0.7.1",
         note = "please remove implementation, not required anymore"
     )]
+    #[doc(hidden)]
     fn empty() -> Self
     where
         Self: Sized,
