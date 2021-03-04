@@ -1,8 +1,8 @@
 use flatgeobuf::{FallibleStreamingIterator, FeatureProperties, FgbReader, GeometryType};
 use geozero::error::Result;
 use geozero::{ColumnValue, CoordDimensions, GeomProcessor, PropertyProcessor};
+use seek_bufread::BufReader;
 use std::fs::File;
-use std::io::BufReader;
 
 struct VertexCounter(u64);
 

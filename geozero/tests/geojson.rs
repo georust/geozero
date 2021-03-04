@@ -2,8 +2,9 @@ use flatgeobuf::{FgbReader, HttpFgbReader};
 use geozero::error::Result;
 use geozero::geojson::GeoJsonWriter;
 use geozero::ProcessToJson;
+use seek_bufread::BufReader;
 use std::fs::File;
-use std::io::{BufReader, BufWriter};
+use std::io::BufWriter;
 
 #[test]
 fn fgb_to_geojson() -> Result<()> {

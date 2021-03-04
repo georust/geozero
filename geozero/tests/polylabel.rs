@@ -4,8 +4,8 @@ use geo::Geometry;
 use geozero::error::Result;
 use geozero::ToGeo;
 use polylabel::polylabel;
+use seek_bufread::BufReader;
 use std::fs::File;
-use std::io::BufReader;
 
 #[test]
 fn country_labels() -> Result<()> {
