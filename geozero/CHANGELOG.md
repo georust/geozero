@@ -1,4 +1,4 @@
-## 0.7.4 (UNRELEASED)
+## 0.7.4 (2021-03-10)
 
 * Support for SQLx macros
 * Provide macros for PostGIS/GPKG-Encoding/Decoding
