@@ -53,7 +53,7 @@ impl<'q, T: GeozeroGeometry + Sized> Encode<'q, Sqlite> for wkb::Encode<T> {
 // - Can only be used with self defined types
 // - Decode does not support NULL values
 
-/// impl sqlx::Type for geometry type
+/// impl `sqlx::Type` for geometry type
 #[macro_export]
 macro_rules! impl_sqlx_gpkg_type_info {
     ( $t:ty ) => {
@@ -65,7 +65,7 @@ macro_rules! impl_sqlx_gpkg_type_info {
     };
 }
 
-/// impl sqlx::decode::Decode for geometry type implementing `FromWkb`
+/// impl `sqlx::decode::Decode` for geometry type implementing `FromWkb`
 ///
 /// CAUTION: Does not support decoding NULL value!
 #[macro_export]
@@ -92,7 +92,7 @@ macro_rules! impl_sqlx_gpkg_decode {
     };
 }
 
-/// impl sqlx::decode::Decode for geometry type implementing `GeozeroGeometry`
+/// impl `sqlx::decode::Decode` for geometry type implementing `GeozeroGeometry`
 #[macro_export]
 macro_rules! impl_sqlx_gpkg_encode {
     ( $t:ty ) => {

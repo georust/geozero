@@ -53,7 +53,7 @@ impl<'a, T: GeozeroGeometry + Sized> ToSql for wkb::Encode<T> {
 // - Can only be used with self defined types
 // - Decode does not support NULL values
 
-/// impl FromSql for geometry type implementing `FromWkb`
+/// impl `FromSql` for geometry type implementing `FromWkb`
 ///
 /// CAUTION: Does not support decoding NULL value!
 #[macro_export]
@@ -80,7 +80,7 @@ macro_rules! impl_postgres_postgis_decode {
     };
 }
 
-/// impl ToSql for geometry type implementing `GeozeroGeometry`
+/// impl `ToSql` for geometry type implementing `GeozeroGeometry`
 #[macro_export]
 macro_rules! impl_postgres_postgis_encode {
     ( $t:ty ) => {
