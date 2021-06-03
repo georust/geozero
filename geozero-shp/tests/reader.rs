@@ -1,4 +1,5 @@
 use dbase::FieldValue;
+use geo_types::{Geometry, LineString, Polygon};
 use geozero::geojson::GeoJsonWriter;
 use geozero::wkt::WktWriter;
 use geozero::{FeatureProperties, ProcessorSink};
@@ -68,17 +69,45 @@ fn shp_to_json() -> Result<(), geozero_shp::Error> {
 #[test]
 fn shp_to_geo() -> Result<(), geozero_shp::Error> {
     use geozero::geo_types::GeoWriter;
-
     let reader = geozero_shp::Reader::from_path("./tests/data/poly.shp")?;
-    let mut cnt = 0;
-    for _ in reader.iter_geometries(&mut GeoWriter::new()) {
-        cnt += 1;
-    }
+    let mut geo = GeoWriter::new();
+    let cnt = reader.iter_features(&mut geo)?.count();
     assert_eq!(cnt, 10);
-
-    // Currently unsupported:
-    // let mut geo = GeoWriter::new();
-    // for _geom in reader.iter_geometries(&mut geo)? {}
+    let first_poly = Polygon::new(LineString::from(vec![
+        (479819.8437 ,4765180.5),
+        (479690.187 ,4765259.5),
+        (479647.0 ,4765369.5),
+        (479730.37 ,4765400.5),
+        (480039.0312 ,4765539.5),
+        (480035.3437 ,4765558.5),
+        (480159.7812 ,4765610.5),
+        (480202.2812 ,4765482.0),
+        (480365.0 ,4765015.5),
+        (480389.687 ,4764950.0),
+        (480133.9687 ,4764856.5),
+        (480080.2812 ,4764979.5),
+        (480082.9687 ,4765049.5),
+        (480088.812 ,4765139.5),
+        (480059.9062 ,4765239.5),
+        (480019.7187 ,4765319.5),
+        (479980.2187 ,4765409.5),
+        (479909.87 ,4765370.0),
+        (479859.87 ,4765270.0),
+        (479819.8437 ,4765180.5)
+    ]), vec![]);
+    let last_poly = Polygon::new(LineString::from(vec![
+        (479750.6875, 4764702.0),
+        (479658.59375, 4764670.0),
+        (479640.09375, 4764721.0),
+        (479735.90625, 4764752.0),
+        (479750.6875, 4764702.0)
+    ]), vec![]);
+    if let Geometry::MultiPolygon(poly) = geo.geometry() {
+        assert_eq!(*poly.iter().nth(0).unwrap(), first_poly);
+        assert_eq!(*poly.iter().last().unwrap(), last_poly);
+    } else {
+        assert!(false);
+    }
 
     Ok(())
 }
