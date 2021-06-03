@@ -18,3 +18,4 @@ dbase = "0.0.4"
 
 [dev-dependencies]
 geozero = { version = "0.7.1", default-features = true }
+geo-types = { version = "0.7", default-features = true }
