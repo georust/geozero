@@ -8,21 +8,21 @@ use std::iter::FusedIterator;
 use std::path::Path;
 
 /// Struct that handle iteration over the shapes of a .shp file
-pub struct ShapeIterator<P: GeomProcessor, T: Read> {
-    processor: P,
+pub struct ShapeIterator<'a, P: GeomProcessor, T: Read> {
+    processor: &'a mut P,
     source: T,
     current_pos: usize,
     file_length: usize,
 }
 
-impl<P: GeomProcessor, T: Read> Iterator for ShapeIterator<P, T> {
+impl<'a, P: GeomProcessor, T: Read> Iterator for ShapeIterator<'a, P, T> {
     type Item = Result<(), Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.current_pos >= self.file_length {
             None
         } else {
-            let hdr = match read_shape(&mut self.processor, &mut self.source) {
+            let hdr = match read_shape(self.processor, &mut self.source) {
                 Err(e) => return Some(Err(e)),
                 Ok(hdr_and_shape) => hdr_and_shape,
             };
@@ -33,10 +33,10 @@ impl<P: GeomProcessor, T: Read> Iterator for ShapeIterator<P, T> {
     }
 }
 
-impl<P: FeatureProcessor, T: Read> FusedIterator for ShapeIterator<P, T> {}
+impl<'a, P: FeatureProcessor, T: Read> FusedIterator for ShapeIterator<'a, P, T> {}
 
-pub struct ShapeRecordIterator<P: FeatureProcessor, T: Read> {
-    shape_iter: ShapeIterator<P, T>,
+pub struct ShapeRecordIterator<'a, P: FeatureProcessor, T: Read> {
+    shape_iter: ShapeIterator<'a, P, T>,
     dbf_reader: dbase::Reader<T>,
     featno: u64,
 }
@@ -45,7 +45,7 @@ pub struct ShapeRecord {
     pub record: dbase::Record,
 }
 
-impl<P: FeatureProcessor, T: Read> Iterator for ShapeRecordIterator<P, T> {
+impl<'a, P: FeatureProcessor, T: Read> Iterator for ShapeRecordIterator<'a, P, T> {
     type Item = Result<ShapeRecord, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -66,7 +66,7 @@ impl<P: FeatureProcessor, T: Read> Iterator for ShapeRecordIterator<P, T> {
             let processor = &mut self.shape_iter.processor;
             processor.feature_begin(self.featno).ok();
             processor.properties_begin().ok();
-            if let Err(e) = shprec.process_properties(processor) {
+            if let Err(e) = shprec.process_properties(*processor) {
                 return Some(Err(Error::GeozeroError(e)));
             }
             processor.properties_end().ok();
@@ -87,7 +87,7 @@ impl<P: FeatureProcessor, T: Read> Iterator for ShapeRecordIterator<P, T> {
     }
 }
 
-impl<P: FeatureProcessor, T: Read> FusedIterator for ShapeRecordIterator<P, T> {}
+impl<'a, P: FeatureProcessor, T: Read> FusedIterator for ShapeRecordIterator<'a, P, T> {}
 
 /// struct that reads the content of a shapefile
 pub struct Reader<T: Read> {
@@ -131,7 +131,7 @@ impl<T: Read> Reader<T> {
         dbf_reader.read().or_else(|e| Err(Error::DbaseError(e)))
     }
 
-    pub fn iter_geometries<P: FeatureProcessor>(self, processor: P) -> ShapeIterator<P, T> {
+    pub fn iter_geometries<P: FeatureProcessor>(self, processor: &mut P) -> ShapeIterator<P, T> {
         ShapeIterator {
             processor,
             source: self.source,
@@ -147,7 +147,7 @@ impl<T: Read> Reader<T> {
     /// The `Result` will be an error if the .dbf wasn't found
     pub fn iter_features<P: FeatureProcessor>(
         mut self,
-        processor: P,
+        processor: &mut P,
     ) -> Result<ShapeRecordIterator<P, T>, Error> {
         let maybe_dbf_reader = self.dbf_reader.take();
         if let Some(dbf_reader) = maybe_dbf_reader {
