@@ -17,15 +17,17 @@
 //!
 //! ## Format conversion overview
 //!
-//! |           |                          [GeozeroGeometry]                           |                         [GeozeroDatasource]                          | Geometry Conversion |             [GeomProcessor]             |
-//! |-----------|----------------------------------------------------------------------|----------------------------------------------------------------------|---------------------|-----------------------------------------|
-//! | geo-types | `geo_types::Geometry<f64>`                                           | -                                                                    | [ToGeo]             | [GeoWriter](geo_types::GeoWriter)       |
-//! | GeoJSON   | [GeoJson](geojson::GeoJson), [GeoJsonString](geojson::GeoJsonString) | [GeoJsonReader](geojson::GeoJsonReader), [GeoJson](geojson::GeoJson) | [ToJson]            | [GeoJsonWriter](geojson::GeoJsonWriter) |
-//! | GDAL      | `gdal::vector::Geometry`                                             | -                                                                    | [ToGdal]            | [GdalWriter](gdal::GdalWriter)          |
-//! | GEOS      | `geos::Geometry`                                                     | -                                                                    | [ToGeos]            | [GeosWriter](geos::GeosWriter)          |
-//! | SVG       | -                                                                    | -                                                                    | [ToSvg]             | [SvgWriter](svg::SvgWriter)             |
-//! | WKB       | [Wkb](wkb::Wkb), [Ewkb](wkb::Ewkb), [GpkgWkb](wkb::GpkgWkb)          | -                                                                    | [ToWkb]             | [WkbWriter](wkb::WkbWriter)             |
-//! | WKT       | -                                                                    | -                                                                    | [ToWkt]             | [WktWriter](wkt::WktWriter)             |
+//! |           |                          [GeozeroGeometry]                           | Dimensions |                         [GeozeroDatasource]                          | Geometry Conversion |             [GeomProcessor]             |
+//! |-----------|----------------------------------------------------------------------|------------|----------------------------------------------------------------------|---------------------|-----------------------------------------|
+//! | geo-types | `geo_types::Geometry<f64>`                                           | XY         | -                                                                    | [ToGeo]             | [GeoWriter](geo_types::GeoWriter)       |
+//! | GeoJSON   | [GeoJson](geojson::GeoJson), [GeoJsonString](geojson::GeoJsonString) | XY         | [GeoJsonReader](geojson::GeoJsonReader), [GeoJson](geojson::GeoJson) | [ToJson]            | [GeoJsonWriter](geojson::GeoJsonWriter) |
+//! | GDAL      | `gdal::vector::Geometry`                                             | XYZ        | -                                                                    | [ToGdal]            | [GdalWriter](gdal::GdalWriter)          |
+//! | GEOS      | `geos::Geometry`                                                     | XYZ        | -                                                                    | [ToGeos]            | [GeosWriter](geos::GeosWriter)          |
+//! | SVG       | -                                                                    | XY         | -                                                                    | [ToSvg]             | [SvgWriter](svg::SvgWriter)             |
+//! | WKB       | [Wkb](wkb::Wkb), [Ewkb](wkb::Ewkb), [GpkgWkb](wkb::GpkgWkb)          | XYZM       | -                                                                    | [ToWkb]             | [WkbWriter](wkb::WkbWriter)             |
+//! | WKT       | -                                                                    | XYZM       | -                                                                    | [ToWkt]             | [WktWriter](wkt::WktWriter)             |
+
+
 
 mod api;
 pub mod error;
