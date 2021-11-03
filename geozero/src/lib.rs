@@ -27,8 +27,6 @@
 //! | WKB       | [Wkb](wkb::Wkb), [Ewkb](wkb::Ewkb), [GpkgWkb](wkb::GpkgWkb)          | XYZM       | -                                                                    | [ToWkb]             | [WkbWriter](wkb::WkbWriter)             |
 //! | WKT       | -                                                                    | XYZM       | -                                                                    | [ToWkt]             | [WktWriter](wkt::WktWriter)             |
 
-
-
 mod api;
 pub mod error;
 mod feature_processor;
