@@ -1,3 +1,7 @@
+## 0.7.6 (UNRELEASED)
+
+* Support XYZ in GeoJSON reader
+
 ## 0.7.5 (2021-11-04)
 
 * Process properties in GeoJSON reader

@@ -208,13 +208,34 @@ type PointType = Position;
 type LineStringType = Vec<Position>;
 type PolygonType = Vec<Vec<Position>>;
 
+fn process_coord<P: GeomProcessor>(
+    point_type: &PointType,
+    multi_dim: bool,
+    idx: usize,
+    processor: &mut P,
+) -> Result<()> {
+    if multi_dim {
+        processor.coordinate(
+            point_type[0],
+            point_type[1],
+            point_type.get(2).map(|v| *v),
+            None,
+            None,
+            None,
+            idx,
+        )
+    } else {
+        processor.xy(point_type[0], point_type[1], idx)
+    }
+}
+
 fn process_point<P: GeomProcessor>(
     point_type: &PointType,
     idx: usize,
     processor: &mut P,
 ) -> Result<()> {
     processor.point_begin(idx)?;
-    processor.xy(point_type[0], point_type[1], 0)?;
+    process_coord(point_type, processor.multi_dim(), 0, processor)?;
     processor.point_end(idx)
 }
 
@@ -224,8 +245,9 @@ fn process_multi_point<P: GeomProcessor>(
     processor: &mut P,
 ) -> Result<()> {
     processor.multipoint_begin(multi_point_type.len(), idx)?;
+    let multi_dim = processor.multi_dim();
     for (idxc, point_type) in multi_point_type.iter().enumerate() {
-        processor.xy(point_type[0], point_type[1], idxc)?;
+        process_coord(point_type, multi_dim, idxc, processor)?
     }
     processor.multipoint_end(idx)
 }
@@ -237,8 +259,9 @@ fn process_linestring<P: GeomProcessor>(
     processor: &mut P,
 ) -> Result<()> {
     processor.linestring_begin(tagged, linestring_type.len(), idx)?;
+    let multi_dim = processor.multi_dim();
     for (idxc, point_type) in linestring_type.iter().enumerate() {
-        processor.xy(point_type[0], point_type[1], idxc)?;
+        process_coord(point_type, multi_dim, idxc, processor)?
     }
     processor.linestring_end(tagged, idx)
 }
@@ -298,6 +321,27 @@ mod test {
         let wkt = std::str::from_utf8(&wkt_data).unwrap();
         assert_eq!(wkt, "LINESTRING(1875038.447610231 -3269648.6879248763,1874359.641504197 -3270196.812984864,1874141.0428635243 -3270953.7840121365,1874440.1778162003 -3271619.4315206874,1876396.0598222911 -3274138.747656357,1876442.0805243007 -3275052.60551469,1874739.312657555 -3275457.333765534)"
     );
+        Ok(())
+    }
+
+    #[test]
+    fn geometries3d() -> Result<()> {
+        let geojson = r#"{"type": "LineString", "coordinates": [[1,1,10],[2,2,20]]}"#;
+        let mut wkt_data: Vec<u8> = Vec::new();
+        let mut out = WktWriter::new(&mut wkt_data);
+        out.dims.z = true;
+        assert!(read_geojson_geom(&mut geojson.as_bytes(), &mut out).is_ok());
+        let wkt = std::str::from_utf8(&wkt_data).unwrap();
+        assert_eq!(wkt, "LINESTRING(1 1 10,2 2 20)");
+
+        let geojson = r#"{"type": "LineString", "coordinates": [[1,1],[2,2]]}"#;
+        let mut wkt_data: Vec<u8> = Vec::new();
+        let mut out = WktWriter::new(&mut wkt_data);
+        out.dims.z = true;
+        assert!(read_geojson_geom(&mut geojson.as_bytes(), &mut out).is_ok());
+        let wkt = std::str::from_utf8(&wkt_data).unwrap();
+        assert_eq!(wkt, "LINESTRING(1 1,2 2)");
+
         Ok(())
     }
 
