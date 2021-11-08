@@ -1,4 +1,4 @@
-## 0.7.7 (UNRELEASED)
+## 0.7.7 (2021-11-09)
 
 * Support XYZ in GeoJSON writer
 
