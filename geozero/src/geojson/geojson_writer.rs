@@ -1,16 +1,20 @@
 use crate::error::Result;
-use crate::{ColumnValue, FeatureProcessor, GeomProcessor, PropertyProcessor};
+use crate::{ColumnValue, CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcessor};
 use std::fmt::Display;
 use std::io::Write;
 
 /// GeoJSON writer.
 pub struct GeoJsonWriter<'a, W: Write> {
+    pub dims: CoordDimensions,
     out: &'a mut W,
 }
 
 impl<'a, W: Write> GeoJsonWriter<'a, W> {
     pub fn new(out: &'a mut W) -> GeoJsonWriter<'a, W> {
-        GeoJsonWriter { out }
+        GeoJsonWriter {
+            dims: CoordDimensions::default(),
+            out,
+        }
     }
     fn comma(&mut self, idx: usize) -> Result<()> {
         if idx > 0 {
@@ -69,9 +73,30 @@ impl<W: Write> FeatureProcessor for GeoJsonWriter<'_, W> {
 }
 
 impl<W: Write> GeomProcessor for GeoJsonWriter<'_, W> {
+    fn dimensions(&self) -> CoordDimensions {
+        self.dims
+    }
     fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
         self.comma(idx)?;
         let _ = self.out.write(&format!("[{},{}]", x, y).as_bytes())?;
+        Ok(())
+    }
+    fn coordinate(
+        &mut self,
+        x: f64,
+        y: f64,
+        z: Option<f64>,
+        _m: Option<f64>,
+        _t: Option<f64>,
+        _tm: Option<u64>,
+        idx: usize,
+    ) -> Result<()> {
+        self.comma(idx)?;
+        let _ = self.out.write(&format!("[{},{}", x, y).as_bytes())?;
+        if let Some(z) = z {
+            let _ = self.out.write(&format!(",{}", z).as_bytes())?;
+        }
+        let _ = self.out.write(b"]")?;
         Ok(())
     }
     fn point_begin(&mut self, idx: usize) -> Result<()> {
@@ -241,6 +266,18 @@ mod test {
         let geojson = r#"{"type": "MultiPolygon", "coordinates": [[[[2683312.339,1247968.33],[2683311.496,1247964.044],[2683307.761,1247964.745],[2683309.16,1247973.337],[2683313.003,1247972.616],[2683312.339,1247968.33]],[[2683312.339,1247968.33],[2683313.003,1247972.616],[2683313.003,1247972.616],[2683312.339,1247968.33],[2683312.339,1247968.33]],[[2683307.761,1247964.745],[2683311.496,1247964.044],[2683311.496,1247964.044],[2683307.761,1247964.745],[2683307.761,1247964.745]],[[2683311.496,1247964.044],[2683312.339,1247968.33],[2683312.339,1247968.33],[2683311.496,1247964.044],[2683311.496,1247964.044]]],[[[2683309.16,1247973.337],[2683307.761,1247964.745],[2683307.761,1247964.745],[2683309.16,1247973.337],[2683309.16,1247973.337]]],[[[2683312.339,1247968.33],[2683311.496,1247964.044],[2683307.761,1247964.745],[2683309.16,1247973.337],[2683313.003,1247972.616],[2683312.339,1247968.33]],[[2683313.003,1247972.616],[2683309.16,1247973.337],[2683309.16,1247973.337],[2683313.003,1247972.616],[2683313.003,1247972.616]]]]}"#;
         let mut out: Vec<u8> = Vec::new();
         assert!(read_geojson(geojson.as_bytes(), &mut GeoJsonWriter::new(&mut out)).is_ok());
+        assert_eq!(std::str::from_utf8(&out).unwrap(), geojson);
+
+        Ok(())
+    }
+
+    #[test]
+    fn geometries3d() -> Result<()> {
+        let geojson = r#"{"type": "LineString", "coordinates": [[1,1,10],[2,2,20]]}"#;
+        let mut out: Vec<u8> = Vec::new();
+        let mut writer = GeoJsonWriter::new(&mut out);
+        writer.dims = CoordDimensions::xyz();
+        assert!(read_geojson(&mut geojson.as_bytes(), &mut writer).is_ok());
         assert_eq!(std::str::from_utf8(&out).unwrap(), geojson);
 
         Ok(())
