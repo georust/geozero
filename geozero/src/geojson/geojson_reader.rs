@@ -52,7 +52,7 @@ pub fn read_geojson<R: Read, P: FeatureProcessor>(mut reader: R, processor: &mut
     reader.read_to_string(&mut geojson_str)?;
     let geojson = geojson_str
         .parse::<GeoGeoJson>()
-        .map_err(|_| GeozeroError::GeometryFormat)?;
+        .map_err(|e| GeozeroError::Geometry(e.to_string()))?;
     process_geojson(&geojson, processor)
 }
 
@@ -65,7 +65,7 @@ pub fn read_geojson_geom<R: Read, P: GeomProcessor>(
     reader.read_to_string(&mut geojson_str)?;
     let geojson = geojson_str
         .parse::<GeoGeoJson>()
-        .map_err(|_| GeozeroError::GeometryFormat)?;
+        .map_err(|e| GeozeroError::Geometry(e.to_string()))?;
     process_geojson_geom(&geojson, processor)
 }
 

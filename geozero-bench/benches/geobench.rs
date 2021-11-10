@@ -281,7 +281,13 @@ fn countries_benchmark(c: &mut Criterion) {
         b.iter(|| gdal::gdal_read("/vsicurl/http://127.0.0.1:3333/countries.json", &bbox, 179))
     });
     group.bench_function("5-geojson_http_gz", |b| {
-        b.iter(|| gdal::gdal_read("/vsicurl/http://127.0.0.1:3333/countries-gz.json", &bbox, 179))
+        b.iter(|| {
+            gdal::gdal_read(
+                "/vsicurl/http://127.0.0.1:3333/countries-gz.json",
+                &bbox,
+                179,
+            )
+        })
     });
     group.bench_function("6-fgb_http", |b| {
         b.iter(|| rt.block_on(fgb::fgb_http_to_geo("countries.fgb", &bbox, 179)));

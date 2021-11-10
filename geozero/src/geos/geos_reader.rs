@@ -17,15 +17,17 @@ impl GeozeroGeometry for geos::Geometry<'_> {
     }
 }
 
-pub(crate) fn from_geos_err(error: geos::Error) -> GeozeroError {
-    match error {
-        geos::Error::InvalidGeometry(e) => GeozeroError::Geometry(e),
-        geos::Error::ImpossibleOperation(e) => GeozeroError::Geometry(e),
-        geos::Error::GeosError(e) => GeozeroError::Geometry(e),
-        geos::Error::GeosFunctionError(_, _) => GeozeroError::GeometryFormat,
-        geos::Error::NoConstructionFromNullPtr(e) => GeozeroError::Geometry(e),
-        geos::Error::ConversionError(e) => GeozeroError::Geometry(e),
-        geos::Error::GenericError(e) => GeozeroError::Geometry(e),
+impl From<geos::Error> for GeozeroError {
+    fn from(error: geos::Error) -> Self {
+        match error {
+            geos::Error::InvalidGeometry(e) => GeozeroError::Geometry(e),
+            geos::Error::ImpossibleOperation(e) => GeozeroError::Geometry(e),
+            geos::Error::GeosError(e) => GeozeroError::Geometry(e),
+            geos::Error::GeosFunctionError(_, _) => GeozeroError::GeometryFormat,
+            geos::Error::NoConstructionFromNullPtr(e) => GeozeroError::Geometry(e),
+            geos::Error::ConversionError(e) => GeozeroError::Geometry(e),
+            geos::Error::GenericError(e) => GeozeroError::Geometry(e),
+        }
     }
 }
 
@@ -46,10 +48,10 @@ fn process_geom_n<'a, P: GeomProcessor, G: Geom<'a>>(
             processor.point_end(idx)?;
         }
         GeometryTypes::MultiPoint => {
-            let n_pts = ggeom.get_num_geometries().map_err(from_geos_err)?;
+            let n_pts = ggeom.get_num_geometries()?;
             processor.multipoint_begin(n_pts, idx)?;
             for i in 0..n_pts {
-                let pt = ggeom.get_geometry_n(i).map_err(from_geos_err)?;
+                let pt = ggeom.get_geometry_n(i)?;
                 process_point(&pt, i, processor)?;
             }
             processor.multipoint_end(idx)?;
@@ -58,10 +60,10 @@ fn process_geom_n<'a, P: GeomProcessor, G: Geom<'a>>(
             process_linestring(ggeom, true, idx, processor)?;
         }
         GeometryTypes::MultiLineString => {
-            let n_lines = ggeom.get_num_geometries().map_err(from_geos_err)?;
+            let n_lines = ggeom.get_num_geometries()?;
             processor.multilinestring_begin(n_lines, idx)?;
             for i in 0..n_lines {
-                let line = ggeom.get_geometry_n(i).map_err(from_geos_err)?;
+                let line = ggeom.get_geometry_n(i)?;
                 process_linestring(&line, false, i, processor)?;
             }
             processor.multilinestring_end(idx)?;
@@ -70,19 +72,19 @@ fn process_geom_n<'a, P: GeomProcessor, G: Geom<'a>>(
             process_polygon(ggeom, true, idx, processor)?;
         }
         GeometryTypes::MultiPolygon => {
-            let n_polys = ggeom.get_num_geometries().map_err(from_geos_err)?;
+            let n_polys = ggeom.get_num_geometries()?;
             processor.multipolygon_begin(n_polys, idx)?;
             for i in 0..n_polys {
-                let poly = ggeom.get_geometry_n(i).map_err(from_geos_err)?;
+                let poly = ggeom.get_geometry_n(i)?;
                 process_polygon(&poly, false, i, processor)?;
             }
             processor.multipolygon_end(idx)?;
         }
         GeometryTypes::GeometryCollection => {
-            let n_geoms = ggeom.get_num_geometries().map_err(from_geos_err)?;
+            let n_geoms = ggeom.get_num_geometries()?;
             processor.geometrycollection_begin(n_geoms, idx)?;
             for i in 0..n_geoms {
-                let g = ggeom.get_geometry_n(i).map_err(from_geos_err)?;
+                let g = ggeom.get_geometry_n(i)?;
                 process_geom_n(&g, i, processor)?;
             }
             processor.geometrycollection_end(idx)?;
@@ -98,13 +100,13 @@ fn process_coord_seq<P: GeomProcessor>(
     processor: &mut P,
 ) -> Result<()> {
     let multi = processor.dimensions().z;
-    let n_coords = cs.size().map_err(from_geos_err)?;
+    let n_coords = cs.size()?;
     for i in 0..n_coords {
         if multi {
             processor.coordinate(
-                cs.get_x(i).map_err(from_geos_err)?,
-                cs.get_y(i).map_err(from_geos_err)?,
-                Some(cs.get_z(i).map_err(from_geos_err)?),
+                cs.get_x(i)?,
+                cs.get_y(i)?,
+                Some(cs.get_z(i)?),
                 None,
                 None,
                 None,
@@ -112,8 +114,8 @@ fn process_coord_seq<P: GeomProcessor>(
             )?;
         } else {
             processor.xy(
-                cs.get_x(i).map_err(from_geos_err)?,
-                cs.get_y(i).map_err(from_geos_err)?,
+                cs.get_x(i)?,
+                cs.get_y(i)?,
                 offset + i, // multipoints have offset > 0, but i is always 0
             )?;
         }
@@ -126,7 +128,7 @@ fn process_point<'a, P: GeomProcessor, G: Geom<'a>>(
     idx: usize,
     processor: &mut P,
 ) -> Result<()> {
-    let cs = ggeom.get_coord_seq().map_err(from_geos_err)?;
+    let cs = ggeom.get_coord_seq()?;
     // NOTE: this clones the underlying CoordSeq!
     // let x = GEOSGeom_getX_r(ggeom.get_raw_context(), ggeom.as_raw());
     process_coord_seq(&cs, idx, processor)?;
@@ -139,10 +141,10 @@ fn process_linestring<'a, P: GeomProcessor, G: Geom<'a>>(
     idx: usize,
     processor: &mut P,
 ) -> Result<()> {
-    let cs = ggeom.get_coord_seq().map_err(from_geos_err)?;
+    let cs = ggeom.get_coord_seq()?;
     // NOTE: this clones the underlying CoordSeq!
     // let coords = GEOSGeom_getCoordSeq_r(ggeom.get_raw_context(), ggeom.as_raw());
-    let n_coords = cs.size().map_err(from_geos_err)?;
+    let n_coords = cs.size()?;
     processor.linestring_begin(tagged, n_coords, idx)?;
     process_coord_seq(&cs, 0, processor)?;
     processor.linestring_end(tagged, idx)
@@ -154,17 +156,15 @@ fn process_polygon<'a, P: GeomProcessor, G: Geom<'a>>(
     idx: usize,
     processor: &mut P,
 ) -> Result<()> {
-    let nb_interiors = ggeom.get_num_interior_rings().map_err(from_geos_err)?;
+    let nb_interiors = ggeom.get_num_interior_rings()?;
 
     processor.polygon_begin(tagged, nb_interiors + 1, idx)?;
     // Exterior ring
-    let ring = ggeom.get_exterior_ring().map_err(from_geos_err)?;
+    let ring = ggeom.get_exterior_ring()?;
     process_linestring(&ring, false, 0, processor)?;
     // Interior rings
     for ix_interior in 0..nb_interiors {
-        let ring = ggeom
-            .get_interior_ring_n(ix_interior as u32)
-            .map_err(from_geos_err)?;
+        let ring = ggeom.get_interior_ring_n(ix_interior as u32)?;
         process_linestring(&ring, false, ix_interior + 1, processor)?;
     }
     processor.polygon_end(tagged, idx)

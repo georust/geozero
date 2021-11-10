@@ -1,4 +1,3 @@
-use super::geos_reader::from_geos_err;
 use crate::error::{GeozeroError, Result};
 use crate::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 use geos::{CoordDimensions, CoordSeq, GResult, Geometry as GGeometry};
@@ -22,7 +21,7 @@ impl<'a> GeosWriter<'a> {
     }
     fn add_coord_seq(&mut self, len: usize) -> Result<()> {
         self.cs
-            .push(CoordSeq::new(len as u32, CoordDimensions::TwoD).map_err(from_geos_err)?);
+            .push(CoordSeq::new(len as u32, CoordDimensions::TwoD)?);
         Ok(())
     }
     pub fn geometry(&self) -> &GGeometry<'a> {
@@ -37,8 +36,8 @@ impl GeomProcessor for GeosWriter<'_> {
         }
         let n = self.cs.len() - 1;
         let coord_seq = &mut self.cs[n];
-        coord_seq.set_x(idx, x).map_err(from_geos_err)?;
-        coord_seq.set_y(idx, y).map_err(from_geos_err)?;
+        coord_seq.set_x(idx, x)?;
+        coord_seq.set_y(idx, y)?;
         Ok(())
     }
     fn point_begin(&mut self, _idx: usize) -> Result<()> {
@@ -51,7 +50,7 @@ impl GeomProcessor for GeosWriter<'_> {
             .cs
             .pop()
             .ok_or_else(|| GeozeroError::Geometry("CoordSeq missing".to_string()))?;
-        self.geom = GGeometry::create_point(cs).map_err(from_geos_err)?;
+        self.geom = GGeometry::create_point(cs)?;
         Ok(())
     }
     fn multipoint_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
@@ -65,7 +64,7 @@ impl GeomProcessor for GeosWriter<'_> {
             .cs
             .pop()
             .ok_or_else(|| GeozeroError::Geometry("CoordSeq missing".to_string()))?;
-        let size = cs.size().map_err(from_geos_err)?;
+        let size = cs.size()?;
         let ggpts = (0..size)
             .map(|i| {
                 GGeometry::create_point(
@@ -73,9 +72,8 @@ impl GeomProcessor for GeosWriter<'_> {
                         .unwrap(),
                 )
             })
-            .collect::<GResult<Vec<GGeometry>>>()
-            .map_err(from_geos_err)?;
-        self.geom = GGeometry::create_multipoint(ggpts).map_err(from_geos_err)?;
+            .collect::<GResult<Vec<GGeometry>>>()?;
+        self.geom = GGeometry::create_multipoint(ggpts)?;
         Ok(())
     }
     fn linestring_begin(&mut self, tagged: bool, size: usize, _idx: usize) -> Result<()> {
@@ -91,7 +89,7 @@ impl GeomProcessor for GeosWriter<'_> {
                 .cs
                 .pop()
                 .ok_or_else(|| GeozeroError::Geometry("CoordSeq missing".to_string()))?;
-            self.geom = GGeometry::create_line_string(cs).map_err(from_geos_err)?;
+            self.geom = GGeometry::create_line_string(cs)?;
         }
         Ok(())
     }
@@ -104,9 +102,8 @@ impl GeomProcessor for GeosWriter<'_> {
             .cs
             .drain(..)
             .map(|cs| GGeometry::create_line_string(cs))
-            .collect::<GResult<Vec<GGeometry>>>()
-            .map_err(from_geos_err)?;
-        self.geom = GGeometry::create_multiline_string(gglines).map_err(from_geos_err)?;
+            .collect::<GResult<Vec<GGeometry>>>()?;
+        self.geom = GGeometry::create_multiline_string(gglines)?;
         Ok(())
     }
     fn polygon_begin(&mut self, _tagged: bool, size: usize, _idx: usize) -> Result<()> {
@@ -119,15 +116,13 @@ impl GeomProcessor for GeosWriter<'_> {
         }
         // TODO: We need to ensure that rings of polygons are closed
         // to create valid GEOS LinearRings
-        let exterior_ring =
-            GGeometry::create_linear_ring(self.cs.remove(0)).map_err(from_geos_err)?;
+        let exterior_ring = GGeometry::create_linear_ring(self.cs.remove(0))?;
         let interiors = self
             .cs
             .drain(..)
             .map(|cs| GGeometry::create_linear_ring(cs))
-            .collect::<GResult<Vec<GGeometry>>>()
-            .map_err(from_geos_err)?;
-        let gpoly = GGeometry::create_polygon(exterior_ring, interiors).map_err(from_geos_err)?;
+            .collect::<GResult<Vec<GGeometry>>>()?;
+        let gpoly = GGeometry::create_polygon(exterior_ring, interiors)?;
         if tagged {
             self.geom = gpoly;
         } else {
@@ -140,8 +135,7 @@ impl GeomProcessor for GeosWriter<'_> {
         Ok(())
     }
     fn multipolygon_end(&mut self, _idx: usize) -> Result<()> {
-        self.geom = GGeometry::create_multipolygon(std::mem::take(&mut self.polys))
-            .map_err(from_geos_err)?;
+        self.geom = GGeometry::create_multipolygon(std::mem::take(&mut self.polys))?;
         Ok(())
     }
 }

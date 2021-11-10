@@ -33,7 +33,7 @@ impl<'a> GdalWriter {
         type_id
     }
     fn empty_geom(&mut self, base: OGRwkbGeometryType::Type) -> Result<Geometry> {
-        Geometry::empty(self.wkb_type(base)).map_err(from_gdal_err)
+        Geometry::empty(self.wkb_type(base)).map_err(|e| e.into())
     }
 }
 
@@ -41,8 +41,10 @@ fn wkb_base_type(wkb_type: OGRwkbGeometryType::Type) -> OGRwkbGeometryType::Type
     (wkb_type as u32) % 1000
 }
 
-pub(crate) fn from_gdal_err(error: gdal::errors::GdalError) -> GeozeroError {
-    GeozeroError::Geometry(error.to_string())
+impl From<gdal::errors::GdalError> for GeozeroError {
+    fn from(error: gdal::errors::GdalError) -> Self {
+        GeozeroError::Geometry(error.to_string())
+    }
 }
 
 impl GeomProcessor for GdalWriter {
@@ -57,7 +59,7 @@ impl GeomProcessor for GdalWriter {
             OGRwkbGeometryType::wkbMultiPoint => {
                 let mut point = self.empty_geom(OGRwkbGeometryType::wkbPoint)?;
                 point.set_point_2d(0, (x, y));
-                self.geom.add_geometry(point).map_err(from_gdal_err)?;
+                self.geom.add_geometry(point)?;
             }
             OGRwkbGeometryType::wkbMultiLineString
             | OGRwkbGeometryType::wkbPolygon
@@ -91,7 +93,7 @@ impl GeomProcessor for GdalWriter {
             OGRwkbGeometryType::wkbMultiPoint => {
                 let mut point = self.empty_geom(OGRwkbGeometryType::wkbPoint)?;
                 point.set_point(0, (x, y, z));
-                self.geom.add_geometry(point).map_err(from_gdal_err)?;
+                self.geom.add_geometry(point)?;
             }
             OGRwkbGeometryType::wkbMultiLineString
             | OGRwkbGeometryType::wkbPolygon
@@ -122,14 +124,14 @@ impl GeomProcessor for GdalWriter {
             match wkb_base_type(self.geom.geometry_type()) {
                 OGRwkbGeometryType::wkbMultiLineString => {
                     let line = self.empty_geom(OGRwkbGeometryType::wkbLineString)?;
-                    self.geom.add_geometry(line).map_err(from_gdal_err)?;
+                    self.geom.add_geometry(line)?;
 
                     let n = self.geom.geometry_count();
                     self.line = unsafe { self.geom.get_unowned_geometry(n - 1) };
                 }
                 OGRwkbGeometryType::wkbPolygon => {
                     let ring = self.empty_geom(OGRwkbGeometryType::wkbLinearRing)?;
-                    self.geom.add_geometry(ring).map_err(from_gdal_err)?;
+                    self.geom.add_geometry(ring)?;
 
                     let n = self.geom.geometry_count();
                     self.line = unsafe { self.geom.get_unowned_geometry(n - 1) };
@@ -138,7 +140,7 @@ impl GeomProcessor for GdalWriter {
                     let ring = self.empty_geom(OGRwkbGeometryType::wkbLinearRing)?;
                     let n = self.geom.geometry_count();
                     let mut poly = unsafe { self.geom.get_unowned_geometry(n - 1) };
-                    poly.add_geometry(ring).map_err(from_gdal_err)?;
+                    poly.add_geometry(ring)?;
 
                     let n = poly.geometry_count();
                     self.line = unsafe { poly.get_unowned_geometry(n - 1) };
@@ -162,7 +164,7 @@ impl GeomProcessor for GdalWriter {
         if tagged {
             self.geom = poly;
         } else {
-            self.geom.add_geometry(poly).map_err(from_gdal_err)?;
+            self.geom.add_geometry(poly)?;
         }
         Ok(())
     }
