@@ -266,7 +266,7 @@ pub trait GeomProcessor {
         Ok(())
     }
 
-    /// End of Polygon processing
+    /// End of Triangle processing
     fn triangle_end(&mut self, tagged: bool, idx: usize) -> Result<()> {
         Ok(())
     }
@@ -278,7 +278,7 @@ pub trait GeomProcessor {
         Ok(())
     }
 
-    /// End of MultiPolygon processing
+    /// End of PolyhedralSurface processing
     fn polyhedralsurface_end(&mut self, idx: usize) -> Result<()> {
         Ok(())
     }
@@ -290,7 +290,7 @@ pub trait GeomProcessor {
         Ok(())
     }
 
-    /// End of MultiPolygon processing
+    /// End of Tin processing
     fn tin_end(&mut self, idx: usize) -> Result<()> {
         Ok(())
     }
