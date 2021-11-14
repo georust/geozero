@@ -8,6 +8,10 @@ geozero --help
 
 Examples:
 ```
+geozero cities.geojson cities.fgb
+```
+
+```
 geozero --extent 8.8,47.2,9.5,55.3 countries.fgb countries.json
 ```
 
