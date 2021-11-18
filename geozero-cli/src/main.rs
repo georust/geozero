@@ -88,7 +88,7 @@ fn process(args: Cli) -> Result<()> {
             transform(args, &mut processor)?;
         }
         Some("fgb") => {
-            let mut fgb = FgbWriter::create("fgb", GeometryType::Unknown, None, |_| {})?;
+            let mut fgb = FgbWriter::create("fgb", GeometryType::Unknown, |_, _| {})?;
             transform(args, &mut fgb)?;
             fgb.write(&mut fout)?;
         }
