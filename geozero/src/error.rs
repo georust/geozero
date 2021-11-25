@@ -25,6 +25,12 @@ pub enum GeozeroError {
     // PropertyProcessor
     #[error("processing feature property: `{0}`")]
     Property(String),
+    #[error("column not found")]
+    ColumnUnknown,
+    #[error("expected a `{0}` value but found `{1}`")]
+    ColumnType(String, String),
+    #[error("column `{0}` not found")]
+    ColumnNotFound(String),
     // GeometryProcessor
     #[error("accessing requested coordinate")]
     Coord,

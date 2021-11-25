@@ -1,4 +1,4 @@
-use crate::error::Result;
+use crate::error::{GeozeroError, Result};
 use std::collections::HashMap;
 use std::fmt;
 
@@ -71,13 +71,13 @@ impl fmt::Display for ColumnValue<'_> {
 #[doc(hidden)]
 pub struct PropertyReader<'a, T: PropertyReadType> {
     pub name: &'a str,
-    pub value: Option<T>,
+    pub value: Result<T>,
 }
 
 #[doc(hidden)]
 pub struct PropertyReaderIdx<T: PropertyReadType> {
     pub idx: usize,
-    pub value: Option<T>,
+    pub value: Result<T>,
 }
 
 /// Get property value as Rust type.
@@ -86,7 +86,7 @@ where
     T: PropertyReadType,
 {
     /// Get property value as Rust type.
-    fn get_value(v: &ColumnValue) -> Option<T>;
+    fn get_value(v: &ColumnValue) -> Result<T>;
 }
 
 impl<T: PropertyReadType> PropertyProcessor for PropertyReader<'_, T> {
@@ -113,16 +113,17 @@ impl<T: PropertyReadType> PropertyProcessor for PropertyReaderIdx<T> {
 
 macro_rules! impl_scalar_property_reader {
     ( $t:ty, $e:path ) => {
-        impl From<&ColumnValue<'_>> for Option<$t> {
-            fn from(v: &ColumnValue) -> Option<$t> {
-                match v {
-                    $e(v) => Some(*v),
-                    _ => None,
+        impl From<&ColumnValue<'_>> for Result<$t> {
+            fn from(v: &ColumnValue) -> Result<$t> {
+                if let $e(v) = v {
+                    Ok(*v)
+                } else {
+                    Err(GeozeroError::ColumnType(stringify!($e).to_string(), format!("{:?}", v)))
                 }
             }
         }
         impl PropertyReadType for $t {
-            fn get_value(v: &ColumnValue) -> Option<$t> {
+            fn get_value(v: &ColumnValue) -> Result<$t> {
                 v.into()
             }
         }
@@ -141,14 +142,14 @@ impl_scalar_property_reader!(u64, ColumnValue::ULong);
 impl_scalar_property_reader!(f32, ColumnValue::Float);
 impl_scalar_property_reader!(f64, ColumnValue::Double);
 
-impl From<&ColumnValue<'_>> for Option<String> {
-    fn from(v: &ColumnValue) -> Option<String> {
-        Some(v.to_string())
+impl From<&ColumnValue<'_>> for Result<String> {
+    fn from(v: &ColumnValue) -> Result<String> {
+        Ok(v.to_string())
     }
 }
 
 impl PropertyReadType for String {
-    fn get_value(v: &ColumnValue) -> Option<String> {
+    fn get_value(v: &ColumnValue) -> Result<String> {
         v.into()
     }
 }
@@ -163,11 +164,17 @@ impl PropertyProcessor for HashMap<String, String> {
 #[test]
 fn convert_column_value() {
     let v = &ColumnValue::Int(42);
-    assert_eq!(Option::<i32>::from(v), Some(42));
-    assert_eq!(Option::<i64>::from(v), None);
-    assert_eq!(Option::<String>::from(v), Some("42".to_string()));
+    assert_eq!(Result::<i32>::from(v).unwrap(), 42);
+    assert_eq!(
+        Result::<i64>::from(v).unwrap_err().to_string(),
+        "expected a `ColumnValue::Long` value but found `Int(42)`"
+    );
+    assert_eq!(Result::<String>::from(v).unwrap(), "42".to_string());
 
     let v = &ColumnValue::String("Yes");
-    assert_eq!(Option::<i32>::from(v), None);
-    assert_eq!(Option::<String>::from(v), Some("Yes".to_string()));
+    assert_eq!(Result::<String>::from(v).unwrap(), "Yes".to_string());
+    assert_eq!(
+        Result::<i32>::from(v).unwrap_err().to_string(),
+        "expected a `ColumnValue::Int` value but found `String(\"Yes\")`"
+    );
 }

@@ -4,7 +4,7 @@
 //! The current feature can be processed with `FeatureAccess` processing API methods.
 //! Some datasources process features during consumation (e.g. reading from file).
 
-use crate::error::Result;
+use crate::error::{GeozeroError, Result};
 use crate::feature_processor::FeatureProcessor;
 use crate::property_processor::{
     PropertyProcessor, PropertyReadType, PropertyReader, PropertyReaderIdx,
@@ -73,24 +73,24 @@ pub trait FeatureProperties {
     /// Process feature properties.
     fn process_properties<P: PropertyProcessor>(&self, processor: &mut P) -> Result<bool>;
     /// Get property value by name
-    fn property<T: PropertyReadType>(&self, name: &str) -> Option<T> {
-        let mut reader = PropertyReader { name, value: None };
-        if self.process_properties(&mut reader).is_ok() {
-            reader.value
-        } else {
-            None
-        }
+    fn property<T: PropertyReadType>(&self, name: &str) -> Result<T> {
+        let mut reader = PropertyReader {
+            name,
+            value: Err(GeozeroError::ColumnUnknown),
+        };
+        self.process_properties(&mut reader).ok();
+        reader.value
     }
     /// Get property value by number
-    fn property_n<T: PropertyReadType>(&self, n: usize) -> Option<T> {
+    fn property_n<T: PropertyReadType>(&self, n: usize) -> Result<T> {
         let mut reader = PropertyReaderIdx {
             idx: n,
-            value: None,
+            value: Err(GeozeroError::ColumnUnknown),
         };
         if self.process_properties(&mut reader).is_ok() {
             reader.value
         } else {
-            None
+            Err(GeozeroError::ColumnNotFound(n.to_string()))
         }
     }
     /// Return all properties in a HashMap
