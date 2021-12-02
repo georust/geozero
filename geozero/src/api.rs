@@ -18,17 +18,6 @@ pub trait GeozeroGeometry {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()>
     where
         Self: Sized;
-    #[deprecated(
-        since = "0.7.1",
-        note = "please remove implementation, not required anymore"
-    )]
-    #[doc(hidden)]
-    fn empty() -> Self
-    where
-        Self: Sized,
-    {
-        unimplemented!()
-    }
     /// Dimensions of geometry
     fn dims(&self) -> CoordDimensions {
         CoordDimensions::xy()
