@@ -89,7 +89,7 @@ fn process_geom_n<'a, P: GeomProcessor, G: Geom<'a>>(
             }
             processor.geometrycollection_end(idx)?;
         }
-        GeometryTypes::__Unknonwn(_) => return Err(GeozeroError::GeometryFormat),
+        GeometryTypes::__Unknown(_) => return Err(GeozeroError::GeometryFormat),
     }
     Ok(())
 }

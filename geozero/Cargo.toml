@@ -29,7 +29,7 @@ thiserror = "1.0"
 geojson = { version = "0.22", optional = true }
 serde_json = "1.0.68"
 geo-types = { version = "0.7", default-features = false, optional = true }
-geos = { version = "7.0", optional = true }
+geos = { version = "8.0", optional = true }
 gdal = { version = "0.11", default-features = false, optional = true }
 gdal-sys = { version = "0.5", optional = true }
 lyon = { version = "0.16", optional = true }
