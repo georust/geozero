@@ -1,3 +1,8 @@
+## 0.8.0 (2021-12-02)
+
+* Breaking: Property reader returns error instead of None
+* Update to gdal 0.11.0 / gdal-sys 0.5.0
+
 ## 0.7.7 (2021-11-09)
 
 * Support XYZ in GeoJSON writer
