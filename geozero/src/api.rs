@@ -62,27 +62,29 @@ pub trait FeatureProperties {
     /// Process feature properties.
     fn process_properties<P: PropertyProcessor>(&self, processor: &mut P) -> Result<bool>;
     /// Get property value by name
+    ///
+    /// An error `ColumnNotFound` can be interpreted as Null value.
     fn property<T: PropertyReadType>(&self, name: &str) -> Result<T> {
         let mut reader = PropertyReader {
             name,
-            value: Err(GeozeroError::ColumnUnknown),
+            value: Err(GeozeroError::ColumnNotFound),
         };
         self.process_properties(&mut reader).ok();
         reader.value
     }
     /// Get property value by number
+    ///
+    /// An error `ColumnNotFound` can be interpreted as Null value.
     fn property_n<T: PropertyReadType>(&self, n: usize) -> Result<T> {
         let mut reader = PropertyReaderIdx {
             idx: n,
-            value: Err(GeozeroError::ColumnUnknown),
+            value: Err(GeozeroError::ColumnNotFound),
         };
-        if self.process_properties(&mut reader).is_ok() {
-            reader.value
-        } else {
-            Err(GeozeroError::ColumnNotFound(n.to_string()))
-        }
+        self.process_properties(&mut reader).ok();
+        reader.value
     }
     /// Return all properties in a HashMap
+    ///
     /// Use `process_properties` for zero-copy access
     fn properties(&self) -> Result<HashMap<String, String>> {
         let mut properties = HashMap::new();
