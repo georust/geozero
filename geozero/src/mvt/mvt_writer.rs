@@ -1,202 +1,431 @@
+//! Encode geometries according to MVT spec
+//! https://github.com/mapbox/vector-tile-spec/tree/master/2.1
+
 use crate::error::{GeozeroError, Result};
-use crate::{FeatureProcessor, GeomProcessor, PropertyProcessor};
-use std::mem;
+use crate::mvt::mvt_commands::*;
+use crate::mvt::vector_tile::{tile, tile::GeomType};
+use crate::GeomProcessor;
 
 /// Generator for MVT geometry type.
 pub struct MvtWriter {
-    pub(crate) geom: Geometry<f64>,
-    // Polygon rings or MultiLineString members
-    line_strings: Vec<LineString<f64>>,
+    pub(crate) feature: tile::Feature,
+    last_x: i32,
+    last_y: i32,
+    line_state: LineState,
+    is_multiline: bool,
+}
+
+#[derive(PartialEq)]
+enum LineState {
+    None,
+    // Issue LineTo command afer first point
+    Line(usize),
+    Ring(usize),
 }
 
 impl MvtWriter {
     pub fn new() -> MvtWriter {
         MvtWriter {
-            geom: Point::new(0., 0.).into(),
-            line_strings: Vec::new(),
+            feature: tile::Feature::default(),
+            last_x: 0,
+            last_y: 0,
+            line_state: LineState::None,
+            is_multiline: false,
         }
     }
-    pub fn geometry(&self) -> &Geometry<f64> {
-        &self.geom
+    pub fn geometry(&self) -> &tile::Feature {
+        &self.feature
     }
 }
 
 impl GeomProcessor for MvtWriter {
-    fn xy(&mut self, x: f64, y: f64, _idx: usize) -> Result<()> {
-        if self.line_strings.len() > 0 {
-            let idx = self.line_strings.len() - 1;
-            self.line_strings[idx].0.push(Coordinate { x, y });
+    fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
+        // Omit last coord of ring (emit ClosePath instead)
+        let last_ring_coord = if let LineState::Ring(size) = self.line_state {
+            idx == size - 1
         } else {
-            match &mut self.geom {
-                Geometry::Point(_) => {
-                    self.geom = Point::new(x, y).into();
-                }
-                Geometry::MultiPoint(mp) => {
-                    mp.0.push(Point::new(x, y));
-                }
+            false
+        };
+
+        if !last_ring_coord {
+            let x = x as i32;
+            let y = y as i32;
+            self.feature
+                .geometry
+                .push(ParameterInteger::from(x.saturating_sub(self.last_x)));
+            self.feature
+                .geometry
+                .push(ParameterInteger::from(y.saturating_sub(self.last_y)));
+            self.last_x = x;
+            self.last_y = y;
+        }
+
+        // Emit LineTo command after first coord in line or ring
+        if idx == 0 && self.line_state != LineState::None {
+            let num_coords = match self.line_state {
+                LineState::Line(size) if size > 1 => size - 1,
+                LineState::Ring(size) if size > 2 => size - 2,
                 _ => {
                     return Err(GeozeroError::Geometry(
-                        "Unexpected geometry type".to_string(),
-                    ));
+                        "Too few coordinates in line or ring".to_string(),
+                    ))
                 }
-            }
+            };
+            self.feature
+                .geometry
+                .push(CommandInteger::from(Command::LineTo, num_coords as u32));
         }
         Ok(())
     }
     fn point_begin(&mut self, _idx: usize) -> Result<()> {
-        self.geom = Point::new(0., 0.).into();
+        self.feature.set_type(GeomType::Point);
+        self.feature.geometry.reserve(3);
+        self.feature
+            .geometry
+            .push(CommandInteger::from(Command::MoveTo, 1));
         Ok(())
     }
     fn multipoint_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
-        self.geom = MultiPoint(Vec::<Point<f64>>::with_capacity(size)).into();
+        self.feature.set_type(GeomType::Point);
+        self.feature.geometry.reserve(1 + 2 * size);
+        self.feature
+            .geometry
+            .push(CommandInteger::from(Command::MoveTo, size as u32));
         Ok(())
     }
     fn linestring_begin(&mut self, tagged: bool, size: usize, _idx: usize) -> Result<()> {
-        let line_string = LineString(Vec::<Coordinate<f64>>::with_capacity(size));
         if tagged {
-            self.line_strings = Vec::with_capacity(1);
-        } // else allocated in multilinestring_begin or polygon_begin
-        self.line_strings.push(line_string);
-        Ok(())
-    }
-    fn linestring_end(&mut self, tagged: bool, _idx: usize) -> Result<()> {
-        if tagged {
-            self.geom = self
-                .line_strings
-                .pop()
-                .ok_or(GeozeroError::Geometry("LineString missing".to_string()))?
-                .into();
+            self.feature.set_type(GeomType::Linestring);
         }
-        Ok(())
-    }
-    fn multilinestring_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
-        self.line_strings = Vec::with_capacity(size);
-        Ok(())
-    }
-    fn multilinestring_end(&mut self, _idx: usize) -> Result<()> {
-        self.geom = MultiLineString(mem::take(&mut self.line_strings)).into();
-        Ok(())
-    }
-    fn polygon_begin(&mut self, _tagged: bool, size: usize, _idx: usize) -> Result<()> {
-        self.line_strings = Vec::with_capacity(size);
-        Ok(())
-    }
-    fn polygon_end(&mut self, tagged: bool, _idx: usize) -> Result<()> {
-        if self.line_strings.len() == 0 {
-            return Err(GeozeroError::Geometry("Missing LineString".to_string()));
-        }
-        let exterior = self.line_strings.remove(0);
-        let polygon = Polygon::new(exterior, mem::take(&mut self.line_strings));
-        if tagged {
-            self.geom = polygon.into();
-        } else if let Geometry::MultiPolygon(mp) = &mut self.geom {
-            mp.0.push(polygon);
+        self.line_state = if tagged || self.is_multiline {
+            self.feature.geometry.reserve(2 + 2 * size); // TODO: correct?
+            LineState::Line(size)
         } else {
-            return Err(GeozeroError::Geometry(
-                "Unexpected geometry type".to_string(),
-            ));
+            self.feature.geometry.reserve(2 + 2 * (size - 1) + 1); // TODO: correct?
+            LineState::Ring(size)
+        };
+        self.feature
+            .geometry
+            .push(CommandInteger::from(Command::MoveTo, 1));
+        Ok(())
+    }
+    fn linestring_end(&mut self, _tagged: bool, _idx: usize) -> Result<()> {
+        if let LineState::Ring(_) = self.line_state {
+            self.feature
+                .geometry
+                .push(CommandInteger::from(Command::ClosePath, 1));
+        }
+        self.line_state = LineState::None;
+        Ok(())
+    }
+    fn multilinestring_begin(&mut self, _size: usize, _idx: usize) -> Result<()> {
+        self.is_multiline = true;
+        self.feature.set_type(GeomType::Linestring);
+        Ok(())
+    }
+    fn multilinestring_end(&mut self, _size: usize) -> Result<()> {
+        self.is_multiline = false;
+        Ok(())
+    }
+    fn polygon_begin(&mut self, tagged: bool, _size: usize, _idx: usize) -> Result<()> {
+        if tagged {
+            self.feature.set_type(GeomType::Polygon);
         }
         Ok(())
     }
-    fn multipolygon_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
-        self.geom = MultiPolygon(Vec::<Polygon<f64>>::with_capacity(size)).into();
+    fn multipolygon_begin(&mut self, _size: usize, _idx: usize) -> Result<()> {
+        self.feature.set_type(GeomType::Polygon);
         Ok(())
     }
 }
 
-impl PropertyProcessor for MvtWriter {}
+#[cfg(test)]
+mod test_mvt {
+    use super::*;
+    use crate::mvt::vector_tile::Tile;
 
-impl FeatureProcessor for MvtWriter {}
+    // https://github.com/mapbox/vector-tile-spec/tree/master/2.1#45-example
+    const TILE_EXAMPLE: &'static str = r#"Tile {
+    layers: [
+        Layer {
+            version: 2,
+            name: "points",
+            features: [
+                Feature {
+                    id: Some(
+                        1,
+                    ),
+                    tags: [
+                        0,
+                        0,
+                        1,
+                        0,
+                        2,
+                        1,
+                    ],
+                    r#type: Some(
+                        Point,
+                    ),
+                    geometry: [
+                        9,
+                        490,
+                        6262,
+                    ],
+                },
+                Feature {
+                    id: Some(
+                        2,
+                    ),
+                    tags: [
+                        0,
+                        2,
+                        2,
+                        3,
+                    ],
+                    r#type: Some(
+                        Point,
+                    ),
+                    geometry: [
+                        9,
+                        490,
+                        6262,
+                    ],
+                },
+            ],
+            keys: [
+                "hello",
+                "h",
+                "count",
+            ],
+            values: [
+                Value {
+                    string_value: Some(
+                        "world",
+                    ),
+                    float_value: None,
+                    double_value: None,
+                    int_value: None,
+                    uint_value: None,
+                    sint_value: None,
+                    bool_value: None,
+                },
+                Value {
+                    string_value: None,
+                    float_value: None,
+                    double_value: Some(
+                        1.23,
+                    ),
+                    int_value: None,
+                    uint_value: None,
+                    sint_value: None,
+                    bool_value: None,
+                },
+                Value {
+                    string_value: Some(
+                        "again",
+                    ),
+                    float_value: None,
+                    double_value: None,
+                    int_value: None,
+                    uint_value: None,
+                    sint_value: None,
+                    bool_value: None,
+                },
+                Value {
+                    string_value: None,
+                    float_value: None,
+                    double_value: None,
+                    int_value: Some(
+                        2,
+                    ),
+                    uint_value: None,
+                    sint_value: None,
+                    bool_value: None,
+                },
+            ],
+            extent: Some(
+                4096,
+            ),
+        },
+    ],
+}"#;
+
+    #[test]
+    fn test_build_mvt() {
+        // https://github.com/mapbox/vector-tile-spec/tree/master/2.1#45-example
+        let mut mvt_tile = Tile::default();
+
+        let mut mvt_layer = tile::Layer::default();
+        mvt_layer.version = 2;
+        mvt_layer.name = String::from("points");
+        mvt_layer.extent = Some(4096);
+
+        let mut mvt_feature = tile::Feature::default();
+        mvt_feature.id = Some(1);
+        mvt_feature.set_type(GeomType::Point);
+        mvt_feature.geometry = [9, 490, 6262].to_vec();
+
+        let mut mvt_value = tile::Value::default();
+        mvt_value.string_value = Some(String::from("world"));
+        add_feature_attribute(
+            &mut mvt_layer,
+            &mut mvt_feature,
+            String::from("hello"),
+            mvt_value,
+        );
+        let mut mvt_value = tile::Value::default();
+        mvt_value.string_value = Some(String::from("world"));
+        add_feature_attribute(
+            &mut mvt_layer,
+            &mut mvt_feature,
+            String::from("h"),
+            mvt_value,
+        );
+        let mut mvt_value = tile::Value::default();
+        mvt_value.double_value = Some(1.23);
+        add_feature_attribute(
+            &mut mvt_layer,
+            &mut mvt_feature,
+            String::from("count"),
+            mvt_value,
+        );
+
+        mvt_layer.features.push(mvt_feature);
+
+        mvt_feature = tile::Feature::default();
+        mvt_feature.id = Some(2);
+        mvt_feature.set_type(GeomType::Point);
+        mvt_feature.geometry = [9, 490, 6262].to_vec();
+
+        let mut mvt_value = tile::Value::default();
+        mvt_value.string_value = Some(String::from("again"));
+        add_feature_attribute(
+            &mut mvt_layer,
+            &mut mvt_feature,
+            String::from("hello"),
+            mvt_value,
+        );
+        let mut mvt_value = tile::Value::default();
+        mvt_value.int_value = Some(2);
+        add_feature_attribute(
+            &mut mvt_layer,
+            &mut mvt_feature,
+            String::from("count"),
+            mvt_value,
+        );
+
+        mvt_layer.features.push(mvt_feature);
+
+        mvt_tile.layers.push(mvt_layer);
+        println!("{:#?}", mvt_tile);
+        // Ignore trailing commas because of https://github.com/rust-lang/rust/pull/59076/
+        assert_eq!(
+            TILE_EXAMPLE.replace(",\n", "\n"),
+            &*format!("{:#?}", mvt_tile).replace(",\n", "\n")
+        );
+    }
+}
+
+fn add_feature_attribute(
+    mvt_layer: &mut tile::Layer,
+    mvt_feature: &mut tile::Feature,
+    key: String,
+    mvt_value: tile::Value,
+) {
+    let keyentry = mvt_layer.keys.iter().position(|k| *k == key);
+    // Optimization: maintain a hash table with key/index pairs
+    let keyidx = match keyentry {
+        None => {
+            mvt_layer.keys.push(key);
+            mvt_layer.keys.len() - 1
+        }
+        Some(idx) => idx,
+    };
+    mvt_feature.tags.push(keyidx as u32);
+
+    let valentry = mvt_layer.values.iter().position(|v| *v == mvt_value);
+    // Optimization: maintain a hash table with value/index pairs
+    let validx = match valentry {
+        None => {
+            mvt_layer.values.push(mvt_value);
+            mvt_layer.values.len() - 1
+        }
+        Some(idx) => idx,
+    };
+    mvt_feature.tags.push(validx as u32);
+}
 
 #[cfg(test)]
 #[cfg(feature = "with-geojson")]
 mod test {
     use super::*;
-    use crate::geojson::{read_geojson, GeoJson};
+    use crate::geojson::GeoJson;
     use crate::ToMvt;
-    use mvt::Geom;
     use std::convert::TryFrom;
 
     #[test]
     fn point_geom() {
-        let geojson = r#"{"type": "Point", "coordinates": [1, 1]}"#;
-        let wkt = "POINT (1.0000000000000000 1.0000000000000000)";
-        let mut mvt = MvtWriter::new();
-        assert!(read_geojson(geojson.as_bytes(), &mut mvt).is_ok());
-        assert_eq!(mvt.geometry().to_wkt().unwrap(), wkt);
+        let geojson = GeoJson(r#"{"type": "Point", "coordinates": [25, 17]}"#);
+        let mvt = geojson.to_mvt().unwrap();
+        assert_eq!(mvt.geometry, [9, 50, 34]);
     }
 
     #[test]
     fn multipoint_geom() {
-        let geojson = GeoJson(r#"{"type": "MultiPoint", "coordinates": [[1, 1], [2, 2]]}"#);
-        let wkt = "MULTIPOINT (1.0000000000000000 1.0000000000000000, 2.0000000000000000 2.0000000000000000)";
+        let geojson = GeoJson(r#"{"type": "MultiPoint", "coordinates": [[5, 7], [3, 2]]}"#);
         let mvt = geojson.to_mvt().unwrap();
-        assert_eq!(mvt.to_wkt().unwrap(), wkt);
+        assert_eq!(mvt.geometry, [17, 10, 14, 3, 9]);
     }
 
     #[test]
     fn line_geom() {
-        let geojson = GeoJson(r#"{"type": "LineString", "coordinates": [[1,1], [2,2]]}"#);
-        let wkt = "LINESTRING (1.0000000000000000 1.0000000000000000, 2.0000000000000000 2.0000000000000000)";
+        let geojson = GeoJson(r#"{"type": "LineString", "coordinates": [[2,2], [2,10], [10,10]]}"#);
         let mvt = geojson.to_mvt().unwrap();
-        assert_eq!(mvt.to_wkt().unwrap(), wkt);
+        assert_eq!(mvt.geometry, [9, 4, 4, 18, 0, 16, 16, 0]);
     }
-
-    // #[test]
-    // fn line_geom_3d() {
-    //     let geojson = GeoJson(r#"{"type": "LineString", "coordinates": [[1,1,10], [2,2,20]]}"#);
-    //     let wkt = "LINESTRING (1 1 10, 2 2 20)";
-    //     let mvt = geojson.to_mvt().unwrap();
-    //     assert_eq!(mvt.to_wkt().unwrap(), wkt);
-    // }
 
     #[test]
     fn multiline_geom() {
-        let geojson =
-            GeoJson(r#"{"type": "MultiLineString", "coordinates": [[[1,1],[2,2]],[[3,3],[4,4]]]}"#);
-        let wkt = "MULTILINESTRING ((1.0000000000000000 1.0000000000000000, 2.0000000000000000 2.0000000000000000), (3.0000000000000000 3.0000000000000000, 4.0000000000000000 4.0000000000000000))";
+        let geojson = GeoJson(
+            r#"{"type": "MultiLineString", "coordinates": [[[2,2], [2,10], [10,10]],[[1,1],[3,5]]]}"#,
+        );
         let mvt = geojson.to_mvt().unwrap();
-        assert_eq!(mvt.to_wkt().unwrap(), wkt);
+        assert_eq!(
+            mvt.geometry,
+            [9, 4, 4, 18, 0, 16, 16, 0, 9, 17, 17, 10, 4, 8]
+        );
     }
 
     #[test]
     fn polygon_geom() {
-        let geojson = GeoJson(
-            r#"{"type": "Polygon", "coordinates": [[[0, 0], [0, 3], [3, 3], [3, 0], [0, 0]],[[0.2, 0.2], [0.2, 2], [2, 2], [2, 0.2], [0.2, 0.2]]]}"#,
-        );
-        let wkt = "POLYGON ((0.0000000000000000 0.0000000000000000, 0.0000000000000000 3.0000000000000000, 3.0000000000000000 3.0000000000000000, 3.0000000000000000 0.0000000000000000, 0.0000000000000000 0.0000000000000000), (0.2000000000000000 0.2000000000000000, 0.2000000000000000 2.0000000000000000, 2.0000000000000000 2.0000000000000000, 2.0000000000000000 0.2000000000000000, 0.2000000000000000 0.2000000000000000))";
+        let geojson =
+            GeoJson(r#"{"type": "Polygon", "coordinates": [[[3, 6], [8, 12], [20, 34], [3, 6]]]}"#);
         let mvt = geojson.to_mvt().unwrap();
-        assert_eq!(mvt.to_wkt().unwrap(), wkt);
+        assert_eq!(mvt.geometry, [9, 6, 12, 18, 10, 12, 24, 44, 15]);
     }
 
     #[test]
     fn multipolygon_geom() {
         let geojson = GeoJson(
-            r#"{"type": "MultiPolygon", "coordinates": [[[[0,0],[0,1],[1,1],[1,0],[0,0]]]]}"#,
+            r#"{"type": "MultiPolygon", "coordinates": [[[[0,0],[10,0],[10,10],[0,10],[0,0]]],[[[11,11],[20,11],[20,20],[11,20],[11,11]],[[13,13],[13,17],[17,17],[17,13],[13,13]]]]}"#,
         );
-        let wkt = "MULTIPOLYGON (((0.0000000000000000 0.0000000000000000, 0.0000000000000000 1.0000000000000000, 1.0000000000000000 1.0000000000000000, 1.0000000000000000 0.0000000000000000, 0.0000000000000000 0.0000000000000000)))";
         let mvt = geojson.to_mvt().unwrap();
-        assert_eq!(mvt.to_wkt().unwrap(), wkt);
+        assert_eq!(
+            mvt.geometry,
+            [
+                9, 0, 0, 26, 20, 0, 0, 20, 19, 0, 15, 9, 22, 2, 26, 18, 0, 0, 18, 17, 0, 15, 9, 4,
+                13, 26, 0, 8, 8, 0, 0, 7, 15
+            ]
+        );
     }
-
-    // #[test]
-    // fn geometry_collection_geom() {
-    //     let geojson = GeoJson(r#"{"type": "Point", "coordinates": [1, 1]}"#);
-    //     let wkt = "GEOMETRYCOLLECTION(POINT(1 1), LINESTRING(1 1, 2 2))";
-    //     let mvt = geojson.to_mvt().unwrap();
-    //     assert_eq!(mvt.to_wkt().unwrap(), wkt);
-    // }
 
     #[test]
     #[cfg(feature = "with-geo")]
     fn geo_to_mvt() -> Result<()> {
         let geo =
-            geo_types::Geometry::try_from(wkt::Wkt::from_str("POINT (10 20)").unwrap()).unwrap();
+            geo_types::Geometry::try_from(wkt::Wkt::from_str("POINT (25 17)").unwrap()).unwrap();
         let mvt = geo.to_mvt()?;
-        assert_eq!(
-            &mvt.to_wkt().unwrap(),
-            "POINT (10.0000000000000000 20.0000000000000000)"
-        );
+        assert_eq!(mvt.geometry, [9, 50, 34]);
         Ok(())
     }
 }

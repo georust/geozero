@@ -86,6 +86,8 @@ pub use crate::wkt::conversion::*;
 
 #[cfg(feature = "with-mvt")]
 pub mod mvt;
+#[cfg(feature = "with-mvt")]
+pub use crate::mvt::conversion::*;
 
 /// Empty processor implementation
 pub struct ProcessorSink;
