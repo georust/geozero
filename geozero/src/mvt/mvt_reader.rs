@@ -88,3 +88,25 @@ fn process_polygon<P: GeomProcessor>(
     // }
     processor.polygon_end(tagged, idx)
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::geojson::GeoJsonWriter;
+    use crate::mvt::vector_tile::Tile;
+    use crate::wkt::WktWriter;
+    use crate::{ProcessToSvg, ToJson, ToWkt};
+    use std::fs::File;
+
+    #[test]
+    fn point_geom() {
+        let mut mvt_feature = tile::Feature::default();
+        mvt_feature.id = Some(1);
+        mvt_feature.set_type(GeomType::Point);
+        mvt_feature.geometry = [9, 50, 34].to_vec();
+
+        let geojson = mvt_feature.to_json().unwrap();
+
+        assert_eq!(geojson, r#"{"type": "Point", "coordinates": [25, 17]}"#);
+    }
+}
