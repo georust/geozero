@@ -6,6 +6,7 @@ use std::fs::File;
 use std::io::{BufReader, Read, Seek};
 use std::iter::FusedIterator;
 use std::path::Path;
+pub use dbase::FieldInfo;
 
 /// Struct that handle iteration over the shapes of a .shp file
 pub struct ShapeIterator<P: GeomProcessor, T: Read> {
@@ -129,6 +130,15 @@ impl<T: Read+Seek> Reader<T> {
     pub fn read_records(self) -> Result<Vec<dbase::Record>, Error> {
         let mut dbf_reader = self.dbf_reader.ok_or(Error::MissingDbf)?;
         dbf_reader.read().or_else(|e| Err(Error::DbaseError(e)))
+    }
+    ///Return the FieldInfo from the dbf file
+    ///Note that the deletion flag is not included in the results
+    pub fn dbf_fields(&self) -> Result<Vec<&FieldInfo>, Error> {
+        let mut dbf_reader = self.dbf_reader.as_ref().ok_or(Error::MissingDbf)?;
+        //Do not return FieldInfo { Name: DeletionFlag, Field Type: dbase::Character }
+        let fields:Vec<_>=dbf_reader.fields().iter()
+            .filter(|f| f.name()!="DeletionFlag").collect();
+        Ok(fields)
     }
 
     pub fn iter_geometries<P: FeatureProcessor>(self, processor: P) -> ShapeIterator<P, T> {
