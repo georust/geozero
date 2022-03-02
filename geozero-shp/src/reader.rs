@@ -134,7 +134,7 @@ impl<T: Read+Seek> Reader<T> {
     ///Return the FieldInfo from the dbf file
     ///Note that the deletion flag is not included in the results
     pub fn dbf_fields(&self) -> Result<Vec<&FieldInfo>, Error> {
-        let mut dbf_reader = self.dbf_reader.as_ref().ok_or(Error::MissingDbf)?;
+        let dbf_reader = self.dbf_reader.as_ref().ok_or(Error::MissingDbf)?;
         //Do not return FieldInfo { Name: DeletionFlag, Field Type: dbase::Character }
         let fields:Vec<_>=dbf_reader.fields().iter()
             .filter(|f| f.name()!="DeletionFlag").collect();

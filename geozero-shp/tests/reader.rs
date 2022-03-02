@@ -1,4 +1,4 @@
-use dbase::FieldValue;
+use dbase::{FieldInfo, FieldName, FieldValue};
 use geozero::geojson::GeoJsonWriter;
 use geozero::wkt::WktWriter;
 use geozero::{FeatureProperties, ProcessorSink};
@@ -125,6 +125,35 @@ fn property_access() -> Result<(), geozero_shp::Error> {
 }
 
 #[test]
+fn property_file() -> Result<(), geozero_shp::Error> {
+    let reader = geozero_shp::Reader::from_path("./tests/data/poly.shp")?;
+    let fields=reader.dbf_fields().unwrap();
+    assert_eq!(fields.len(),3);
+    let sql=fields.iter().map(|f|{
+       let name=f.name();
+       let len=f.length();
+
+       let col_type:u8= f.field_type().into();
+       let sql_type=match col_type as char {
+            'C' => String::from("TEXT"),
+            'D' => String::from("INTEGER"),
+            'F' => String::from("REAL"),
+            'N' => String::from("REAL"),
+            'L' => String::from("INTEGER"),
+            'Y' => String::from("REAL"),
+            'T' => String::from("INTEGER"),
+            'I' => String::from("INTEGER"),
+            'B' => String::from("REAL"),
+            'M' => String::from("BLOB"),
+            _ => {unimplemented!();}
+        };
+        format!("{} {}",name,sql_type)
+    }).collect::<Vec<String>>().join(",");
+    assert_eq!(sql,"AREA REAL,EAS_ID REAL,PRFEDEA TEXT");
+    Ok(())
+}
+
+    #[test]
 fn point() -> Result<(), geozero_shp::Error> {
     let reader = geozero_shp::Reader::from_path("./tests/data/point.shp")?;
     let mut wkt_data: Vec<u8> = Vec::new();
