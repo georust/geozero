@@ -3,7 +3,7 @@ use crate::shx_reader::{read_index_file, ShapeIndex};
 use crate::{header, Error};
 use geozero::{FeatureProcessor, FeatureProperties, GeomProcessor};
 use std::fs::File;
-use std::io::{BufReader, Read};
+use std::io::{BufReader, Read, Seek};
 use std::iter::FusedIterator;
 use std::path::Path;
 
@@ -33,9 +33,9 @@ impl<P: GeomProcessor, T: Read> Iterator for ShapeIterator<P, T> {
     }
 }
 
-impl<P: FeatureProcessor, T: Read> FusedIterator for ShapeIterator<P, T> {}
+impl<P: FeatureProcessor, T: Read+Seek> FusedIterator for ShapeIterator<P, T> {}
 
-pub struct ShapeRecordIterator<P: FeatureProcessor, T: Read> {
+pub struct ShapeRecordIterator<P: FeatureProcessor, T: Read+Seek> {
     shape_iter: ShapeIterator<P, T>,
     dbf_reader: dbase::Reader<T>,
     featno: u64,
@@ -45,14 +45,14 @@ pub struct ShapeRecord {
     pub record: dbase::Record,
 }
 
-impl<P: FeatureProcessor, T: Read> Iterator for ShapeRecordIterator<P, T> {
+impl<P: FeatureProcessor, T: Read+Seek> Iterator for ShapeRecordIterator<P, T> {
     type Item = Result<ShapeRecord, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.featno == 0 {
             self.shape_iter.processor.dataset_begin(None).ok();
         }
-        let record = match self.dbf_reader.next() {
+        let record = match self.dbf_reader.iter_records().next() {
             None => {
                 self.shape_iter.processor.dataset_end().ok();
                 return None;
@@ -87,17 +87,17 @@ impl<P: FeatureProcessor, T: Read> Iterator for ShapeRecordIterator<P, T> {
     }
 }
 
-impl<P: FeatureProcessor, T: Read> FusedIterator for ShapeRecordIterator<P, T> {}
+impl<P: FeatureProcessor, T: Read+Seek> FusedIterator for ShapeRecordIterator<P, T> {}
 
 /// struct that reads the content of a shapefile
-pub struct Reader<T: Read> {
+pub struct Reader<T: Read+Seek> {
     source: T,
     header: header::Header,
     shapes_index: Option<Vec<ShapeIndex>>,
     dbf_reader: Option<dbase::Reader<T>>,
 }
 
-impl<T: Read> Reader<T> {
+impl<T: Read+Seek> Reader<T> {
     /// Creates a new Reader from a source that implements the `Read` trait
     ///
     /// The Shapefile header is read upon creation (but no reading of the Shapes is done)
@@ -127,7 +127,7 @@ impl<T: Read> Reader<T> {
 
     /// Read and return _only_ the records contained in the *.dbf* file
     pub fn read_records(self) -> Result<Vec<dbase::Record>, Error> {
-        let dbf_reader = self.dbf_reader.ok_or(Error::MissingDbf)?;
+        let mut dbf_reader = self.dbf_reader.ok_or(Error::MissingDbf)?;
         dbf_reader.read().or_else(|e| Err(Error::DbaseError(e)))
     }
 
