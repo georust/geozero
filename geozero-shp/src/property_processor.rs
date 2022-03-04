@@ -31,7 +31,21 @@ impl FeatureProperties for ShapeRecord {
                 FieldValue::Double(val) => {
                     finish = processor.property(i, name, &ColumnValue::Double(*val))?;
                 }
-                _ => {}
+                FieldValue::Currency(val) => {
+                    finish = processor.property(i, name, &ColumnValue::Double(*val))?;
+                }
+                FieldValue::DateTime(_) => {
+                    let s = format!("{}", value);
+                    finish = processor.property(i, name, &ColumnValue::DateTime(&s))?;
+                }
+                FieldValue::Memo(val) => {
+                    finish = processor.property(i, name, &ColumnValue::String(val))?;
+                }
+                FieldValue::Character(None)
+                | FieldValue::Numeric(None)
+                | FieldValue::Logical(None)
+                | FieldValue::Date(None)
+                | FieldValue::Float(None) => {} // Ignore NULL values
             }
             if finish {
                 break;
