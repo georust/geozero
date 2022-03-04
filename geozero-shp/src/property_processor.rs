@@ -7,7 +7,7 @@ impl FeatureProperties for ShapeRecord {
     /// Process feature properties.
     fn process_properties<P: PropertyProcessor>(&self, processor: &mut P) -> Result<bool> {
         let mut finish = false;
-        for (i, (name, value)) in self.record.iter().enumerate() {
+        for (i, (name, value)) in self.record.as_ref().iter().enumerate() {
             match value {
                 FieldValue::Character(Some(val)) => {
                     finish = processor.property(i, name, &ColumnValue::String(val))?;
