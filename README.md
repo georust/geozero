@@ -73,8 +73,7 @@ Full source code: [geos.rs](./geozero/tests/geos.rs)
 Read FlatGeobuf subset as GeoJSON:
 ```rust
 let mut file = BufReader::new(File::open("countries.fgb")?);
-let mut fgb = FgbReader::open(&mut file)?;
-fgb.select_bbox(8.8, 47.2, 9.5, 55.3)?;
+let mut fgb = FgbReader::open(&mut file)?.select_bbox(8.8, 47.2, 9.5, 55.3)?;
 println!("{}", fgb.to_json()?);
 ```
 Full source code: [geojson.rs](./geozero/tests/geojson.rs)
@@ -83,8 +82,7 @@ Full source code: [geojson.rs](./geozero/tests/geojson.rs)
 Read FlatGeobuf data as geo-types geometries and calculate label position with [polylabel-rs](https://github.com/urschrei/polylabel-rs):
 ```rust
 let mut file = BufReader::new(File::open("countries.fgb")?);
-let mut fgb = FgbReader::open(&mut file)?;
-fgb.select_all()?;
+let mut fgb = FgbReader::open(&mut file)?.select_all()?;
 while let Some(feature) = fgb.next()? {
     let name: String = feature.property("name").unwrap();
     if let Ok(Geometry::MultiPolygon(mpoly)) = feature.to_geo() {
@@ -254,8 +252,10 @@ Full source code: [flatgeobuf-gpu](https://github.com/pka/flatgeobuf-gpu)
 Read a FlatGeobuf dataset with async HTTP client applying a bbox filter and convert to GeoJSON:
 ```rust
 let url = "https://flatgeobuf.org/test/data/countries.fgb";
-let mut fgb = HttpFgbReader::open(url).await?;
-fgb.select_bbox(8.8, 47.2, 9.5, 55.3).await?;
+let mut fgb = HttpFgbReader::open(url)
+    .await?
+    .select_bbox(8.8, 47.2, 9.5, 55.3)
+    .await?;
 
 let mut fout = BufWriter::new(File::create("countries.json")?);
 let mut json = GeoJsonWriter::new(&mut fout);

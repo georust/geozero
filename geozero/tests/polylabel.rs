@@ -10,8 +10,7 @@ use std::fs::File;
 #[test]
 fn country_labels() -> Result<()> {
     let mut file = BufReader::new(File::open("tests/data/countries.fgb")?);
-    let mut fgb = FgbReader::open(&mut file)?;
-    fgb.select_all()?;
+    let mut fgb = FgbReader::open(&mut file)?.select_all()?;
     while let Some(feature) = fgb.next()? {
         let name: String = feature.property("name").unwrap();
         if let Ok(Geometry::MultiPolygon(mpoly)) = feature.to_geo() {

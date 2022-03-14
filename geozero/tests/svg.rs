@@ -55,9 +55,7 @@ fn svg_writer<'a, W: Write>(
 #[test]
 fn fgb_to_svg() -> Result<()> {
     let mut filein = BufReader::new(File::open("tests/data/countries.fgb")?);
-    let mut fgb = FgbReader::open(&mut filein)?;
-
-    let _count = fgb.select_bbox(8.8, 47.2, 9.5, 55.3)?;
+    let mut fgb = FgbReader::open(&mut filein)?.select_bbox(8.8, 47.2, 9.5, 55.3)?;
     let mut svg_data: Vec<u8> = Vec::new();
     let mut svg = svg_writer(&fgb.header(), 800, 400, &mut svg_data);
     fgb.process_features(&mut svg)?;
