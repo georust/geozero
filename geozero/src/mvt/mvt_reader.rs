@@ -121,8 +121,8 @@ fn process_linestrings<P: GeomProcessor>(
     let mut geom: &[u32] = &geom.geometry;
 
     while geom.len() > 0 {
-        let moveto = CommandInteger(geom[3]);
-        let slice_size = 4 + moveto.count() as usize * 2;
+        let lineto = CommandInteger(geom[3]);
+        let slice_size = 4 + lineto.count() as usize * 2;
         let (slice, rest) = geom.split_at(slice_size);
         line_string_slices.push(slice);
         geom = rest;
