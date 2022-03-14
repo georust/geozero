@@ -2,7 +2,7 @@ use std::vec::Vec;
 
 /// Command to be executed and the number of times that the command will be executed
 /// https://github.com/mapbox/vector-tile-spec/tree/master/2.1#431-command-integers
-pub struct CommandInteger(u32);
+pub struct CommandInteger(pub u32);
 
 pub enum Command {
     MoveTo = 1,
@@ -14,12 +14,10 @@ impl CommandInteger {
     pub fn from(id: Command, count: u32) -> u32 {
         ((id as u32) & 0x7) | (count << 3)
     }
-    #[cfg(test)]
-    fn id(&self) -> u32 {
+    pub fn id(&self) -> u32 {
         self.0 & 0x7
     }
-    #[cfg(test)]
-    fn count(&self) -> u32 {
+    pub fn count(&self) -> u32 {
         self.0 >> 3
     }
 }
@@ -36,14 +34,13 @@ fn test_commands() {
 
 /// Commands requiring parameters are followed by a ParameterInteger for each parameter required by that command
 /// https://github.com/mapbox/vector-tile-spec/tree/master/2.1#432-parameter-integers
-pub struct ParameterInteger(u32);
+pub struct ParameterInteger(pub u32);
 
 impl ParameterInteger {
     pub fn from(value: i32) -> u32 {
         ((value << 1) ^ (value >> 31)) as u32
     }
-    #[cfg(test)]
-    fn value(&self) -> i32 {
+    pub fn value(&self) -> i32 {
         ((self.0 >> 1) as i32) ^ (-((self.0 & 1) as i32))
     }
 }
