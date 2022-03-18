@@ -28,9 +28,9 @@ fn process_geom_n<P: GeomProcessor>(
         Some(r#type) if r#type == GeomType::Linestring as i32 => {
             process_linestrings(&mut cursor, geom, idx, processor)?;
         }
-        // Some(GeomType::Polygon) => {
-        //     process_polygon(geom, true, idx, processor)?;
-        // }
+        Some(r#type) if r#type == GeomType::Polygon as i32 => {
+            process_polygons(&mut cursor, geom, idx, processor)?;
+        }
         // Some(GeomType::Unknown) => {
         //     todo!()
         // }
@@ -128,8 +128,6 @@ fn process_linestrings<P: GeomProcessor>(
         geom = rest;
     }
 
-    let multi_linestring = line_string_slices.len() > 1;
-
     if line_string_slices.len() > 1 {
         processor.multilinestring_begin(line_string_slices.len(), idx);
         for i in 0..line_string_slices.len() {
@@ -141,6 +139,109 @@ fn process_linestrings<P: GeomProcessor>(
     }
 
     Ok(())
+}
+
+fn process_polygon<P: GeomProcessor>(
+    cursor: &mut [i32; 2],
+    rings: &[&[u32]],
+    tagged: bool,
+    idx: usize,
+    processor: &mut P,
+) -> Result<()> {
+    processor.polygon_begin(tagged, rings.len(), idx);
+
+    for (i, ring) in rings.iter().enumerate() {
+        if ring[0] != CommandInteger::from(Command::MoveTo, 1) {
+            return Err(GeozeroError::GeometryFormat);
+        }
+        if *ring.last().unwrap() != CommandInteger::from(Command::ClosePath, 1) {
+            return Err(GeozeroError::GeometryFormat);
+        }
+        let lineto = CommandInteger(ring[3]);
+        if lineto.id() != Command::LineTo as u32 {
+            return Err(GeozeroError::GeometryFormat);
+        }
+        processor.linestring_begin(false, 1 + lineto.count() as usize, i);
+        let mut start_cursor = cursor.clone();
+        process_coord(cursor, &ring[1..3], 0, processor)?;
+        for i in 0..lineto.count() as usize {
+            process_coord(cursor, &ring[4 + i * 2..6 + i * 2], i + 1, processor)?;
+        }
+        process_coord(
+            &mut start_cursor,
+            &ring[1..3],
+            1 + lineto.count() as usize,
+            processor,
+        )?;
+        processor.linestring_end(false, i);
+    }
+
+    processor.polygon_end(tagged, idx);
+
+    Ok(())
+}
+
+fn process_polygons<P: GeomProcessor>(
+    cursor: &mut [i32; 2],
+    geom: &tile::Feature,
+    idx: usize,
+    processor: &mut P,
+) -> Result<()> {
+    let mut polygon_slices: Vec<Vec<&[u32]>> = vec![];
+    let mut geom: &[u32] = &geom.geometry;
+
+    while geom.len() > 0 {
+        let lineto = CommandInteger(geom[3]);
+        let slice_size = 4 + lineto.count() as usize * 2 + 1;
+        let (slice, rest) = geom.split_at(slice_size);
+        let positive_area = is_area_positive(
+            cursor.clone(),
+            &slice[1..3],
+            &slice[4..4 + lineto.count() as usize * 2],
+        );
+        if positive_area {
+            // new polygon with exterior ring
+            polygon_slices.push(vec![slice]);
+        } else if let Some(last_slice) = polygon_slices.last_mut() {
+            // add interior ring to previous polygon
+            last_slice.push(slice);
+        } else {
+            return Err(GeozeroError::GeometryFormat);
+        }
+        geom = rest;
+    }
+
+    if polygon_slices.len() > 1 {
+        processor.multipolygon_begin(polygon_slices.len(), idx);
+        for i in 0..polygon_slices.len() {
+            process_polygon(cursor, &polygon_slices[i], false, i, processor)?;
+        }
+        processor.multipolygon_end(idx);
+    } else {
+        process_polygon(cursor, &polygon_slices[0], true, idx, processor)?;
+    }
+
+    Ok(())
+}
+
+// using surveyor's formula
+fn is_area_positive(mut cursor: [i32; 2], first: &[u32], rest: &[u32]) -> bool {
+    let nb = 1 + rest.len() / 2;
+    let mut area = 0;
+    let mut coords = first
+        .iter()
+        .chain(rest)
+        .chain(first.iter())
+        .map(|&x| ParameterInteger(x).value());
+    cursor[0] += coords.next().unwrap();
+    cursor[1] += coords.next().unwrap();
+    for i in 0..nb {
+        let [x0, y0] = cursor;
+        cursor[0] += coords.next().unwrap();
+        cursor[1] += coords.next().unwrap();
+        area += x0 * cursor[1] - cursor[0] * y0;
+    }
+    area > 0
 }
 
 #[cfg(test)]
@@ -203,6 +304,38 @@ mod test {
         assert_eq!(
             geojson,
             r#"{"type": "MultiLineString", "coordinates": [[[2,2],[2,10],[10,10]],[[1,1],[3,5]]]}"#
+        );
+    }
+
+    #[test]
+    fn polygon_geom() {
+        let mut mvt_feature = tile::Feature::default();
+        mvt_feature.set_type(GeomType::Polygon);
+        mvt_feature.geometry = [9, 6, 12, 18, 10, 12, 24, 44, 15].to_vec();
+
+        let geojson = mvt_feature.to_json().unwrap();
+
+        assert_eq!(
+            geojson,
+            r#"{"type": "Polygon", "coordinates": [[[3,6],[8,12],[20,34],[3,6]]]}"#
+        );
+    }
+
+    #[test]
+    fn multipolygon_geom() {
+        let mut mvt_feature = tile::Feature::default();
+        mvt_feature.set_type(GeomType::Polygon);
+        mvt_feature.geometry = [
+            9, 0, 0, 26, 20, 0, 0, 20, 19, 0, 15, 9, 22, 2, 26, 18, 0, 0, 18, 17, 0, 15, 9, 4, 13,
+            26, 0, 8, 8, 0, 0, 7, 15,
+        ]
+        .to_vec();
+
+        let geojson = mvt_feature.to_json().unwrap();
+
+        assert_eq!(
+            geojson,
+            r#"{"type": "MultiPolygon", "coordinates": [[[[0,0],[10,0],[10,10],[0,10],[0,0]]],[[[11,11],[20,11],[20,20],[11,20],[11,11]],[[13,13],[13,17],[17,17],[17,13],[13,13]]]]}"#
         );
     }
 }
