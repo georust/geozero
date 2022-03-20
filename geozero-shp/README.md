@@ -9,7 +9,7 @@ Features:
 - [ ] Read spatial index
 - [ ] Read projection files
 
-For writing Shapefiles either use [shapefile-rs](https://crates.io/crates/shapefile) or the GDAL driver of [GeoZero Core](https://crates.io/crates/geozero-core)
+For writing Shapefiles either use [shapefile-rs](https://crates.io/crates/shapefile) or the GDAL driver of [GeoZero](https://crates.io/crates/geozero)
 
 Originally based on shapefile-rs from Thomas Montaigu.
 
@@ -17,7 +17,7 @@ Originally based on shapefile-rs from Thomas Montaigu.
 ## Usage example
 
 ```Rust
-use geozero_core::geojson::GeoJsonWriter;
+use geozero::geojson::GeoJsonWriter;
 
 let reader = geozero_shp::Reader::from_path("poly.shp")?;
 let mut json: Vec<u8> = Vec::new();

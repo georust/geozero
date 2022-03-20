@@ -1,3 +1,8 @@
+## 0.9.0 (UNRELEASED)
+
+* Add MVT writer and reader
+* Return ColumnNotFound instead of ColumnUnknown for Null values
+
 ## 0.8.0 (2021-12-02)
 
 * Breaking: Property reader returns error instead of None

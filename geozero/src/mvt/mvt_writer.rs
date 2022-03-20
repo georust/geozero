@@ -1,5 +1,5 @@
 //! Encode geometries according to MVT spec
-//! https://github.com/mapbox/vector-tile-spec/tree/master/2.1
+//! <https://github.com/mapbox/vector-tile-spec/tree/master/2.1>
 
 use crate::error::{GeozeroError, Result};
 use crate::mvt::mvt_commands::*;

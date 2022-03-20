@@ -6,6 +6,7 @@ mod vector_tile;
 
 pub use mvt_reader::*;
 pub use mvt_writer::*;
+pub use vector_tile::*;
 
 pub(crate) mod conversion {
     use super::mvt_writer::*;
