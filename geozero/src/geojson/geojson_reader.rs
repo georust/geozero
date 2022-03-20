@@ -55,8 +55,10 @@ pub fn read_geojson<R: Read, P: FeatureProcessor>(mut reader: R, processor: &mut
 }
 
 pub fn read_geojson_fc<R: Read, P: FeatureProcessor>(reader: R, processor: &mut P) -> Result<()> {
+    let mut idx = 0;
     for feature in FeatureIterator::new(reader) {
-        process_geojson_feature(&feature?, processor)?;
+        process_geojson_feature(&feature?, idx, processor)?;
+        idx += 1;
     }
     Ok(())
 }
@@ -95,7 +97,7 @@ fn process_geojson<P: FeatureProcessor>(gj: &GeoGeoJson, processor: &mut P) -> R
             }
             processor.dataset_end()?;
         }
-        GeoGeoJson::Feature(ref feature) => process_geojson_feature(feature, processor)?,
+        GeoGeoJson::Feature(ref feature) => process_geojson_feature(feature, 0, processor)?,
         GeoGeoJson::Geometry(ref geometry) => {
             process_geojson_geom_n(geometry, 0, processor)?;
         }
@@ -104,10 +106,10 @@ fn process_geojson<P: FeatureProcessor>(gj: &GeoGeoJson, processor: &mut P) -> R
 }
 
 /// Process top-level GeoJSON items
-fn process_geojson_feature<P: FeatureProcessor>(feature: &Feature, processor: &mut P) -> Result<()> {
+fn process_geojson_feature<P: FeatureProcessor>(feature: &Feature, idx: usize, processor: &mut P) -> Result<()> {
     processor.dataset_begin(None)?;
     if feature.geometry.is_some() || feature.properties.is_some() {
-        processor.feature_begin(0)?;
+        processor.feature_begin(idx as u64)?;
         if let Some(ref properties) = feature.properties {
             processor.properties_begin()?;
             process_properties(properties, processor)?;
@@ -115,10 +117,10 @@ fn process_geojson_feature<P: FeatureProcessor>(feature: &Feature, processor: &m
         }
         if let Some(ref geometry) = feature.geometry {
             processor.geometry_begin()?;
-            process_geojson_geom_n(geometry, 0, processor)?;
+            process_geojson_geom_n(geometry, idx, processor)?;
             processor.geometry_end()?;
         }
-        processor.feature_end(0)?;
+        processor.feature_end(idx as u64)?;
     }
     processor.dataset_end()?;
     Ok(())
@@ -411,11 +413,11 @@ mod test {
         let wkt = std::str::from_utf8(&wkt_data).unwrap();
         assert_eq!(
             &wkt[0..100],
-            "POINT(32.533299524864844 0.583299105614628)POINT(30.27500161597942 0.671004121125236)POINT(15.798996"
+            "POINT(32.533299524864844 0.583299105614628),POINT(30.27500161597942 0.671004121125236),POINT(15.7989"
         );
         assert_eq!(
             &wkt[wkt.len()-100..],
-            "1806510862875)POINT(103.85387481909902 1.294979325105942)POINT(114.18306345846304 22.30692675357551)"
+            "06510862875),POINT(103.85387481909902 1.294979325105942),POINT(114.18306345846304 22.30692675357551)"
         );
         Ok(())
     }
