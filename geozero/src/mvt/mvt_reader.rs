@@ -1,8 +1,75 @@
 use crate::error::{GeozeroError, Result};
 use crate::mvt::vector_tile::{tile, tile::GeomType};
-use crate::{GeomProcessor, GeozeroGeometry};
+use crate::{ColumnValue, FeatureProcessor, GeomProcessor, GeozeroDatasource, GeozeroGeometry};
 
 use super::mvt_commands::{Command, CommandInteger, ParameterInteger};
+
+impl GeozeroDatasource for tile::Layer {
+    fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> Result<()> {
+        process(&self, processor)
+    }
+}
+
+/// Process MVT layer.
+pub fn process(layer: &tile::Layer, processor: &mut impl FeatureProcessor) -> Result<()> {
+    processor.dataset_begin(Some(&layer.name))?;
+    for (idx, feature) in layer.features.iter().enumerate() {
+        processor.feature_begin(idx as u64)?;
+
+        process_properties(layer, feature, processor)?;
+
+        processor.geometry_begin()?;
+        process_geom(feature, processor)?;
+        processor.geometry_end()?;
+
+        processor.feature_end(idx as u64)?;
+    }
+    processor.dataset_end()?;
+    Ok(())
+}
+
+fn process_properties(
+    layer: &tile::Layer,
+    feature: &tile::Feature,
+    processor: &mut impl FeatureProcessor,
+) -> Result<()> {
+    processor.properties_begin()?;
+    for i in 0..feature.tags.len() / 2 {
+        let key_idx = feature.tags[i * 2];
+        let value_idx = feature.tags[i * 2 + 1];
+        let key = layer
+            .keys
+            .get(key_idx as usize)
+            .ok_or_else(|| GeozeroError::Feature(format!("invalid key index {}", key_idx)))?;
+        let value = layer
+            .values
+            .get(value_idx as usize)
+            .ok_or_else(|| GeozeroError::Feature(format!("invalid value index {}", value_idx)))?;
+
+        if let Some(ref v) = value.string_value {
+            processor.property(i, key, &ColumnValue::String(v))?;
+        } else if let Some(v) = value.float_value {
+            processor.property(i, key, &ColumnValue::Float(v))?;
+        } else if let Some(v) = value.double_value {
+            processor.property(i, key, &ColumnValue::Double(v))?;
+        } else if let Some(v) = value.int_value {
+            processor.property(i, key, &ColumnValue::Long(v))?;
+        } else if let Some(v) = value.uint_value {
+            processor.property(i, key, &ColumnValue::ULong(v))?;
+        } else if let Some(v) = value.sint_value {
+            processor.property(i, key, &ColumnValue::Long(v))?;
+        } else if let Some(v) = value.bool_value {
+            processor.property(i, key, &ColumnValue::Bool(v))?;
+        } else {
+            return Err(GeozeroError::Property(format!(
+                "unsupported value type for key {}",
+                key
+            )));
+        }
+    }
+    processor.properties_end()?;
+    Ok(())
+}
 
 impl GeozeroGeometry for tile::Feature {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
@@ -31,12 +98,6 @@ fn process_geom_n<P: GeomProcessor>(
         Some(r#type) if r#type == GeomType::Polygon as i32 => {
             process_polygons(&mut cursor, geom, idx, processor)?;
         }
-        // Some(GeomType::Unknown) => {
-        //     todo!()
-        // }
-        // None => {
-        //     todo!()
-        // }
         _ => {}
     }
     Ok(())
@@ -251,8 +312,93 @@ mod test {
     use crate::geojson::GeoJsonWriter;
     use crate::mvt::vector_tile::Tile;
     use crate::wkt::WktWriter;
-    use crate::{ProcessToSvg, ToJson, ToWkt};
+    use crate::{ProcessToJson, ProcessToSvg, ToJson, ToWkt};
     use std::fs::File;
+
+    #[test]
+    fn layer() {
+        // https://github.com/mapbox/vector-tile-spec/tree/master/2.1#45-example
+        let mut mvt_layer = tile::Layer::default();
+        mvt_layer.version = 2;
+        mvt_layer.name = String::from("points");
+        mvt_layer.extent = Some(4096);
+
+        mvt_layer.keys.push(String::from("hello"));
+        mvt_layer.keys.push(String::from("h"));
+        mvt_layer.keys.push(String::from("count"));
+
+        mvt_layer.values.push(tile::Value {
+            string_value: Some(String::from("world")),
+            ..Default::default()
+        });
+        mvt_layer.values.push(tile::Value {
+            double_value: Some(1.23),
+            ..Default::default()
+        });
+        mvt_layer.values.push(tile::Value {
+            string_value: Some(String::from("again")),
+            ..Default::default()
+        });
+        mvt_layer.values.push(tile::Value {
+            int_value: Some(2),
+            ..Default::default()
+        });
+
+        {
+            let mut mvt_feature = tile::Feature::default();
+            mvt_feature.id = Some(1);
+            mvt_feature.set_type(GeomType::Point);
+            mvt_feature.tags = [0, 0, 1, 0, 2, 1].to_vec();
+            mvt_feature.geometry = [9, 2410, 3080].to_vec();
+            mvt_layer.features.push(mvt_feature);
+        }
+
+        {
+            let mut mvt_feature = tile::Feature::default();
+            mvt_feature.id = Some(2);
+            mvt_feature.set_type(GeomType::Point);
+            mvt_feature.tags = [0, 2, 2, 3].to_vec();
+            mvt_feature.geometry = [9, 2410, 3080].to_vec();
+            mvt_layer.features.push(mvt_feature);
+        }
+
+        let geojson = mvt_layer.to_json().unwrap();
+
+        assert_eq!(
+            geojson.replace("\n", "").replace(" ", ""),
+            r#"{
+    "type": "FeatureCollection",
+    "name": "points",
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {
+                "hello": "world",
+                "h": "world",
+                "count": 1.23
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [1205,1540]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "hello": "again",
+                "count": 2
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [1205,1540]
+            }
+        }
+    ]
+}"#
+            .replace("\n", "")
+            .replace(" ", "")
+        );
+    }
 
     #[test]
     fn point_geom() {
