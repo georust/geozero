@@ -27,28 +27,28 @@ with-tessellator = ["lyon"]
 [dependencies]
 thiserror = "1.0"
 geojson = { version = "0.22", optional = true }
-serde_json = "1.0.68"
+serde_json = "1.0"
 geo-types = { version = "0.7", default-features = false, optional = true }
 geos = { version = "8.0", optional = true }
-gdal = { version = "0.11", default-features = false, optional = true }
-gdal-sys = { version = "0.5", optional = true }
-lyon = { version = "0.16", optional = true }
-scroll = { version = "0.10", optional = true }
+gdal = { version = "0.12", default-features = false, optional = true }
+gdal-sys = { version = "0.6", optional = true }
+lyon = { version = "0.17", optional = true }
+scroll = { version = "0.11", optional = true }
 sqlx = { version = "0.5", default-features = false, optional = true }
 postgres-types = { version = "0.2", optional = true }
-bytes = { version = "1.0", optional = true }
+bytes = { version = "1.1", optional = true }
 
 [dev-dependencies]
 seek_bufread = "1.2"
 hex = "0.4"
-geo = "0.17"
-wkt = "0.9"
+geo = "0.19"
+wkt = "0.10"
 kdbush = "0.2"
 polylabel = "2.4"
 flatgeobuf = "0.7.0"
 postgres = "0.19"
 sqlx = { version = "0.5", default-features = false, features = [ "runtime-tokio-native-tls", "macros", "time", "postgres", "sqlite" ] }
-tokio = { version = "1.2.0", default-features = false, features = ["rt-multi-thread"] }
+tokio = { version = "1.17.0", default-features = false, features = ["rt-multi-thread"] }
 
 [package.metadata.docs.rs]
 all-features = true

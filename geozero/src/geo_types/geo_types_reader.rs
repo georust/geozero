@@ -125,6 +125,7 @@ fn process_polygon<P: GeomProcessor>(
 #[cfg(test)]
 #[cfg(feature = "with-wkt")]
 mod test {
+    use std::str::FromStr;
     use super::*;
     use crate::wkt::WktWriter;
     use crate::ToWkt;
