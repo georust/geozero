@@ -1,8 +1,10 @@
 //! MVT conversions.
 mod mvt_commands;
+pub(crate) mod mvt_reader;
 pub(crate) mod mvt_writer;
 mod vector_tile;
 
+pub use mvt_reader::*;
 pub use mvt_writer::*;
 
 pub(crate) mod conversion {
