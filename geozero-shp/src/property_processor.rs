@@ -7,7 +7,9 @@ impl FeatureProperties for ShapeRecord {
     /// Process feature properties.
     fn process_properties<P: PropertyProcessor>(&self, processor: &mut P) -> Result<bool> {
         let mut finish = false;
+        let mut null_offset = 0usize;
         for (i, (name, value)) in self.record.as_ref().iter().enumerate() {
+            let i = i - null_offset;
             match value {
                 FieldValue::Character(Some(val)) => {
                     finish = processor.property(i, name, &ColumnValue::String(val))?;
@@ -45,7 +47,7 @@ impl FeatureProperties for ShapeRecord {
                 | FieldValue::Numeric(None)
                 | FieldValue::Logical(None)
                 | FieldValue::Date(None)
-                | FieldValue::Float(None) => {} // Ignore NULL values
+                | FieldValue::Float(None) => { null_offset += 1 } // Ignore NULL values
             }
             if finish {
                 break;
