@@ -424,6 +424,7 @@ mod test {
     #[test]
     #[cfg(feature = "with-geo")]
     fn geo_to_mvt() -> Result<()> {
+        use std::str::FromStr;
         let geo =
             geo_types::Geometry::try_from(wkt::Wkt::from_str("POINT (25 17)").unwrap()).unwrap();
         let mvt = geo.to_mvt()?;
