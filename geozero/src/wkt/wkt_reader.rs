@@ -107,15 +107,14 @@ fn process_point<P: GeomProcessor>(
     idx: usize,
     processor: &mut P,
 ) -> Result<()> {
-    processor.point_begin(idx)?;
     if let Some(ref coord) = point.0 {
+        processor.point_begin(idx)?;
         process_coord(coord, multi_dim, 0, processor)?;
+        processor.point_end(idx)
     } else {
-        return Err(GeozeroError::Geometry(
-            "The WKT Point was empty, but Points cannot be empty in other formats".to_string(),
-        ));
+        // skip processing of POINT EMPTY for now since no other formats support it
+        Ok(())
     }
-    processor.point_end(idx)
 }
 
 fn process_multi_point<P: GeomProcessor>(
@@ -129,8 +128,9 @@ fn process_multi_point<P: GeomProcessor>(
         if let Some(ref coord) = point.0 {
             process_coord(coord, multi_dim, idxc, processor)?;
         } else {
-            // skip processing of POINT EMPTY for now since no other formats support it
-            debug_assert!(false, "Unexpectedly encountered an empty point within a MultiPoint, which shouldn't be possible.")
+            // skip processing of the untagged empty POINT, since no other formats support it.
+            // Alternatively we could error here, but likely omitting the empty coord won't affect
+            // the output of most computations (area, length, etc.)
         }
     }
     processor.multipoint_end(idx)
@@ -200,6 +200,17 @@ mod test {
         let actual = wkt.to_geo().unwrap();
 
         let expected: geo_types::Geometry<f64> = point!(x: 1.0, y: 2.0).into();
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn empty_point() {
+        let wkt = WktStr("POINT EMPTY");
+        let actual = wkt.to_geo().unwrap();
+
+        // This is weird - but it's not obvious to me what we should do in this case.
+        let expected: geo_types::Geometry<f64> = point!(x: 0.0, y: 0.0).into();
 
         assert_eq!(expected, actual);
     }
