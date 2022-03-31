@@ -81,6 +81,12 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
     fn point_end(&mut self, _idx: usize) -> Result<()> {
         self.geom_end()
     }
+
+    fn empty_point(&mut self, idx: usize) -> Result<()> {
+        self.geom_begin(idx, b"POINT EMPTY")
+        // we intentionally omit calling geom_end(), because POINT EMPTY has no closing paren
+    }
+
     fn multipoint_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
         self.geom_begin(idx, b"MULTIPOINT(")
     }

@@ -112,8 +112,7 @@ fn process_point<P: GeomProcessor>(
         process_coord(coord, multi_dim, 0, processor)?;
         processor.point_end(idx)
     } else {
-        // skip processing of POINT EMPTY for now since no other formats support it
-        Ok(())
+        processor.empty_point(idx)
     }
 }
 
@@ -207,12 +206,15 @@ mod test {
     #[test]
     fn empty_point() {
         let wkt = WktStr("POINT EMPTY");
-        let actual = wkt.to_geo().unwrap();
+        let actual = wkt.to_geo().unwrap_err();
+        assert!(matches!(actual, GeozeroError::Geometry(_)));
+    }
 
-        // This is weird - but it's not obvious to me what we should do in this case.
-        let expected: geo_types::Geometry<f64> = point!(x: 0.0, y: 0.0).into();
-
-        assert_eq!(expected, actual);
+    #[test]
+    fn empty_point_roundtrip() {
+        let wkt = WktStr("POINT EMPTY");
+        let actual = wkt.to_wkt().unwrap();
+        assert_eq!("POINT EMPTY", &actual);
     }
 
     #[test]
@@ -339,6 +341,17 @@ mod test {
         let expected = r#"{"type": "Point", "coordinates": [40,10]},{"type": "LineString", "coordinates": [[10,10],[20,20],[10,40]]},{"type": "Polygon", "coordinates": [[[40,40],[20,45],[45,30],[40,40]]]}"#;
 
         assert_eq!(expected, &actual);
+    }
+
+    #[test]
+    fn geometry_collection_with_empty_point() {
+        let str = "GEOMETRYCOLLECTION(POINT(40 10),LINESTRING(10 10,20 20,10 40),POINT EMPTY)";
+        let wkt = WktStr(str);
+
+        use crate::wkt::conversion::ToWkt;
+        let roundtripped = wkt.to_wkt().unwrap();
+
+        assert_eq!(str, &roundtripped);
     }
 
     #[test]
