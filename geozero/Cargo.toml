@@ -13,7 +13,7 @@ keywords = ["geo", "geojson", "gdal", "geos", "postgis"]
 [features]
 default = ["with-svg", "with-wkt", "with-geo", "with-geojson"]
 with-svg = []
-with-wkt = []
+with-wkt = ["wkt"]
 with-geo = ["geo-types"]
 with-geojson = ["geojson"]
 with-gdal = ["gdal", "gdal-sys"]
@@ -39,12 +39,13 @@ sqlx = { version = "0.5", default-features = false, optional = true }
 postgres-types = { version = "0.2", optional = true }
 bytes = { version = "1.0", optional = true }
 prost = { version = "0.9.0", optional = true }
+wkt = { version = "0.10.0", optional = true }
 
 [dev-dependencies]
 seek_bufread = "1.2"
 hex = "0.4"
 geo = "0.17"
-wkt = "0.9"
+wkt = "0.10.0"
 kdbush = "0.2"
 polylabel = "2.4"
 flatgeobuf = "0.7.0"

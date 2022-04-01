@@ -129,6 +129,7 @@ mod test {
     use crate::wkt::WktWriter;
     use crate::ToWkt;
     use std::convert::TryFrom;
+    use std::str::FromStr;
 
     #[test]
     fn point() {

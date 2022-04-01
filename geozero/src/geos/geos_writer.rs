@@ -225,6 +225,7 @@ mod test {
     #[test]
     #[cfg(feature = "with-geo")]
     fn geo_to_geos() -> Result<()> {
+        use std::str::FromStr;
         let geo =
             geo_types::Geometry::try_from(wkt::Wkt::from_str("POINT (10 20)").unwrap()).unwrap();
         let geos = geo.to_geos()?;

@@ -1,8 +1,10 @@
 //! Well-Known Text (WKT) conversions.
 //!
 //! OpenGIS Simple Features Specification For SQL Revision 1.1, Chapter 3.2.5
+pub(crate) mod wkt_reader;
 pub(crate) mod wkt_writer;
 
+pub use wkt_reader::*;
 pub use wkt_writer::*;
 
 pub(crate) mod conversion {
@@ -36,6 +38,7 @@ pub(crate) mod conversion {
 
 #[cfg(feature = "with-wkb")]
 mod wkb {
+    use super::wkt_reader::*;
     use super::wkt_writer::*;
     use crate::error::Result;
     use crate::wkb::{FromWkb, WkbDialect};

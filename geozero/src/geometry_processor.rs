@@ -1,4 +1,4 @@
-use crate::error::Result;
+use crate::error::{GeozeroError, Result};
 
 /// Dimensions requested for processing
 #[derive(Default, Clone, Copy)]
@@ -100,6 +100,13 @@ pub trait GeomProcessor {
         idx: usize,
     ) -> Result<()> {
         Ok(())
+    }
+
+    /// Process empty coordinates, like WKT's `POINT EMPTY`
+    fn empty_point(&mut self, idx: usize) -> Result<()> {
+        Err(GeozeroError::Geometry(
+            "The input was an empty Point, but the output doesn't support empty Points".to_string(),
+        ))
     }
 
     /// Begin of Point processing
