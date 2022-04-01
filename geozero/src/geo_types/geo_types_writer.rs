@@ -84,6 +84,7 @@ impl GeomProcessor for GeoWriter {
     }
     fn polygon_end(&mut self, tagged: bool, _idx: usize) -> Result<()> {
         if self.line_strings.len() == 0 {
+            // Instead of erroring, we could write a Polygon whose exterior is an empty LineString.
             return Err(GeozeroError::Geometry("Missing LineString".to_string()));
         }
         let exterior = self.line_strings.remove(0);
