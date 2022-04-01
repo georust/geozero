@@ -388,8 +388,9 @@ mod test {
         #[test]
         fn empty_polygon() {
             let wkt = WktStr("POLYGON EMPTY");
-            let actual = wkt.to_geo().unwrap_err();
-            assert!(matches!(actual, GeozeroError::Geometry(_)));
+            let actual = wkt.to_geo().unwrap();
+            let expected: geo_types::Geometry<f64> = polygon![].into();
+            assert_eq!(expected, actual);
         }
 
         #[test]
