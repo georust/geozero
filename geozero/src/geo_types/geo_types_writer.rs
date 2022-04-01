@@ -83,12 +83,12 @@ impl GeomProcessor for GeoWriter {
         Ok(())
     }
     fn polygon_end(&mut self, tagged: bool, _idx: usize) -> Result<()> {
-        if self.line_strings.len() == 0 {
-            // Instead of erroring, we could write a Polygon whose exterior is an empty LineString.
-            return Err(GeozeroError::Geometry("Missing LineString".to_string()));
-        }
-        let exterior = self.line_strings.remove(0);
-        let polygon = Polygon::new(exterior, mem::take(&mut self.line_strings));
+        let polygon = if self.line_strings.len() == 0 {
+            Polygon::new(LineString(vec![]), vec![])
+        } else {
+            let exterior = self.line_strings.remove(0);
+            Polygon::new(exterior, mem::take(&mut self.line_strings))
+        };
         if tagged {
             self.geom = polygon.into();
         } else if let Geometry::MultiPolygon(mp) = &mut self.geom {
