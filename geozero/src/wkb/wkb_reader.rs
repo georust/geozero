@@ -68,7 +68,9 @@ struct WkbInfo {
     base_type: WKBGeometryType,
     has_z: bool,
     has_m: bool,
+    #[allow(dead_code)]
     srid: Option<i32>,
+    #[allow(dead_code)]
     envelope: Vec<f64>,
 }
 

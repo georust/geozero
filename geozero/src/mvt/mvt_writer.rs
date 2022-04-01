@@ -324,35 +324,35 @@ mod test_mvt {
             &*format!("{:#?}", mvt_tile).replace(",\n", "\n")
         );
     }
-}
 
-fn add_feature_attribute(
-    mvt_layer: &mut tile::Layer,
-    mvt_feature: &mut tile::Feature,
-    key: String,
-    mvt_value: tile::Value,
-) {
-    let keyentry = mvt_layer.keys.iter().position(|k| *k == key);
-    // Optimization: maintain a hash table with key/index pairs
-    let keyidx = match keyentry {
-        None => {
-            mvt_layer.keys.push(key);
-            mvt_layer.keys.len() - 1
-        }
-        Some(idx) => idx,
-    };
-    mvt_feature.tags.push(keyidx as u32);
+    fn add_feature_attribute(
+        mvt_layer: &mut tile::Layer,
+        mvt_feature: &mut tile::Feature,
+        key: String,
+        mvt_value: tile::Value,
+    ) {
+        let keyentry = mvt_layer.keys.iter().position(|k| *k == key);
+        // Optimization: maintain a hash table with key/index pairs
+        let keyidx = match keyentry {
+            None => {
+                mvt_layer.keys.push(key);
+                mvt_layer.keys.len() - 1
+            }
+            Some(idx) => idx,
+        };
+        mvt_feature.tags.push(keyidx as u32);
 
-    let valentry = mvt_layer.values.iter().position(|v| *v == mvt_value);
-    // Optimization: maintain a hash table with value/index pairs
-    let validx = match valentry {
-        None => {
-            mvt_layer.values.push(mvt_value);
-            mvt_layer.values.len() - 1
-        }
-        Some(idx) => idx,
-    };
-    mvt_feature.tags.push(validx as u32);
+        let valentry = mvt_layer.values.iter().position(|v| *v == mvt_value);
+        // Optimization: maintain a hash table with value/index pairs
+        let validx = match valentry {
+            None => {
+                mvt_layer.values.push(mvt_value);
+                mvt_layer.values.len() - 1
+            }
+            Some(idx) => idx,
+        };
+        mvt_feature.tags.push(validx as u32);
+    }
 }
 
 #[cfg(test)]

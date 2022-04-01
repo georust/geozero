@@ -1,5 +1,3 @@
-use std::vec::Vec;
-
 /// Command to be executed and the number of times that the command will be executed
 /// https://github.com/mapbox/vector-tile-spec/tree/master/2.1#431-command-integers
 pub struct CommandInteger(pub u32);
@@ -51,10 +49,10 @@ fn test_paremeters() {
     assert_eq!(ParameterInteger::from(25), 50);
 }
 
-type CommandSequence = Vec<u32>;
-
 #[test]
 fn test_sequence() {
+    type CommandSequence = std::vec::Vec<u32>;
+
     let mut seq = CommandSequence::new();
     seq.push(CommandInteger::from(Command::MoveTo, 1));
     seq.push(ParameterInteger::from(25));
