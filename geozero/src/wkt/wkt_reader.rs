@@ -186,7 +186,7 @@ fn process_multi_polygon<P: GeomProcessor>(
     processor.multipolygon_end(idx)
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "with-geo"))]
 mod test {
     use super::*;
     use crate::geo_types::conversion::ToGeo;
@@ -201,20 +201,6 @@ mod test {
         let expected: geo_types::Geometry<f64> = point!(x: 1.0, y: 2.0).into();
 
         assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn empty_point() {
-        let wkt = WktStr("POINT EMPTY");
-        let actual = wkt.to_geo().unwrap_err();
-        assert!(matches!(actual, GeozeroError::Geometry(_)));
-    }
-
-    #[test]
-    fn empty_point_roundtrip() {
-        let wkt = WktStr("POINT EMPTY");
-        let actual = wkt.to_wkt().unwrap();
-        assert_eq!("POINT EMPTY", &actual);
     }
 
     #[test]
@@ -321,6 +307,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "with-geojson")]
     fn geometry_collection() {
         let wkt = WktStr(
             "GEOMETRYCOLLECTION (POINT (40 10),
@@ -344,17 +331,6 @@ mod test {
     }
 
     #[test]
-    fn geometry_collection_with_empty_point() {
-        let str = "GEOMETRYCOLLECTION(POINT(40 10),LINESTRING(10 10,20 20,10 40),POINT EMPTY)";
-        let wkt = WktStr(str);
-
-        use crate::wkt::conversion::ToWkt;
-        let roundtripped = wkt.to_wkt().unwrap();
-
-        assert_eq!(str, &roundtripped);
-    }
-
-    #[test]
     fn geometry_collection_roundtrip() {
         let str = "GEOMETRYCOLLECTION(POINT(40 10),LINESTRING(10 10,20 20,10 40),POLYGON((40 40,20 45,45 30,40 40)))";
         let wkt = WktStr(str);
@@ -363,5 +339,76 @@ mod test {
         let roundtripped = wkt.to_wkt().unwrap();
 
         assert_eq!(str, &roundtripped);
+    }
+
+    mod empties {
+        use super::*;
+
+        #[test]
+        fn empty_point() {
+            let wkt = WktStr("POINT EMPTY");
+            let actual = wkt.to_geo().unwrap_err();
+            assert!(matches!(actual, GeozeroError::Geometry(_)));
+        }
+
+        #[test]
+        fn empty_point_roundtrip() {
+            let wkt = WktStr("POINT EMPTY");
+            let actual = wkt.to_wkt().unwrap();
+            assert_eq!("POINT EMPTY", &actual);
+        }
+
+        #[test]
+        fn geometry_collection_with_empty_point() {
+            let str = "GEOMETRYCOLLECTION(POINT(40 10),LINESTRING(10 10,20 20,10 40),POINT EMPTY)";
+            let wkt = WktStr(str);
+
+            use crate::wkt::conversion::ToWkt;
+            let roundtripped = wkt.to_wkt().unwrap();
+
+            assert_eq!(str, &roundtripped);
+        }
+
+        #[test]
+        fn empty_line_string() {
+            let wkt = WktStr("LINESTRING EMPTY");
+            let actual = wkt.to_geo().unwrap();
+            let expected: geo_types::Geometry<f64> = line_string![].into();
+            assert_eq!(expected, actual);
+        }
+
+        #[test]
+        fn empty_multi_line_string() {
+            let wkt = WktStr("MULTILINESTRING EMPTY");
+            let actual = wkt.to_geo().unwrap();
+            let expected: geo_types::Geometry<f64> = geo_types::MultiLineString(vec![]).into();
+            assert_eq!(expected, actual);
+        }
+
+        #[test]
+        fn empty_polygon() {
+            let wkt = WktStr("POLYGON EMPTY");
+            let actual = wkt.to_geo().unwrap_err();
+            assert!(matches!(actual, GeozeroError::Geometry(_)));
+        }
+
+        #[test]
+        fn empty_multi_polygon() {
+            let wkt = WktStr("MULTIPOLYGON EMPTY");
+            let actual = wkt.to_geo().unwrap();
+            let expected: geo_types::Geometry<f64> = geo_types::MultiPolygon(vec![]).into();
+            assert_eq!(expected, actual);
+        }
+
+        #[test]
+        #[ignore = "geo::GeometryCollections is known to be broken https://github.com/georust/geozero/issues/11"]
+        fn empty_geometry_collection() {
+            let wkt = WktStr("GEOMETRYCOLLECTION EMPTY");
+            let actual = wkt.to_geo().unwrap();
+
+            let expected =
+                geo_types::Geometry::GeometryCollection(geo_types::GeometryCollection(vec![]));
+            assert_eq!(expected, actual);
+        }
     }
 }
