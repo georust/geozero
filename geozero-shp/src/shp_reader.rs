@@ -13,6 +13,7 @@ pub(crate) fn is_no_data(val: f64) -> bool {
 
 /// Header of a shape record, present before any shape record
 pub(crate) struct RecordHeader {
+    #[allow(dead_code)]
     pub record_number: i32,
     pub record_size: i32,
 }

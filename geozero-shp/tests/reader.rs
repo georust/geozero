@@ -1,4 +1,4 @@
-use dbase::{FieldInfo, FieldName, FieldValue};
+use dbase::FieldValue;
 use geozero::geojson::GeoJsonWriter;
 use geozero::wkt::WktWriter;
 use geozero::{FeatureProperties, ProcessorSink};
@@ -133,7 +133,7 @@ fn property_file() -> Result<(), geozero_shp::Error> {
         .iter()
         .map(|f| {
             let name = f.name();
-            let len = f.length();
+            let _len = f.length();
 
             let col_type: u8 = f.field_type().into();
             let sql_type = match col_type as char {
