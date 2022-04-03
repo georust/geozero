@@ -10,8 +10,8 @@ name = "geozero"
 path = "src/main.rs"
 
 [dependencies]
-geozero = "0.7.0"
-flatgeobuf = "0.6.2"
+geozero = "0.8.0"
+flatgeobuf = "0.7.0"
 async-trait = "0.1"
 structopt = "0.3"
 tokio = { version = "1.2.0", features = ["full"] }
