@@ -26,9 +26,10 @@ Supported dimensions: X, Y, Z, M, T
 * WKB Reader + Writer supporting
   - PostGIS geometries for [rust-postgres](https://github.com/sfackler/rust-postgres) and [SQLx](https://github.com/launchbadge/sqlx)
   - GeoPackage geometries for [SQLx](https://github.com/launchbadge/sqlx)
-* WKT Writer
+* [WKT](https://github.com/georust/wkt) Reader + Writer
 * SVG Writer
 * [geo-types](https://github.com/georust/geo) Reader + Writer
+* MVT (Mapbox Vector Tiles) Reader + Writer
 
 [geozero-shp](https://github.com/georust/geozero/tree/master/geozero-shp) [![crates.io version](https://img.shields.io/crates/v/geozero-shp.svg)](https://crates.io/crates/geozero-shp)
 [![docs.rs docs](https://docs.rs/geozero-shp/badge.svg)](https://docs.rs/geozero-shp)

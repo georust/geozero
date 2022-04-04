@@ -1,6 +1,3 @@
-mod driver;
-
-use crate::driver::{Extent, HttpReader, Reader, SelectOpts};
 use flatgeobuf::*;
 use geozero::error::Result;
 use geozero::geojson::{GeoJsonReader, GeoJsonWriter};
@@ -26,6 +23,14 @@ struct Cli {
     dest: std::path::PathBuf,
 }
 
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub struct Extent {
+    pub minx: f64,
+    pub miny: f64,
+    pub maxx: f64,
+    pub maxy: f64,
+}
+
 fn parse_extent(src: &str) -> std::result::Result<Extent, ParseFloatError> {
     let arr: Vec<f64> = src
         .split(",")
@@ -44,15 +49,16 @@ fn parse_extent(src: &str) -> std::result::Result<Extent, ParseFloatError> {
 
 fn transform<P: FeatureProcessor>(args: Cli, processor: &mut P) -> Result<()> {
     let pathin = Path::new(&args.input);
-    let select_opts = SelectOpts {
-        extent: args.extent,
-    };
     let mut filein = BufReader::new(File::open(pathin)?);
     match pathin.extension().and_then(OsStr::to_str) {
         Some("fgb") => {
-            let mut ds = FgbReader::open(&mut filein)?;
-            ds.select(&select_opts)?;
-            GeozeroDatasource::process(&mut ds, processor)?;
+            let ds = FgbReader::open(&mut filein)?;
+            let mut ds = if let Some(bbox) = &args.extent {
+                ds.select_bbox(bbox.minx, bbox.miny, bbox.maxx, bbox.maxy)?
+            } else {
+                ds.select_all()?
+            };
+            ds.process_features(processor)?;
         }
         Some("json") | Some("geojson") => {
             let mut ds = GeoJsonReader(&mut filein);
@@ -99,18 +105,19 @@ fn process(args: Cli) -> Result<()> {
 
 #[tokio::main]
 async fn process_url(args: Cli) -> Result<()> {
-    let mut ds = HttpFgbReader::open(&args.input).await?;
-
-    let select_opts = SelectOpts {
-        extent: args.extent,
+    let ds = HttpFgbReader::open(&args.input).await?;
+    let mut ds = if let Some(bbox) = &args.extent {
+        ds.select_bbox(bbox.minx, bbox.miny, bbox.maxx, bbox.maxy)
+            .await?
+    } else {
+        ds.select_all().await?
     };
-    ds.select(&select_opts).await?;
 
     let mut fout = BufWriter::new(File::create(&args.dest)?);
     match args.dest.extension().and_then(OsStr::to_str) {
         Some("json") | Some("geojson") => {
             let mut processor = GeoJsonWriter::new(&mut fout);
-            ds.process(&mut processor).await?;
+            ds.process_features(&mut processor).await?;
         }
         Some("svg") => {
             let mut processor = SvgWriter::new(&mut fout, true);
@@ -126,7 +133,7 @@ async fn process_url(args: Cli) -> Result<()> {
             } else {
                 processor.set_dimensions(-180.0, -90.0, 180.0, 90.0, 800, 600);
             }
-            ds.process(&mut processor).await?;
+            ds.process_features(&mut processor).await?;
         }
         _ => panic!("Unkown output format"),
     }

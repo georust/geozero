@@ -5,7 +5,9 @@ use std::io::Read;
 const INDEX_RECORD_SIZE: usize = 2 * std::mem::size_of::<i32>();
 
 pub(crate) struct ShapeIndex {
+    #[allow(dead_code)]
     pub offset: i32,
+    #[allow(dead_code)]
     pub record_size: i32,
 }
 

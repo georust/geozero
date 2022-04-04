@@ -41,9 +41,9 @@ mod wkb {
 
     impl FromWkb for gdal::vector::Geometry {
         fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> Result<Self> {
-            let mut geos = GdalWriter::new();
-            crate::wkb::process_wkb_type_geom(rdr, &mut geos, dialect)?;
-            Ok(geos.geom)
+            let mut gdal = GdalWriter::new();
+            crate::wkb::process_wkb_type_geom(rdr, &mut gdal, dialect)?;
+            Ok(gdal.geom)
         }
     }
 }

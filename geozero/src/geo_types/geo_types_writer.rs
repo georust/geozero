@@ -127,7 +127,7 @@ mod test {
             Geometry::LineString(line) => {
                 assert_eq!(line.coords_count(), 7);
                 assert_eq!(
-                    line.points_iter().next().unwrap(),
+                    line.points().next().unwrap(),
                     Point::new(1875038.447610231, -3269648.6879248763)
                 );
             }
@@ -147,7 +147,7 @@ mod test {
             Geometry::MultiPolygon(mp) => {
                 let poly = mp.clone().into_iter().next().unwrap();
                 assert_eq!(
-                    poly.exterior().points_iter().next().unwrap(),
+                    poly.exterior().points().next().unwrap(),
                     Point::new(173.020375, -40.919052)
                 );
             }

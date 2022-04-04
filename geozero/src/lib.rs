@@ -23,9 +23,10 @@
 //! | GeoJSON   | [GeoJson](geojson::GeoJson), [GeoJsonString](geojson::GeoJsonString) | XYZ        | [GeoJsonReader](geojson::GeoJsonReader), [GeoJson](geojson::GeoJson) | [ToJson]            | [GeoJsonWriter](geojson::GeoJsonWriter) |
 //! | GDAL      | `gdal::vector::Geometry`                                             | XYZ        | -                                                                    | [ToGdal]            | [GdalWriter](gdal::GdalWriter)          |
 //! | GEOS      | `geos::Geometry`                                                     | XYZ        | -                                                                    | [ToGeos]            | [GeosWriter](geos::GeosWriter)          |
+//! | MVT       | <mvt::tile::Feature>                                                 | XY         | <mvt::tile::Layer>                                                   | [ToMvt]             | [MvtWriter](mvt::MvtWriter)             |
 //! | SVG       | -                                                                    | XY         | -                                                                    | [ToSvg]             | [SvgWriter](svg::SvgWriter)             |
 //! | WKB       | [Wkb](wkb::Wkb), [Ewkb](wkb::Ewkb), [GpkgWkb](wkb::GpkgWkb)          | XYZM       | -                                                                    | [ToWkb]             | [WkbWriter](wkb::WkbWriter)             |
-//! | WKT       | -                                                                    | XYZM       | -                                                                    | [ToWkt]             | [WktWriter](wkt::WktWriter)             |
+//! | WKT       | [wkt::WktStr], [wkt::WktString]                                      | XYZM       | [wkt::WktReader], [wkt::WktStr], [wkt::WktString]                    | [ToWkt]             | [WktWriter](wkt::WktWriter)             |
 
 mod api;
 pub mod error;
@@ -83,6 +84,11 @@ pub use crate::wkb::conversion::*;
 pub mod wkt;
 #[cfg(feature = "with-wkt")]
 pub use crate::wkt::conversion::*;
+
+#[cfg(feature = "with-mvt")]
+pub mod mvt;
+#[cfg(feature = "with-mvt")]
+pub use crate::mvt::conversion::*;
 
 /// Empty processor implementation
 pub struct ProcessorSink;

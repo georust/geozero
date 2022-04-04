@@ -69,7 +69,7 @@ pub trait FeatureProperties {
             name,
             value: Err(GeozeroError::ColumnNotFound),
         };
-        self.process_properties(&mut reader).ok();
+        self.process_properties(&mut reader)?;
         reader.value
     }
     /// Get property value by number
@@ -80,7 +80,7 @@ pub trait FeatureProperties {
             idx: n,
             value: Err(GeozeroError::ColumnNotFound),
         };
-        self.process_properties(&mut reader).ok();
+        self.process_properties(&mut reader)?;
         reader.value
     }
     /// Return all properties in a HashMap
