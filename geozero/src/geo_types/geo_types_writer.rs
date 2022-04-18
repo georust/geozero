@@ -8,17 +8,33 @@ pub struct GeoWriter {
     pub(crate) geom: Geometry<f64>,
     // Polygon rings or MultiLineString members
     line_strings: Vec<LineString<f64>>,
+    // Stack of any in-progress (potentially nested) GeometryCollections
+    collections: Vec<Vec<Geometry<f64>>>,
 }
 
 impl GeoWriter {
     pub fn new() -> GeoWriter {
         GeoWriter {
+            // FIXME: make this an Option<Geometry> to distinguish from missing?
+            // Seems like it'd be hard to, e.g., have nested geometry collections otherwise.
             geom: Point::new(0., 0.).into(),
             line_strings: Vec::new(),
+            collections: Vec::new(),
         }
     }
     pub fn geometry(&self) -> &Geometry<f64> {
         &self.geom
+    }
+
+    // push the current geometry into a (potentially nested) collection if we're in
+    // the middle of processing a collection.
+    fn finish_geometry(&mut self) {
+        if let Some(most_recent_collection) = self.collections.last_mut() {
+            // TODO: Make self.geom an option rather than this dance.
+            let mut geometry: Geometry<f64> = Geometry::Point(point!(x: 0.0, y: 0.0));
+            mem::swap(&mut geometry, &mut self.geom);
+            most_recent_collection.push(geometry);
+        }
     }
 }
 
@@ -44,14 +60,27 @@ impl GeomProcessor for GeoWriter {
         }
         Ok(())
     }
+
     fn point_begin(&mut self, _idx: usize) -> Result<()> {
         self.geom = Point::new(0., 0.).into();
         Ok(())
     }
+
+    fn point_end(&mut self, _idx: usize) -> Result<()> {
+        self.finish_geometry();
+        Ok(())
+    }
+
     fn multipoint_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
         self.geom = MultiPoint(Vec::<Point<f64>>::with_capacity(size)).into();
         Ok(())
     }
+
+    fn multipoint_end(&mut self, _idx: usize) -> Result<()> {
+        self.finish_geometry();
+        Ok(())
+    }
+
     fn linestring_begin(&mut self, tagged: bool, size: usize, _idx: usize) -> Result<()> {
         let line_string = LineString(Vec::<Coordinate<f64>>::with_capacity(size));
         if tagged {
@@ -67,7 +96,10 @@ impl GeomProcessor for GeoWriter {
                 .pop()
                 .ok_or(GeozeroError::Geometry("LineString missing".to_string()))?
                 .into();
+
+            self.finish_geometry();
         }
+
         Ok(())
     }
     fn multilinestring_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
@@ -76,6 +108,7 @@ impl GeomProcessor for GeoWriter {
     }
     fn multilinestring_end(&mut self, _idx: usize) -> Result<()> {
         self.geom = MultiLineString(mem::take(&mut self.line_strings)).into();
+        self.finish_geometry();
         Ok(())
     }
     fn polygon_begin(&mut self, _tagged: bool, size: usize, _idx: usize) -> Result<()> {
@@ -91,6 +124,7 @@ impl GeomProcessor for GeoWriter {
         };
         if tagged {
             self.geom = polygon.into();
+            self.finish_geometry();
         } else if let Geometry::MultiPolygon(mp) = &mut self.geom {
             mp.0.push(polygon);
         } else {
@@ -102,6 +136,29 @@ impl GeomProcessor for GeoWriter {
     }
     fn multipolygon_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
         self.geom = MultiPolygon(Vec::<Polygon<f64>>::with_capacity(size)).into();
+        Ok(())
+    }
+
+    fn multipolygon_end(&mut self, _idx: usize) -> Result<()> {
+        self.finish_geometry();
+        Ok(())
+    }
+
+    fn geometrycollection_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
+        self.collections.push(Vec::with_capacity(size));
+        Ok(())
+    }
+
+    fn geometrycollection_end(&mut self, _idx: usize) -> Result<()> {
+        let geometries = self.collections.pop().ok_or(GeozeroError::Geometry(
+            "Unexpected geometry type".to_string(),
+        ))?;
+
+        self.geom = Geometry::GeometryCollection(GeometryCollection(geometries));
+
+        // this could be a nested collection
+        self.finish_geometry();
+
         Ok(())
     }
 }
@@ -155,6 +212,46 @@ mod test {
             _ => assert!(false),
         }
         Ok(())
+    }
+
+    #[test]
+    fn geometry_collection() {
+        use crate::wkt::WktStr;
+        let wkt = WktStr("GEOMETRYCOLLECTION(POINT(1 2),LINESTRING(1 2,3 4))");
+        let actual = wkt.to_geo().unwrap();
+
+        use geo_types::{line_string, point, Geometry, GeometryCollection};
+
+        let expected = Geometry::GeometryCollection(GeometryCollection(vec![
+            point!(x: 1.0, y: 2.0).into(),
+            line_string![(x: 1.0, y: 2.0), (x: 3.0, y: 4.0)].into(),
+        ]));
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn nested_geometry_collections() {
+        use crate::wkt::WktStr;
+        let wkt = WktStr("GEOMETRYCOLLECTION(POINT(1 2),GEOMETRYCOLLECTION(LINESTRING(1 2,3 4), MULTIPOINT(1 2, 3 4, 5 6)))");
+        let actual = wkt.to_geo().unwrap();
+
+        use geo_types::{line_string, point, Geometry, GeometryCollection, MultiPoint};
+
+        let expected = Geometry::GeometryCollection(GeometryCollection(vec![
+            point!(x: 1.0, y: 2.0).into(),
+            Geometry::GeometryCollection(GeometryCollection(vec![
+                line_string![(x: 1.0, y: 2.0), (x: 3.0, y: 4.0)].into(),
+                MultiPoint(vec![
+                    point!(x: 1.0, y: 2.0),
+                    point!(x: 3.0, y: 4.0),
+                    point!(x: 5.0, y: 6.0),
+                ])
+                .into(),
+            ])),
+        ]));
+
+        assert_eq!(expected, actual);
     }
 
     #[test]
