@@ -402,7 +402,6 @@ mod test {
         }
 
         #[test]
-        #[ignore = "geo::GeometryCollections is known to be broken https://github.com/georust/geozero/issues/11"]
         fn empty_geometry_collection() {
             let wkt = WktStr("GEOMETRYCOLLECTION EMPTY");
             let actual = wkt.to_geo().unwrap();
