@@ -153,7 +153,7 @@ let _ = sqlx::query(
 .await?;
 ```
 
-Using compile-time verification requires [type overrides](https://docs.rs/sqlx/0.5.1/sqlx/macro.query.html?search=insert#force-a-differentcustom-type): 
+Using compile-time verification requires [type overrides](https://docs.rs/sqlx/latest/sqlx/macro.query.html#force-a-differentcustom-type): 
 ```rust
 let _ = sqlx::query!(
     "INSERT INTO point2d (datetimefield, geom) VALUES(now(), $1::geometry)",
