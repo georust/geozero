@@ -12,7 +12,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // The current working directory can vary depending on how the project is being
     // built or released so we build an absolute path to the proto file
     let path = Path::new("src/mvt/vector_tile.proto");
-    if path.exists() {
+    if path.exists() && std::env::var("DOCS_RS").is_err() {
         // avoid rerunning build if the file has not changed
         println!("cargo:rerun-if-changed=src/mvt/vector_tile.proto");
 
