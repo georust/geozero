@@ -1,3 +1,7 @@
+## 0.9.1 (2022-04-25)
+
+* Support GeometryCollection in geo-types writer
+
 ## 0.9.0 (2022-04-25)
 
 * Add MVT writer and reader
