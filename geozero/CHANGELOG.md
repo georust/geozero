@@ -1,6 +1,8 @@
-## 0.9.0 (UNRELEASED)
+## 0.9.0 (2022-04-25)
 
 * Add MVT writer and reader
+* Add WKT reader
+* API extensions for empty point support
 * Return ColumnNotFound instead of ColumnUnknown for Null values
 * Update to gdal 0.12 / gdal-sys 0.6
 
