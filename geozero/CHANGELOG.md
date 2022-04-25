@@ -2,6 +2,7 @@
 
 * Add MVT writer and reader
 * Return ColumnNotFound instead of ColumnUnknown for Null values
+* Update to gdal 0.12 / gdal-sys 0.6
 
 ## 0.8.0 (2021-12-02)
 
