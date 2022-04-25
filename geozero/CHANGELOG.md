@@ -1,3 +1,7 @@
+## 0.9.2 (2022-04-25)
+
+* Fix docs.rs build
+
 ## 0.9.1 (2022-04-25)
 
 * Support GeometryCollection in geo-types writer

@@ -1,6 +1,7 @@
 # Release checklist
 
-Because some tests have requirements which end up in circular dependencies, version bumps and releases have to be done in a particular order.
+With flatgeobuf as test requirement we have a circular dependency on geozero,
+which causes build conflicts when doing major version updates.
 
 ## geozero
 
@@ -21,4 +22,4 @@ Because some tests have requirements which end up in circular dependencies, vers
 Major updates:
 * Update geozero dependency in flatgeobuf
 * Test with local patch version
-* Change flatgeobuf to git version until next release
+* Change flatgeobuf to git version until flatgeobuf crate is released
