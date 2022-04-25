@@ -1,6 +1,6 @@
 [package]
 name = "geozero"
-version = "0.9.3"
+version = "0.9.4"
 authors = ["Pirmin Kalberer <pka@sourcepole.ch>"]
 edition = "2018"
 description = "Zero-Copy reading and writing of geospatial data."
@@ -57,8 +57,10 @@ tokio = { version = "1.17.0", default-features = false, features = ["rt-multi-th
 prost-build = "0.10"
 
 [package.metadata.docs.rs]
-all-features = true
-rustc-args = ["--cfg", "docsrs"]
+#all-features = true
+#rustc-args = ["--cfg", "docsrs"]
+# Disable GDAL for docs.rs build, as a workaround for  https://github.com/georust/gdal/issues/240
+features = ["with-geos", "with-wkb", "with-gpkg", "with-postgis-sqlx", "with-postgis-postgres", "with-mvt", "with-tessellator"]
 
 [[test]]
 name = "gdal"
