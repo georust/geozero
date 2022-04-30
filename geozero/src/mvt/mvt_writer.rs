@@ -36,6 +36,14 @@ impl MvtWriter {
     pub fn geometry(&self) -> &tile::Feature {
         &self.feature
     }
+    fn reserve(&mut self, capacity: usize) {
+        let total = self.feature.geometry.len() + capacity;
+        if total > self.feature.geometry.capacity() {
+            self.feature
+                .geometry
+                .reserve(total - self.feature.geometry.capacity());
+        }
+    }
 }
 
 impl GeomProcessor for MvtWriter {
@@ -79,7 +87,7 @@ impl GeomProcessor for MvtWriter {
     }
     fn point_begin(&mut self, _idx: usize) -> Result<()> {
         self.feature.set_type(GeomType::Point);
-        self.feature.geometry.reserve(3);
+        self.reserve(3);
         self.feature
             .geometry
             .push(CommandInteger::from(Command::MoveTo, 1));
@@ -87,7 +95,7 @@ impl GeomProcessor for MvtWriter {
     }
     fn multipoint_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
         self.feature.set_type(GeomType::Point);
-        self.feature.geometry.reserve(1 + 2 * size);
+        self.reserve(1 + 2 * size);
         self.feature
             .geometry
             .push(CommandInteger::from(Command::MoveTo, size as u32));
@@ -98,10 +106,10 @@ impl GeomProcessor for MvtWriter {
             self.feature.set_type(GeomType::Linestring);
         }
         self.line_state = if tagged || self.is_multiline {
-            self.feature.geometry.reserve(2 + 2 * size); // TODO: correct?
+            self.reserve(2 + 2 * size);
             LineState::Line(size)
         } else {
-            self.feature.geometry.reserve(2 + 2 * (size - 1) + 1); // TODO: correct?
+            self.reserve(2 + 2 * (size - 1) + 1);
             LineState::Ring(size)
         };
         self.feature
