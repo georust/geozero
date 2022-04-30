@@ -20,6 +20,5 @@ which causes build conflicts when doing major version updates.
 * `git commit -a -m "Release geozero x.x.x"`
 
 Major updates:
-* Update geozero dependency in flatgeobuf
-* Test with local patch version
+* Create branch of flatgeobuf with updated geozero dependency
 * Change flatgeobuf to git version until flatgeobuf crate is released
