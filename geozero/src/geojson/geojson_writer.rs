@@ -177,6 +177,17 @@ impl<W: Write> GeomProcessor for GeoJsonWriter<'_, W> {
         let _ = self.out.write(b"]}")?;
         Ok(())
     }
+    fn geometrycollection_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
+        self.comma(idx)?;
+        let _ = self
+            .out
+            .write(br#"{"type": "GeometryCollection", "geometries": ["#)?;
+        Ok(())
+    }
+    fn geometrycollection_end(&mut self, _idx: usize) -> Result<()> {
+        let _ = self.out.write(b"]}")?;
+        Ok(())
+    }
 }
 
 fn write_num_prop<'a, W: Write>(out: &'a mut W, colname: &str, v: &dyn Display) -> Result<()> {
@@ -280,6 +291,15 @@ mod test {
         assert!(read_geojson(&mut geojson.as_bytes(), &mut writer).is_ok());
         assert_eq!(std::str::from_utf8(&out).unwrap(), geojson);
 
+        Ok(())
+    }
+
+    #[test]
+    fn geometry_collection() -> Result<()> {
+        let geojson = r#"{"type": "GeometryCollection", "geometries": [{"type": "Point", "coordinates": [100.1,0.1]},{"type": "LineString", "coordinates": [[101.1,0.1],[102.1,1.1]]}]}"#;
+        let mut out: Vec<u8> = Vec::new();
+        assert!(read_geojson(geojson.as_bytes(), &mut GeoJsonWriter::new(&mut out)).is_ok());
+        assert_eq!(std::str::from_utf8(&out).unwrap(), geojson);
         Ok(())
     }
 

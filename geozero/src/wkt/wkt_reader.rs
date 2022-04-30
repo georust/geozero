@@ -307,7 +307,6 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "with-geojson")]
     fn geometry_collection() {
         let wkt = WktStr(
             "GEOMETRYCOLLECTION (POINT (40 10),
@@ -315,19 +314,13 @@ mod test {
                         POLYGON ((40 40, 20 45, 45 30, 40 40)))",
         );
 
-        // writing to geo::GeometryCollections is known to be broken https://github.com/georust/geozero/issues/11
-        // let actual = wkt.to_geo().unwrap();
-        // let expected: geo_types::Geometry<f64> = geo_types::Geometry::GeometryCollection(geo_types::GeometryCollection(vec![
-        //     point!(x: 40.0, y: 10.0).into(),
-        //     line_string![(x: 10.0, y: 10.0), (x: 20.0, y: 20.0), (x: 10.0, y: 40.0)].into(),
-        //     polygon![(x: 40.0f64, y: 40.0), (x: 20.0, y: 45.0), (x: 45.0, y: 30.0), (x: 40.0, y: 40.0)].into(),
-        // ]));
-
-        use crate::geojson::conversion::ToJson;
-        let actual = wkt.to_json().unwrap();
-        let expected = r#"{"type": "Point", "coordinates": [40,10]},{"type": "LineString", "coordinates": [[10,10],[20,20],[10,40]]},{"type": "Polygon", "coordinates": [[[40,40],[20,45],[45,30],[40,40]]]}"#;
-
-        assert_eq!(expected, &actual);
+        let actual = wkt.to_geo().unwrap();
+        let expected: geo_types::Geometry<f64> = geo_types::Geometry::GeometryCollection(geo_types::GeometryCollection(vec![
+            point!(x: 40.0, y: 10.0).into(),
+            line_string![(x: 10.0, y: 10.0), (x: 20.0, y: 20.0), (x: 10.0, y: 40.0)].into(),
+            polygon![(x: 40.0f64, y: 40.0), (x: 20.0, y: 45.0), (x: 45.0, y: 30.0), (x: 40.0, y: 40.0)].into(),
+        ]));
+        assert_eq!(expected, actual);
     }
 
     #[test]
