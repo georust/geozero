@@ -29,7 +29,10 @@
 //! | WKT       | [wkt::WktStr], [wkt::WktString]                                      | XYZM       | [wkt::WktReader], [wkt::WktStr], [wkt::WktString]                    | [ToWkt]             | [WktWriter](wkt::WktWriter)             |
 
 mod api;
+pub mod bbox;
+pub mod chaining;
 pub mod error;
+pub mod events;
 mod feature_processor;
 mod geometry_processor;
 mod multiplex;

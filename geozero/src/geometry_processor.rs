@@ -1,7 +1,7 @@
 use crate::error::{GeozeroError, Result};
 
 /// Dimensions requested for processing
-#[derive(Default, Clone, Copy)]
+#[derive(Default, Clone, Copy, Debug)]
 pub struct CoordDimensions {
     /// height
     pub z: bool,
