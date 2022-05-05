@@ -2,6 +2,7 @@ use flatgeobuf::*;
 use geozero::error::Result;
 use geozero::geojson::{GeoJsonReader, GeoJsonWriter};
 use geozero::svg::SvgWriter;
+use geozero::wkt::{WktReader, WktWriter};
 use geozero::{FeatureProcessor, GeozeroDatasource};
 use std::env;
 use std::ffi::OsStr;
@@ -64,6 +65,10 @@ fn transform<P: FeatureProcessor>(args: Cli, processor: &mut P) -> Result<()> {
             let mut ds = GeoJsonReader(&mut filein);
             GeozeroDatasource::process(&mut ds, processor)?;
         }
+        Some("wkt") => {
+            let mut ds = WktReader(&mut filein);
+            GeozeroDatasource::process(&mut ds, processor)?;
+        }
         _ => panic!("Unkown input file extension"),
     };
     Ok(())
@@ -97,6 +102,10 @@ fn process(args: Cli) -> Result<()> {
             let mut fgb = FgbWriter::create("fgb", GeometryType::Unknown)?;
             transform(args, &mut fgb)?;
             fgb.write(&mut fout)?;
+        }
+        Some("wkt") => {
+            let mut processor = WktWriter::new(&mut fout);
+            transform(args, &mut processor)?;
         }
         _ => panic!("Unkown output file extension"),
     }
