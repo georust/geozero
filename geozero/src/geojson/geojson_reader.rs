@@ -20,6 +20,12 @@ impl GeozeroGeometry for GeoJsonString {
     }
 }
 
+impl GeozeroDatasource for GeoJsonString {
+    fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> Result<()> {
+        read_geojson(&mut self.0.as_bytes(), processor)
+    }
+}
+
 /// GeoJSON String slice.
 pub struct GeoJson<'a>(pub &'a str);
 
