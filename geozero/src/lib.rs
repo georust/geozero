@@ -43,6 +43,8 @@ pub use property_processor::*;
 
 #[cfg(feature = "with-csv")]
 pub mod csv;
+#[cfg(feature = "with-csv")]
+pub use crate::csv::conversion::*;
 
 #[cfg(feature = "with-gdal")]
 pub mod gdal;
