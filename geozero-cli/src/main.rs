@@ -1,5 +1,6 @@
 use clap::Parser;
 use flatgeobuf::*;
+use geozero::csv::CsvReader;
 use geozero::error::Result;
 use geozero::geojson::{GeoJsonReader, GeoJsonWriter};
 use geozero::svg::SvgWriter;
@@ -22,6 +23,10 @@ struct Cli {
     /// The path to the file to write
     #[clap(parse(from_os_str))]
     dest: std::path::PathBuf,
+
+    /// When processing CSV, the name of the column holding a WKT geometry.
+    #[clap(long)]
+    csv_geometry_column: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -67,6 +72,13 @@ fn transform<P: FeatureProcessor>(args: Cli, processor: &mut P) -> Result<()> {
         }
         Some("wkt") => {
             let mut ds = WktReader(&mut filein);
+            GeozeroDatasource::process(&mut ds, processor)?;
+        }
+        Some("csv") => {
+            let geometry_column_name = args
+                .csv_geometry_column
+                .expect("must specify --csv-geometry-column=<column name> when parsing CSV");
+            let mut ds = CsvReader::new(&geometry_column_name, &mut filein);
             GeozeroDatasource::process(&mut ds, processor)?;
         }
         _ => panic!("Unkown input file extension"),
