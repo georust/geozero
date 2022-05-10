@@ -1,6 +1,6 @@
 use clap::Parser;
 use flatgeobuf::*;
-use geozero::csv::CsvReader;
+use geozero::csv::{CsvReader, CsvWriter};
 use geozero::error::Result;
 use geozero::geojson::{GeoJsonReader, GeoJsonWriter};
 use geozero::svg::SvgWriter;
@@ -117,6 +117,10 @@ fn process(args: Cli) -> Result<()> {
         }
         Some("wkt") => {
             let mut processor = WktWriter::new(&mut fout);
+            transform(args, &mut processor)?;
+        }
+        Some("csv") => {
+            let mut processor = CsvWriter::new(&mut fout);
             transform(args, &mut processor)?;
         }
         _ => panic!("Unkown output file extension"),
