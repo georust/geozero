@@ -58,7 +58,7 @@ fn process_wkt_geom<P: GeomProcessor>(geometry: &Geometry<f64>, processor: &mut 
     process_wkt_geom_n(geometry, 0, processor)
 }
 
-fn process_wkt_geom_n<P: GeomProcessor>(
+pub(crate) fn process_wkt_geom_n<P: GeomProcessor>(
     geometry: &Geometry<f64>,
     idx: usize,
     processor: &mut P,
