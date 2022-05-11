@@ -48,7 +48,7 @@ impl<W: Write> FeatureProcessor for GeoJsonWriter<'_, W> {
         if idx > 0 {
             let _ = self.out.write(b",\n")?;
         }
-        let _ = self.out.write(br#"{"type": "Feature", "#)?;
+        let _ = self.out.write(br#"{"type": "Feature""#)?;
         Ok(())
     }
     fn feature_end(&mut self, _idx: u64) -> Result<()> {
@@ -56,15 +56,15 @@ impl<W: Write> FeatureProcessor for GeoJsonWriter<'_, W> {
         Ok(())
     }
     fn properties_begin(&mut self) -> Result<()> {
-        let _ = self.out.write(br#""properties": {"#)?;
+        let _ = self.out.write(br#", "properties": {"#)?;
         Ok(())
     }
     fn properties_end(&mut self) -> Result<()> {
-        let _ = self.out.write(b"}, ")?; //TODO: support also properties after geometry!
+        let _ = self.out.write(b"}")?;
         Ok(())
     }
     fn geometry_begin(&mut self) -> Result<()> {
-        let _ = self.out.write(br#""geometry": "#)?;
+        let _ = self.out.write(br#", "geometry": "#)?;
         Ok(())
     }
     fn geometry_end(&mut self) -> Result<()> {
