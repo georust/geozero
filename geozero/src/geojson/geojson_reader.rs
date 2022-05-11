@@ -387,7 +387,6 @@ mod test {
             std::str::from_utf8(&out).unwrap(),
             r#"{
 "type": "FeatureCollection",
-"name": "",
 "features": [{"type": "Feature", "properties": {"id": 1, "name": "New Zealand"}, "geometry": {"type": "Point", "coordinates": [10,20]}}]}"#
         );
 

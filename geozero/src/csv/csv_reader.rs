@@ -239,7 +239,6 @@ mod tests {
 
         let expected_geojson = serde_json::json!({
             "type": "FeatureCollection",
-            "name": "",
             "features": [
                {
                    "type": "Feature",
@@ -288,7 +287,6 @@ mod tests {
         );
         let expected_geojson = serde_json::json!({
             "type": "FeatureCollection",
-            "name": "",
             "features": [
                {
                    "type": "Feature",
@@ -338,7 +336,6 @@ mod tests {
         );
         let expected_geojson = serde_json::json!({
             "type": "FeatureCollection",
-            "name": "",
             "features": [
                {
                    "type": "Feature",
