@@ -2,6 +2,7 @@
 mod mvt_commands;
 pub(crate) mod mvt_reader;
 pub(crate) mod mvt_writer;
+#[rustfmt::skip]
 mod vector_tile;
 
 pub use mvt_reader::*;
