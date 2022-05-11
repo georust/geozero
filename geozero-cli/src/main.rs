@@ -1,3 +1,4 @@
+use clap::Parser;
 use flatgeobuf::*;
 use geozero::error::Result;
 use geozero::geojson::{GeoJsonReader, GeoJsonWriter};
@@ -10,17 +11,16 @@ use std::fs::File;
 use std::io::{BufReader, BufWriter};
 use std::num::ParseFloatError;
 use std::path::Path;
-use structopt::StructOpt;
 
-#[derive(StructOpt)]
+#[derive(Parser)]
 struct Cli {
     /// The path or URL to the FlatGeobuf file to read
     input: String,
     /// Geometries within extent
-    #[structopt(short, long, parse(try_from_str = parse_extent))]
+    #[clap(short, long, parse(try_from_str = parse_extent))]
     extent: Option<Extent>,
     /// The path to the file to write
-    #[structopt(parse(from_os_str))]
+    #[clap(parse(from_os_str))]
     dest: std::path::PathBuf,
 }
 
@@ -150,7 +150,7 @@ async fn process_url(args: Cli) -> Result<()> {
 }
 
 fn main() {
-    let args = Cli::from_args();
+    let args = Cli::parse();
 
     if env::var("RUST_LOG").is_err() {
         env::set_var("RUST_LOG", "info");
