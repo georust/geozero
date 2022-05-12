@@ -17,24 +17,24 @@ impl<'a, W: Write> WktWriter<'a, W> {
     }
     fn geom_begin(&mut self, idx: usize, tag: &[u8]) -> Result<()> {
         if idx > 0 {
-            let _ = self.out.write(b",")?;
+            self.out.write_all(b",")?;
         }
-        let _ = self.out.write(tag)?;
+        self.out.write_all(tag)?;
         Ok(())
     }
     fn tagged_geom_begin(&mut self, tagged: bool, idx: usize, tag: &[u8]) -> Result<()> {
         if idx > 0 {
-            let _ = self.out.write(b",")?;
+            self.out.write_all(b",")?;
         }
         if tagged {
-            let _ = self.out.write(tag)?;
+            self.out.write_all(tag)?;
         } else {
-            let _ = self.out.write(b"(")?;
+            self.out.write_all(b"(")?;
         }
         Ok(())
     }
     fn geom_end(&mut self) -> Result<()> {
-        let _ = self.out.write(b")")?;
+        self.out.write_all(b")")?;
         Ok(())
     }
 }
@@ -45,9 +45,9 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
     }
     fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
         if idx == 0 {
-            let _ = self.out.write(&format!("{} {}", x, y).as_bytes())?;
+            self.out.write_all(&format!("{} {}", x, y).as_bytes())?;
         } else {
-            let _ = self.out.write(&format!(",{} {}", x, y).as_bytes())?;
+            self.out.write_all(&format!(",{} {}", x, y).as_bytes())?;
         }
         Ok(())
     }
@@ -62,15 +62,15 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
         idx: usize,
     ) -> Result<()> {
         if idx == 0 {
-            let _ = self.out.write(&format!("{} {}", x, y).as_bytes())?;
+            self.out.write_all(&format!("{} {}", x, y).as_bytes())?;
         } else {
-            let _ = self.out.write(&format!(",{} {}", x, y).as_bytes())?;
+            self.out.write_all(&format!(",{} {}", x, y).as_bytes())?;
         }
         if let Some(z) = z {
-            let _ = self.out.write(&format!(" {}", z).as_bytes())?;
+            self.out.write_all(&format!(" {}", z).as_bytes())?;
         }
         if let Some(m) = m {
-            let _ = self.out.write(&format!(" {}", m).as_bytes())?;
+            self.out.write_all(&format!(" {}", m).as_bytes())?;
         }
         Ok(())
     }
@@ -118,7 +118,7 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
         self.geom_end()
     }
     fn geometrycollection_begin(&mut self, _size: usize, _idx: usize) -> Result<()> {
-        let _ = self.out.write(b"GEOMETRYCOLLECTION(")?;
+        self.out.write_all(b"GEOMETRYCOLLECTION(")?;
         Ok(())
     }
     fn geometrycollection_end(&mut self, _idx: usize) -> Result<()> {

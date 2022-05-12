@@ -42,17 +42,16 @@ impl<'a, W: Write> SvgWriter<'a, W> {
 
 impl<W: Write> FeatureProcessor for SvgWriter<'_, W> {
     fn dataset_begin(&mut self, name: Option<&str>) -> Result<()> {
-        let _ = self.out.write(
+        self.out.write_all(
             br#"<?xml version="1.0"?>
 <svg xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny" "#,
         )?;
         if let Some((width, height)) = self.size {
-            let _ = self
-                .out
-                .write(&format!("width=\"{}\" height=\"{}\" ", width, height).as_bytes())?;
+            self.out
+                .write_all(&format!("width=\"{}\" height=\"{}\" ", width, height).as_bytes())?;
         }
         if let Some((xmin, ymin, xmax, ymax)) = self.view_box {
-            let _ = self.out.write(
+            self.out.write_all(
                 &format!(
                     "viewBox=\"{} {} {} {}\" ",
                     xmin,
@@ -63,22 +62,22 @@ impl<W: Write> FeatureProcessor for SvgWriter<'_, W> {
                 .as_bytes(),
             )?;
         }
-        let _ = self.out.write(
+        self.out.write_all(
             br#"stroke-linecap="round" stroke-linejoin="round">
 <g id=""#,
         )?;
         if let Some(name) = name {
-            let _ = self.out.write(name.as_bytes())?;
+            self.out.write_all(name.as_bytes())?;
         }
-        let _ = self.out.write(br#"">"#)?;
+        self.out.write_all(br#"">"#)?;
         Ok(())
     }
     fn dataset_end(&mut self) -> Result<()> {
-        let _ = self.out.write(b"\n</g>\n</svg>")?;
+        self.out.write_all(b"\n</g>\n</svg>")?;
         Ok(())
     }
     fn feature_begin(&mut self, _idx: u64) -> Result<()> {
-        let _ = self.out.write(b"\n")?;
+        self.out.write_all(b"\n")?;
         Ok(())
     }
     fn feature_end(&mut self, _idx: u64) -> Result<()> {
@@ -89,47 +88,47 @@ impl<W: Write> FeatureProcessor for SvgWriter<'_, W> {
 impl<W: Write> GeomProcessor for SvgWriter<'_, W> {
     fn xy(&mut self, x: f64, y: f64, _idx: usize) -> Result<()> {
         let y = if self.invert_y { -y } else { y };
-        let _ = self.out.write(&format!("{} {} ", x, y).as_bytes())?;
+        self.out.write_all(&format!("{} {} ", x, y).as_bytes())?;
         Ok(())
     }
     fn point_begin(&mut self, _idx: usize) -> Result<()> {
-        let _ = self.out.write(br#"<path d="M "#)?;
+        self.out.write_all(br#"<path d="M "#)?;
         Ok(())
     }
     fn point_end(&mut self, _idx: usize) -> Result<()> {
-        let _ = self.out.write(br#"Z"/>"#)?;
+        self.out.write_all(br#"Z"/>"#)?;
         Ok(())
     }
     fn linestring_begin(&mut self, tagged: bool, _size: usize, _idx: usize) -> Result<()> {
         if tagged {
-            let _ = self.out.write(br#"<path d=""#)?;
+            self.out.write_all(br#"<path d=""#)?;
         } else {
-            let _ = self.out.write(b"M ")?;
+            self.out.write_all(b"M ")?;
         }
         Ok(())
     }
     fn linestring_end(&mut self, tagged: bool, _idx: usize) -> Result<()> {
         if tagged {
-            let _ = self.out.write(br#""/>"#)?;
+            self.out.write_all(br#""/>"#)?;
         } else {
-            let _ = self.out.write(b"Z ")?;
+            self.out.write_all(b"Z ")?;
         }
         Ok(())
     }
     fn multilinestring_begin(&mut self, _size: usize, _idx: usize) -> Result<()> {
-        let _ = self.out.write(br#"<path d=""#)?;
+        self.out.write_all(br#"<path d=""#)?;
         Ok(())
     }
     fn multilinestring_end(&mut self, _idx: usize) -> Result<()> {
-        let _ = self.out.write(br#""/>"#)?;
+        self.out.write_all(br#""/>"#)?;
         Ok(())
     }
     fn polygon_begin(&mut self, _tagged: bool, _size: usize, _idx: usize) -> Result<()> {
-        let _ = self.out.write(br#"<path d=""#)?;
+        self.out.write_all(br#"<path d=""#)?;
         Ok(())
     }
     fn polygon_end(&mut self, _tagged: bool, _idx: usize) -> Result<()> {
-        let _ = self.out.write(br#""/>"#)?;
+        self.out.write_all(br#""/>"#)?;
         Ok(())
     }
 }

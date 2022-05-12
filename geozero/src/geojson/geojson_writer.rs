@@ -18,7 +18,7 @@ impl<'a, W: Write> GeoJsonWriter<'a, W> {
     }
     fn comma(&mut self, idx: usize) -> Result<()> {
         if idx > 0 {
-            let _ = self.out.write(b",")?;
+            self.out.write_all(b",")?;
         }
         Ok(())
     }
@@ -26,44 +26,44 @@ impl<'a, W: Write> GeoJsonWriter<'a, W> {
 
 impl<W: Write> FeatureProcessor for GeoJsonWriter<'_, W> {
     fn dataset_begin(&mut self, name: Option<&str>) -> Result<()> {
-        let _ = self.out.write(
+        self.out.write_all(
             br#"{
 "type": "FeatureCollection""#,
         )?;
         if let Some(name) = name {
             write!(self.out, ",\n\"name\": \"{}\"", name)?;
         }
-        let _ = self.out.write(
+        self.out.write_all(
             br#",
 "features": ["#,
         )?;
         Ok(())
     }
     fn dataset_end(&mut self) -> Result<()> {
-        let _ = self.out.write(b"]}")?;
+        self.out.write_all(b"]}")?;
         Ok(())
     }
     fn feature_begin(&mut self, idx: u64) -> Result<()> {
         if idx > 0 {
-            let _ = self.out.write(b",\n")?;
+            self.out.write_all(b",\n")?;
         }
-        let _ = self.out.write(br#"{"type": "Feature""#)?;
+        self.out.write_all(br#"{"type": "Feature""#)?;
         Ok(())
     }
     fn feature_end(&mut self, _idx: u64) -> Result<()> {
-        let _ = self.out.write(b"}")?;
+        self.out.write_all(b"}")?;
         Ok(())
     }
     fn properties_begin(&mut self) -> Result<()> {
-        let _ = self.out.write(br#", "properties": {"#)?;
+        self.out.write_all(br#", "properties": {"#)?;
         Ok(())
     }
     fn properties_end(&mut self) -> Result<()> {
-        let _ = self.out.write(b"}")?;
+        self.out.write_all(b"}")?;
         Ok(())
     }
     fn geometry_begin(&mut self) -> Result<()> {
-        let _ = self.out.write(br#", "geometry": "#)?;
+        self.out.write_all(br#", "geometry": "#)?;
         Ok(())
     }
     fn geometry_end(&mut self) -> Result<()> {
@@ -77,7 +77,7 @@ impl<W: Write> GeomProcessor for GeoJsonWriter<'_, W> {
     }
     fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
         self.comma(idx)?;
-        let _ = self.out.write(&format!("[{},{}]", x, y).as_bytes())?;
+        self.out.write_all(&format!("[{},{}]", x, y).as_bytes())?;
         Ok(())
     }
     fn coordinate(
@@ -91,118 +91,115 @@ impl<W: Write> GeomProcessor for GeoJsonWriter<'_, W> {
         idx: usize,
     ) -> Result<()> {
         self.comma(idx)?;
-        let _ = self.out.write(&format!("[{},{}", x, y).as_bytes())?;
+        self.out.write_all(&format!("[{},{}", x, y).as_bytes())?;
         if let Some(z) = z {
-            let _ = self.out.write(&format!(",{}", z).as_bytes())?;
+            self.out.write_all(&format!(",{}", z).as_bytes())?;
         }
-        let _ = self.out.write(b"]")?;
+        self.out.write_all(b"]")?;
         Ok(())
     }
     fn point_begin(&mut self, idx: usize) -> Result<()> {
         self.comma(idx)?;
-        let _ = self.out.write(br#"{"type": "Point", "coordinates": "#)?;
+        self.out
+            .write_all(br#"{"type": "Point", "coordinates": "#)?;
         Ok(())
     }
     fn point_end(&mut self, _idx: usize) -> Result<()> {
-        let _ = self.out.write(b"}")?;
+        self.out.write_all(b"}")?;
         Ok(())
     }
     fn multipoint_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
         self.comma(idx)?;
-        let _ = self
-            .out
-            .write(br#"{"type": "MultiPoint", "coordinates": ["#)?;
+        self.out
+            .write_all(br#"{"type": "MultiPoint", "coordinates": ["#)?;
         Ok(())
     }
     fn multipoint_end(&mut self, _idx: usize) -> Result<()> {
-        let _ = self.out.write(b"]}")?;
+        self.out.write_all(b"]}")?;
         Ok(())
     }
     fn linestring_begin(&mut self, tagged: bool, _size: usize, idx: usize) -> Result<()> {
         self.comma(idx)?;
         if tagged {
-            let _ = self
-                .out
-                .write(br#"{"type": "LineString", "coordinates": ["#)?;
+            self.out
+                .write_all(br#"{"type": "LineString", "coordinates": ["#)?;
         } else {
-            let _ = self.out.write(b"[")?;
+            self.out.write_all(b"[")?;
         }
         Ok(())
     }
     fn linestring_end(&mut self, tagged: bool, _idx: usize) -> Result<()> {
         if tagged {
-            let _ = self.out.write(b"]}")?;
+            self.out.write_all(b"]}")?;
         } else {
-            let _ = self.out.write(b"]")?;
+            self.out.write_all(b"]")?;
         }
         Ok(())
     }
     fn multilinestring_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
         self.comma(idx)?;
-        let _ = self
-            .out
-            .write(br#"{"type": "MultiLineString", "coordinates": ["#)?;
+        self.out
+            .write_all(br#"{"type": "MultiLineString", "coordinates": ["#)?;
         Ok(())
     }
     fn multilinestring_end(&mut self, _idx: usize) -> Result<()> {
-        let _ = self.out.write(b"]}")?;
+        self.out.write_all(b"]}")?;
         Ok(())
     }
     fn polygon_begin(&mut self, tagged: bool, _size: usize, idx: usize) -> Result<()> {
         self.comma(idx)?;
         if tagged {
-            let _ = self.out.write(br#"{"type": "Polygon", "coordinates": ["#)?;
+            self.out
+                .write_all(br#"{"type": "Polygon", "coordinates": ["#)?;
         } else {
-            let _ = self.out.write(b"[")?;
+            self.out.write_all(b"[")?;
         }
         Ok(())
     }
     fn polygon_end(&mut self, tagged: bool, _idx: usize) -> Result<()> {
         if tagged {
-            let _ = self.out.write(b"]}")?;
+            self.out.write_all(b"]}")?;
         } else {
-            let _ = self.out.write(b"]")?;
+            self.out.write_all(b"]")?;
         }
         Ok(())
     }
     fn multipolygon_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
         self.comma(idx)?;
-        let _ = self
-            .out
-            .write(br#"{"type": "MultiPolygon", "coordinates": ["#)?;
+        self.out
+            .write_all(br#"{"type": "MultiPolygon", "coordinates": ["#)?;
         Ok(())
     }
     fn multipolygon_end(&mut self, _idx: usize) -> Result<()> {
-        let _ = self.out.write(b"]}")?;
+        self.out.write_all(b"]}")?;
         Ok(())
     }
     fn geometrycollection_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
         self.comma(idx)?;
-        let _ = self
-            .out
-            .write(br#"{"type": "GeometryCollection", "geometries": ["#)?;
+        self.out
+            .write_all(br#"{"type": "GeometryCollection", "geometries": ["#)?;
         Ok(())
     }
     fn geometrycollection_end(&mut self, _idx: usize) -> Result<()> {
-        let _ = self.out.write(b"]}")?;
+        self.out.write_all(b"]}")?;
         Ok(())
     }
 }
 
 fn write_num_prop<'a, W: Write>(out: &'a mut W, colname: &str, v: &dyn Display) -> Result<()> {
-    let _ = out.write(&format!(r#""{}": {}"#, colname, v).as_bytes())?;
+    out.write_all(&format!(r#""{}": {}"#, colname, v).as_bytes())?;
     Ok(())
 }
 
 fn write_str_prop<'a, W: Write>(out: &'a mut W, colname: &str, v: &dyn Display) -> Result<()> {
-    let _ = out.write(&format!(r#""{}": "{}""#, colname, v).as_bytes())?;
+    out.write_all(&format!(r#""{}": "{}""#, colname, v).as_bytes())?;
     Ok(())
 }
 
 impl<W: Write> PropertyProcessor for GeoJsonWriter<'_, W> {
     fn property(&mut self, i: usize, colname: &str, colval: &ColumnValue) -> Result<bool> {
         if i > 0 {
-            let _ = self.out.write(b", ")?;
+            self.out.write_all(b", ")?;
         }
         match colval {
             ColumnValue::Byte(v) => write_num_prop(self.out, colname, &v)?,

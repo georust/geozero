@@ -116,7 +116,7 @@ impl<'a, W: Write> WkbWriter<'a, W> {
     /// GPKG geometry header according to http://www.geopackage.org/spec/#gpb_format
     fn write_gpkg_header(&mut self) -> Result<()> {
         let magic = b"GP";
-        self.out.write(magic)?;
+        self.out.write_all(magic)?;
         let version: u8 = 0;
         self.out.iowrite(version)?;
 
