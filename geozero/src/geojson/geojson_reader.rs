@@ -96,7 +96,7 @@ fn process_geojson<P: FeatureProcessor>(gj: &GeoGeoJson, processor: &mut P) -> R
                 }
                 if let Some(ref geometry) = feature.geometry {
                     processor.geometry_begin()?;
-                    process_geojson_geom_n(geometry, idx, processor)?;
+                    process_geojson_geom_n(geometry, 0, processor)?;
                     processor.geometry_end()?;
                 }
                 processor.feature_end(idx as u64)?;
