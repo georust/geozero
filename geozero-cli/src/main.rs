@@ -57,6 +57,17 @@ fn transform<P: FeatureProcessor>(args: Cli, processor: &mut P) -> Result<()> {
     let pathin = Path::new(&args.input);
     let mut filein = BufReader::new(File::open(pathin)?);
     match pathin.extension().and_then(OsStr::to_str) {
+        Some("csv") => {
+            let geometry_column_name = args
+                .csv_geometry_column
+                .expect("must specify --csv-geometry-column=<column name> when parsing CSV");
+            let mut ds = CsvReader::new(&geometry_column_name, &mut filein);
+            GeozeroDatasource::process(&mut ds, processor)?;
+        }
+        Some("json") | Some("geojson") => {
+            let mut ds = GeoJsonReader(&mut filein);
+            GeozeroDatasource::process(&mut ds, processor)?;
+        }
         Some("fgb") => {
             let ds = FgbReader::open(&mut filein)?;
             let mut ds = if let Some(bbox) = &args.extent {
@@ -66,19 +77,8 @@ fn transform<P: FeatureProcessor>(args: Cli, processor: &mut P) -> Result<()> {
             };
             ds.process_features(processor)?;
         }
-        Some("json") | Some("geojson") => {
-            let mut ds = GeoJsonReader(&mut filein);
-            GeozeroDatasource::process(&mut ds, processor)?;
-        }
         Some("wkt") => {
             let mut ds = WktReader(&mut filein);
-            GeozeroDatasource::process(&mut ds, processor)?;
-        }
-        Some("csv") => {
-            let geometry_column_name = args
-                .csv_geometry_column
-                .expect("must specify --csv-geometry-column=<column name> when parsing CSV");
-            let mut ds = CsvReader::new(&geometry_column_name, &mut filein);
             GeozeroDatasource::process(&mut ds, processor)?;
         }
         _ => panic!("Unkown input file extension"),
@@ -89,6 +89,15 @@ fn transform<P: FeatureProcessor>(args: Cli, processor: &mut P) -> Result<()> {
 fn process(args: Cli) -> Result<()> {
     let mut fout = BufWriter::new(File::create(&args.dest)?);
     match args.dest.extension().and_then(OsStr::to_str) {
+        Some("csv") => {
+            let mut processor = CsvWriter::new(&mut fout);
+            transform(args, &mut processor)?;
+        }
+        Some("fgb") => {
+            let mut fgb = FgbWriter::create("fgb", GeometryType::Unknown)?;
+            transform(args, &mut fgb)?;
+            fgb.write(&mut fout)?;
+        }
         Some("json") | Some("geojson") => {
             let mut processor = GeoJsonWriter::new(&mut fout);
             transform(args, &mut processor)?;
@@ -110,17 +119,8 @@ fn process(args: Cli) -> Result<()> {
             }
             transform(args, &mut processor)?;
         }
-        Some("fgb") => {
-            let mut fgb = FgbWriter::create("fgb", GeometryType::Unknown)?;
-            transform(args, &mut fgb)?;
-            fgb.write(&mut fout)?;
-        }
         Some("wkt") => {
             let mut processor = WktWriter::new(&mut fout);
-            transform(args, &mut processor)?;
-        }
-        Some("csv") => {
-            let mut processor = CsvWriter::new(&mut fout);
             transform(args, &mut processor)?;
         }
         _ => panic!("Unkown output file extension"),
