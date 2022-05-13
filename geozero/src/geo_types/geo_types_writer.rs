@@ -5,7 +5,7 @@ use std::mem;
 
 /// Generator for geo-types geometry type.
 pub struct GeoWriter {
-    pub(crate) geom: Option<Geometry<f64>>,
+    geoms: Vec<Geometry<f64>>,
     // Stack of any in-progress (potentially nested) GeometryCollections
     collections: Vec<Vec<Geometry<f64>>>,
     // In-progress multi-polygon
@@ -19,7 +19,7 @@ pub struct GeoWriter {
 impl GeoWriter {
     pub fn new() -> GeoWriter {
         GeoWriter {
-            geom: None,
+            geoms: Vec::new(),
             coords: None,
             line_strings: None,
             polygons: None,
@@ -27,8 +27,15 @@ impl GeoWriter {
         }
     }
 
-    pub fn geometry(&self) -> Option<&Geometry<f64>> {
-        self.geom.as_ref()
+    pub fn take_geometry(&mut self) -> Option<Geometry<f64>> {
+        match self.geoms.len() {
+            0 => None,
+            1 => Some(self.geoms.pop().unwrap()),
+            _ => {
+                let geoms = std::mem::take(&mut self.geoms);
+                Some(Geometry::GeometryCollection(GeometryCollection(geoms)))
+            }
+        }
     }
 
     fn finish_geometry(&mut self, geometry: Geometry<f64>) -> Result<()> {
@@ -37,7 +44,7 @@ impl GeoWriter {
         if let Some(most_recent_collection) = self.collections.last_mut() {
             most_recent_collection.push(geometry);
         } else {
-            self.geom = Some(geometry);
+            self.geoms.push(geometry);
         }
         Ok(())
     }
@@ -190,8 +197,8 @@ mod test {
         let geojson = r#"{"type": "LineString", "coordinates": [[1875038.447610231,-3269648.6879248763],[1874359.641504197,-3270196.812984864],[1874141.0428635243,-3270953.7840121365],[1874440.1778162003,-3271619.4315206874],[1876396.0598222911,-3274138.747656357],[1876442.0805243007,-3275052.60551469],[1874739.312657555,-3275457.333765534]]}"#;
         let mut geo = GeoWriter::new();
         assert!(read_geojson(geojson.as_bytes(), &mut geo).is_ok());
-        println!("{:?}", geo.geometry());
-        match geo.geometry().unwrap() {
+        let geom = geo.take_geometry().unwrap();
+        match geom {
             Geometry::LineString(line) => {
                 assert_eq!(line.coords_count(), 7);
                 assert_eq!(
