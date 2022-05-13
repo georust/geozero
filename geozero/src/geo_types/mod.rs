@@ -20,7 +20,7 @@ pub(crate) mod conversion {
         fn to_geo(&self) -> Result<geo_types::Geometry<f64>> {
             let mut geo = GeoWriter::new();
             self.process_geom(&mut geo)?;
-            geo.geom
+            geo.take_geometry()
                 .ok_or(GeozeroError::Geometry("Missing Geometry".to_string()))
         }
     }
@@ -37,8 +37,163 @@ mod wkb {
         fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> Result<Self> {
             let mut geo = GeoWriter::new();
             crate::wkb::process_wkb_type_geom(rdr, &mut geo, dialect)?;
-            geo.geom
+            geo.take_geometry()
                 .ok_or(GeozeroError::Geometry("Missing Geometry".to_string()))
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::geo_types::conversion::ToGeo;
+    use crate::geojson::GeoJsonString;
+
+    use geo_types::{Geometry, GeometryCollection, Point};
+    use serde_json::json;
+
+    #[test]
+    fn from_geojson_feature_collection_of_points() {
+        let geojson = GeoJsonString(
+            json!({
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "population": 100
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [10.0, 45.0]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "population": 200
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [20.0, 45.0]
+                        }
+                    }
+                ]
+            })
+            .to_string(),
+        );
+
+        let actual = geojson.to_geo().unwrap();
+        let expected = Geometry::GeometryCollection(GeometryCollection::<f64>(vec![
+            Point::new(10.0, 45.0).into(),
+            Point::new(20.0, 45.0).into(),
+        ]));
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn from_geojson_feature_collection_geometry_collection_and_point() {
+        let geojson = GeoJsonString(
+            json!({
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "population": 100
+                        },
+                        "geometry": {
+                            "type": "GeometryCollection",
+                            "geometries": [
+                                {
+                                    "type": "Point",
+                                    "coordinates": [10.1, 45.0]
+                                },
+                                {
+                                    "type": "Point",
+                                    "coordinates": [10.2, 45.0]
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "population": 200
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [20.0, 45.0]
+                        }
+                    }
+                ]
+            })
+            .to_string(),
+        );
+
+        let actual = geojson.to_geo().unwrap();
+        let expected = Geometry::GeometryCollection(GeometryCollection::<f64>(vec![
+            Geometry::GeometryCollection(GeometryCollection::<f64>(vec![
+                Point::new(10.1, 45.0).into(),
+                Point::new(10.2, 45.0).into(),
+            ])),
+            Point::new(20.0, 45.0).into(),
+        ]));
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn from_geojson_point_feature() {
+        let geojson = GeoJsonString(
+            json!({
+                "type": "Feature",
+                "properties": {
+                    "population": 100
+                },
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [10.0, 45.0]
+                }
+            })
+            .to_string(),
+        );
+
+        use geo_types::{Geometry, Point};
+
+        let actual = geojson.to_geo().unwrap();
+        let expected = Geometry::Point(Point::new(10.0, 45.0));
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn from_geojson_geometry_collection_feature() {
+        let geojson = GeoJsonString(
+            json!({
+                "type": "Feature",
+                "properties": {
+                    "population": 100
+                },
+                "geometry": {
+                    "type": "GeometryCollection",
+                    "geometries": [
+                        {
+                            "type": "Point",
+                            "coordinates": [10.0, 45.0]
+                        },
+                        {
+                            "type": "Point",
+                            "coordinates": [20.0, 45.0]
+                        }
+                    ]
+                }
+            })
+            .to_string(),
+        );
+
+        let actual = geojson.to_geo().unwrap();
+        let expected = Geometry::GeometryCollection(GeometryCollection::<f64>(vec![
+            Point::new(10.0, 45.0).into(),
+            Point::new(20.0, 45.0).into(),
+        ]));
+        assert_eq!(expected, actual);
     }
 }
