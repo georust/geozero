@@ -33,6 +33,7 @@ pub mod error;
 mod feature_processor;
 mod geometry_processor;
 mod multiplex;
+mod proj;
 mod property_processor;
 
 pub use api::*;
@@ -76,6 +77,9 @@ pub mod postgis;
 pub mod svg;
 #[cfg(feature = "with-svg")]
 pub use crate::svg::conversion::*;
+
+#[cfg(feature = "with-proj")]
+pub use crate::proj::ToProjected;
 
 #[cfg(feature = "with-tesselator")]
 pub mod tessellator;
