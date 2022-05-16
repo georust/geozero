@@ -1,4 +1,5 @@
 use crate::error::{GeozeroError, Result};
+use crate::events::{self, Event, GeomEventProcessor};
 use crate::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 use geo_types::*;
 use std::mem;
@@ -45,6 +46,138 @@ impl GeoWriter {
             most_recent_collection.push(geometry);
         } else {
             self.geoms.push(geometry);
+        }
+        Ok(())
+    }
+}
+
+impl GeomEventProcessor for GeoWriter {
+    fn event(
+        &mut self,
+        event: Event,
+        geom_type: events::GeometryType,
+        _collection: bool,
+    ) -> Result<()> {
+        match event {
+            Event::Xy(x, y, _idx) => {
+                let coords = self
+                    .coords
+                    .as_mut()
+                    .ok_or(GeozeroError::Geometry("Not ready for coords".to_string()))?;
+                coords.push(coord!(x: x, y: y));
+            }
+
+            Event::PointBegin(_idx) => {
+                debug_assert!(self.coords.is_none());
+                self.coords = Some(Vec::with_capacity(1));
+            }
+
+            Event::PointEnd(_idx) => {
+                let coords = self
+                    .coords
+                    .take()
+                    .ok_or(GeozeroError::Geometry("No coords for Point".to_string()))?;
+                debug_assert!(coords.len() == 1);
+                self.finish_geometry(Point(coords[0]).into())?;
+            }
+
+            Event::MultiPointBegin(size, _idx) => {
+                debug_assert!(self.coords.is_none());
+                self.coords = Some(Vec::with_capacity(size));
+            }
+
+            Event::MultiPointEnd(_idx) => {
+                let coords = self.coords.take().ok_or(GeozeroError::Geometry(
+                    "No coords for MultiPoint".to_string(),
+                ))?;
+                let points: Vec<Point<_>> = coords.into_iter().map(From::from).collect();
+                self.finish_geometry(MultiPoint(points).into())?;
+            }
+
+            Event::LineStringBegin(size, _idx) => {
+                debug_assert!(self.coords.is_none());
+                self.coords = Some(Vec::with_capacity(size));
+            }
+
+            Event::LineStringEnd(_idx) => {
+                let coords = self.coords.take().ok_or(GeozeroError::Geometry(
+                    "No coords for LineString".to_string(),
+                ))?;
+                let line_string = LineString(coords);
+                if geom_type == events::GeometryType::LineString {
+                    self.finish_geometry(line_string.into())?;
+                } else {
+                    let line_strings = self.line_strings.as_mut().ok_or(GeozeroError::Geometry(
+                        "Missing container for LineString".to_string(),
+                    ))?;
+                    line_strings.push(line_string);
+                }
+            }
+
+            Event::MultiLineStringBegin(size, _idx) => {
+                debug_assert!(self.line_strings.is_none());
+                self.line_strings = Some(Vec::with_capacity(size));
+            }
+
+            Event::MultiLineStringEnd(_idx) => {
+                let line_strings = self.line_strings.take().ok_or(GeozeroError::Geometry(
+                    "No LineStrings for MultiLineString".to_string(),
+                ))?;
+                self.finish_geometry(MultiLineString(line_strings).into())?;
+            }
+
+            Event::PolygonBegin(size, _idx) => {
+                debug_assert!(self.line_strings.is_none());
+                self.line_strings = Some(Vec::with_capacity(size));
+            }
+
+            Event::PolygonEnd(_idx) => {
+                let mut line_strings = self.line_strings.take().ok_or(GeozeroError::Geometry(
+                    "Missing LineStrings for Polygon".to_string(),
+                ))?;
+
+                let polygon = if line_strings.len() == 0 {
+                    Polygon::new(LineString(vec![]), vec![])
+                } else {
+                    let exterior = line_strings.remove(0);
+                    Polygon::new(exterior, mem::take(&mut line_strings))
+                };
+
+                if geom_type == events::GeometryType::Polygon {
+                    self.finish_geometry(polygon.into())?;
+                } else {
+                    let polygons = self.polygons.as_mut().ok_or(GeozeroError::Geometry(
+                        "Missing container for Polygon".to_string(),
+                    ))?;
+                    polygons.push(polygon);
+                }
+            }
+
+            Event::MultiPolygonBegin(size, _idx) => {
+                debug_assert!(self.polygons.is_none());
+                self.polygons = Some(Vec::with_capacity(size));
+            }
+
+            Event::MultiPolygonEnd(_idx) => {
+                let polygons = self.polygons.take().ok_or(GeozeroError::Geometry(
+                    "Missing polygons for MultiPolygon".to_string(),
+                ))?;
+                self.finish_geometry(MultiPolygon(polygons).into())?;
+            }
+
+            Event::GeometryCollectionBegin(size, _idx) => {
+                self.collections.push(Vec::with_capacity(size));
+            }
+
+            Event::GeometryCollectionEnd(_idx) => {
+                let geometries = self.collections.pop().ok_or(GeozeroError::Geometry(
+                    "Unexpected geometry type".to_string(),
+                ))?;
+
+                self.finish_geometry(Geometry::GeometryCollection(GeometryCollection(geometries)))?;
+            }
+
+            _ => return Err(GeozeroError::GeometryFormat), // ?? With GeomProcessor we ignore all other states
         }
         Ok(())
     }
