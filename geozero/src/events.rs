@@ -810,7 +810,6 @@ impl<'a, P: GeomEventProcessor> GeomVisitor<'a, P> {
     }
 }
 
-#[allow(unused)]
 impl<'a, P: GeomEventProcessor> GeomProcessor for GeomVisitor<'a, P> {
     fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
         self.xy(x, y, idx)
@@ -828,8 +827,7 @@ impl<'a, P: GeomEventProcessor> GeomProcessor for GeomVisitor<'a, P> {
         self.coordinate(x, y, z, m, t, tm, idx)
     }
     fn empty_point(&mut self, idx: usize) -> Result<()> {
-        self.point_begin(idx)?;
-        self.point_end(idx)
+        self.empty_point(idx)
     }
     fn point_begin(&mut self, idx: usize) -> Result<()> {
         self.point_begin(idx)
@@ -903,10 +901,10 @@ impl<'a, P: GeomEventProcessor> GeomProcessor for GeomVisitor<'a, P> {
     fn multisurface_end(&mut self, idx: usize) -> Result<()> {
         self.multisurface_end(idx)
     }
-    fn triangle_begin(&mut self, tagged: bool, size: usize, idx: usize) -> Result<()> {
+    fn triangle_begin(&mut self, _tagged: bool, size: usize, idx: usize) -> Result<()> {
         self.triangle_begin(size, idx)
     }
-    fn triangle_end(&mut self, tagged: bool, idx: usize) -> Result<()> {
+    fn triangle_end(&mut self, _tagged: bool, idx: usize) -> Result<()> {
         self.triangle_end(idx)
     }
     fn polyhedralsurface_begin(&mut self, size: usize, idx: usize) -> Result<()> {
