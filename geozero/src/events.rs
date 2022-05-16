@@ -188,7 +188,9 @@ enum Vstate {
     CurvePolygon,
     MultiCurve,
     MultiSurface,
+    #[allow(dead_code)]
     Curve,
+    #[allow(dead_code)]
     Surface,
     PolyhedralSurface,
     Tin,
@@ -465,6 +467,15 @@ impl<'a, P: GeomEventProcessor> GeomVisitor<'a, P> {
         self.emit(Event::Coordinate(x, y, z, m, t, tm, idx))?;
         Ok(())
     }
+    /// Process empty coordinates, like WKT's `POINT EMPTY`
+    pub fn empty_point(&mut self, idx: usize) -> Result<()> {
+        self.set_type(GeometryType::Point)?;
+        self.enter_state(Vstate::Point)?;
+        self.emit(Event::EmptyPoint(idx))?;
+        self.exit_state(Vstate::Point)?;
+        Ok(())
+    }
+
     /// Begin of Point processing
     pub fn point_begin(&mut self, idx: usize) -> Result<()> {
         self.set_type(GeometryType::Point)?;
@@ -496,6 +507,10 @@ impl<'a, P: GeomEventProcessor> GeomVisitor<'a, P> {
     }
 
     /// Begin of LineString processing
+    ///
+    /// Can also be a Polygon ring or part of a MultiLineString
+    ///
+    /// Next: size * xy/coordinate
     pub fn linestring_begin(&mut self, size: usize, idx: usize) -> Result<()> {
         self.set_type(GeometryType::LineString)?;
         self.enter_state(Vstate::LineString)?;
@@ -510,7 +525,28 @@ impl<'a, P: GeomEventProcessor> GeomVisitor<'a, P> {
         Ok(())
     }
 
+    /// Begin of MultiLineString processing
+    ///
+    /// Next: size * LineString
+    pub fn multilinestring_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.set_type(GeometryType::MultiLineString)?;
+        self.enter_state(Vstate::MultiLineString)?;
+        self.emit(Event::MultiLineStringBegin(size, idx))?;
+        Ok(())
+    }
+
+    /// End of MultiLineString processing
+    pub fn multilinestring_end(&mut self, idx: usize) -> Result<()> {
+        self.exit_state(Vstate::MultiLineString)?;
+        self.emit(Event::MultiLineStringEnd(idx))?;
+        Ok(())
+    }
+
     /// Begin of Polygon processing
+    ///
+    /// Can also be part of a MultiPolygon
+    ///
+    /// Next: size * LineString = rings
     pub fn polygon_begin(&mut self, size: usize, idx: usize) -> Result<()> {
         self.set_type(GeometryType::Polygon)?;
         self.enter_state(Vstate::Polygon)?;
@@ -522,6 +558,23 @@ impl<'a, P: GeomEventProcessor> GeomVisitor<'a, P> {
     pub fn polygon_end(&mut self, idx: usize) -> Result<()> {
         self.exit_state(Vstate::Polygon)?;
         self.emit(Event::PolygonEnd(idx))?;
+        Ok(())
+    }
+
+    /// Begin of MultiPolygon processing
+    ///
+    /// Next: size * Polygon
+    pub fn multipolygon_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.set_type(GeometryType::MultiPolygon)?;
+        self.enter_state(Vstate::MultiPolygon)?;
+        self.emit(Event::MultiPolygonBegin(size, idx))?;
+        Ok(())
+    }
+
+    /// End of MultiPolygon processing
+    pub fn multipolygon_end(&mut self, idx: usize) -> Result<()> {
+        self.exit_state(Vstate::MultiPolygon)?;
+        self.emit(Event::MultiPolygonEnd(idx))?;
         Ok(())
     }
 
@@ -540,6 +593,153 @@ impl<'a, P: GeomEventProcessor> GeomVisitor<'a, P> {
         self.geom_type = GeometryType::Unknown;
         self.emit(Event::GeometryCollectionEnd(idx))?;
         self.collection = false;
+        Ok(())
+    }
+
+    /// Begin of CircularString processing
+    ///
+    /// The CircularString is the basic curve type, similar to a LineString in the linear world. A single segment required three points, the start and end points (first and third) and any other point on the arc. The exception to this is for a closed circle, where the start and end points are the same. In this case the second point MUST be the center of the arc, ie the opposite side of the circle. To chain arcs together, the last point of the previous arc becomes the first point of the next arc, just like in LineString. This means that a valid circular string must have an odd number of points greated than 1.
+    ///
+    /// Next: size * xy/coordinate
+    pub fn circularstring_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.set_type(GeometryType::CircularString)?;
+        self.enter_state(Vstate::CircularString)?;
+        self.emit(Event::CircularStringBegin(size, idx))?;
+        Ok(())
+    }
+
+    /// End of CircularString processing
+    pub fn circularstring_end(&mut self, idx: usize) -> Result<()> {
+        self.exit_state(Vstate::CircularString)?;
+        self.emit(Event::CircularStringEnd(idx))?;
+        Ok(())
+    }
+
+    /// Begin of CompoundCurve processing
+    ///
+    /// A compound curve is a single, continuous curve that has both curved (circular) segments and linear segments. That means that in addition to having well-formed components, the end point of every component (except the last) must be coincident with the start point of the following component.
+    ///
+    /// Next: size * (CircularString | LineString)
+    pub fn compoundcurve_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.set_type(GeometryType::CompoundCurve)?;
+        self.enter_state(Vstate::CompoundCurve)?;
+        self.emit(Event::CompoundCurveBegin(size, idx))?;
+        Ok(())
+    }
+
+    /// End of CompoundCurve processing
+    pub fn compoundcurve_end(&mut self, idx: usize) -> Result<()> {
+        self.exit_state(Vstate::CompoundCurve)?;
+        self.emit(Event::CompoundCurveEnd(idx))?;
+        Ok(())
+    }
+
+    /// Begin of CurvePolygon processing
+    ///
+    /// A CurvePolygon is just like a polygon, with an outer ring and zero or more inner rings. The difference is that a ring can take the form of a circular string, linear string or compound string.
+    ///
+    /// Next: size * (CircularString | LineString | CompoundCurve)
+    pub fn curvepolygon_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.set_type(GeometryType::CurvePolygon)?;
+        self.enter_state(Vstate::CurvePolygon)?;
+        self.emit(Event::CurvePolygonBegin(size, idx))?;
+        Ok(())
+    }
+
+    /// End of CurvePolygon processing
+    pub fn curvepolygon_end(&mut self, idx: usize) -> Result<()> {
+        self.exit_state(Vstate::CurvePolygon)?;
+        self.emit(Event::CurvePolygonEnd(idx))?;
+        Ok(())
+    }
+
+    /// Begin of MultiCurve processing
+    ///
+    /// The MultiCurve is a collection of curves, which can include linear strings, circular strings or compound strings.
+    ///
+    /// Next: size * (CircularString | LineString | CompoundCurve)
+    pub fn multicurve_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.set_type(GeometryType::MultiCurve)?;
+        self.enter_state(Vstate::MultiCurve)?;
+        self.emit(Event::MultiCurveBegin(size, idx))?;
+        Ok(())
+    }
+
+    /// End of MultiCurve processing
+    pub fn multicurve_end(&mut self, idx: usize) -> Result<()> {
+        self.exit_state(Vstate::MultiCurve)?;
+        self.emit(Event::MultiCurveEnd(idx))?;
+        Ok(())
+    }
+
+    /// Begin of MultiSurface processing
+    ///
+    /// The MultiSurface is a collection of surfaces, which can be (linear) polygons or curve polygons.
+    ///
+    /// Next: size * (CurvePolygon | Polygon)
+    pub fn multisurface_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.set_type(GeometryType::MultiSurface)?;
+        self.enter_state(Vstate::MultiSurface)?;
+        self.emit(Event::MultiSurfaceBegin(size, idx))?;
+        Ok(())
+    }
+
+    /// End of MultiSurface processing
+    pub fn multisurface_end(&mut self, idx: usize) -> Result<()> {
+        self.exit_state(Vstate::MultiSurface)?;
+        self.emit(Event::MultiSurfaceEnd(idx))?;
+        Ok(())
+    }
+    /// Begin of Triangle processing
+    ///
+    /// Can also be part of a Tin
+    ///
+    /// Next: size * LineString = rings
+    pub fn triangle_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.set_type(GeometryType::Triangle)?;
+        self.enter_state(Vstate::Triangle)?;
+        self.emit(Event::TriangleBegin(size, idx))?;
+        Ok(())
+    }
+
+    /// End of Triangle processing
+    pub fn triangle_end(&mut self, idx: usize) -> Result<()> {
+        self.exit_state(Vstate::Triangle)?;
+        self.emit(Event::TriangleEnd(idx))?;
+        Ok(())
+    }
+
+    /// Begin of PolyhedralSurface processing
+    ///
+    /// Next: size * Polygon
+    pub fn polyhedralsurface_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.set_type(GeometryType::PolyhedralSurface)?;
+        self.enter_state(Vstate::PolyhedralSurface)?;
+        self.emit(Event::PolyhedralSurfaceBegin(size, idx))?;
+        Ok(())
+    }
+
+    /// End of PolyhedralSurface processing
+    pub fn polyhedralsurface_end(&mut self, idx: usize) -> Result<()> {
+        self.exit_state(Vstate::PolyhedralSurface)?;
+        self.emit(Event::PolyhedralSurfaceEnd(idx))?;
+        Ok(())
+    }
+
+    /// Begin of Tin processing
+    ///
+    /// Next: size * Polygon
+    pub fn tin_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.set_type(GeometryType::Tin)?;
+        self.enter_state(Vstate::Tin)?;
+        self.emit(Event::TinBegin(size, idx))?;
+        Ok(())
+    }
+
+    /// End of Tin processing
+    pub fn tin_end(&mut self, idx: usize) -> Result<()> {
+        self.exit_state(Vstate::Tin)?;
+        self.emit(Event::TinEnd(idx))?;
         Ok(())
     }
 }
@@ -584,10 +784,10 @@ impl<'a, P: GeomEventProcessor> GeomProcessor for GeomVisitor<'a, P> {
         self.linestring_end(idx)
     }
     fn multilinestring_begin(&mut self, size: usize, idx: usize) -> Result<()> {
-        todo!()
+        self.multilinestring_begin(size, idx)
     }
     fn multilinestring_end(&mut self, idx: usize) -> Result<()> {
-        todo!()
+        self.multilinestring_end(idx)
     }
     fn polygon_begin(&mut self, _tagged: bool, size: usize, idx: usize) -> Result<()> {
         self.polygon_begin(size, idx)
@@ -596,10 +796,10 @@ impl<'a, P: GeomEventProcessor> GeomProcessor for GeomVisitor<'a, P> {
         self.polygon_end(idx)
     }
     fn multipolygon_begin(&mut self, size: usize, idx: usize) -> Result<()> {
-        todo!()
+        self.multipolygon_begin(size, idx)
     }
     fn multipolygon_end(&mut self, idx: usize) -> Result<()> {
-        todo!()
+        self.multipolygon_end(idx)
     }
     fn geometrycollection_begin(&mut self, size: usize, idx: usize) -> Result<()> {
         self.geometrycollection_begin(size, idx)
@@ -608,52 +808,52 @@ impl<'a, P: GeomEventProcessor> GeomProcessor for GeomVisitor<'a, P> {
         self.geometrycollection_end(idx)
     }
     fn circularstring_begin(&mut self, size: usize, idx: usize) -> Result<()> {
-        todo!()
+        self.circularstring_begin(size, idx)
     }
     fn circularstring_end(&mut self, idx: usize) -> Result<()> {
-        todo!()
+        self.circularstring_end(idx)
     }
     fn compoundcurve_begin(&mut self, size: usize, idx: usize) -> Result<()> {
-        todo!()
+        self.compoundcurve_begin(size, idx)
     }
     fn compoundcurve_end(&mut self, idx: usize) -> Result<()> {
-        todo!()
+        self.compoundcurve_end(idx)
     }
     fn curvepolygon_begin(&mut self, size: usize, idx: usize) -> Result<()> {
-        todo!()
+        self.curvepolygon_begin(size, idx)
     }
     fn curvepolygon_end(&mut self, idx: usize) -> Result<()> {
-        todo!()
+        self.curvepolygon_end(idx)
     }
     fn multicurve_begin(&mut self, size: usize, idx: usize) -> Result<()> {
-        todo!()
+        self.multicurve_begin(size, idx)
     }
     fn multicurve_end(&mut self, idx: usize) -> Result<()> {
-        todo!()
+        self.multicurve_end(idx)
     }
     fn multisurface_begin(&mut self, size: usize, idx: usize) -> Result<()> {
-        todo!()
+        self.multisurface_begin(size, idx)
     }
     fn multisurface_end(&mut self, idx: usize) -> Result<()> {
-        todo!()
+        self.multisurface_end(idx)
     }
     fn triangle_begin(&mut self, tagged: bool, size: usize, idx: usize) -> Result<()> {
-        todo!()
+        self.triangle_begin(size, idx)
     }
     fn triangle_end(&mut self, tagged: bool, idx: usize) -> Result<()> {
-        todo!()
+        self.triangle_end(idx)
     }
     fn polyhedralsurface_begin(&mut self, size: usize, idx: usize) -> Result<()> {
-        todo!()
+        self.polyhedralsurface_begin(size, idx)
     }
     fn polyhedralsurface_end(&mut self, idx: usize) -> Result<()> {
-        todo!()
+        self.polyhedralsurface_end(idx)
     }
     fn tin_begin(&mut self, size: usize, idx: usize) -> Result<()> {
-        todo!()
+        self.tin_begin(size, idx)
     }
     fn tin_end(&mut self, idx: usize) -> Result<()> {
-        todo!()
+        self.tin_end(idx)
     }
 }
 
