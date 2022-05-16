@@ -50,11 +50,9 @@ use crate::GeomProcessor;
 ///          |            |                 |                         |                 |
 ///          +----------->|    LineString   |                         |     Point       |
 ///                       |                 |                         |                 |
-///                       +--------+--------+   +-----------------+   +--------+--------+
-///                                |            |                 |            |
+///                       +--------+--------+                         +--------+--------+
+///                                |                                           |
 ///                                +------------>   Coordinate    <------------+
-///                                             |                 |
-///                                             +-----------------+
 /// ```
 #[derive(Clone, PartialEq, Debug)]
 pub enum Event {
@@ -175,6 +173,28 @@ pub enum GeometryType {
     Triangle,
 }
 
+#[derive(PartialEq, Clone, Debug)]
+enum Vstate {
+    Initial,
+    Point,
+    LineString,
+    Polygon,
+    MultiPoint,
+    MultiLineString,
+    MultiPolygon,
+    GeometryCollection,
+    CircularString,
+    CompoundCurve,
+    CurvePolygon,
+    MultiCurve,
+    MultiSurface,
+    Curve,
+    Surface,
+    PolyhedralSurface,
+    Tin,
+    Triangle,
+}
+
 /// Geometry visitor emitting events to a processor
 pub struct GeomVisitor<'a, P: GeomEventProcessor> {
     // pub dims: CoordDimensions,
@@ -182,6 +202,7 @@ pub struct GeomVisitor<'a, P: GeomEventProcessor> {
     geom_type: GeometryType,
     /// Geometry is part of collection
     collection: bool,
+    state: Vstate,
     processor: &'a mut P,
 }
 
@@ -214,19 +235,207 @@ impl<'a, P: GeomEventProcessor> GeomVisitor<'a, P> {
         GeomVisitor {
             geom_type: GeometryType::Unknown,
             collection: false,
+            state: Vstate::Initial,
             processor,
         }
     }
     pub fn emit(&mut self, event: Event) -> Result<()> {
         self.processor.event(event, self.geom_type, self.collection)
     }
+    fn enter_state(&mut self, state: Vstate) -> Result<()> {
+        match (&self.state, &&state) {
+            (Vstate::Initial, Vstate::GeometryCollection)
+            | (Vstate::Initial, Vstate::Point)
+            | (Vstate::Initial, Vstate::LineString)
+            | (Vstate::Initial, Vstate::Polygon)
+            | (Vstate::Initial, Vstate::MultiPoint)
+            | (Vstate::Initial, Vstate::MultiLineString)
+            | (Vstate::Initial, Vstate::MultiPolygon)
+            | (Vstate::Initial, Vstate::CircularString)
+            | (Vstate::Initial, Vstate::CompoundCurve)
+            | (Vstate::Initial, Vstate::CurvePolygon)
+            | (Vstate::Initial, Vstate::MultiCurve)
+            | (Vstate::Initial, Vstate::MultiSurface)
+            | (Vstate::Initial, Vstate::Curve)
+            | (Vstate::Initial, Vstate::Surface)
+            | (Vstate::Initial, Vstate::PolyhedralSurface)
+            | (Vstate::Initial, Vstate::Tin)
+            | (Vstate::Initial, Vstate::Triangle)
+            | (Vstate::Polygon, Vstate::LineString)
+            | (Vstate::MultiPoint, Vstate::Point)
+            | (Vstate::MultiPolygon, Vstate::Polygon)
+            | (Vstate::GeometryCollection, Vstate::Point)
+            | (Vstate::GeometryCollection, Vstate::LineString)
+            | (Vstate::GeometryCollection, Vstate::Polygon)
+            | (Vstate::GeometryCollection, Vstate::MultiPoint)
+            | (Vstate::GeometryCollection, Vstate::MultiLineString)
+            | (Vstate::GeometryCollection, Vstate::MultiPolygon)
+            | (Vstate::GeometryCollection, Vstate::CircularString)
+            | (Vstate::GeometryCollection, Vstate::CompoundCurve)
+            | (Vstate::GeometryCollection, Vstate::CurvePolygon)
+            | (Vstate::GeometryCollection, Vstate::MultiCurve)
+            | (Vstate::GeometryCollection, Vstate::MultiSurface)
+            | (Vstate::GeometryCollection, Vstate::Curve)
+            | (Vstate::GeometryCollection, Vstate::Surface)
+            | (Vstate::GeometryCollection, Vstate::PolyhedralSurface)
+            | (Vstate::GeometryCollection, Vstate::Tin)
+            | (Vstate::GeometryCollection, Vstate::Triangle)
+            | (Vstate::CompoundCurve, Vstate::CircularString)
+            | (Vstate::CompoundCurve, Vstate::LineString)
+            | (Vstate::CurvePolygon, Vstate::CircularString)
+            | (Vstate::CurvePolygon, Vstate::LineString)
+            | (Vstate::CurvePolygon, Vstate::CompoundCurve)
+            | (Vstate::MultiCurve, Vstate::CircularString)
+            | (Vstate::MultiCurve, Vstate::LineString)
+            | (Vstate::MultiCurve, Vstate::CompoundCurve)
+            | (Vstate::MultiSurface, Vstate::CurvePolygon)
+            | (Vstate::MultiSurface, Vstate::Polygon)
+            | (Vstate::Triangle, Vstate::LineString)
+            | (Vstate::PolyhedralSurface, Vstate::Polygon)
+            | (Vstate::Tin, Vstate::Polygon) => {
+                // println!("Enter state {:?}=>{:?}", self.state, state);
+                self.state = state;
+                Ok(())
+            }
+            _ => Err(GeozeroError::Geometry(format!(
+                "Invalid state transition from {:?} to {:?}",
+                self.state, state
+            ))),
+        }
+    }
+    fn exit_state(&mut self, state: Vstate) -> Result<()> {
+        let next_state = match (&self.state, &self.geom_type, self.collection, &state) {
+            // --- Back to Vstate::Initial ---
+            (Vstate::Point, GeometryType::Point, false, Vstate::Point)
+            | (Vstate::LineString, GeometryType::LineString, false, Vstate::LineString)
+            | (Vstate::Polygon, GeometryType::Polygon, false, Vstate::Polygon)
+            | (Vstate::MultiPoint, GeometryType::MultiPoint, false, Vstate::MultiPoint)
+            | (
+                Vstate::MultiLineString,
+                GeometryType::MultiLineString,
+                false,
+                Vstate::MultiLineString,
+            )
+            | (Vstate::MultiPolygon, GeometryType::MultiPolygon, false, Vstate::MultiPolygon)
+            | (
+                Vstate::CircularString,
+                GeometryType::CircularString,
+                false,
+                Vstate::CircularString,
+            )
+            | (Vstate::CompoundCurve, GeometryType::CompoundCurve, false, Vstate::CompoundCurve)
+            | (Vstate::CurvePolygon, GeometryType::CurvePolygon, false, Vstate::CurvePolygon)
+            | (Vstate::MultiCurve, GeometryType::MultiCurve, false, Vstate::MultiCurve)
+            | (Vstate::MultiSurface, GeometryType::MultiSurface, false, Vstate::MultiSurface)
+            | (Vstate::Curve, GeometryType::Curve, false, Vstate::Curve)
+            | (Vstate::Surface, GeometryType::Surface, false, Vstate::Surface)
+            | (
+                Vstate::PolyhedralSurface,
+                GeometryType::PolyhedralSurface,
+                false,
+                Vstate::PolyhedralSurface,
+            )
+            | (Vstate::Tin, GeometryType::Tin, false, Vstate::Tin)
+            | (Vstate::Triangle, GeometryType::Triangle, false, Vstate::Triangle)
+            | (Vstate::GeometryCollection, _, true, Vstate::GeometryCollection) => Vstate::Initial,
+            // --- Back to Vstate::GeometryCollection ---
+            (Vstate::Point, GeometryType::Point, true, Vstate::Point)
+            | (Vstate::LineString, GeometryType::LineString, true, Vstate::LineString)
+            | (Vstate::Polygon, GeometryType::Polygon, true, Vstate::Polygon)
+            | (Vstate::MultiPoint, GeometryType::MultiPoint, true, Vstate::MultiPoint)
+            | (
+                Vstate::MultiLineString,
+                GeometryType::MultiLineString,
+                true,
+                Vstate::MultiLineString,
+            )
+            | (Vstate::MultiPolygon, GeometryType::MultiPolygon, true, Vstate::MultiPolygon)
+            | (
+                Vstate::CircularString,
+                GeometryType::CircularString,
+                true,
+                Vstate::CircularString,
+            )
+            | (Vstate::CompoundCurve, GeometryType::CompoundCurve, true, Vstate::CompoundCurve)
+            | (Vstate::CurvePolygon, GeometryType::CurvePolygon, true, Vstate::CurvePolygon)
+            | (Vstate::MultiCurve, GeometryType::MultiCurve, true, Vstate::MultiCurve)
+            | (Vstate::MultiSurface, GeometryType::MultiSurface, true, Vstate::MultiSurface)
+            | (Vstate::Curve, GeometryType::Curve, true, Vstate::Curve)
+            | (Vstate::Surface, GeometryType::Surface, true, Vstate::Surface)
+            | (
+                Vstate::PolyhedralSurface,
+                GeometryType::PolyhedralSurface,
+                true,
+                Vstate::PolyhedralSurface,
+            )
+            | (Vstate::Tin, GeometryType::Tin, true, Vstate::Tin)
+            | (Vstate::Triangle, GeometryType::Triangle, true, Vstate::Triangle) => {
+                Vstate::GeometryCollection
+            }
+            // --- Other cases ---
+            (Vstate::LineString, GeometryType::Polygon, _, Vstate::LineString) => Vstate::Polygon,
+            (Vstate::Point, GeometryType::MultiPoint, _, Vstate::Point) => Vstate::MultiPoint,
+            (Vstate::Polygon, GeometryType::MultiPolygon, _, Vstate::Polygon) => {
+                Vstate::MultiPolygon
+            }
+            (Vstate::CircularString, GeometryType::CompoundCurve, _, Vstate::CircularString) => {
+                Vstate::CompoundCurve
+            }
+            (Vstate::LineString, GeometryType::CompoundCurve, _, Vstate::LineString) => {
+                Vstate::CompoundCurve
+            }
+            (Vstate::CircularString, GeometryType::CurvePolygon, _, Vstate::CircularString) => {
+                Vstate::CurvePolygon
+            }
+            (Vstate::LineString, GeometryType::CurvePolygon, _, Vstate::LineString) => {
+                Vstate::CurvePolygon
+            }
+            (Vstate::CompoundCurve, GeometryType::CurvePolygon, _, Vstate::CompoundCurve) => {
+                Vstate::CurvePolygon
+            }
+            (Vstate::CircularString, GeometryType::MultiCurve, _, Vstate::CircularString) => {
+                Vstate::MultiCurve
+            }
+            (Vstate::LineString, GeometryType::MultiCurve, _, Vstate::LineString) => {
+                Vstate::MultiCurve
+            }
+            (Vstate::CompoundCurve, GeometryType::MultiCurve, _, Vstate::CompoundCurve) => {
+                Vstate::MultiCurve
+            }
+            (Vstate::CurvePolygon, GeometryType::MultiSurface, _, Vstate::CurvePolygon) => {
+                Vstate::MultiSurface
+            }
+            (Vstate::Polygon, GeometryType::MultiSurface, _, Vstate::Polygon) => {
+                Vstate::MultiSurface
+            }
+            (Vstate::LineString, GeometryType::Triangle, _, Vstate::LineString) => Vstate::Triangle,
+            (Vstate::Polygon, GeometryType::PolyhedralSurface, _, Vstate::Polygon) => {
+                Vstate::PolyhedralSurface
+            }
+            (Vstate::Polygon, GeometryType::Tin, _, Vstate::Polygon) => Vstate::Tin,
+            _ => {
+                return Err(GeozeroError::Geometry(format!(
+                    "Invalid state transition from {:?} to {:?}",
+                    self.state, state
+                )))
+            }
+        };
+        // println!(
+        //     "Exit state {:?} (GeometryType::{:?})=>{:?}",
+        //     &self.state, &self.geom_type, next_state
+        // );
+        self.state = next_state;
+        Ok(())
+    }
     fn set_type(&mut self, inner_type: GeometryType) -> Result<()> {
         match self.geom_type {
             GeometryType::Unknown => {
+                // println!("Set GeometryType {:?} => {:?}", &self.geom_type, inner_type);
                 self.geom_type = inner_type;
             }
             _ if self.collection => {
                 // new type within collection
+                // println!("Set GeometryType {:?} => {:?}", &self.geom_type, inner_type);
                 self.geom_type = inner_type;
             }
             _ => {
@@ -234,17 +443,6 @@ impl<'a, P: GeomEventProcessor> GeomVisitor<'a, P> {
             }
         }
         Ok(())
-    }
-    fn check_type(&self, geom_type: GeometryType) -> Result<()> {
-        if self.geom_type == geom_type {
-            Ok(())
-        } else {
-            self.type_seq_err()
-        }
-    }
-    fn type_seq_err(&self) -> Result<()> {
-        // TODO: unexpected event in self.geom_type
-        Err(GeozeroError::GeometryFormat)
     }
 
     /// Process coordinate with x,y dimensions
@@ -270,26 +468,29 @@ impl<'a, P: GeomEventProcessor> GeomVisitor<'a, P> {
     /// Begin of Point processing
     pub fn point_begin(&mut self, idx: usize) -> Result<()> {
         self.set_type(GeometryType::Point)?;
+        self.enter_state(Vstate::Point)?;
         self.emit(Event::PointBegin(idx))?;
         Ok(())
     }
 
     /// End of Point processing
     pub fn point_end(&mut self, idx: usize) -> Result<()> {
-        // self.check_type(GeometryType::Point)?; || MultiPoint, etc.
+        self.exit_state(Vstate::Point)?;
         self.emit(Event::PointEnd(idx))?;
         Ok(())
     }
 
+    /// Begin of MultiPoint processing
     pub fn multipoint_begin(&mut self, size: usize, idx: usize) -> Result<()> {
         self.set_type(GeometryType::MultiPoint)?;
+        self.enter_state(Vstate::MultiPoint)?;
         self.emit(Event::MultiPointBegin(size, idx))?;
         Ok(())
     }
 
     /// End of MultiPoint processing
     pub fn multipoint_end(&mut self, idx: usize) -> Result<()> {
-        self.check_type(GeometryType::MultiPoint)?;
+        self.exit_state(Vstate::MultiPoint)?;
         self.emit(Event::MultiPointEnd(idx))?;
         Ok(())
     }
@@ -297,13 +498,14 @@ impl<'a, P: GeomEventProcessor> GeomVisitor<'a, P> {
     /// Begin of LineString processing
     pub fn linestring_begin(&mut self, size: usize, idx: usize) -> Result<()> {
         self.set_type(GeometryType::LineString)?;
+        self.enter_state(Vstate::LineString)?;
         self.emit(Event::LineStringBegin(size, idx))?;
         Ok(())
     }
 
     /// End of LineString processing
     pub fn linestring_end(&mut self, idx: usize) -> Result<()> {
-        // self.check_type(GeometryType::LineString)?; || polygon, etc.
+        self.exit_state(Vstate::LineString)?;
         self.emit(Event::LineStringEnd(idx))?;
         Ok(())
     }
@@ -311,13 +513,14 @@ impl<'a, P: GeomEventProcessor> GeomVisitor<'a, P> {
     /// Begin of Polygon processing
     pub fn polygon_begin(&mut self, size: usize, idx: usize) -> Result<()> {
         self.set_type(GeometryType::Polygon)?;
+        self.enter_state(Vstate::Polygon)?;
         self.emit(Event::PolygonBegin(size, idx))?;
         Ok(())
     }
 
     /// End of Polygon processing
     pub fn polygon_end(&mut self, idx: usize) -> Result<()> {
-        self.check_type(GeometryType::Polygon)?;
+        self.exit_state(Vstate::Polygon)?;
         self.emit(Event::PolygonEnd(idx))?;
         Ok(())
     }
@@ -326,15 +529,14 @@ impl<'a, P: GeomEventProcessor> GeomVisitor<'a, P> {
     pub fn geometrycollection_begin(&mut self, size: usize, idx: usize) -> Result<()> {
         self.collection = true;
         self.geom_type = GeometryType::Unknown;
+        self.enter_state(Vstate::GeometryCollection)?;
         self.emit(Event::GeometryCollectionBegin(size, idx))?;
         Ok(())
     }
 
     /// End of GeometryCollection processing
     pub fn geometrycollection_end(&mut self, idx: usize) -> Result<()> {
-        if !self.collection {
-            return self.type_seq_err();
-        }
+        self.exit_state(Vstate::GeometryCollection)?;
         self.geom_type = GeometryType::Unknown;
         self.emit(Event::GeometryCollectionEnd(idx))?;
         self.collection = false;
