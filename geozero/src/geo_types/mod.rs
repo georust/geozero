@@ -8,6 +8,7 @@ pub use geo_types_writer::*;
 pub(crate) mod conversion {
     use super::geo_types_writer::*;
     use crate::error::{GeozeroError, Result};
+    use crate::events::GeomVisitor;
     use crate::GeozeroGeometry;
 
     /// Convert to geo-types Geometry.
@@ -19,7 +20,7 @@ pub(crate) mod conversion {
     impl<T: GeozeroGeometry> ToGeo for T {
         fn to_geo(&self) -> Result<geo_types::Geometry<f64>> {
             let mut geo = GeoWriter::new();
-            self.process_geom(&mut geo)?;
+            self.process_geom(&mut GeomVisitor::new(&mut geo))?;
             geo.take_geometry()
                 .ok_or(GeozeroError::Geometry("Missing Geometry".to_string()))
         }
@@ -30,13 +31,14 @@ pub(crate) mod conversion {
 mod wkb {
     use super::geo_types_writer::*;
     use crate::error::{GeozeroError, Result};
+    use crate::events::GeomVisitor;
     use crate::wkb::{FromWkb, WkbDialect};
     use std::io::Read;
 
     impl FromWkb for geo_types::Geometry<f64> {
         fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> Result<Self> {
             let mut geo = GeoWriter::new();
-            crate::wkb::process_wkb_type_geom(rdr, &mut geo, dialect)?;
+            crate::wkb::process_wkb_type_geom(rdr, &mut GeomVisitor::new(&mut geo), dialect)?;
             geo.take_geometry()
                 .ok_or(GeozeroError::Geometry("Missing Geometry".to_string()))
         }

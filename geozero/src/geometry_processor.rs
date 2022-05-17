@@ -1,4 +1,5 @@
 use crate::error::{GeozeroError, Result};
+use crate::events::{GeomEventProcessor, GeomVisitor};
 
 /// Dimensions requested for processing
 #[derive(Default, Clone, Copy, Debug)]
@@ -302,6 +303,321 @@ pub trait GeomProcessor {
         Ok(())
     }
 }
+
+impl<'a, P: GeomEventProcessor> GeomProcessor for GeomVisitor<'a, P> {
+    fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
+        self.xy(x, y, idx)
+    }
+    fn coordinate(
+        &mut self,
+        x: f64,
+        y: f64,
+        z: Option<f64>,
+        m: Option<f64>,
+        t: Option<f64>,
+        tm: Option<u64>,
+        idx: usize,
+    ) -> Result<()> {
+        self.coordinate(x, y, z, m, t, tm, idx)
+    }
+    fn empty_point(&mut self, idx: usize) -> Result<()> {
+        self.empty_point(idx)
+    }
+    fn point_begin(&mut self, idx: usize) -> Result<()> {
+        self.point_begin(idx)
+    }
+    fn point_end(&mut self, idx: usize) -> Result<()> {
+        self.point_end(idx)
+    }
+    fn multipoint_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.multipoint_begin(size, idx)
+    }
+    fn multipoint_end(&mut self, idx: usize) -> Result<()> {
+        self.multipoint_end(idx)
+    }
+    fn linestring_begin(&mut self, _tagged: bool, size: usize, idx: usize) -> Result<()> {
+        self.linestring_begin(size, idx)
+    }
+    fn linestring_end(&mut self, _tagged: bool, idx: usize) -> Result<()> {
+        self.linestring_end(idx)
+    }
+    fn multilinestring_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.multilinestring_begin(size, idx)
+    }
+    fn multilinestring_end(&mut self, idx: usize) -> Result<()> {
+        self.multilinestring_end(idx)
+    }
+    fn polygon_begin(&mut self, _tagged: bool, size: usize, idx: usize) -> Result<()> {
+        self.polygon_begin(size, idx)
+    }
+    fn polygon_end(&mut self, _tagged: bool, idx: usize) -> Result<()> {
+        self.polygon_end(idx)
+    }
+    fn multipolygon_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.multipolygon_begin(size, idx)
+    }
+    fn multipolygon_end(&mut self, idx: usize) -> Result<()> {
+        self.multipolygon_end(idx)
+    }
+    fn geometrycollection_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.geometrycollection_begin(size, idx)
+    }
+    fn geometrycollection_end(&mut self, idx: usize) -> Result<()> {
+        self.geometrycollection_end(idx)
+    }
+    fn circularstring_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.circularstring_begin(size, idx)
+    }
+    fn circularstring_end(&mut self, idx: usize) -> Result<()> {
+        self.circularstring_end(idx)
+    }
+    fn compoundcurve_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.compoundcurve_begin(size, idx)
+    }
+    fn compoundcurve_end(&mut self, idx: usize) -> Result<()> {
+        self.compoundcurve_end(idx)
+    }
+    fn curvepolygon_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.curvepolygon_begin(size, idx)
+    }
+    fn curvepolygon_end(&mut self, idx: usize) -> Result<()> {
+        self.curvepolygon_end(idx)
+    }
+    fn multicurve_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.multicurve_begin(size, idx)
+    }
+    fn multicurve_end(&mut self, idx: usize) -> Result<()> {
+        self.multicurve_end(idx)
+    }
+    fn multisurface_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.multisurface_begin(size, idx)
+    }
+    fn multisurface_end(&mut self, idx: usize) -> Result<()> {
+        self.multisurface_end(idx)
+    }
+    fn triangle_begin(&mut self, _tagged: bool, size: usize, idx: usize) -> Result<()> {
+        self.triangle_begin(size, idx)
+    }
+    fn triangle_end(&mut self, _tagged: bool, idx: usize) -> Result<()> {
+        self.triangle_end(idx)
+    }
+    fn polyhedralsurface_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.polyhedralsurface_begin(size, idx)
+    }
+    fn polyhedralsurface_end(&mut self, idx: usize) -> Result<()> {
+        self.polyhedralsurface_end(idx)
+    }
+    fn tin_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.tin_begin(size, idx)
+    }
+    fn tin_end(&mut self, idx: usize) -> Result<()> {
+        self.tin_end(idx)
+    }
+}
+
+/*
+impl GeomProcessor for dyn GeomEventProcessor {
+    fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
+        self.event(Event::Xy(x, y, idx), events::GeometryType::Unknown, false)
+    }
+    fn coordinate(
+        &mut self,
+        x: f64,
+        y: f64,
+        z: Option<f64>,
+        m: Option<f64>,
+        t: Option<f64>,
+        tm: Option<u64>,
+        idx: usize,
+    ) -> Result<()> {
+        self.event(
+            Event::Coordinate(x, y, z, m, t, tm, idx),
+            events::GeometryType::Unknown,
+            false,
+        )
+    }
+    fn point_begin(&mut self, idx: usize) -> Result<()> {
+        self.event(Event::PointBegin(idx), events::GeometryType::Unknown, false)
+    }
+    fn point_end(&mut self, idx: usize) -> Result<()> {
+        self.event(Event::PointEnd(idx), events::GeometryType::Unknown, false)
+    }
+    fn multipoint_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.event(
+            Event::MultiPointBegin(size, idx),
+            events::GeometryType::Unknown,
+            false,
+        )
+    }
+    fn multipoint_end(&mut self, idx: usize) -> Result<()> {
+        self.event(
+            Event::MultiPointEnd(idx),
+            events::GeometryType::Unknown,
+            false,
+        )
+    }
+    fn linestring_begin(&mut self, tagged: bool, size: usize, idx: usize) -> Result<()> {
+        self.event(
+            Event::LineStringBegin(size, idx),
+            events::GeometryType::Unknown,
+            false,
+        )
+    }
+    fn linestring_end(&mut self, tagged: bool, idx: usize) -> Result<()> {
+        self.event(
+            Event::LineStringEnd(idx),
+            events::GeometryType::Unknown,
+            false,
+        )
+    }
+    fn multilinestring_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.event(
+            Event::MultiLineStringBegin(size, idx),
+            events::GeometryType::Unknown,
+            false,
+        )
+    }
+    fn multilinestring_end(&mut self, idx: usize) -> Result<()> {
+        self.event(
+            Event::MultiLineStringEnd(idx),
+            events::GeometryType::Unknown,
+            false,
+        )
+    }
+    fn polygon_begin(&mut self, tagged: bool, size: usize, idx: usize) -> Result<()> {
+        self.event(
+            Event::PolygonBegin(size, idx),
+            events::GeometryType::Unknown,
+            false,
+        )
+    }
+    fn polygon_end(&mut self, tagged: bool, idx: usize) -> Result<()> {
+        self.event(Event::PolygonEnd(idx), events::GeometryType::Unknown, false)
+    }
+    fn multipolygon_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.event(
+            Event::MultiPolygonBegin(size, idx),
+            events::GeometryType::Unknown,
+            false,
+        )
+    }
+    fn multipolygon_end(&mut self, idx: usize) -> Result<()> {
+        self.event(
+            Event::MultiPolygonEnd(idx),
+            events::GeometryType::Unknown,
+            false,
+        )
+    }
+    fn circularstring_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.event(
+            Event::CircularStringBegin(size, idx),
+            events::GeometryType::Unknown,
+            false,
+        )
+    }
+    fn circularstring_end(&mut self, idx: usize) -> Result<()> {
+        self.event(
+            Event::CircularStringEnd(idx),
+            events::GeometryType::Unknown,
+            false,
+        )
+    }
+    fn compoundcurve_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.event(
+            Event::CompoundCurveBegin(size, idx),
+            events::GeometryType::Unknown,
+            false,
+        )
+    }
+    fn compoundcurve_end(&mut self, idx: usize) -> Result<()> {
+        self.event(
+            Event::CompoundCurveEnd(idx),
+            events::GeometryType::Unknown,
+            false,
+        )
+    }
+    fn curvepolygon_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.event(
+            Event::CurvePolygonBegin(size, idx),
+            events::GeometryType::Unknown,
+            false,
+        )
+    }
+    fn curvepolygon_end(&mut self, idx: usize) -> Result<()> {
+        self.event(
+            Event::CurvePolygonEnd(idx),
+            events::GeometryType::Unknown,
+            false,
+        )
+    }
+    fn multicurve_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.event(
+            Event::MultiCurveBegin(size, idx),
+            events::GeometryType::Unknown,
+            false,
+        )
+    }
+    fn multicurve_end(&mut self, idx: usize) -> Result<()> {
+        self.event(
+            Event::MultiCurveEnd(idx),
+            events::GeometryType::Unknown,
+            false,
+        )
+    }
+    fn multisurface_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.event(
+            Event::MultiSurfaceBegin(size, idx),
+            events::GeometryType::Unknown,
+            false,
+        )
+    }
+    fn multisurface_end(&mut self, idx: usize) -> Result<()> {
+        self.event(
+            Event::MultiSurfaceEnd(idx),
+            events::GeometryType::Unknown,
+            false,
+        )
+    }
+    fn triangle_begin(&mut self, tagged: bool, size: usize, idx: usize) -> Result<()> {
+        self.event(
+            Event::TriangleBegin(size, idx),
+            events::GeometryType::Unknown,
+            false,
+        )
+    }
+    fn triangle_end(&mut self, tagged: bool, idx: usize) -> Result<()> {
+        self.event(
+            Event::TriangleEnd(idx),
+            events::GeometryType::Unknown,
+            false,
+        )
+    }
+    fn polyhedralsurface_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.event(
+            Event::PolyhedralSurfaceBegin(size, idx),
+            events::GeometryType::Unknown,
+            false,
+        )
+    }
+    fn polyhedralsurface_end(&mut self, idx: usize) -> Result<()> {
+        self.event(
+            Event::PolyhedralSurfaceEnd(idx),
+            events::GeometryType::Unknown,
+            false,
+        )
+    }
+    fn tin_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.event(
+            Event::TinBegin(size, idx),
+            events::GeometryType::Unknown,
+            false,
+        )
+    }
+    fn tin_end(&mut self, idx: usize) -> Result<()> {
+        self.event(Event::TinEnd(idx), events::GeometryType::Unknown, false)
+    }
+}
+*/
 
 #[test]
 fn error_message() {

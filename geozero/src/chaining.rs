@@ -156,7 +156,7 @@ mod test {
 
     #[test]
     fn chain_and_duplex() -> Result<()> {
-        // geom  ------+----> PromotToMulti (1a) ----> GeomEventBuffer (2a)
+        // geom  ------+----> PromoteToMulti (1a) ----> GeomEventBuffer (2a)
         //             |
         //             +----> GeomEventBuffer (1b)
         let mut processor1a = PromoteToMulti;
