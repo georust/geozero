@@ -108,56 +108,40 @@ impl GeomEventProcessor for Bbox {
             Coordinate(x, y, _z, _m, _t, _tm, _idx) => {
                 self.expand_xy(x, y);
             }
-            PointBegin(_idifx) if !collection => {
+            MultiPointBegin(_, _)
+            | MultiLineStringBegin(_, _)
+            | MultiPolygonBegin(_, _)
+            | GeometryCollectionBegin(_, _)
+            | CircularStringBegin(_, _)
+            | CompoundCurveBegin(_, _)
+            | CurvePolygonBegin(_, _)
+            | MultiCurveBegin(_, _)
+            | MultiSurfaceBegin(_, _)
+            | PolyhedralSurfaceBegin(_, _)
+            | TinBegin(_, _)
+                if !collection =>
+            {
                 self.reset();
             }
-            MultiPointBegin(_size, _idx) if !collection => {
-                self.reset();
+            PointBegin(_) if !collection => {
+                if geom_type == GeometryType::Point {
+                    self.reset();
+                }
             }
-            LineStringBegin(_size, _idx) if !collection => {
+            LineStringBegin(_, _) if !collection => {
                 if geom_type == GeometryType::LineString {
                     self.reset();
                 }
             }
-            MultiLineStringBegin(_size, _idx) if !collection => {
-                self.reset();
-            }
-            PolygonBegin(_size, _idx) if !collection => {
+            PolygonBegin(_, _) if !collection => {
                 if geom_type == GeometryType::Polygon {
                     self.reset();
                 }
             }
-            MultiPolygonBegin(_size, _idx) if !collection => {
-                self.reset();
-            }
-            GeometryCollectionBegin(_size, _idx) if !collection => {
-                self.reset();
-            }
-            CircularStringBegin(_size, _idx) if !collection => {
-                self.reset();
-            }
-            CompoundCurveBegin(_size, _idx) if !collection => {
-                self.reset();
-            }
-            CurvePolygonBegin(_size, _idx) if !collection => {
-                self.reset();
-            }
-            MultiCurveBegin(_size, _idx) if !collection => {
-                self.reset();
-            }
-            MultiSurfaceBegin(_size, _idx) if !collection => {
-                self.reset();
-            }
-            TriangleBegin(_size, _idx) if !collection => {
+            TriangleBegin(_, _) if !collection => {
                 if geom_type == GeometryType::Triangle {
                     self.reset();
                 }
-            }
-            PolyhedralSurfaceBegin(_size, _idx) if !collection => {
-                self.reset();
-            }
-            TinBegin(_sizeif, _idx) if !collection => {
-                self.reset();
             }
             _ => {}
         }
