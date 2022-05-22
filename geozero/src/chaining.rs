@@ -98,12 +98,10 @@ mod test {
             visitor: &mut GeomVisitor<'_, P>,
         ) -> Result<()> {
             match event {
-                PointBegin(idx) if geom_type == GeometryType::Point => {
+                PointBegin(idx) => {
                     visitor.multipoint_begin(1, idx)?;
-                    visitor.point_begin(0)?;
                 }
-                PointEnd(idx) if geom_type == GeometryType::Point => {
-                    visitor.point_end(0)?;
+                PointEnd(idx) => {
                     visitor.multipoint_end(idx)?;
                 }
                 _ => visitor.emit_event(event)?,
@@ -124,13 +122,7 @@ mod test {
 
         assert_eq!(
             processor2.buffer,
-            [
-                MultiPointBegin(1, 0),
-                PointBegin(0),
-                Xy(0.0, 0.0, 0),
-                PointEnd(0),
-                MultiPointEnd(0)
-            ]
+            [MultiPointBegin(1, 0), Xy(0.0, 0.0, 0), MultiPointEnd(0)]
         );
 
         Ok(())
@@ -171,13 +163,7 @@ mod test {
 
         assert_eq!(
             processor2a.buffer,
-            [
-                MultiPointBegin(1, 0),
-                PointBegin(0),
-                Xy(0.0, 0.0, 0),
-                PointEnd(0),
-                MultiPointEnd(0)
-            ]
+            [MultiPointBegin(1, 0), Xy(0.0, 0.0, 0), MultiPointEnd(0)]
         );
         assert_eq!(
             processor1b.buffer,

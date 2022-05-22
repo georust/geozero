@@ -70,21 +70,17 @@ impl GeomEventProcessor for GeoWriter {
             Event::EmptyPoint(_idx) => {}
 
             Event::PointBegin(_idx) => {
-                if geom_type == events::GeometryType::Point {
-                    debug_assert!(self.coords.is_none());
-                    self.coords = Some(Vec::with_capacity(1));
-                }
+                debug_assert!(self.coords.is_none());
+                self.coords = Some(Vec::with_capacity(1));
             }
 
             Event::PointEnd(_idx) => {
-                if geom_type == events::GeometryType::Point {
-                    let coords = self
-                        .coords
-                        .take()
-                        .ok_or(GeozeroError::Geometry("No coords for Point".to_string()))?;
-                    debug_assert!(coords.len() == 1);
-                    self.finish_geometry(Point(coords[0]).into())?;
-                }
+                let coords = self
+                    .coords
+                    .take()
+                    .ok_or(GeozeroError::Geometry("No coords for Point".to_string()))?;
+                debug_assert!(coords.len() == 1);
+                self.finish_geometry(Point(coords[0]).into())?;
             }
 
             Event::MultiPointBegin(size, _idx) => {

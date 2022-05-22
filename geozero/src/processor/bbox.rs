@@ -124,9 +124,7 @@ impl GeomEventProcessor for Bbox {
                 self.reset();
             }
             PointBegin(_) if !collection => {
-                if geom_type == GeometryType::Point {
-                    self.reset();
-                }
+                self.reset();
             }
             LineStringBegin(_, _) if !collection => {
                 if geom_type == GeometryType::LineString {

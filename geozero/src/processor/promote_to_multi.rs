@@ -15,12 +15,10 @@ impl ChainedGeomEventProcessor for PromoteToMulti {
         visitor: &mut GeomVisitor<'_, P>,
     ) -> Result<()> {
         match event {
-            PointBegin(idx) if geom_type == GeometryType::Point => {
+            PointBegin(idx) => {
                 visitor.multipoint_begin(1, idx)?;
-                visitor.point_begin(0)?;
             }
-            PointEnd(idx) if geom_type == GeometryType::Point => {
-                visitor.point_end(0)?;
+            PointEnd(idx) => {
                 visitor.multipoint_end(idx)?;
             }
             LineStringBegin(size, idx) if geom_type == GeometryType::LineString => {

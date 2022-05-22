@@ -31,27 +31,29 @@ use crate::error::{GeozeroError, Result};
 ///                           |                 |             |
 ///                           +--------^--------+    +--------v---------+
 ///                                    |             |                  |
-///                              +-+-+-+-+-+         |GeometryCollection|
+///                              +-+-+---+-+         |GeometryCollection|
 ///                              | | | | | |         |                  |
 ///                              v v v v v v         +--------^---------+
 /// +-----------------+                                       |
-/// |                 |                                 +-+-+-+-+-+
+/// |                 |                                 +-+-+---+-+
 /// |  MultiPolygon   |                                 | | | | | |
 /// |                 |                                 v v v v v v
-/// +--------^--------+   +-----------------+                         +-----------------+
-///          |            |                 |                         |                 |
-///          |            | MultiLineString |                         |   MultiPoint    |
-/// +--------v--------+   |                 |                         |                 |
-/// |                 |   +--------^--------+                         +--------^--------+
-/// |     Polygon     |            |                                           |
-/// |                 |            |                                           |
-/// +--------^--------+   +--------v--------+                         +--------v--------+
-///          |            |                 |                         |                 |
-///          +----------->|    LineString   |                         |     Point       |
-///                       |                 |                         |                 |
-///                       +--------+--------+                         +--------+--------+
-///                                |                                           |
-///                                +------------>   Coordinate    <------------+
+/// +--------^--------+   +-----------------+
+///          |            |                 |
+///          |            | MultiLineString |
+/// +--------v--------+   |                 |
+/// |                 |   +--------^--------+
+/// |     Polygon     |            |
+/// |                 |            |
+/// +--------^--------+   +--------v--------+                         +-------------+   +--------------+
+///          |            |                 |                         |             |   |              |
+///          +----------->+    LineString   |                         |    Point    |   |  MultiPoint  |
+///                       |                 |                         |             |   |              |
+///                       +--------+--------+   +-----------------+   +------+------+   +-------+------+
+///                                |            |                 |          |                  |
+///                                +------------>   Coordinate    <----------+------------------+
+///                                             |                 |
+///                                             +-----------------+
 /// ```
 #[derive(Clone, PartialEq, Debug)]
 pub enum Event {
@@ -311,7 +313,6 @@ impl<'a, P: GeomEventProcessor> GeomVisitor<'a, P> {
             | (Vstate::Initial, Vstate::Tin)
             | (Vstate::Initial, Vstate::Triangle)
             | (Vstate::Polygon, Vstate::LineString)
-            | (Vstate::MultiPoint, Vstate::Point)
             | (Vstate::MultiLineString, Vstate::LineString)
             | (Vstate::MultiPolygon, Vstate::Polygon)
             | (Vstate::GeometryCollection, Vstate::Point)
@@ -441,6 +442,8 @@ impl<'a, P: GeomEventProcessor> GeomVisitor<'a, P> {
     }
 
     /// Begin of MultiPoint processing
+    ///
+    /// Next: size * xy/coordinate
     pub fn multipoint_begin(&mut self, size: usize, idx: usize) -> Result<()> {
         self.set_type(GeometryType::MultiPoint)?;
         if self.check_states {
