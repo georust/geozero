@@ -86,7 +86,7 @@ mod test {
     use crate::error::Result;
     use crate::events::test::{GeomEventBuffer, NullIsland};
     use crate::events::Event::*;
-    use crate::events::GeomEventSink;
+    use crate::processor::GeomEventSink;
 
     pub struct PromoteToMulti;
     impl ChainedGeomEventProcessor for PromoteToMulti {

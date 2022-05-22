@@ -214,15 +214,6 @@ pub trait GeomEventProcessor {
     fn event(&mut self, event: Event, geom_type: GeometryType, collection: bool) -> Result<()>;
 }
 
-/// Geometry processor without any actions
-pub struct GeomEventSink;
-
-impl GeomEventProcessor for GeomEventSink {
-    fn event(&mut self, _event: Event, _geom_type: GeometryType, _collection: bool) -> Result<()> {
-        Ok(())
-    }
-}
-
 /// Reading geometries by passing events to a visitor object
 pub trait GeometryReader {
     /// Process geometry.
@@ -728,6 +719,7 @@ impl<'a, P: GeomEventProcessor> GeomVisitor<'a, P> {
 pub(crate) mod test {
     use super::*;
     use crate::events::Event::*;
+    use crate::processor::GeomEventSink;
 
     // -- Event emitter (geometry input) --
 
@@ -913,7 +905,7 @@ pub(crate) mod test {
         use crate::geojson::GeoJson;
 
         let geojson = GeoJson(
-            r#"{"type": "Feature", "properties": {"fid": 0, "name": "Albania"}, "geometry": {"type": "Polygon", "coordinates": [[[20.590247,41.855404],[20.463175,41.515089],[20.605182,41.086226],[21.02004,40.842727],[20.99999,40.580004],[20.674997,40.435],[20.615,40.110007],[20.150016,39.624998],[19.98,39.694993],[19.960002,39.915006],[19.406082,40.250773],[19.319059,40.72723],[19.40355,41.409566],[19.540027,41.719986],[19.371769,41.877548],[19.304486,42.195745],[19.738051,42.688247],[19.801613,42.500093],[20.0707,42.58863],[20.283755,42.32026],[20.52295,42.21787],[20.590247,41.855404]]]}}"#,
+            r#"{"type": "Polygon", "coordinates": [[[20.590247,41.855404],[20.463175,41.515089],[20.605182,41.086226],[21.02004,40.842727],[20.99999,40.580004],[20.674997,40.435],[20.615,40.110007],[20.150016,39.624998],[19.98,39.694993],[19.960002,39.915006],[19.406082,40.250773],[19.319059,40.72723],[19.40355,41.409566],[19.540027,41.719986],[19.371769,41.877548],[19.304486,42.195745],[19.738051,42.688247],[19.801613,42.500093],[20.0707,42.58863],[20.283755,42.32026],[20.52295,42.21787],[20.590247,41.855404]]]}"#,
         );
         let mut processor = GeomEventBuffer::new();
         geojson.process_geom(&mut GeomVisitor::new(&mut processor))?;
