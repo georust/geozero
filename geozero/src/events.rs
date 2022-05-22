@@ -233,8 +233,55 @@ impl<'a, P: GeomEventProcessor> GeomVisitor<'a, P> {
             processor,
         }
     }
-    pub fn emit(&mut self, event: Event) -> Result<()> {
+    fn emit(&mut self, event: Event) -> Result<()> {
         self.processor.event(event, self.geom_type, self.collection)
+    }
+    /// Pass event to chained visitor with original state
+    pub fn chain_event(
+        &mut self,
+        event: Event,
+        geom_type: GeometryType,
+        collection: bool,
+    ) -> Result<()> {
+        self.processor.event(event, geom_type, collection)
+    }
+    /// Pass event to visitor with state recalculation
+    pub fn emit_event(&mut self, event: Event) -> Result<()> {
+        match event {
+            Event::Xy(x, y, idx) => self.xy(x, y, idx),
+            Event::Coordinate(x, y, z, m, t, tm, idx) => self.coordinate(x, y, z, m, t, tm, idx),
+            Event::EmptyPoint(idx) => self.empty_point(idx),
+            Event::PointBegin(idx) => self.point_begin(idx),
+            Event::PointEnd(idx) => self.point_end(idx),
+            Event::MultiPointBegin(size, idx) => self.multipoint_begin(size, idx),
+            Event::MultiPointEnd(idx) => self.multipoint_end(idx),
+            Event::LineStringBegin(size, idx) => self.linestring_begin(size, idx),
+            Event::LineStringEnd(idx) => self.linestring_end(idx),
+            Event::MultiLineStringBegin(size, idx) => self.multilinestring_begin(size, idx),
+            Event::MultiLineStringEnd(idx) => self.multilinestring_end(idx),
+            Event::PolygonBegin(size, idx) => self.polygon_begin(size, idx),
+            Event::PolygonEnd(idx) => self.polygon_end(idx),
+            Event::MultiPolygonBegin(size, idx) => self.multipolygon_begin(size, idx),
+            Event::MultiPolygonEnd(idx) => self.multipolygon_end(idx),
+            Event::GeometryCollectionBegin(size, idx) => self.geometrycollection_begin(size, idx),
+            Event::GeometryCollectionEnd(idx) => self.geometrycollection_end(idx),
+            Event::CircularStringBegin(size, idx) => self.circularstring_begin(size, idx),
+            Event::CircularStringEnd(idx) => self.circularstring_end(idx),
+            Event::CompoundCurveBegin(size, idx) => self.compoundcurve_begin(size, idx),
+            Event::CompoundCurveEnd(idx) => self.compoundcurve_end(idx),
+            Event::CurvePolygonBegin(size, idx) => self.curvepolygon_begin(size, idx),
+            Event::CurvePolygonEnd(idx) => self.curvepolygon_end(idx),
+            Event::MultiCurveBegin(size, idx) => self.multicurve_begin(size, idx),
+            Event::MultiCurveEnd(idx) => self.multicurve_end(idx),
+            Event::MultiSurfaceBegin(size, idx) => self.multisurface_begin(size, idx),
+            Event::MultiSurfaceEnd(idx) => self.multisurface_end(idx),
+            Event::TriangleBegin(size, idx) => self.triangle_begin(size, idx),
+            Event::TriangleEnd(idx) => self.triangle_end(idx),
+            Event::PolyhedralSurfaceBegin(size, idx) => self.polyhedralsurface_begin(size, idx),
+            Event::PolyhedralSurfaceEnd(idx) => self.polyhedralsurface_end(idx),
+            Event::TinBegin(size, idx) => self.tin_begin(size, idx),
+            Event::TinEnd(idx) => self.tin_end(idx),
+        }
     }
     fn state(&self) -> &Vstate {
         let len = self.state_stack.len();

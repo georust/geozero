@@ -106,7 +106,7 @@ mod test {
                     visitor.point_end(0)?;
                     visitor.multipoint_end(idx)?;
                 }
-                _ => visitor.emit(event)?,
+                _ => visitor.emit_event(event)?,
             }
             Ok(())
         }

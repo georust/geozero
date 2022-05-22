@@ -39,14 +39,14 @@ impl ChainedGeomEventProcessor for PromoteToMulti {
                 visitor.polygon_end(0)?;
                 visitor.multipolygon_end(idx)?;
             }
-            _ => visitor.emit(event)?,
+            _ => visitor.emit_event(event)?,
         }
         Ok(())
     }
 }
 
 #[cfg(test)]
-#[cfg(feature = "with-geojson")]
+#[cfg(all(feature = "with-geojson", feature = "with-geo"))]
 mod test {
     use super::*;
     use crate::api::GeozeroGeometry;
