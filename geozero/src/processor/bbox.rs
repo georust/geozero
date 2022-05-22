@@ -1,4 +1,5 @@
 use crate::error::Result;
+use crate::events::Event::*;
 use crate::events::{Event, GeomEventProcessor, GeometryType};
 
 #[derive(Clone, PartialEq, Debug)]
@@ -101,61 +102,61 @@ impl Bbox {
 impl GeomEventProcessor for Bbox {
     fn event(&mut self, event: Event, geom_type: GeometryType, collection: bool) -> Result<()> {
         match event {
-            Event::Xy(x, y, _idx) => {
+            Xy(x, y, _idx) => {
                 self.expand_xy(x, y);
             }
-            Event::Coordinate(x, y, _z, _m, _t, _tm, _idx) => {
+            Coordinate(x, y, _z, _m, _t, _tm, _idx) => {
                 self.expand_xy(x, y);
             }
-            Event::PointBegin(_idifx) if !collection => {
+            PointBegin(_idifx) if !collection => {
                 self.reset();
             }
-            Event::MultiPointBegin(_size, _idx) if !collection => {
+            MultiPointBegin(_size, _idx) if !collection => {
                 self.reset();
             }
-            Event::LineStringBegin(_size, _idx) if !collection => {
+            LineStringBegin(_size, _idx) if !collection => {
                 if geom_type == GeometryType::LineString {
                     self.reset();
                 }
             }
-            Event::MultiLineStringBegin(_size, _idx) if !collection => {
+            MultiLineStringBegin(_size, _idx) if !collection => {
                 self.reset();
             }
-            Event::PolygonBegin(_size, _idx) if !collection => {
+            PolygonBegin(_size, _idx) if !collection => {
                 if geom_type == GeometryType::Polygon {
                     self.reset();
                 }
             }
-            Event::MultiPolygonBegin(_size, _idx) if !collection => {
+            MultiPolygonBegin(_size, _idx) if !collection => {
                 self.reset();
             }
-            Event::GeometryCollectionBegin(_size, _idx) if !collection => {
+            GeometryCollectionBegin(_size, _idx) if !collection => {
                 self.reset();
             }
-            Event::CircularStringBegin(_size, _idx) if !collection => {
+            CircularStringBegin(_size, _idx) if !collection => {
                 self.reset();
             }
-            Event::CompoundCurveBegin(_size, _idx) if !collection => {
+            CompoundCurveBegin(_size, _idx) if !collection => {
                 self.reset();
             }
-            Event::CurvePolygonBegin(_size, _idx) if !collection => {
+            CurvePolygonBegin(_size, _idx) if !collection => {
                 self.reset();
             }
-            Event::MultiCurveBegin(_size, _idx) if !collection => {
+            MultiCurveBegin(_size, _idx) if !collection => {
                 self.reset();
             }
-            Event::MultiSurfaceBegin(_size, _idx) if !collection => {
+            MultiSurfaceBegin(_size, _idx) if !collection => {
                 self.reset();
             }
-            Event::TriangleBegin(_size, _idx) if !collection => {
+            TriangleBegin(_size, _idx) if !collection => {
                 if geom_type == GeometryType::Triangle {
                     self.reset();
                 }
             }
-            Event::PolyhedralSurfaceBegin(_size, _idx) if !collection => {
+            PolyhedralSurfaceBegin(_size, _idx) if !collection => {
                 self.reset();
             }
-            Event::TinBegin(_sizeif, _idx) if !collection => {
+            TinBegin(_sizeif, _idx) if !collection => {
                 self.reset();
             }
             _ => {}

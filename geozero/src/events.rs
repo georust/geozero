@@ -883,7 +883,7 @@ pub(crate) mod test {
 
     #[test]
     fn invalid_transitions() -> Result<()> {
-        let mut processor = GeomEventSink {};
+        let mut processor = GeomEventSink;
         let mut visitor = GeomVisitor::new(&mut processor);
         visitor.point_begin(0)?;
         visitor.xy(0.0, 0.0, 0)?;

@@ -70,17 +70,21 @@ impl GeomEventProcessor for GeoWriter {
             Event::EmptyPoint(_idx) => {}
 
             Event::PointBegin(_idx) => {
-                debug_assert!(self.coords.is_none());
-                self.coords = Some(Vec::with_capacity(1));
+                if geom_type == events::GeometryType::Point {
+                    debug_assert!(self.coords.is_none());
+                    self.coords = Some(Vec::with_capacity(1));
+                }
             }
 
             Event::PointEnd(_idx) => {
-                let coords = self
-                    .coords
-                    .take()
-                    .ok_or(GeozeroError::Geometry("No coords for Point".to_string()))?;
-                debug_assert!(coords.len() == 1);
-                self.finish_geometry(Point(coords[0]).into())?;
+                if geom_type == events::GeometryType::Point {
+                    let coords = self
+                        .coords
+                        .take()
+                        .ok_or(GeozeroError::Geometry("No coords for Point".to_string()))?;
+                    debug_assert!(coords.len() == 1);
+                    self.finish_geometry(Point(coords[0]).into())?;
+                }
             }
 
             Event::MultiPointBegin(size, _idx) => {
@@ -179,7 +183,12 @@ impl GeomEventProcessor for GeoWriter {
                 self.finish_geometry(Geometry::GeometryCollection(GeometryCollection(geometries)))?;
             }
 
-            _ => return Err(GeozeroError::GeometryFormat), // ?? With GeomProcessor we ignore all other states
+            _ => {
+                return Err(GeozeroError::Geometry(format!(
+                    "Unexpected geometry event {:?}",
+                    event
+                )))
+            } // ?? With GeomProcessor we ignore all other states
         }
         Ok(())
     }
