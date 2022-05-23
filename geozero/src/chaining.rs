@@ -11,7 +11,7 @@ pub trait ChainedGeomEventProcessor {
     /// Geometry processing event with geometry type information
     fn chain_event<P: GeomEventProcessor>(
         &mut self,
-        event: Event,
+        event: &Event,
         geom_type: GeometryType,
         collection: bool,
         visitor: &mut GeomVisitor<P>,
@@ -38,7 +38,7 @@ impl<'a, P1: ChainedGeomEventProcessor, P2: GeomEventProcessor> GeomEventProcess
 {
     fn event(
         &mut self,
-        event: Event,
+        event: &Event,
         geom_type: GeometryType,
         collection: bool,
     ) -> crate::error::Result<()> {
@@ -69,12 +69,11 @@ impl<P1: GeomEventProcessor, P2: GeomEventProcessor> GeomEventProcessor
 {
     fn event(
         &mut self,
-        event: Event,
+        event: &Event,
         geom_type: GeometryType,
         collection: bool,
     ) -> crate::error::Result<()> {
-        self.processor1
-            .event(event.clone(), geom_type, collection)?;
+        self.processor1.event(event, geom_type, collection)?;
         self.processor2.event(event, geom_type, collection)?;
         Ok(())
     }
@@ -92,12 +91,12 @@ mod test {
     impl ChainedGeomEventProcessor for PromoteToMulti {
         fn chain_event<P: GeomEventProcessor>(
             &mut self,
-            event: Event,
+            event: &Event,
             _geom_type: GeometryType,
             _collection: bool,
             visitor: &mut GeomVisitor<P>,
         ) -> Result<()> {
-            match event {
+            match *event {
                 PointBegin(idx) => {
                     visitor.multipoint_begin(1, idx)?;
                 }

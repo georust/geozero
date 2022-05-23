@@ -9,12 +9,12 @@ pub struct PromoteToMulti;
 impl ChainedGeomEventProcessor for PromoteToMulti {
     fn chain_event<P: GeomEventProcessor>(
         &mut self,
-        event: Event,
+        event: &Event,
         geom_type: GeometryType,
         _collection: bool,
         visitor: &mut GeomVisitor<P>,
     ) -> Result<()> {
-        match event {
+        match *event {
             PointBegin(idx) => {
                 visitor.multipoint_begin(1, idx)?;
             }

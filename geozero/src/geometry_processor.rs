@@ -415,7 +415,6 @@ impl<P: GeomEventProcessor> GeomProcessor for GeomVisitor<P> {
     }
 }
 
-
 #[test]
 fn error_message() {
     use crate::error::GeozeroError;

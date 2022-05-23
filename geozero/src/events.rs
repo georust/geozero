@@ -214,7 +214,7 @@ pub struct GeomVisitor<P: GeomEventProcessor> {
 /// Processing geometry events, e.g. for producing an output geometry
 pub trait GeomEventProcessor {
     /// Geometry processing event with geometry type information
-    fn event(&mut self, event: Event, geom_type: GeometryType, collection: bool) -> Result<()>;
+    fn event(&mut self, event: &Event, geom_type: GeometryType, collection: bool) -> Result<()>;
 }
 
 /// Reading geometries by passing events to a visitor object
@@ -233,21 +233,21 @@ impl<P: GeomEventProcessor> GeomVisitor<P> {
             processor,
         }
     }
-    fn emit(&mut self, event: Event) -> Result<()> {
+    fn emit(&mut self, event: &Event) -> Result<()> {
         self.processor.event(event, self.geom_type, self.collection)
     }
     /// Pass event to chained visitor with original state
     pub fn chain_event(
         &mut self,
-        event: Event,
+        event: &Event,
         geom_type: GeometryType,
         collection: bool,
     ) -> Result<()> {
         self.processor.event(event, geom_type, collection)
     }
     /// Pass event to visitor with state recalculation
-    pub fn emit_event(&mut self, event: Event) -> Result<()> {
-        match event {
+    pub fn emit_event(&mut self, event: &Event) -> Result<()> {
+        match *event {
             Event::Xy(x, y, idx) => self.xy(x, y, idx),
             Event::Coordinate(x, y, z, m, t, tm, idx) => self.coordinate(x, y, z, m, t, tm, idx),
             Event::EmptyPoint(idx) => self.empty_point(idx),
@@ -390,7 +390,7 @@ impl<P: GeomEventProcessor> GeomVisitor<P> {
     }
     /// Process coordinate with x,y dimensions
     pub fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
-        self.emit(Event::Xy(x, y, idx))
+        self.emit(&Event::Xy(x, y, idx))
     }
 
     /// Process coordinate with all requested dimensions
@@ -404,7 +404,7 @@ impl<P: GeomEventProcessor> GeomVisitor<P> {
         tm: Option<u64>,
         idx: usize,
     ) -> Result<()> {
-        self.emit(Event::Coordinate(x, y, z, m, t, tm, idx))
+        self.emit(&Event::Coordinate(x, y, z, m, t, tm, idx))
     }
     /// Process empty coordinates, like WKT's `POINT EMPTY`
     pub fn empty_point(&mut self, idx: usize) -> Result<()> {
@@ -412,7 +412,7 @@ impl<P: GeomEventProcessor> GeomVisitor<P> {
         if self.check_states {
             self.enter_state(Vstate::Point)?;
         }
-        self.emit(Event::EmptyPoint(idx))?;
+        self.emit(&Event::EmptyPoint(idx))?;
         if self.check_states {
             self.exit_state(Vstate::Point)?;
         }
@@ -425,13 +425,13 @@ impl<P: GeomEventProcessor> GeomVisitor<P> {
         if self.check_states {
             self.enter_state(Vstate::Point)?;
         }
-        self.emit(Event::PointBegin(idx))?;
+        self.emit(&Event::PointBegin(idx))?;
         Ok(())
     }
 
     /// End of Point processing
     pub fn point_end(&mut self, idx: usize) -> Result<()> {
-        self.emit(Event::PointEnd(idx))?;
+        self.emit(&Event::PointEnd(idx))?;
         self.reset_type(GeometryType::Point);
         if self.check_states {
             self.exit_state(Vstate::Point)?;
@@ -447,13 +447,13 @@ impl<P: GeomEventProcessor> GeomVisitor<P> {
         if self.check_states {
             self.enter_state(Vstate::MultiPoint)?;
         }
-        self.emit(Event::MultiPointBegin(size, idx))?;
+        self.emit(&Event::MultiPointBegin(size, idx))?;
         Ok(())
     }
 
     /// End of MultiPoint processing
     pub fn multipoint_end(&mut self, idx: usize) -> Result<()> {
-        self.emit(Event::MultiPointEnd(idx))?;
+        self.emit(&Event::MultiPointEnd(idx))?;
         self.reset_type(GeometryType::MultiPoint);
         if self.check_states {
             self.exit_state(Vstate::MultiPoint)?;
@@ -471,13 +471,13 @@ impl<P: GeomEventProcessor> GeomVisitor<P> {
         if self.check_states {
             self.enter_state(Vstate::LineString)?;
         }
-        self.emit(Event::LineStringBegin(size, idx))?;
+        self.emit(&Event::LineStringBegin(size, idx))?;
         Ok(())
     }
 
     /// End of LineString processing
     pub fn linestring_end(&mut self, idx: usize) -> Result<()> {
-        self.emit(Event::LineStringEnd(idx))?;
+        self.emit(&Event::LineStringEnd(idx))?;
         self.reset_type(GeometryType::LineString);
         if self.check_states {
             self.exit_state(Vstate::LineString)?;
@@ -493,13 +493,13 @@ impl<P: GeomEventProcessor> GeomVisitor<P> {
         if self.check_states {
             self.enter_state(Vstate::MultiLineString)?;
         }
-        self.emit(Event::MultiLineStringBegin(size, idx))?;
+        self.emit(&Event::MultiLineStringBegin(size, idx))?;
         Ok(())
     }
 
     /// End of MultiLineString processing
     pub fn multilinestring_end(&mut self, idx: usize) -> Result<()> {
-        self.emit(Event::MultiLineStringEnd(idx))?;
+        self.emit(&Event::MultiLineStringEnd(idx))?;
         self.reset_type(GeometryType::MultiLineString);
         if self.check_states {
             self.exit_state(Vstate::MultiLineString)?;
@@ -517,13 +517,13 @@ impl<P: GeomEventProcessor> GeomVisitor<P> {
         if self.check_states {
             self.enter_state(Vstate::Polygon)?;
         }
-        self.emit(Event::PolygonBegin(size, idx))?;
+        self.emit(&Event::PolygonBegin(size, idx))?;
         Ok(())
     }
 
     /// End of Polygon processing
     pub fn polygon_end(&mut self, idx: usize) -> Result<()> {
-        self.emit(Event::PolygonEnd(idx))?;
+        self.emit(&Event::PolygonEnd(idx))?;
         self.reset_type(GeometryType::Polygon);
         if self.check_states {
             self.exit_state(Vstate::Polygon)?;
@@ -539,13 +539,13 @@ impl<P: GeomEventProcessor> GeomVisitor<P> {
         if self.check_states {
             self.enter_state(Vstate::MultiPolygon)?;
         }
-        self.emit(Event::MultiPolygonBegin(size, idx))?;
+        self.emit(&Event::MultiPolygonBegin(size, idx))?;
         Ok(())
     }
 
     /// End of MultiPolygon processing
     pub fn multipolygon_end(&mut self, idx: usize) -> Result<()> {
-        self.emit(Event::MultiPolygonEnd(idx))?;
+        self.emit(&Event::MultiPolygonEnd(idx))?;
         self.reset_type(GeometryType::MultiPolygon);
         if self.check_states {
             self.exit_state(Vstate::MultiPolygon)?;
@@ -560,13 +560,13 @@ impl<P: GeomEventProcessor> GeomVisitor<P> {
         if self.check_states {
             self.enter_state(Vstate::GeometryCollection)?;
         }
-        self.emit(Event::GeometryCollectionBegin(size, idx))?;
+        self.emit(&Event::GeometryCollectionBegin(size, idx))?;
         Ok(())
     }
 
     /// End of GeometryCollection processing
     pub fn geometrycollection_end(&mut self, idx: usize) -> Result<()> {
-        self.emit(Event::GeometryCollectionEnd(idx))?;
+        self.emit(&Event::GeometryCollectionEnd(idx))?;
         self.geom_type = GeometryType::Unknown;
         if self.check_states {
             self.exit_state(Vstate::GeometryCollection)?;
@@ -585,13 +585,13 @@ impl<P: GeomEventProcessor> GeomVisitor<P> {
         if self.check_states {
             self.enter_state(Vstate::CircularString)?;
         }
-        self.emit(Event::CircularStringBegin(size, idx))?;
+        self.emit(&Event::CircularStringBegin(size, idx))?;
         Ok(())
     }
 
     /// End of CircularString processing
     pub fn circularstring_end(&mut self, idx: usize) -> Result<()> {
-        self.emit(Event::CircularStringEnd(idx))?;
+        self.emit(&Event::CircularStringEnd(idx))?;
         self.reset_type(GeometryType::CircularString);
         if self.check_states {
             self.exit_state(Vstate::CircularString)?;
@@ -609,13 +609,13 @@ impl<P: GeomEventProcessor> GeomVisitor<P> {
         if self.check_states {
             self.enter_state(Vstate::CompoundCurve)?;
         }
-        self.emit(Event::CompoundCurveBegin(size, idx))?;
+        self.emit(&Event::CompoundCurveBegin(size, idx))?;
         Ok(())
     }
 
     /// End of CompoundCurve processing
     pub fn compoundcurve_end(&mut self, idx: usize) -> Result<()> {
-        self.emit(Event::CompoundCurveEnd(idx))?;
+        self.emit(&Event::CompoundCurveEnd(idx))?;
         self.reset_type(GeometryType::CompoundCurve);
         if self.check_states {
             self.exit_state(Vstate::CompoundCurve)?;
@@ -633,13 +633,13 @@ impl<P: GeomEventProcessor> GeomVisitor<P> {
         if self.check_states {
             self.enter_state(Vstate::CurvePolygon)?;
         }
-        self.emit(Event::CurvePolygonBegin(size, idx))?;
+        self.emit(&Event::CurvePolygonBegin(size, idx))?;
         Ok(())
     }
 
     /// End of CurvePolygon processing
     pub fn curvepolygon_end(&mut self, idx: usize) -> Result<()> {
-        self.emit(Event::CurvePolygonEnd(idx))?;
+        self.emit(&Event::CurvePolygonEnd(idx))?;
         self.reset_type(GeometryType::CurvePolygon);
         if self.check_states {
             self.exit_state(Vstate::CurvePolygon)?;
@@ -657,13 +657,13 @@ impl<P: GeomEventProcessor> GeomVisitor<P> {
         if self.check_states {
             self.enter_state(Vstate::MultiCurve)?;
         }
-        self.emit(Event::MultiCurveBegin(size, idx))?;
+        self.emit(&Event::MultiCurveBegin(size, idx))?;
         Ok(())
     }
 
     /// End of MultiCurve processing
     pub fn multicurve_end(&mut self, idx: usize) -> Result<()> {
-        self.emit(Event::MultiCurveEnd(idx))?;
+        self.emit(&Event::MultiCurveEnd(idx))?;
         self.reset_type(GeometryType::MultiCurve);
         if self.check_states {
             self.exit_state(Vstate::MultiCurve)?;
@@ -681,13 +681,13 @@ impl<P: GeomEventProcessor> GeomVisitor<P> {
         if self.check_states {
             self.enter_state(Vstate::MultiSurface)?;
         }
-        self.emit(Event::MultiSurfaceBegin(size, idx))?;
+        self.emit(&Event::MultiSurfaceBegin(size, idx))?;
         Ok(())
     }
 
     /// End of MultiSurface processing
     pub fn multisurface_end(&mut self, idx: usize) -> Result<()> {
-        self.emit(Event::MultiSurfaceEnd(idx))?;
+        self.emit(&Event::MultiSurfaceEnd(idx))?;
         self.reset_type(GeometryType::MultiSurface);
         if self.check_states {
             self.exit_state(Vstate::MultiSurface)?;
@@ -704,13 +704,13 @@ impl<P: GeomEventProcessor> GeomVisitor<P> {
         if self.check_states {
             self.enter_state(Vstate::Triangle)?;
         }
-        self.emit(Event::TriangleBegin(size, idx))?;
+        self.emit(&Event::TriangleBegin(size, idx))?;
         Ok(())
     }
 
     /// End of Triangle processing
     pub fn triangle_end(&mut self, idx: usize) -> Result<()> {
-        self.emit(Event::TriangleEnd(idx))?;
+        self.emit(&Event::TriangleEnd(idx))?;
         self.reset_type(GeometryType::Triangle);
         if self.check_states {
             self.exit_state(Vstate::Triangle)?;
@@ -726,13 +726,13 @@ impl<P: GeomEventProcessor> GeomVisitor<P> {
         if self.check_states {
             self.enter_state(Vstate::PolyhedralSurface)?;
         }
-        self.emit(Event::PolyhedralSurfaceBegin(size, idx))?;
+        self.emit(&Event::PolyhedralSurfaceBegin(size, idx))?;
         Ok(())
     }
 
     /// End of PolyhedralSurface processing
     pub fn polyhedralsurface_end(&mut self, idx: usize) -> Result<()> {
-        self.emit(Event::PolyhedralSurfaceEnd(idx))?;
+        self.emit(&Event::PolyhedralSurfaceEnd(idx))?;
         self.reset_type(GeometryType::PolyhedralSurface);
         if self.check_states {
             self.exit_state(Vstate::PolyhedralSurface)?;
@@ -748,13 +748,13 @@ impl<P: GeomEventProcessor> GeomVisitor<P> {
         if self.check_states {
             self.enter_state(Vstate::Tin)?;
         }
-        self.emit(Event::TinBegin(size, idx))?;
+        self.emit(&Event::TinBegin(size, idx))?;
         Ok(())
     }
 
     /// End of Tin processing
     pub fn tin_end(&mut self, idx: usize) -> Result<()> {
-        self.emit(Event::TinEnd(idx))?;
+        self.emit(&Event::TinEnd(idx))?;
         self.reset_type(GeometryType::Tin);
         if self.check_states {
             self.exit_state(Vstate::Tin)?;
@@ -800,11 +800,11 @@ pub(crate) mod test {
     impl GeomEventProcessor for GeomEventBuffer {
         fn event(
             &mut self,
-            event: Event,
+            event: &Event,
             _geom_type: GeometryType,
             _collection: bool,
         ) -> Result<()> {
-            self.buffer.push(event);
+            self.buffer.push(event.clone());
             Ok(())
         }
     }
@@ -831,11 +831,11 @@ pub(crate) mod test {
     impl GeomEventProcessor for Point2D {
         fn event(
             &mut self,
-            event: Event,
+            event: &Event,
             _geom_type: GeometryType,
             _collection: bool,
         ) -> Result<()> {
-            match event {
+            match *event {
                 PointBegin(_) | PointEnd(_) => {} // OK
                 Xy(x, y, _idx) => (self.x, self.y) = (x, y),
                 _ => return Err(GeozeroError::GeometryFormat),

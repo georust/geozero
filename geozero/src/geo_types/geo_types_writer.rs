@@ -54,11 +54,11 @@ impl GeoWriter {
 impl GeomEventProcessor for GeoWriter {
     fn event(
         &mut self,
-        event: Event,
+        event: &Event,
         geom_type: events::GeometryType,
         _collection: bool,
     ) -> Result<()> {
-        match event {
+        match *event {
             Event::Xy(x, y, _idx) => {
                 let coords = self
                     .coords

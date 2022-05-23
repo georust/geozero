@@ -16,19 +16,19 @@ fn lonlat_to_merc(lon: f64, lat: f64) -> (f64, f64) {
 impl ChainedGeomEventProcessor for LonLatToMercator {
     fn chain_event<P: GeomEventProcessor>(
         &mut self,
-        event: Event,
+        event: &Event,
         geom_type: GeometryType,
         collection: bool,
         visitor: &mut GeomVisitor<P>,
     ) -> Result<()> {
-        match event {
+        match *event {
             Xy(x, y, idx) => {
                 let (x, y) = lonlat_to_merc(x, y);
-                visitor.chain_event(Xy(x, y, idx), geom_type, collection)?;
+                visitor.chain_event(&Xy(x, y, idx), geom_type, collection)?;
             }
             Coordinate(x, y, z, m, t, tm, idx) => {
                 let (x, y) = lonlat_to_merc(x, y);
-                visitor.chain_event(Coordinate(x, y, z, m, t, tm, idx), geom_type, collection)?;
+                visitor.chain_event(&Coordinate(x, y, z, m, t, tm, idx), geom_type, collection)?;
             }
             _ => visitor.chain_event(event, geom_type, collection)?,
         }

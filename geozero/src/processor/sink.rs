@@ -5,7 +5,7 @@ use crate::events::{Event, GeomEventProcessor, GeometryType};
 pub struct GeomEventSink;
 
 impl GeomEventProcessor for GeomEventSink {
-    fn event(&mut self, _event: Event, _geom_type: GeometryType, _collection: bool) -> Result<()> {
+    fn event(&mut self, _event: &Event, _geom_type: GeometryType, _collection: bool) -> Result<()> {
         Ok(())
     }
 }

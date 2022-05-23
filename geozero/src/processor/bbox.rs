@@ -100,8 +100,8 @@ impl Bbox {
 }
 
 impl GeomEventProcessor for Bbox {
-    fn event(&mut self, event: Event, geom_type: GeometryType, collection: bool) -> Result<()> {
-        match event {
+    fn event(&mut self, event: &Event, geom_type: GeometryType, collection: bool) -> Result<()> {
+        match *event {
             Xy(x, y, _idx) => {
                 self.expand_xy(x, y);
             }
