@@ -19,8 +19,7 @@ pub(crate) mod conversion {
 
     impl<T: GeozeroGeometry> ToGeo for T {
         fn to_geo(&self) -> Result<geo_types::Geometry<f64>> {
-            let geo = GeoWriter::new();
-            let mut visitor = GeomVisitor::new(geo);
+            let mut visitor = GeomVisitor::new(GeoWriter::new());
             self.process_geom(&mut visitor)?;
             visitor
                 .processor
@@ -40,9 +39,11 @@ mod wkb {
 
     impl FromWkb for geo_types::Geometry<f64> {
         fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> Result<Self> {
-            let mut geo = GeoWriter::new();
-            crate::wkb::process_wkb_type_geom(rdr, &mut GeomVisitor::new(&mut geo), dialect)?;
-            geo.take_geometry()
+            let mut visitor = GeomVisitor::new(GeoWriter::new());
+            crate::wkb::process_wkb_type_geom(rdr, &mut visitor, dialect)?;
+            visitor
+                .processor
+                .take_geometry()
                 .ok_or(GeozeroError::Geometry("Missing Geometry".to_string()))
         }
     }
