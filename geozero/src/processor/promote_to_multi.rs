@@ -12,7 +12,7 @@ impl ChainedGeomEventProcessor for PromoteToMulti {
         event: Event,
         geom_type: GeometryType,
         _collection: bool,
-        visitor: &mut GeomVisitor<'_, P>,
+        visitor: &mut GeomVisitor<P>,
     ) -> Result<()> {
         match event {
             PointBegin(idx) => {
@@ -59,11 +59,12 @@ mod test {
         let geojson = GeoJson(
             r#"{"type": "Polygon", "coordinates": [[[20.590247,41.855404],[20.463175,41.515089],[20.605182,41.086226],[21.02004,40.842727],[20.99999,40.580004],[20.674997,40.435],[20.615,40.110007],[20.150016,39.624998],[19.98,39.694993],[19.960002,39.915006],[19.406082,40.250773],[19.319059,40.72723],[19.40355,41.409566],[19.540027,41.719986],[19.371769,41.877548],[19.304486,42.195745],[19.738051,42.688247],[19.801613,42.500093],[20.0707,42.58863],[20.283755,42.32026],[20.52295,42.21787],[20.590247,41.855404]]]}"#,
         );
-        let mut processor1 = PromoteToMulti;
-        let mut processor2 = GeoWriter::new(); // TODO: Json writer
-        let mut processor = ChainedProcessor::new(&mut processor1, &mut processor2);
-        geojson.process_geom(&mut GeomVisitor::new(&mut processor))?;
-        let geom = processor2.take_geometry().unwrap();
+        let processor1 = PromoteToMulti;
+        let processor2 = GeoWriter::new(); // TODO: Json writer
+        let processor = ChainedProcessor::new(processor1, processor2);
+        let mut visitor = GeomVisitor::new(processor);
+        geojson.process_geom(&mut visitor)?;
+        let geom = visitor.processor.visitor.processor.take_geometry().unwrap(); // processor2
         let expected = r#"{"type": "MultiPolygon", "coordinates": [[[[20.590247,41.855404],[20.463175,41.515089],[20.605182,41.086226],[21.02004,40.842727],[20.99999,40.580004],[20.674997,40.435],[20.615,40.110007],[20.150016,39.624998],[19.98,39.694993],[19.960002,39.915006],[19.406082,40.250773],[19.319059,40.72723],[19.40355,41.409566],[19.540027,41.719986],[19.371769,41.877548],[19.304486,42.195745],[19.738051,42.688247],[19.801613,42.500093],[20.0707,42.58863],[20.283755,42.32026],[20.52295,42.21787],[20.590247,41.855404]]]]}"#;
         assert_eq!(expected, geom.to_json()?);
         Ok(())
@@ -74,11 +75,12 @@ mod test {
         let geojson = GeoJson(
             r#"{"type": "GeometryCollection", "geometries": [{"type": "Point", "coordinates": [100.1,0.1]},{"type": "LineString", "coordinates": [[101.1,0.1],[102.1,1.1]]}]}"#,
         );
-        let mut processor1 = PromoteToMulti;
-        let mut processor2 = GeoWriter::new(); // TODO: Json writer
-        let mut processor = ChainedProcessor::new(&mut processor1, &mut processor2);
-        geojson.process_geom(&mut GeomVisitor::new(&mut processor))?;
-        let geom = processor2.take_geometry().unwrap();
+        let processor1 = PromoteToMulti;
+        let processor2 = GeoWriter::new(); // TODO: Json writer
+        let processor = ChainedProcessor::new(processor1, processor2);
+        let mut visitor = GeomVisitor::new(processor);
+        geojson.process_geom(&mut visitor)?;
+        let geom = visitor.processor.visitor.processor.take_geometry().unwrap(); // processor2
         let expected = r#"{"type": "GeometryCollection", "geometries": [{"type": "MultiPoint", "coordinates": [[100.1,0.1]]},{"type": "MultiLineString", "coordinates": [[[101.1,0.1],[102.1,1.1]]]}]}"#;
         assert_eq!(expected, geom.to_json()?);
         Ok(())

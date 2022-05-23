@@ -19,9 +19,12 @@ pub(crate) mod conversion {
 
     impl<T: GeozeroGeometry> ToGeo for T {
         fn to_geo(&self) -> Result<geo_types::Geometry<f64>> {
-            let mut geo = GeoWriter::new();
-            self.process_geom(&mut GeomVisitor::new(&mut geo))?;
-            geo.take_geometry()
+            let geo = GeoWriter::new();
+            let mut visitor = GeomVisitor::new(geo);
+            self.process_geom(&mut visitor)?;
+            visitor
+                .processor
+                .take_geometry()
                 .ok_or(GeozeroError::Geometry("Missing Geometry".to_string()))
         }
     }

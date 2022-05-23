@@ -304,7 +304,7 @@ pub trait GeomProcessor {
     }
 }
 
-impl<'a, P: GeomEventProcessor> GeomProcessor for GeomVisitor<'a, P> {
+impl<P: GeomEventProcessor> GeomProcessor for GeomVisitor<P> {
     fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
         self.xy(x, y, idx)
     }
@@ -414,6 +414,7 @@ impl<'a, P: GeomEventProcessor> GeomProcessor for GeomVisitor<'a, P> {
         self.tin_end(idx)
     }
 }
+
 
 #[test]
 fn error_message() {
