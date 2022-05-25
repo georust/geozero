@@ -321,7 +321,10 @@ impl<P: GeomEventProcessor> GeomProcessor for GeomVisitor<P> {
         self.coordinate(x, y, z, m, t, tm, idx)
     }
     fn empty_point(&mut self, idx: usize) -> Result<()> {
-        self.empty_point(idx)
+        self.point_begin(idx)?;
+        self.empty()?;
+        self.point_end(idx)?;
+        Ok(())
     }
     fn point_begin(&mut self, idx: usize) -> Result<()> {
         self.point_begin(idx)

@@ -15,12 +15,15 @@ pub struct GeoWriter {
     line_strings: Option<Vec<LineString<f64>>>,
     // In-progress point or line_string
     coords: Option<Vec<Coordinate<f64>>>,
+    // Empty geometry flag
+    empty: bool,
 }
 
 impl GeoWriter {
     pub fn new() -> GeoWriter {
         GeoWriter {
             geoms: Vec::new(),
+            empty: false,
             coords: None,
             line_strings: None,
             polygons: None,
@@ -60,6 +63,7 @@ impl GeomEventProcessor for GeoWriter {
     ) -> Result<()> {
         match *event {
             Event::Xy(x, y, _idx) => {
+                self.empty = false;
                 let coords = self
                     .coords
                     .as_mut()
@@ -67,7 +71,9 @@ impl GeomEventProcessor for GeoWriter {
                 coords.push(coord!(x: x, y: y));
             }
 
-            Event::EmptyPoint(_idx) => {}
+            Event::Empty => {
+                self.empty = true;
+            }
 
             Event::PointBegin(_idx) => {
                 debug_assert!(self.coords.is_none());
@@ -75,6 +81,9 @@ impl GeomEventProcessor for GeoWriter {
             }
 
             Event::PointEnd(_idx) => {
+                if self.empty {
+                    return Ok(());
+                }
                 let coords = self
                     .coords
                     .take()

@@ -69,8 +69,8 @@ pub enum Event {
         Option<u64>,
         usize,
     ),
-    /// Empty coordinates, like WKT's `POINT EMPTY` (idx)
-    EmptyPoint(usize),
+    /// Empty geometry
+    Empty,
     /// Begin of Point (idx)
     PointBegin(usize),
     /// End of Point (idx)
@@ -250,7 +250,7 @@ impl<P: GeomEventProcessor> GeomVisitor<P> {
         match *event {
             Event::Xy(x, y, idx) => self.xy(x, y, idx),
             Event::Coordinate(x, y, z, m, t, tm, idx) => self.coordinate(x, y, z, m, t, tm, idx),
-            Event::EmptyPoint(idx) => self.empty_point(idx),
+            Event::Empty => self.empty(),
             Event::PointBegin(idx) => self.point_begin(idx),
             Event::PointEnd(idx) => self.point_end(idx),
             Event::MultiPointBegin(size, idx) => self.multipoint_begin(size, idx),
@@ -406,16 +406,9 @@ impl<P: GeomEventProcessor> GeomVisitor<P> {
     ) -> Result<()> {
         self.emit(&Event::Coordinate(x, y, z, m, t, tm, idx))
     }
-    /// Process empty coordinates, like WKT's `POINT EMPTY`
-    pub fn empty_point(&mut self, idx: usize) -> Result<()> {
-        self.set_type(GeometryType::Point)?;
-        if self.check_states {
-            self.enter_state(Vstate::Point)?;
-        }
-        self.emit(&Event::EmptyPoint(idx))?;
-        if self.check_states {
-            self.exit_state(Vstate::Point)?;
-        }
+    /// Process empty coordinates, like an empty point
+    pub fn empty(&mut self) -> Result<()> {
+        self.emit(&Event::Empty)?;
         Ok(())
     }
 
