@@ -32,6 +32,7 @@ impl Bbox {
         }
     }
 
+    #[inline]
     pub fn reset(&mut self) {
         self.min_x = f64::INFINITY;
         self.min_y = f64::INFINITY;
@@ -52,6 +53,7 @@ impl Bbox {
         a
     }
 
+    #[inline]
     pub fn expand(&mut self, r: &Bbox) {
         if r.min_x < self.min_x {
             self.min_x = r.min_x;
@@ -67,6 +69,7 @@ impl Bbox {
         }
     }
 
+    #[inline]
     pub fn expand_xy(&mut self, x: f64, y: f64) {
         if x < self.min_x {
             self.min_x = x;

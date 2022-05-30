@@ -55,6 +55,106 @@ use crate::error::{GeozeroError, Result};
 ///                                             |                 |
 ///                                             +-----------------+
 /// ```
+/* Type size:
+print-type-size type: `geozero::events::Event`: 96 bytes, alignment: 8 bytes
+print-type-size     discriminant: 8 bytes
+print-type-size     variant `Coordinate`: 88 bytes
+print-type-size         field `.0`: 8 bytes
+print-type-size         field `.1`: 8 bytes
+print-type-size         field `.2`: 16 bytes
+print-type-size         field `.3`: 16 bytes
+print-type-size         field `.4`: 16 bytes
+print-type-size         field `.5`: 16 bytes
+print-type-size         field `.6`: 8 bytes
+print-type-size     variant `Xy`: 24 bytes
+print-type-size         field `.0`: 8 bytes
+print-type-size         field `.1`: 8 bytes
+print-type-size         field `.2`: 8 bytes
+print-type-size     variant `XySlice`: 24 bytes
+print-type-size         field `.0`: 16 bytes
+print-type-size         field `.1`: 8 bytes
+print-type-size     variant `MultiPointBegin`: 16 bytes
+print-type-size         field `.0`: 8 bytes
+print-type-size         field `.1`: 8 bytes
+print-type-size     variant `LineStringBegin`: 16 bytes
+print-type-size         field `.0`: 8 bytes
+print-type-size         field `.1`: 8 bytes
+print-type-size     variant `MultiLineStringBegin`: 16 bytes
+print-type-size         field `.0`: 8 bytes
+print-type-size         field `.1`: 8 bytes
+print-type-size     variant `PolygonBegin`: 16 bytes
+print-type-size         field `.0`: 8 bytes
+print-type-size         field `.1`: 8 bytes
+print-type-size     variant `MultiPolygonBegin`: 16 bytes
+print-type-size         field `.0`: 8 bytes
+print-type-size         field `.1`: 8 bytes
+print-type-size     variant `GeometryCollectionBegin`: 16 bytes
+print-type-size         field `.0`: 8 bytes
+print-type-size         field `.1`: 8 bytes
+print-type-size     variant `CircularStringBegin`: 16 bytes
+print-type-size         field `.0`: 8 bytes
+print-type-size         field `.1`: 8 bytes
+print-type-size     variant `CompoundCurveBegin`: 16 bytes
+print-type-size         field `.0`: 8 bytes
+print-type-size         field `.1`: 8 bytes
+print-type-size     variant `CurvePolygonBegin`: 16 bytes
+print-type-size         field `.0`: 8 bytes
+print-type-size         field `.1`: 8 bytes
+print-type-size     variant `MultiCurveBegin`: 16 bytes
+print-type-size         field `.0`: 8 bytes
+print-type-size         field `.1`: 8 bytes
+print-type-size     variant `MultiSurfaceBegin`: 16 bytes
+print-type-size         field `.0`: 8 bytes
+print-type-size         field `.1`: 8 bytes
+print-type-size     variant `TriangleBegin`: 16 bytes
+print-type-size         field `.0`: 8 bytes
+print-type-size         field `.1`: 8 bytes
+print-type-size     variant `PolyhedralSurfaceBegin`: 16 bytes
+print-type-size         field `.0`: 8 bytes
+print-type-size         field `.1`: 8 bytes
+print-type-size     variant `TinBegin`: 16 bytes
+print-type-size         field `.0`: 8 bytes
+print-type-size         field `.1`: 8 bytes
+print-type-size     variant `PointBegin`: 8 bytes
+print-type-size         field `.0`: 8 bytes
+print-type-size     variant `PointEnd`: 8 bytes
+print-type-size         field `.0`: 8 bytes
+print-type-size     variant `MultiPointEnd`: 8 bytes
+print-type-size         field `.0`: 8 bytes
+print-type-size     variant `LineStringEnd`: 8 bytes
+print-type-size         field `.0`: 8 bytes
+print-type-size     variant `MultiLineStringEnd`: 8 bytes
+print-type-size         field `.0`: 8 bytes
+print-type-size     variant `PolygonEnd`: 8 bytes
+print-type-size         field `.0`: 8 bytes
+print-type-size     variant `MultiPolygonEnd`: 8 bytes
+print-type-size         field `.0`: 8 bytes
+print-type-size     variant `GeometryCollectionEnd`: 8 bytes
+print-type-size         field `.0`: 8 bytes
+print-type-size     variant `CircularStringEnd`: 8 bytes
+print-type-size         field `.0`: 8 bytes
+print-type-size     variant `CompoundCurveEnd`: 8 bytes
+print-type-size         field `.0`: 8 bytes
+print-type-size     variant `CurvePolygonEnd`: 8 bytes
+print-type-size         field `.0`: 8 bytes
+print-type-size     variant `MultiCurveEnd`: 8 bytes
+print-type-size         field `.0`: 8 bytes
+print-type-size     variant `MultiSurfaceEnd`: 8 bytes
+print-type-size         field `.0`: 8 bytes
+print-type-size     variant `TriangleEnd`: 8 bytes
+print-type-size         field `.0`: 8 bytes
+print-type-size     variant `PolyhedralSurfaceEnd`: 8 bytes
+print-type-size         field `.0`: 8 bytes
+print-type-size     variant `TinEnd`: 8 bytes
+print-type-size         field `.0`: 8 bytes
+print-type-size     variant `Empty`: 0 bytes
+
+With Coordinate(Box<(..)>):
+print-type-size type: `events::Event`: 32 bytes, alignment: 8 bytes
+print-type-size     discriminant: 8 bytes
+print-type-size     variant `Coordinate`: 8 bytes
+print-type-size         field `.0`: 8 bytes
+*/
 #[derive(Clone, PartialEq, Debug)]
 pub enum Event {
     /// Coordinate with x,y dimensions (x, y, idx)
@@ -236,7 +336,8 @@ impl<P: GeomEventProcessor> GeomVisitor<P> {
     fn emit(&mut self, event: &Event) -> Result<()> {
         self.processor.event(event, self.geom_type, self.collection)
     }
-    /// Pass event to chained visitor with original state
+    /// Pass event to chained processor with original state
+    #[inline(always)]
     pub fn chain_event(
         &mut self,
         event: &Event,
@@ -246,10 +347,11 @@ impl<P: GeomEventProcessor> GeomVisitor<P> {
         self.processor.event(event, geom_type, collection)
     }
     /// Pass event to visitor with state recalculation
+    #[inline]
     pub fn emit_event(&mut self, event: &Event) -> Result<()> {
         match *event {
-            Event::Xy(x, y, idx) => self.xy(x, y, idx),
-            Event::Coordinate(x, y, z, m, t, tm, idx) => self.coordinate(x, y, z, m, t, tm, idx),
+            Event::Xy(_x, _y, _idx) => self.emit(event),
+            Event::Coordinate(_x, _y, _z, _m, _t, _tm, _idx) => self.emit(event),
             Event::Empty => self.empty(),
             Event::PointBegin(idx) => self.point_begin(idx),
             Event::PointEnd(idx) => self.point_end(idx),
