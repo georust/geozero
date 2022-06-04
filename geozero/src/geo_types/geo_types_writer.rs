@@ -199,9 +199,9 @@ impl GeomEventProcessor for GeoWriter {
     }
 }
 
-impl PropertyProcessor for events::GeomVisitor<GeoWriter> {}
+impl PropertyProcessor for events::GeomVisitor<'_> {}
 
-impl FeatureProcessor for events::GeomVisitor<GeoWriter> {}
+impl FeatureProcessor for events::GeomVisitor<'_> {}
 
 #[cfg(test)]
 #[cfg(feature = "with-geojson")]
@@ -309,10 +309,10 @@ mod test {
             {"type": "Feature", "properties": {"id": "ALB", "name": "Albania"}, "geometry": {"type": "Polygon", "coordinates": [[[20.590247,41.855404],[20.463175,41.515089],[20.605182,41.086226],[21.02004,40.842727],[20.99999,40.580004],[20.674997,40.435],[20.615,40.110007],[20.150016,39.624998],[19.98,39.694993],[19.960002,39.915006],[19.406082,40.250773],[19.319059,40.72723],[19.40355,41.409566],[19.540027,41.719986],[19.371769,41.877548],[19.304486,42.195745],[19.738051,42.688247],[19.801613,42.500093],[20.0707,42.58863],[20.283755,42.32026],[20.52295,42.21787],[20.590247,41.855404]]]}},
             {"type": "Feature", "properties": {"id": "TLS", "name": "East Timor"}, "geometry": {"type": "MultiPolygon", "coordinates": [[[[124.968682, -8.89279], [125.086246, -8.656887], [125.947072, -8.432095], [126.644704, -8.398247], [126.957243, -8.273345], [127.335928, -8.397317], [126.967992, -8.668256], [125.925885, -9.106007], [125.08852, -9.393173], [125.07002, -9.089987], [124.968682, -8.89279]]]]}}
         ]}"#;
-        let geo = GeoWriter::new();
-        let mut visitor = GeomVisitor::new(geo);
+        let mut geo = GeoWriter::new();
+        let mut visitor = GeomVisitor::new(&mut geo);
         assert!(read_geojson(geojson.as_bytes(), &mut visitor).is_ok());
-        let geom = visitor.processor.take_geometry().unwrap();
+        let geom = geo.take_geometry().unwrap();
         dbg!(&geom);
         println!("{}", geom.to_json()?);
         // TODO: we get a broken GeometryCollection

@@ -299,7 +299,7 @@ enum Vstate {
 }
 
 /// Geometry visitor emitting events to a processor
-pub struct GeomVisitor<P: GeomEventProcessor> {
+pub struct GeomVisitor<'a> {
     // pub dims: CoordDimensions,
     pub check_states: bool,
     /// Main geometry type
@@ -308,7 +308,7 @@ pub struct GeomVisitor<P: GeomEventProcessor> {
     collection: bool,
     state_stack: Vec<Vstate>,
     /// Event processor
-    pub processor: P,
+    pub processor: &'a mut dyn GeomEventProcessor,
 }
 
 /// Processing geometry events, e.g. for producing an output geometry
@@ -320,11 +320,11 @@ pub trait GeomEventProcessor {
 /// Reading geometries by passing events to a visitor object
 pub trait GeometryReader {
     /// Process geometry.
-    fn process_geom<P: GeomEventProcessor>(&mut self, visitor: &mut GeomVisitor<P>) -> Result<()>;
+    fn process_geom(&mut self, visitor: &mut GeomVisitor) -> Result<()>;
 }
 
-impl<P: GeomEventProcessor> GeomVisitor<P> {
-    pub fn new(processor: P) -> Self {
+impl<'a> GeomVisitor<'a> {
+    pub fn new(processor: &'a mut dyn GeomEventProcessor) -> Self {
         GeomVisitor {
             check_states: true, // Should maybe set from env var?
             geom_type: GeometryType::Unknown,
@@ -869,10 +869,7 @@ pub(crate) mod test {
     pub struct NullIsland;
 
     impl GeometryReader for NullIsland {
-        fn process_geom<P: GeomEventProcessor>(
-            &mut self,
-            visitor: &mut GeomVisitor<P>,
-        ) -> Result<()> {
+        fn process_geom(&mut self, visitor: &mut GeomVisitor) -> Result<()> {
             visitor.point_begin(0)?;
             visitor.xy(0.0, 0.0, 0)?;
             visitor.point_end(0)?;
@@ -906,15 +903,70 @@ pub(crate) mod test {
 
     #[test]
     fn processing() -> Result<()> {
-        let mut visitor = GeomVisitor::new(GeomEventBuffer::new());
+        let mut processor = GeomEventBuffer::new();
+        let mut visitor = GeomVisitor::new(&mut processor);
         let mut geom = NullIsland;
         geom.process_geom(&mut visitor)?;
 
         assert_eq!(
-            visitor.processor.buffer,
+            processor.buffer,
             [PointBegin(0), Xy(0.0, 0.0, 0), PointEnd(0)]
         );
 
+        Ok(())
+    }
+
+    #[test]
+    fn runtime_definition() -> Result<()> {
+        let do_buffer = true;
+        let mut processor = GeomEventBuffer::new();
+        let mut sink = GeomEventSink;
+        let mut visitor = if do_buffer {
+            GeomVisitor::new(&mut processor)
+        } else {
+            GeomVisitor::new(&mut sink)
+        };
+        let mut geom = NullIsland;
+        geom.process_geom(&mut visitor)?;
+
+        if do_buffer {
+            assert_eq!(
+                processor.buffer,
+                [PointBegin(0), Xy(0.0, 0.0, 0), PointEnd(0)]
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn owned_visitor() -> Result<()> {
+        struct App {
+            processor: GeomEventBuffer,
+        }
+        struct AppVisitor<'a> {
+            visitor: GeomVisitor<'a>,
+        }
+        impl App {
+            fn new() -> Self {
+                App {
+                    processor: GeomEventBuffer::new(),
+                }
+            }
+            fn visitor(&mut self) -> AppVisitor {
+                AppVisitor {
+                    visitor: GeomVisitor::new(&mut self.processor),
+                }
+            }
+            fn buf_size(&mut self) -> usize {
+                self.processor.buffer.len()
+            }
+        }
+        let mut app = App::new();
+        let mut app_visitor = app.visitor();
+        let mut geom = NullIsland;
+        geom.process_geom(&mut app_visitor.visitor)?;
+        let size = app.buf_size();
+        assert_eq!(size, 3);
         Ok(())
     }
 
@@ -941,24 +993,24 @@ pub(crate) mod test {
 
     #[test]
     fn process_point() -> Result<()> {
-        let geom_out = Point2D {
+        let mut geom_out = Point2D {
             x: f64::NAN,
             y: f64::NAN,
         };
-        let mut visitor = GeomVisitor::new(geom_out);
+        let mut visitor = GeomVisitor::new(&mut geom_out);
 
         let mut geom_in = NullIsland;
         geom_in.process_geom(&mut visitor)?;
 
-        let geom = visitor.processor;
-        assert_eq!((geom.x, geom.y), (0.0, 0.0));
+        assert_eq!((geom_out.x, geom_out.y), (0.0, 0.0));
 
         Ok(())
     }
 
     #[test]
     fn polygon() -> Result<()> {
-        let mut visitor = GeomVisitor::new(GeomEventBuffer::new());
+        let mut processor = GeomEventBuffer::new();
+        let mut visitor = GeomVisitor::new(&mut processor);
         visitor.polygon_begin(2, 0)?;
         visitor.linestring_begin(2, 0)?;
         visitor.xy(0.0, 0.0, 0)?;
@@ -970,9 +1022,9 @@ pub(crate) mod test {
         visitor.linestring_end(1)?;
         visitor.polygon_end(0)?;
 
-        dbg!(&visitor.processor.buffer);
+        dbg!(&processor.buffer);
         assert_eq!(
-            visitor.processor.buffer,
+            processor.buffer,
             [
                 PolygonBegin(2, 0),
                 LineStringBegin(2, 0),
@@ -992,7 +1044,8 @@ pub(crate) mod test {
 
     #[test]
     fn collection() -> Result<()> {
-        let mut visitor = GeomVisitor::new(GeomEventBuffer::new());
+        let mut processor = GeomEventBuffer::new();
+        let mut visitor = GeomVisitor::new(&mut processor);
         visitor.geometrycollection_begin(2, 0)?;
         visitor.point_begin(0)?;
         visitor.xy(0.0, 0.0, 0)?;
@@ -1004,7 +1057,7 @@ pub(crate) mod test {
         visitor.geometrycollection_end(0)?;
 
         assert_eq!(
-            visitor.processor.buffer,
+            processor.buffer,
             [
                 GeometryCollectionBegin(2, 0),
                 PointBegin(0),
@@ -1023,8 +1076,8 @@ pub(crate) mod test {
 
     #[test]
     fn invalid_transitions() -> Result<()> {
-        let processor = GeomEventSink;
-        let mut visitor = GeomVisitor::new(processor);
+        let mut processor = GeomEventSink;
+        let mut visitor = GeomVisitor::new(&mut processor);
         visitor.point_begin(0)?;
         visitor.xy(0.0, 0.0, 0)?;
         let result = visitor.polygon_end(0);
@@ -1047,10 +1100,11 @@ pub(crate) mod test {
         let geojson = GeoJson(
             r#"{"type": "Polygon", "coordinates": [[[20.590247,41.855404],[20.463175,41.515089],[20.605182,41.086226],[21.02004,40.842727],[20.99999,40.580004],[20.674997,40.435],[20.615,40.110007],[20.150016,39.624998],[19.98,39.694993],[19.960002,39.915006],[19.406082,40.250773],[19.319059,40.72723],[19.40355,41.409566],[19.540027,41.719986],[19.371769,41.877548],[19.304486,42.195745],[19.738051,42.688247],[19.801613,42.500093],[20.0707,42.58863],[20.283755,42.32026],[20.52295,42.21787],[20.590247,41.855404]]]}"#,
         );
-        let mut visitor = GeomVisitor::new(GeomEventBuffer::new());
+        let mut processor = GeomEventBuffer::new();
+        let mut visitor = GeomVisitor::new(&mut processor);
         geojson.process_geom(&mut visitor)?;
         assert_eq!(
-            visitor.processor.buffer,
+            processor.buffer,
             [
                 PolygonBegin(1, 0),
                 LineStringBegin(22, 0),

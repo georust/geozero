@@ -1,5 +1,5 @@
 use crate::error::{GeozeroError, Result};
-use crate::events::{GeomEventProcessor, GeomVisitor};
+use crate::events::GeomVisitor;
 
 /// Dimensions requested for processing
 #[derive(Default, Clone, Copy, Debug)]
@@ -304,7 +304,7 @@ pub trait GeomProcessor {
     }
 }
 
-impl<P: GeomEventProcessor> GeomProcessor for GeomVisitor<P> {
+impl GeomProcessor for GeomVisitor<'_> {
     fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
         self.xy(x, y, idx)
     }

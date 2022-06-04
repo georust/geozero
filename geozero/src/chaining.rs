@@ -9,23 +9,26 @@ use crate::events::*;
 /// Processing geometry events and passing events to a chained visitor
 pub trait ChainedGeomEventProcessor {
     /// Geometry processing event with geometry type information
-    fn chain_event<P: GeomEventProcessor>(
+    fn chain_event(
         &mut self,
         event: &Event,
         geom_type: GeometryType,
         collection: bool,
-        visitor: &mut GeomVisitor<P>,
+        visitor: &mut GeomVisitor,
     ) -> Result<()>;
 }
 
 /// Chaining [GeomEventProcessor]
-pub struct ChainedProcessor<P1: ChainedGeomEventProcessor, P2: GeomEventProcessor> {
-    pub processor1: P1,
-    pub visitor: GeomVisitor<P2>,
+pub struct ChainedProcessor<'a> {
+    processor1: &'a mut dyn ChainedGeomEventProcessor,
+    visitor: GeomVisitor<'a>,
 }
 
-impl<'a, P1: ChainedGeomEventProcessor, P2: GeomEventProcessor> ChainedProcessor<P1, P2> {
-    pub fn new(processor1: P1, processor2: P2) -> Self {
+impl<'a> ChainedProcessor<'a> {
+    pub fn new(
+        processor1: &'a mut dyn ChainedGeomEventProcessor,
+        processor2: &'a mut dyn GeomEventProcessor,
+    ) -> Self {
         ChainedProcessor {
             processor1,
             visitor: GeomVisitor::new(processor2),
@@ -33,9 +36,7 @@ impl<'a, P1: ChainedGeomEventProcessor, P2: GeomEventProcessor> ChainedProcessor
     }
 }
 
-impl<'a, P1: ChainedGeomEventProcessor, P2: GeomEventProcessor> GeomEventProcessor
-    for ChainedProcessor<P1, P2>
-{
+impl<'a> GeomEventProcessor for ChainedProcessor<'a> {
     fn event(
         &mut self,
         event: &Event,
@@ -50,13 +51,16 @@ impl<'a, P1: ChainedGeomEventProcessor, P2: GeomEventProcessor> GeomEventProcess
 // ------- Duplex ---------
 
 /// Duplexing [GeomEventProcessor]
-pub struct DuplexProcessor<P1: GeomEventProcessor, P2: GeomEventProcessor> {
-    pub processor1: P1,
-    pub processor2: P2,
+pub struct DuplexProcessor<'a> {
+    processor1: &'a mut dyn GeomEventProcessor,
+    processor2: &'a mut dyn GeomEventProcessor,
 }
 
-impl<P1: GeomEventProcessor, P2: GeomEventProcessor> DuplexProcessor<P1, P2> {
-    pub fn new(processor1: P1, processor2: P2) -> Self {
+impl<'a> DuplexProcessor<'a> {
+    pub fn new(
+        processor1: &'a mut dyn GeomEventProcessor,
+        processor2: &'a mut dyn GeomEventProcessor,
+    ) -> Self {
         DuplexProcessor {
             processor1,
             processor2,
@@ -64,9 +68,7 @@ impl<P1: GeomEventProcessor, P2: GeomEventProcessor> DuplexProcessor<P1, P2> {
     }
 }
 
-impl<P1: GeomEventProcessor, P2: GeomEventProcessor> GeomEventProcessor
-    for DuplexProcessor<P1, P2>
-{
+impl GeomEventProcessor for DuplexProcessor<'_> {
     fn event(
         &mut self,
         event: &Event,
@@ -89,12 +91,12 @@ mod test {
 
     pub struct PromoteToMulti;
     impl ChainedGeomEventProcessor for PromoteToMulti {
-        fn chain_event<P: GeomEventProcessor>(
+        fn chain_event(
             &mut self,
             event: &Event,
             _geom_type: GeometryType,
             _collection: bool,
-            visitor: &mut GeomVisitor<P>,
+            visitor: &mut GeomVisitor,
         ) -> Result<()> {
             match *event {
                 PointBegin(idx) => {
@@ -111,14 +113,16 @@ mod test {
 
     #[test]
     fn chained_processor() -> Result<()> {
-        let processor = ChainedProcessor::new(PromoteToMulti, GeomEventBuffer::new());
-        let mut visitor = GeomVisitor::new(processor);
+        let mut buffer_processor = GeomEventBuffer::new();
+        let mut multi = PromoteToMulti;
+        let mut processor = ChainedProcessor::new(&mut multi, &mut buffer_processor);
+        let mut visitor = GeomVisitor::new(&mut processor);
 
         let mut geom = NullIsland;
         geom.process_geom(&mut visitor)?;
 
         assert_eq!(
-            visitor.processor.visitor.processor.buffer,
+            buffer_processor.buffer,
             [MultiPointBegin(1, 0), Xy(0.0, 0.0, 0), MultiPointEnd(0)]
         );
 
@@ -127,14 +131,16 @@ mod test {
 
     #[test]
     fn duplex_processor() -> Result<()> {
-        let processor = DuplexProcessor::new(GeomEventSink, GeomEventBuffer::new());
-        let mut visitor = GeomVisitor::new(processor);
+        let mut buffer_processor = GeomEventBuffer::new();
+        let mut sink = GeomEventSink;
+        let mut processor = DuplexProcessor::new(&mut sink, &mut buffer_processor);
+        let mut visitor = GeomVisitor::new(&mut processor);
 
         let mut geom = NullIsland;
         geom.process_geom(&mut visitor)?;
 
         assert_eq!(
-            visitor.processor.processor2.buffer,
+            buffer_processor.buffer,
             [PointBegin(0), Xy(0.0, 0.0, 0), PointEnd(0),]
         );
 
@@ -146,19 +152,22 @@ mod test {
         // geom  ------+----> PromoteToMulti (1a) ----> GeomEventBuffer (2a)
         //             |
         //             +----> GeomEventBuffer (1b)
-        let processor_a = ChainedProcessor::new(PromoteToMulti, GeomEventBuffer::new());
-        let processor = DuplexProcessor::new(processor_a, GeomEventBuffer::new());
-        let mut visitor = GeomVisitor::new(processor);
+        let mut processor1a = PromoteToMulti;
+        let mut processor2a = GeomEventBuffer::new();
+        let mut processor1b = GeomEventBuffer::new();
+        let mut processor_a = ChainedProcessor::new(&mut processor1a, &mut processor2a);
+        let mut processor = DuplexProcessor::new(&mut processor_a, &mut processor1b);
+        let mut visitor = GeomVisitor::new(&mut processor);
 
         let mut geom = NullIsland;
         geom.process_geom(&mut visitor)?;
 
         assert_eq!(
-            visitor.processor.processor1.visitor.processor.buffer, // 2a
+            processor2a.buffer,
             [MultiPointBegin(1, 0), Xy(0.0, 0.0, 0), MultiPointEnd(0)]
         );
         assert_eq!(
-            visitor.processor.processor2.buffer, // 1b
+            processor1b.buffer,
             [PointBegin(0), Xy(0.0, 0.0, 0), PointEnd(0),]
         );
 
