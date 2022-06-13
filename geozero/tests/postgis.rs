@@ -225,9 +225,32 @@ mod postgis_sqlx {
         Ok(())
     }
 
-    // Requires DATABASE_URL at compile time
     #[tokio::test]
     #[ignore]
+    async fn bulk_insert() -> Result<(), sqlx::Error> {
+        // https://github.com/launchbadge/sqlx/blob/v0.5.13/FAQ.md#how-can-i-bind-an-array-to-a-values-clause-how-can-i-do-bulk-inserts
+        let pool = PgPoolOptions::new()
+            .max_connections(5)
+            .connect(&env::var("DATABASE_URL").unwrap())
+            .await?;
+
+        let geom: geo_types::Geometry<f64> = geo::Point::new(10.0, 20.0).into();
+        let geoms = vec![wkb::Encode(geom.clone()), wkb::Encode(geom.clone())];
+        let inserted = sqlx::query(
+            "INSERT INTO point2d (datetimefield, geom)
+               SELECT now(), ST_SetSRID(g,4326) FROM UNNEST($1::geometry[]) as g",
+        )
+        .bind(&geoms[..])
+        .execute(&pool)
+        .await?;
+
+        assert_eq!(inserted.rows_affected(), geoms.len() as u64);
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore]
+    // Requires DATABASE_URL at compile time
     #[cfg(feature = "dont-compile")]
     async fn rust_geo_macro_query() -> Result<(), sqlx::Error> {
         use sqlx::types::time::OffsetDateTime;
