@@ -1,3 +1,7 @@
+## Unreleased
+
+* Update to geojson 0.23
+
 ## 0.9.4 (2022-04-25)
 
 * Fix docs.rs build
