@@ -9,7 +9,7 @@ repository = "https://github.com/georust/geozero"
 license = "MIT/Apache-2.0"
 
 [dependencies]
-geozero = { version = "0.7.0", features = ["with-geo", "with-geojson", "with-geos", "with-gpkg", "with-postgis-sqlx", "with-postgis-postgres"] }
+geozero = { path = "../geozero", features = ["with-geo", "with-geojson", "with-geos", "with-gpkg", "with-postgis-sqlx", "with-postgis-postgres"] }
 sqlx = { version = "0.5", default-features = false, features = [ "runtime-tokio-native-tls", "postgres", "sqlite" ] }
 futures-util = "0.3.5"
 geojson = "0.22"
