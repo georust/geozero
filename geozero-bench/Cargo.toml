@@ -16,7 +16,7 @@ geojson = "0.23.0"
 criterion = "0.3.3"
 geo-types = { version = "0.7", default-features = false }
 geo = "0.17" # { version = "0.17", features = ["postgis-integration"] }
-flatgeobuf = "0.5.0"
+flatgeobuf = "0.8.0"
 seek_bufread = "1.2"
 postgres = "0.19"
 postgis = "0.8.0"
