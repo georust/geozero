@@ -52,10 +52,9 @@ fn shp_to_json() -> Result<(), geozero_shp::Error> {
     let cnt = reader.iter_features(GeoJsonWriter::new(&mut json))?.count();
     assert_eq!(cnt, 10);
     assert_eq!(
-        &from_utf8(&json).unwrap()[0..92],
+        &from_utf8(&json).unwrap()[0..80],
         r#"{
 "type": "FeatureCollection",
-"name": "",
 "features": [{"type": "Feature", "properties": {""#
     );
     assert_eq!(

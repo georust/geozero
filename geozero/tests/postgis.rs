@@ -134,8 +134,9 @@ mod postgis_sqlx {
     use geozero::wkb;
     use sqlx::postgres::PgPoolOptions;
     use std::env;
-    use tokio::runtime::Runtime;
 
+    #[tokio::test]
+    #[ignore]
     async fn blob_query() -> Result<(), sqlx::Error> {
         use geozero::ToWkt;
 
@@ -156,12 +157,8 @@ mod postgis_sqlx {
         Ok(())
     }
 
-    #[test]
+    #[tokio::test]
     #[ignore]
-    fn async_blob_query() {
-        assert!(Runtime::new().unwrap().block_on(blob_query()).is_ok());
-    }
-
     async fn point3d_query() -> Result<(), sqlx::Error> {
         use super::PointZ;
 
@@ -187,12 +184,8 @@ mod postgis_sqlx {
         Ok(())
     }
 
-    #[test]
+    #[tokio::test]
     #[ignore]
-    fn async_point3d_query() {
-        assert!(Runtime::new().unwrap().block_on(point3d_query()).is_ok());
-    }
-
     async fn rust_geo_query() -> Result<(), sqlx::Error> {
         let pool = PgPoolOptions::new()
             .max_connections(5)
@@ -232,12 +225,31 @@ mod postgis_sqlx {
         Ok(())
     }
 
-    #[test]
+    #[tokio::test]
     #[ignore]
-    fn async_rust_geo_query() {
-        assert!(Runtime::new().unwrap().block_on(rust_geo_query()).is_ok());
+    async fn bulk_insert() -> Result<(), sqlx::Error> {
+        // https://github.com/launchbadge/sqlx/blob/v0.5.13/FAQ.md#how-can-i-bind-an-array-to-a-values-clause-how-can-i-do-bulk-inserts
+        let pool = PgPoolOptions::new()
+            .max_connections(5)
+            .connect(&env::var("DATABASE_URL").unwrap())
+            .await?;
+
+        let geom: geo_types::Geometry<f64> = geo::Point::new(10.0, 20.0).into();
+        let geoms = vec![wkb::Encode(geom.clone()), wkb::Encode(geom.clone())];
+        let inserted = sqlx::query(
+            "INSERT INTO point2d (datetimefield, geom)
+               SELECT now(), ST_SetSRID(g,4326) FROM UNNEST($1::geometry[]) as g",
+        )
+        .bind(&geoms[..])
+        .execute(&pool)
+        .await?;
+
+        assert_eq!(inserted.rows_affected(), geoms.len() as u64);
+        Ok(())
     }
 
+    #[tokio::test]
+    #[ignore]
     // Requires DATABASE_URL at compile time
     #[cfg(feature = "dont-compile")]
     async fn rust_geo_macro_query() -> Result<(), sqlx::Error> {
@@ -300,16 +312,8 @@ mod postgis_sqlx {
         Ok(())
     }
 
-    #[test]
+    #[tokio::test]
     #[ignore]
-    #[cfg(feature = "dont-compile")]
-    fn async_rust_geo_macro_query() {
-        assert!(Runtime::new()
-            .unwrap()
-            .block_on(rust_geo_macro_query())
-            .is_ok());
-    }
-
     #[cfg(feature = "with-geos")]
     async fn geos_query() -> Result<(), sqlx::Error> {
         use geos::Geom;
@@ -344,19 +348,6 @@ mod postgis_sqlx {
         Ok(())
     }
 
-    #[test]
-    #[ignore]
-    #[cfg(feature = "with-geos")]
-    fn async_geos_query() {
-        assert_eq!(
-            Runtime::new()
-                .unwrap()
-                .block_on(geos_query())
-                .map_err(|e| e.to_string()),
-            Ok(())
-        );
-    }
-
     mod register_type {
         use super::*;
         use geozero::wkt::WktWriter;
@@ -389,6 +380,8 @@ mod postgis_sqlx {
             }
         }
 
+        #[tokio::test]
+        #[ignore]
         async fn geometry_query() -> Result<(), sqlx::Error> {
             let pool = PgPoolOptions::new()
                 .max_connections(5)
@@ -407,12 +400,6 @@ mod postgis_sqlx {
             assert_eq!((row.0).0, "EMPTY");
 
             Ok(())
-        }
-
-        #[test]
-        #[ignore]
-        fn postgis_geometry_query() {
-            assert!(Runtime::new().unwrap().block_on(geometry_query()).is_ok());
         }
     }
 }

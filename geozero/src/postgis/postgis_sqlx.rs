@@ -2,7 +2,7 @@ use crate::wkb::{self, FromWkb};
 use crate::GeozeroGeometry;
 use sqlx::decode::Decode;
 use sqlx::encode::{Encode, IsNull};
-use sqlx::postgres::{PgArgumentBuffer, PgTypeInfo, PgValueRef, Postgres};
+use sqlx::postgres::{PgArgumentBuffer, PgHasArrayType, PgTypeInfo, PgValueRef, Postgres};
 use sqlx::ValueRef;
 
 type BoxDynError = Box<dyn std::error::Error + Send + Sync>;
@@ -10,6 +10,12 @@ type BoxDynError = Box<dyn std::error::Error + Send + Sync>;
 impl<T: FromWkb + Sized> sqlx::Type<Postgres> for wkb::Decode<T> {
     fn type_info() -> PgTypeInfo {
         PgTypeInfo::with_name("geometry")
+    }
+}
+
+impl<T: FromWkb + Sized> PgHasArrayType for wkb::Decode<T> {
+    fn array_type_info() -> PgTypeInfo {
+        PgTypeInfo::with_name("_geometry")
     }
 }
 
@@ -33,6 +39,12 @@ impl<T: GeozeroGeometry + Sized> sqlx::Type<Postgres> for wkb::Encode<T> {
     }
 }
 
+impl<T: GeozeroGeometry + Sized> PgHasArrayType for wkb::Encode<T> {
+    fn array_type_info() -> PgTypeInfo {
+        PgTypeInfo::with_name("_geometry")
+    }
+}
+
 impl<T: GeozeroGeometry + Sized> Encode<'_, Postgres> for wkb::Encode<T> {
     fn encode_by_ref(&self, buf: &mut PgArgumentBuffer) -> IsNull {
         let mut wkb_out: Vec<u8> = Vec::new();
@@ -53,13 +65,19 @@ impl<T: GeozeroGeometry + Sized> Encode<'_, Postgres> for wkb::Encode<T> {
 // - Can only be used with self defined types
 // - Decode does not support NULL values
 
-/// impl `sqlx::Type` for geometry type
+/// impl `sqlx::Type` and  `PgHasArrayType` for geometry type
 #[macro_export]
 macro_rules! impl_sqlx_postgis_type_info {
     ( $t:ty ) => {
         impl sqlx::Type<sqlx::postgres::Postgres> for $t {
             fn type_info() -> sqlx::postgres::PgTypeInfo {
                 sqlx::postgres::PgTypeInfo::with_name("geometry")
+            }
+        }
+
+        impl sqlx::postgres::PgHasArrayType for $t {
+            fn array_type_info() -> sqlx::postgres::PgTypeInfo {
+                sqlx::postgres::PgTypeInfo::with_name("_geometry")
             }
         }
     };

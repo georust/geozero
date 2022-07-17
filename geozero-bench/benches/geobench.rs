@@ -20,14 +20,14 @@ mod fgb {
 
     pub(super) fn fgb_to_geo(fpath: &str, bbox: &Option<Extent>, count: usize) -> Result<()> {
         let mut filein = BufReader::new(File::open(fpath)?);
-        let mut fgb = FgbReader::open(&mut filein)?;
-        if let Some(bbox) = bbox {
-            fgb.select_bbox(bbox.minx, bbox.miny, bbox.maxx, bbox.maxy)?;
+        let opened_fgb = FgbReader::open(&mut filein)?;
+        let mut selected_fgb = if let Some(bbox) = bbox {
+            opened_fgb.select_bbox(bbox.minx, bbox.miny, bbox.maxx, bbox.maxy)?
         } else {
-            fgb.select_all()?;
-        }
+            opened_fgb.select_all()?
+        };
         let mut cnt = 0;
-        while let Some(feature) = fgb.next()? {
+        while let Some(feature) = selected_fgb.next()? {
             let _geom = feature.to_geo()?;
             cnt += 1;
         }
@@ -41,15 +41,16 @@ mod fgb {
         count: usize,
     ) -> Result<()> {
         let url = format!("http://127.0.0.1:3333/{}", fname);
-        let mut fgb = HttpFgbReader::open(&url).await?;
-        if let Some(bbox) = bbox {
-            fgb.select_bbox(bbox.minx, bbox.miny, bbox.maxx, bbox.maxy)
-                .await?;
+        let opened_fgb = HttpFgbReader::open(&url).await?;
+        let mut selected_fgb = if let Some(bbox) = bbox {
+            opened_fgb
+                .select_bbox(bbox.minx, bbox.miny, bbox.maxx, bbox.maxy)
+                .await?
         } else {
-            fgb.select_all().await?;
-        }
+            opened_fgb.select_all().await?
+        };
         let mut cnt = 0;
-        while let Some(feature) = fgb.next().await? {
+        while let Some(feature) = selected_fgb.next().await? {
             let _geom = feature.to_geo()?;
             cnt += 1;
         }
