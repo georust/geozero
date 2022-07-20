@@ -41,6 +41,9 @@ pub use geometry_processor::*;
 pub use multiplex::*;
 pub use property_processor::*;
 
+#[cfg(feature = "with-arrow")]
+pub mod arrow;
+
 #[cfg(feature = "with-csv")]
 pub mod csv;
 #[cfg(feature = "with-csv")]

@@ -22,7 +22,7 @@ impl GeozeroGeometry for Ewkb {
     }
 }
 
-/// GepPackage WKB reader.
+/// GeoPackage WKB reader.
 pub struct GpkgWkb(pub Vec<u8>);
 
 impl GeozeroGeometry for GpkgWkb {
@@ -63,7 +63,7 @@ pub fn process_wkb_type_geom<R: Read, P: GeomProcessor>(
 }
 
 #[derive(Debug)]
-struct WkbInfo {
+pub(crate) struct WkbInfo {
     endian: scroll::Endian,
     base_type: WKBGeometryType,
     has_z: bool,
@@ -75,7 +75,7 @@ struct WkbInfo {
 }
 
 /// OGC WKB header.
-fn read_wkb_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
+pub(crate) fn read_wkb_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
     let byte_order = raw.ioread::<u8>()?;
     let endian = if byte_order == WKBByteOrder::XDR as u8 {
         scroll::BE
@@ -177,7 +177,7 @@ fn read_gpkg_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
 
 // TODO: Spatialite https://www.gaia-gis.it/gaia-sins/BLOB-Geometry.html
 
-fn process_wkb_geom_n<R: Read, P: GeomProcessor>(
+pub(crate) fn process_wkb_geom_n<R: Read, P: GeomProcessor>(
     raw: &mut R,
     info: &WkbInfo,
     read_header: fn(&mut R) -> Result<WkbInfo>,

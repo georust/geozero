@@ -12,6 +12,7 @@ keywords = ["geo", "geojson", "gdal", "geos", "postgis"]
 
 [features]
 default = ["with-svg", "with-wkt", "with-geo", "with-geojson"]
+with-arrow = ["arrow2"]
 with-csv = ["csv", "with-wkt"]
 with-svg = []
 with-wkt = ["wkt"]
@@ -43,6 +44,7 @@ postgres-types = { version = "0.2", optional = true }
 bytes = { version = "1.0", optional = true }
 prost = { version = "0.10.0", optional = true }
 wkt = { version = "0.10.0", optional = true }
+arrow2 = { version = "0.12", optional = true, features = ["io_ipc"]}
 
 [dev-dependencies]
 seek_bufread = "1.2"
