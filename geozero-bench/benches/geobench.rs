@@ -225,8 +225,8 @@ mod gdal {
         bbox: &Option<Extent>,
         count: usize,
     ) -> std::result::Result<(), gdal::errors::GdalError> {
-        let mut dataset = Dataset::open(Path::new(fpath))?;
-        let layer = dataset.layer(0)?;
+        let dataset = Dataset::open(Path::new(fpath))?;
+        let mut layer = dataset.layer(0)?;
         // omit fields when fetching features
         ignore_fields(&layer);
 

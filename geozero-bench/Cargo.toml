@@ -10,18 +10,18 @@ license = "MIT/Apache-2.0"
 
 [dependencies]
 geozero = { path = "../geozero", features = ["with-geo", "with-geojson", "with-geos", "with-gpkg", "with-postgis-sqlx", "with-postgis-postgres"] }
-sqlx = { version = "0.5", default-features = false, features = [ "runtime-tokio-native-tls", "postgres", "sqlite" ] }
+sqlx = { version = "0.6", default-features = false, features = [ "runtime-tokio-native-tls", "postgres", "sqlite" ] }
 futures-util = "0.3.5"
 geojson = "0.23.0"
 criterion = "0.3.3"
 geo-types = { version = "0.7", default-features = false }
-geo = "0.17" # { version = "0.17", features = ["postgis-integration"] }
+geo = "0.22" # { version = "0.17", features = ["postgis-integration"] }
 flatgeobuf = "0.8.0"
 seek_bufread = "1.2"
 postgres = "0.19"
-postgis = "0.8.0"
-gdal = { version = "0.7", default-features = false }
-gdal-sys = { version = "0.3" }
+postgis = "0.9.0"
+gdal = { version = "0.12", default-features = false }
+gdal-sys = { version = "0.6" }
 tokio = { version = "1.2.0", default-features = false, features = ["rt-multi-thread"] }
 
 [[bench]]
