@@ -2,7 +2,7 @@ DBNAME = geozerobench
 
 all: countries.shp countries.json countries-gz.json.gz osm-buildings-3857-ch.shp
 
-countries.fgb: ../../../geozero-core/tests/data/countries.fgb
+countries.fgb: ../../../geozero/tests/data/countries.fgb
 	cp $< $@
 
 countries.gpkg: countries.fgb

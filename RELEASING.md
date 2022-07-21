@@ -17,7 +17,7 @@ which causes build conflicts when doing major version updates.
 * `git commit -a -m "Release geozero x.x.x"`
 * `git tag -m v0.x.x v0.x.x`
 * Bump to next minor version in `Cargo.toml` (without `-dev` postfix)
-* `git commit -a -m "Release geozero x.x.x"`
+* `git commit -a -m "Bump version"`
 
 Major updates:
 * Create branch of flatgeobuf with updated geozero dependency

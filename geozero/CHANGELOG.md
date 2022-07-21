@@ -1,4 +1,4 @@
-## 0.9.5 (2022-07-12)
+## 0.9.5 (2022-07-21)
 
 * Add CSV writer and reader
 * Add GeoArrow WKB reader
