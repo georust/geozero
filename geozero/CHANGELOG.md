@@ -1,5 +1,10 @@
-## Unreleased
+## 0.9.5 (2022-07-12)
 
+* Add CSV writer and reader
+* Add GeoArrow WKB reader
+* Impl array_type_info for SQLx WKB geometries
+* geojson: support properties after/without geometry
+* feature_collection.to_geo() now returns geometry collection
 * Update to geojson 0.23
 
 ## 0.9.4 (2022-04-25)

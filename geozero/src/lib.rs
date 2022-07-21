@@ -19,7 +19,9 @@
 //!
 //! |           |                          [GeozeroGeometry]                           | Dimensions |                         [GeozeroDatasource]                          | Geometry Conversion |             [GeomProcessor]             |
 //! |-----------|----------------------------------------------------------------------|------------|----------------------------------------------------------------------|---------------------|-----------------------------------------|
+//! | CSV       | [csv::Csv], [csv::CsvString]                                         | XY         | -                                                                    | [ProcessToCsv]      | [CsvWriter](csv::CsvWriter)             |
 //! | geo-types | `geo_types::Geometry<f64>`                                           | XY         | -                                                                    | [ToGeo]             | [GeoWriter](geo_types::GeoWriter)       |
+//! | GeoArrow  | `arrow2::array::BinaryArray`                                         | XY         | -                                                                    | -                   | -                                       |
 //! | GeoJSON   | [GeoJson](geojson::GeoJson), [GeoJsonString](geojson::GeoJsonString) | XYZ        | [GeoJsonReader](geojson::GeoJsonReader), [GeoJson](geojson::GeoJson) | [ToJson]            | [GeoJsonWriter](geojson::GeoJsonWriter) |
 //! | GDAL      | `gdal::vector::Geometry`                                             | XYZ        | -                                                                    | [ToGdal]            | [GdalWriter](gdal::GdalWriter)          |
 //! | GEOS      | `geos::Geometry`                                                     | XYZ        | -                                                                    | [ToGeos]            | [GeosWriter](geos::GeosWriter)          |
