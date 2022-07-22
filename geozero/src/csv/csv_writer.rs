@@ -138,82 +138,98 @@ impl<W: Write> GeomProcessor for CsvWriter<'_, W> {
         self.wkt_writer.empty_point(self.offset_geom_idx(idx))
     }
     fn multipoint_begin(&mut self, size: usize, idx: usize) -> Result<()> {
-        self.wkt_writer.multipoint_begin(size, self.offset_geom_idx(idx))
+        self.wkt_writer
+            .multipoint_begin(size, self.offset_geom_idx(idx))
     }
     fn multipoint_end(&mut self, idx: usize) -> Result<()> {
         self.wkt_writer.multipoint_end(self.offset_geom_idx(idx))
     }
     fn linestring_begin(&mut self, tagged: bool, size: usize, idx: usize) -> Result<()> {
-        self.wkt_writer.linestring_begin(tagged, size, self.offset_geom_idx(idx))
+        self.wkt_writer
+            .linestring_begin(tagged, size, self.offset_geom_idx(idx))
     }
     fn linestring_end(&mut self, tagged: bool, idx: usize) -> Result<()> {
-        self.wkt_writer.linestring_end(tagged, self.offset_geom_idx(idx))
+        self.wkt_writer
+            .linestring_end(tagged, self.offset_geom_idx(idx))
     }
     fn multilinestring_begin(&mut self, size: usize, idx: usize) -> Result<()> {
-        self.wkt_writer.multilinestring_begin(size, self.offset_geom_idx(idx))
+        self.wkt_writer
+            .multilinestring_begin(size, self.offset_geom_idx(idx))
     }
     fn multilinestring_end(&mut self, idx: usize) -> Result<()> {
         self.wkt_writer
             .multilinestring_end(self.offset_geom_idx(idx))
     }
     fn polygon_begin(&mut self, tagged: bool, size: usize, idx: usize) -> Result<()> {
-        self.wkt_writer.polygon_begin(tagged, size, self.offset_geom_idx(idx))
+        self.wkt_writer
+            .polygon_begin(tagged, size, self.offset_geom_idx(idx))
     }
     fn polygon_end(&mut self, tagged: bool, idx: usize) -> Result<()> {
-        self.wkt_writer.polygon_end(tagged, self.offset_geom_idx(idx))
+        self.wkt_writer
+            .polygon_end(tagged, self.offset_geom_idx(idx))
     }
     fn multipolygon_begin(&mut self, size: usize, idx: usize) -> Result<()> {
-        self.wkt_writer.multipolygon_begin(size, self.offset_geom_idx(idx))
+        self.wkt_writer
+            .multipolygon_begin(size, self.offset_geom_idx(idx))
     }
     fn multipolygon_end(&mut self, idx: usize) -> Result<()> {
         self.wkt_writer.multipolygon_end(self.offset_geom_idx(idx))
     }
     fn geometrycollection_begin(&mut self, size: usize, idx: usize) -> Result<()> {
-        self.wkt_writer.geometrycollection_begin(size, self.offset_geom_idx(idx))
+        self.wkt_writer
+            .geometrycollection_begin(size, self.offset_geom_idx(idx))
     }
     fn geometrycollection_end(&mut self, idx: usize) -> Result<()> {
         self.wkt_writer
             .geometrycollection_end(self.offset_geom_idx(idx))
     }
     fn circularstring_begin(&mut self, size: usize, idx: usize) -> Result<()> {
-        self.wkt_writer.circularstring_begin(size, self.offset_geom_idx(idx))
+        self.wkt_writer
+            .circularstring_begin(size, self.offset_geom_idx(idx))
     }
     fn circularstring_end(&mut self, idx: usize) -> Result<()> {
         self.wkt_writer
             .circularstring_end(self.offset_geom_idx(idx))
     }
     fn compoundcurve_begin(&mut self, size: usize, idx: usize) -> Result<()> {
-        self.wkt_writer.compoundcurve_begin(size, self.offset_geom_idx(idx))
+        self.wkt_writer
+            .compoundcurve_begin(size, self.offset_geom_idx(idx))
     }
     fn compoundcurve_end(&mut self, idx: usize) -> Result<()> {
         self.wkt_writer.compoundcurve_end(self.offset_geom_idx(idx))
     }
     fn curvepolygon_begin(&mut self, size: usize, idx: usize) -> Result<()> {
-        self.wkt_writer.curvepolygon_begin(size, self.offset_geom_idx(idx))
+        self.wkt_writer
+            .curvepolygon_begin(size, self.offset_geom_idx(idx))
     }
     fn curvepolygon_end(&mut self, idx: usize) -> Result<()> {
         self.wkt_writer.curvepolygon_end(self.offset_geom_idx(idx))
     }
     fn multicurve_begin(&mut self, size: usize, idx: usize) -> Result<()> {
-        self.wkt_writer.multicurve_begin(size, self.offset_geom_idx(idx))
+        self.wkt_writer
+            .multicurve_begin(size, self.offset_geom_idx(idx))
     }
     fn multicurve_end(&mut self, idx: usize) -> Result<()> {
         self.wkt_writer.multicurve_end(self.offset_geom_idx(idx))
     }
     fn multisurface_begin(&mut self, size: usize, idx: usize) -> Result<()> {
-        self.wkt_writer.multisurface_begin(size, self.offset_geom_idx(idx))
+        self.wkt_writer
+            .multisurface_begin(size, self.offset_geom_idx(idx))
     }
     fn multisurface_end(&mut self, idx: usize) -> Result<()> {
         self.wkt_writer.multisurface_end(self.offset_geom_idx(idx))
     }
     fn triangle_begin(&mut self, tagged: bool, size: usize, idx: usize) -> Result<()> {
-        self.wkt_writer.triangle_begin(tagged, size, self.offset_geom_idx(idx))
+        self.wkt_writer
+            .triangle_begin(tagged, size, self.offset_geom_idx(idx))
     }
     fn triangle_end(&mut self, tagged: bool, idx: usize) -> Result<()> {
-        self.wkt_writer.triangle_end(tagged, self.offset_geom_idx(idx))
+        self.wkt_writer
+            .triangle_end(tagged, self.offset_geom_idx(idx))
     }
     fn polyhedralsurface_begin(&mut self, size: usize, idx: usize) -> Result<()> {
-        self.wkt_writer.polyhedralsurface_begin(size, self.offset_geom_idx(idx))
+        self.wkt_writer
+            .polyhedralsurface_begin(size, self.offset_geom_idx(idx))
     }
     fn polyhedralsurface_end(&mut self, idx: usize) -> Result<()> {
         self.wkt_writer
@@ -495,11 +511,8 @@ POINT(1 45),904 7th Av,05/22/2019 12:55:00 PM,F190051945,Car Fire
 "POLYGON((3 1,3 2,3 1))",Bar
 "#;
 
-        let actual_output = crate::geojson::GeoJson(&input_geojson)
-            .to_csv()
-            .unwrap();
+        let actual_output = crate::geojson::GeoJson(&input_geojson).to_csv().unwrap();
 
         assert_eq!(expected_output, actual_output);
-
     }
 }
