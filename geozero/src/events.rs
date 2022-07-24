@@ -275,7 +275,7 @@ pub enum GeometryType {
 }
 
 #[derive(PartialEq, Debug)]
-enum Vstate {
+pub(crate) enum Vstate {
     Initial,
     Point,
     LineString,

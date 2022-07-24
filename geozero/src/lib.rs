@@ -34,6 +34,7 @@ pub mod error;
 pub mod events;
 mod feature_processor;
 mod geometry_processor;
+pub mod iterator;
 mod multiplex;
 pub mod processor;
 mod property_processor;
