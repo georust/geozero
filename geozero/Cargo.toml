@@ -24,7 +24,7 @@ with-wkb = ["scroll", "with-wkt"]
 with-gpkg = ["with-wkb", "sqlx/sqlite"]
 with-postgis-sqlx = ["with-wkb", "sqlx/postgres"]
 with-postgis-postgres = ["with-wkb", "postgres-types", "bytes"]
-with-mvt = ["prost"]
+with-mvt = ["prost", "prost-build"]
 with-tessellator = ["lyon"]
 
 [dependencies]
@@ -60,7 +60,7 @@ sqlx = { version = "0.6", default-features = false, features = [ "runtime-tokio-
 tokio = { version = "1.17.0", default-features = false, features = ["macros"] }
 
 [build-dependencies]
-prost-build = "0.10"
+prost-build = { version = "0.10", optional = true }
 
 [package.metadata.docs.rs]
 #all-features = true
