@@ -1,3 +1,4 @@
+#[cfg(feature = "with-mvt")]
 use std::{
     env,
     fs::OpenOptions,
@@ -5,7 +6,8 @@ use std::{
     path::Path,
 };
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+#[cfg(feature = "with-mvt")]
+fn compile_protos() -> Result<(), Box<dyn std::error::Error>> {
     // override the build location, in order to check in the changes to proto files
     env::set_var("OUT_DIR", "src/mvt");
 
@@ -33,5 +35,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // As the proto file is checked in, the build should not fail if the file is not found
+    Ok(())
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    #[cfg(feature = "with-mvt")]
+    compile_protos()?;
+
     Ok(())
 }
