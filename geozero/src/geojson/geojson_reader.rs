@@ -1,10 +1,9 @@
-use crate::error::{GeozeroError, Result};
+use crate::error::Result;
 use crate::{
     ColumnValue, FeatureProcessor, GeomProcessor, GeozeroDatasource, GeozeroGeometry,
     PropertyProcessor,
 };
-use geojson::Feature;
-use geojson::FeatureIterator;
+use geojson::{Feature, FeatureReader};
 use geojson::{GeoJson as GeoGeoJson, Geometry, Value};
 use serde_json::map::Map;
 use serde_json::value::Value as JsonValue;
@@ -54,15 +53,13 @@ impl<'a, R: Read> GeozeroDatasource for GeoJsonReader<'a, R> {
 pub fn read_geojson<R: Read, P: FeatureProcessor>(mut reader: R, processor: &mut P) -> Result<()> {
     let mut geojson_str = String::new();
     reader.read_to_string(&mut geojson_str)?;
-    let geojson = geojson_str
-        .parse::<GeoGeoJson>()
-        .map_err(|e| GeozeroError::Geometry(e.to_string()))?;
+    let geojson = geojson_str.parse::<GeoGeoJson>()?;
     process_geojson(&geojson, processor)
 }
 
 pub fn read_geojson_fc<R: Read, P: FeatureProcessor>(reader: R, processor: &mut P) -> Result<()> {
     let mut idx = 0;
-    for feature in FeatureIterator::new(reader) {
+    for feature in FeatureReader::from_reader(reader).features() {
         process_geojson_feature(&feature?, idx, processor)?;
         idx += 1;
     }
@@ -76,9 +73,7 @@ pub fn read_geojson_geom<R: Read, P: GeomProcessor>(
 ) -> Result<()> {
     let mut geojson_str = String::new();
     reader.read_to_string(&mut geojson_str)?;
-    let geojson = geojson_str
-        .parse::<GeoGeoJson>()
-        .map_err(|e| GeozeroError::Geometry(e.to_string()))?;
+    let geojson = geojson_str.parse::<GeoGeoJson>()?;
     process_geojson_geom(&geojson, processor)
 }
 
