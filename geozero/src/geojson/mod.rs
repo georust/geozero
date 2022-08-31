@@ -45,6 +45,15 @@ pub(crate) mod conversion {
     }
 }
 
+impl From<geojson::Error> for crate::error::GeozeroError {
+    fn from(geojson_error: geojson::Error) -> Self {
+        match geojson_error {
+            geojson::Error::Io(io) => Self::IoError(io),
+            other => Self::Geometry(other.to_string()),
+        }
+    }
+}
+
 #[cfg(feature = "with-wkb")]
 mod wkb {
     use super::geojson_writer::*;
