@@ -74,6 +74,9 @@ pub use crate::geos::conversion::*;
 #[cfg(feature = "with-gpkg")]
 pub mod gpkg;
 
+#[cfg(feature = "with-gpx")]
+pub mod gpx;
+
 #[cfg(any(feature = "with-postgis-postgres", feature = "with-postgis-sqlx"))]
 pub mod postgis;
 
