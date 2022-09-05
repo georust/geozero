@@ -155,4 +155,62 @@ mod test {
         ])]));
         assert_eq!(expected, actual);
     }
+
+    #[test]
+    fn test_extensive() {
+        let gpx_str = include_str!("fixtures/extensive.gpx");
+        let mut cursor = io::Cursor::new(gpx_str);
+        let mut geo_writer = crate::geo_types::GeoWriter::new();
+        read_gpx(&mut cursor, &mut geo_writer).unwrap();
+        let actual = geo_writer.take_geometry().unwrap();
+        let expected = Geometry::GeometryCollection(GeometryCollection(vec![
+            Geometry::MultiPoint(MultiPoint(vec![
+                Point(Coordinate {
+                    x: -1.5153741828293,
+                    y: 47.253146555709,
+                }),
+                Point(Coordinate {
+                    x: -1.5482325613225,
+                    y: 47.235331031612,
+                }),
+            ])),
+            Geometry::MultiLineString(MultiLineString(vec![
+                LineString(vec![
+                    Coordinate {
+                        x: -1.5521714646550901,
+                        y: 47.2278526991611,
+                    },
+                    Coordinate {
+                        x: -1.5504753767742476,
+                        y: 47.229236980562256,
+                    },
+                ]),
+                LineString(vec![
+                    Coordinate {
+                        x: -1.5493804339650867,
+                        y: 47.2301112449252,
+                    },
+                    Coordinate {
+                        x: -1.5485645942249218,
+                        y: 47.230562942529104,
+                    },
+                ]),
+            ])),
+            Geometry::MultiLineString(MultiLineString(vec![LineString(vec![
+                Coordinate {
+                    x: -1.5521714646550901,
+                    y: 47.2278526991611,
+                },
+                Coordinate {
+                    x: -1.5504753767742476,
+                    y: 47.229236980562256,
+                },
+                Coordinate {
+                    x: -1.5493804339650867,
+                    y: 47.2301112449252,
+                },
+            ])])),
+        ]));
+        assert_eq!(expected, actual);
+    }
 }
