@@ -25,7 +25,7 @@ fn process_top_level_waypoints<P: crate::GeomProcessor>(
         return Ok(());
     }
     processor.multipoint_begin(gpx_reader.waypoints.len(), 0)?;
-    process_waypoints_iter(gpx_reader.waypoints.iter(), processor, 0)?;
+    process_waypoints_iter(gpx_reader.waypoints.iter(), processor)?;
     processor.multipoint_end(0)?;
     Ok(())
 }
@@ -52,7 +52,7 @@ fn process_track_segments<P: crate::GeomProcessor>(
         return Ok(());
     }
     processor.multilinestring_begin(track.segments.len(), index)?;
-    for segment in &track.segments {
+    for (index, segment) in track.segments.iter().enumerate() {
         process_track_segment(segment, processor, index)?;
     }
     processor.multilinestring_end(index)?;
@@ -68,7 +68,7 @@ fn process_track_segment<P: crate::GeomProcessor>(
         return Ok(());
     }
     processor.linestring_begin(false, segment.points.len(), index)?;
-    process_waypoints_iter(segment.points.iter(), processor, index)?;
+    process_waypoints_iter(segment.points.iter(), processor)?;
     processor.linestring_end(false, index)?;
     Ok(())
 }
@@ -97,7 +97,7 @@ fn process_route<P: crate::GeomProcessor>(
         return Ok(());
     }
     processor.linestring_begin(false, route.points.len(), index)?;
-    process_waypoints_iter(route.points.iter(), processor, index)?;
+    process_waypoints_iter(route.points.iter(), processor)?;
     processor.linestring_end(false, index)?;
     Ok(())
 }
@@ -105,9 +105,8 @@ fn process_route<P: crate::GeomProcessor>(
 fn process_waypoints_iter<'a, P: crate::GeomProcessor>(
     iter: impl Iterator<Item = &'a gpx::Waypoint>,
     processor: &mut P,
-    index: usize,
 ) -> crate::error::Result<()> {
-    for waypoint in iter {
+    for (index, waypoint) in iter.enumerate() {
         let point = waypoint.point();
         processor.xy(point.x(), point.y(), index)?;
     }
@@ -174,28 +173,25 @@ mod test {
                     y: 47.235331031612,
                 }),
             ])),
-            Geometry::MultiLineString(MultiLineString(vec![
-                LineString(vec![
-                    Coordinate {
-                        x: -1.5521714646550901,
-                        y: 47.2278526991611,
-                    },
-                    Coordinate {
-                        x: -1.5504753767742476,
-                        y: 47.229236980562256,
-                    },
-                ]),
-                LineString(vec![
-                    Coordinate {
-                        x: -1.5493804339650867,
-                        y: 47.2301112449252,
-                    },
-                    Coordinate {
-                        x: -1.5485645942249218,
-                        y: 47.230562942529104,
-                    },
-                ]),
-            ])),
+            Geometry::MultiLineString(MultiLineString(vec![LineString(vec![
+                Coordinate {
+                    x: -1.5521714646550901,
+                    y: 47.2278526991611,
+                },
+                Coordinate {
+                    x: -1.5504753767742476,
+                    y: 47.229236980562256,
+                },
+            ]), LineString(vec![
+                Coordinate {
+                    x: -1.5493804339650867,
+                    y: 47.2301112449252,
+                },
+                Coordinate {
+                    x: -1.5485645942249218,
+                    y: 47.230562942529104,
+                },
+            ])])),
             Geometry::MultiLineString(MultiLineString(vec![LineString(vec![
                 Coordinate {
                     x: -1.5521714646550901,
