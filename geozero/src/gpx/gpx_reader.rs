@@ -185,25 +185,28 @@ mod test {
                     y: 47.235331031612,
                 }),
             ])),
-            Geometry::MultiLineString(MultiLineString(vec![LineString(vec![
-                Coordinate {
-                    x: -1.5521714646550901,
-                    y: 47.2278526991611,
-                },
-                Coordinate {
-                    x: -1.5504753767742476,
-                    y: 47.229236980562256,
-                },
-            ]), LineString(vec![
-                Coordinate {
-                    x: -1.5493804339650867,
-                    y: 47.2301112449252,
-                },
-                Coordinate {
-                    x: -1.5485645942249218,
-                    y: 47.230562942529104,
-                },
-            ])])),
+            Geometry::MultiLineString(MultiLineString(vec![
+                LineString(vec![
+                    Coordinate {
+                        x: -1.5521714646550901,
+                        y: 47.2278526991611,
+                    },
+                    Coordinate {
+                        x: -1.5504753767742476,
+                        y: 47.229236980562256,
+                    },
+                ]),
+                LineString(vec![
+                    Coordinate {
+                        x: -1.5493804339650867,
+                        y: 47.2301112449252,
+                    },
+                    Coordinate {
+                        x: -1.5485645942249218,
+                        y: 47.230562942529104,
+                    },
+                ]),
+            ])),
             Geometry::MultiLineString(MultiLineString(vec![LineString(vec![
                 Coordinate {
                     x: -1.5521714646550901,
