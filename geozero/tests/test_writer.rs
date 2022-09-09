@@ -110,7 +110,7 @@ impl geozero::GeomProcessor for TestWriter {
         Ok(())
     }
 
-    fn linestring_begin(&mut self, tagged: bool, _size: usize, idx: usize) -> Result<()> {
+    fn linestring_begin(&mut self, _tagged: bool, _size: usize, idx: usize) -> Result<()> {
         self.0.push(Cmd::LineStringBegin { idx });
         Ok(())
     }
@@ -130,7 +130,7 @@ impl geozero::GeomProcessor for TestWriter {
         Ok(())
     }
 
-    fn polygon_begin(&mut self, tagged: bool, _size: usize, idx: usize) -> Result<()> {
+    fn polygon_begin(&mut self, _tagged: bool, _size: usize, idx: usize) -> Result<()> {
         self.0.push(Cmd::PolygonBegin { idx });
         Ok(())
     }
@@ -160,7 +160,7 @@ impl geozero::GeomProcessor for TestWriter {
         Ok(())
     }
 
-    fn circularstring_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
+    fn circularstring_begin(&mut self, _size: usize, _idx: usize) -> Result<()> {
         Ok(())
     }
 
@@ -168,7 +168,7 @@ impl geozero::GeomProcessor for TestWriter {
         Ok(())
     }
 
-    fn compoundcurve_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
+    fn compoundcurve_begin(&mut self, _size: usize, _idx: usize) -> Result<()> {
         Ok(())
     }
 
@@ -176,7 +176,7 @@ impl geozero::GeomProcessor for TestWriter {
         Ok(())
     }
 
-    fn curvepolygon_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
+    fn curvepolygon_begin(&mut self, _size: usize, _idx: usize) -> Result<()> {
         Ok(())
     }
 
@@ -184,7 +184,7 @@ impl geozero::GeomProcessor for TestWriter {
         Ok(())
     }
 
-    fn multicurve_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
+    fn multicurve_begin(&mut self, _size: usize, _idx: usize) -> Result<()> {
         Ok(())
     }
 
@@ -192,7 +192,7 @@ impl geozero::GeomProcessor for TestWriter {
         Ok(())
     }
 
-    fn multisurface_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
+    fn multisurface_begin(&mut self, _size: usize, _idx: usize) -> Result<()> {
         Ok(())
     }
 
@@ -200,7 +200,7 @@ impl geozero::GeomProcessor for TestWriter {
         Ok(())
     }
 
-    fn triangle_begin(&mut self, tagged: bool, _size: usize, idx: usize) -> Result<()> {
+    fn triangle_begin(&mut self, _tagged: bool, _size: usize, _idx: usize) -> Result<()> {
         Ok(())
     }
 
@@ -208,7 +208,7 @@ impl geozero::GeomProcessor for TestWriter {
         Ok(())
     }
 
-    fn polyhedralsurface_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
+    fn polyhedralsurface_begin(&mut self, _size: usize, _idx: usize) -> Result<()> {
         Ok(())
     }
 
@@ -216,7 +216,7 @@ impl geozero::GeomProcessor for TestWriter {
         Ok(())
     }
 
-    fn tin_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
+    fn tin_begin(&mut self, _size: usize, _idx: usize) -> Result<()> {
         Ok(())
     }
 
