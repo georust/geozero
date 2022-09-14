@@ -1,3 +1,6 @@
+use geozero::gpx::{Gpx, GpxReader};
+use serde_json::json;
+
 use std::io;
 
 mod test_writer;
@@ -74,4 +77,88 @@ fn test_wikipedia_example() {
             Cmd::MultiLineStringEnd { idx: 0 },
         ]
     );
+}
+
+mod wikipedia_example_conversions {
+    use super::*;
+
+    #[test]
+    fn to_json() {
+        let gpx_str = include_str!("data/wikipedia_example.gpx");
+        let mut cursor = io::Cursor::new(gpx_str);
+        let mut reader = GpxReader(&mut cursor);
+
+        use geozero::ProcessToJson;
+        let geojson = reader.to_json().unwrap();
+        assert_eq!(
+            r#"{"type": "MultiLineString", "coordinates": [[[-122.326897,47.644548],[-122.326897,47.644548],[-122.326897,47.644548]]]}"#,
+            geojson
+        );
+    }
+
+    #[test]
+    fn to_svg() {
+        let gpx_str = include_str!("data/wikipedia_example.gpx");
+        let mut cursor = io::Cursor::new(gpx_str);
+        let mut reader = GpxReader(&mut cursor);
+
+        use geozero::ProcessToSvg;
+        let geojson = reader.to_svg().unwrap();
+        assert_eq!(
+            r#"<path d="M -122.326897 47.644548 -122.326897 47.644548 -122.326897 47.644548 Z "/>"#,
+            geojson
+        );
+    }
+
+    #[test]
+    fn to_wkt() {
+        let gpx_str = include_str!("data/wikipedia_example.gpx");
+        let mut reader = Gpx(gpx_str);
+
+        use geozero::ToWkt;
+        let wkt = reader.to_wkt().unwrap();
+        assert_eq!(
+            r#"MULTILINESTRING((-122.326897 47.644548,-122.326897 47.644548,-122.326897 47.644548))"#,
+            wkt
+        );
+    }
+}
+
+mod extensive_conversion {
+    use super::*;
+
+    #[test]
+    fn to_geojson() {
+        let gpx_str = include_str!("data/extensive.gpx");
+        let mut cursor = io::Cursor::new(gpx_str);
+        let mut reader = GpxReader(&mut cursor);
+
+        use geozero::ProcessToJson;
+        let geojson = reader.to_json().unwrap();
+        let actual_json: serde_json::Value = serde_json::from_str(&geojson).unwrap();
+        let expected_json: serde_json::Value = serde_json::from_str(r#""to fill in""#).unwrap();
+        assert_eq!(actual_json, expected_json)
+    }
+
+    #[test]
+    fn to_svg() {
+        let gpx_str = include_str!("data/extensive.gpx");
+        let mut reader = Gpx(gpx_str);
+
+        use geozero::ToSvg;
+        let actual_svg = reader.to_svg().unwrap();
+        let expected_svg: &str = "to fill in";
+        assert_eq!(expected_svg, actual_svg);
+    }
+
+    #[test]
+    fn to_wkt() {
+        let gpx_str = include_str!("data/extensive.gpx");
+        let mut reader = Gpx(gpx_str);
+
+        use geozero::ToWkt;
+        let wkt = reader.to_wkt().unwrap();
+        let expected_wkt: &str = "to fill in";
+        assert_eq!(expected_wkt, wkt);
+    }
 }
