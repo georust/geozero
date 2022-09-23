@@ -68,7 +68,7 @@ prost-build = { version = "0.10", optional = true }
 #all-features = true
 #rustc-args = ["--cfg", "docsrs"]
 # Disable GDAL for docs.rs build, as a workaround for https://github.com/georust/gdal/issues/240
-features = ["with-geos", "with-wkb", "with-gpkg", "with-postgis-sqlx", "with-postgis-postgres", "with-mvt", "with-tessellator", "with-csv", "with-arrow"]
+features = ["with-geos", "with-wkb", "with-gpkg", "with-postgis-sqlx", "with-postgis-postgres", "with-mvt", "with-tessellator", "with-csv", "with-arrow", "with-gpx"]
 
 [[test]]
 name = "gdal"
@@ -114,6 +114,11 @@ required-features = ["with-geo"]
 name = "postgis"
 path = "tests/postgis.rs"
 required-features = ["with-wkb", "with-wkt", "with-geo"]
+
+[[test]]
+name = "gpx"
+path = "tests/gpx.rs"
+required-features = ["with-gpx", "with-wkt", "with-geojson"]
 
 [[test]]
 name = "svg"

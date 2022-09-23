@@ -57,6 +57,7 @@ pub enum Cmd {
     },
     GeometryCollectionBegin {
         idx: usize,
+        size: usize,
     },
     GeometryCollectionEnd {
         idx: usize,
@@ -150,8 +151,8 @@ impl geozero::GeomProcessor for TestWriter {
         Ok(())
     }
 
-    fn geometrycollection_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
-        self.0.push(Cmd::GeometryCollectionBegin { idx });
+    fn geometrycollection_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        self.0.push(Cmd::GeometryCollectionBegin { idx, size });
         Ok(())
     }
 
