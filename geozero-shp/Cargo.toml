@@ -14,7 +14,7 @@ keywords = ["geo", "shapefile"]
 thiserror = "1.0"
 geozero = { version = "0.9.4", default-features = false }
 byteorder = "1.4.3"
-dbase = "0.2.3"
+dbase = "0.3"
 
 [dev-dependencies]
 geozero = { version = "0.9.4", default-features = true }

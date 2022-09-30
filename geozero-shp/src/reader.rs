@@ -1,7 +1,7 @@
 use crate::shp_reader::{read_shape, RecordHeader};
 use crate::shx_reader::{read_index_file, ShapeIndex};
 use crate::{header, Error};
-pub use dbase::FieldInfo;
+pub use dbase::{FieldInfo,FieldType};
 use geozero::{FeatureProcessor, FeatureProperties, GeomProcessor};
 use std::fs::File;
 use std::io::{BufReader, Read, Seek};
