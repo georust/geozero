@@ -88,7 +88,7 @@ mod wikipedia_example_conversions {
     use super::*;
 
     #[test]
-    fn to_json() {
+    fn to_geojson() {
         let gpx_str = include_str!("data/wikipedia_example.gpx");
         let mut cursor = io::Cursor::new(gpx_str);
         let mut reader = GpxReader(&mut cursor);
@@ -96,7 +96,7 @@ mod wikipedia_example_conversions {
         use geozero::ProcessToJson;
         let geojson = reader.to_json().unwrap();
         assert_eq!(
-            r#"{"type": "MultiLineString", "coordinates": [[[-122.326897,47.644548],[-122.326897,47.644548],[-122.326897,47.644548]]]}"#,
+            "{\"type\": \"GeometryCollection\", \"geometries\": [{\"type\": \"MultiLineString\", \"coordinates\": [[[-122.326897,47.644548],[-122.326897,47.644548],[-122.326897,47.644548]]]}]}",
             geojson
         );
     }
@@ -123,7 +123,7 @@ mod wikipedia_example_conversions {
         use geozero::ToWkt;
         let wkt = reader.to_wkt().unwrap();
         assert_eq!(
-            r#"MULTILINESTRING((-122.326897 47.644548,-122.326897 47.644548,-122.326897 47.644548))"#,
+            r#"GEOMETRYCOLLECTION(MULTILINESTRING((-122.326897 47.644548,-122.326897 47.644548,-122.326897 47.644548)))"#,
             wkt
         );
     }
@@ -140,9 +140,10 @@ mod extensive_conversion {
 
         use geozero::ProcessToJson;
         let geojson = reader.to_json().unwrap();
-        let actual_json: serde_json::Value = serde_json::from_str(&geojson).unwrap();
-        let expected_json: serde_json::Value = serde_json::from_str(r#""to fill in""#).unwrap();
-        assert_eq!(actual_json, expected_json)
+        assert_eq!(
+            "{\"type\": \"GeometryCollection\", \"geometries\": [{\"type\": \"Point\", \"coordinates\": [-1.5153741828293,47.253146555709]},{\"type\": \"Point\", \"coordinates\": [-1.5482325613225,47.235331031612]},{\"type\": \"MultiLineString\", \"coordinates\": [[[-1.5521714646550901,47.2278526991611],[-1.5504753767742476,47.229236980562256]],[[-1.5493804339650867,47.2301112449252],[-1.5485645942249218,47.230562942529104]]]},{\"type\": \"MultiLineString\", \"coordinates\": [[[-1.5521714646550901,47.2278526991611],[-1.5504753767742476,47.229236980562256],[-1.5493804339650867,47.2301112449252]]]}]}",
+            geojson
+        );
     }
 
     #[test]
@@ -152,7 +153,7 @@ mod extensive_conversion {
 
         use geozero::ToSvg;
         let actual_svg = reader.to_svg().unwrap();
-        let expected_svg: &str = "to fill in";
+        let expected_svg: &str = "<path d=\"M -1.5153741828293 47.253146555709 Z\"/><path d=\"M -1.5482325613225 47.235331031612 Z\"/><path d=\"M -1.5521714646550901 47.2278526991611 -1.5504753767742476 47.229236980562256 Z M -1.5493804339650867 47.2301112449252 -1.5485645942249218 47.230562942529104 Z \"/><path d=\"M -1.5521714646550901 47.2278526991611 -1.5504753767742476 47.229236980562256 -1.5493804339650867 47.2301112449252 Z \"/>";
         assert_eq!(expected_svg, actual_svg);
     }
 
@@ -163,7 +164,7 @@ mod extensive_conversion {
 
         use geozero::ToWkt;
         let wkt = reader.to_wkt().unwrap();
-        let expected_wkt: &str = "to fill in";
+        let expected_wkt: &str = "GEOMETRYCOLLECTION(POINT(-1.5153741828293 47.253146555709),POINT(-1.5482325613225 47.235331031612),MULTILINESTRING((-1.5521714646550901 47.2278526991611,-1.5504753767742476 47.229236980562256),(-1.5493804339650867 47.2301112449252,-1.5485645942249218 47.230562942529104)),MULTILINESTRING((-1.5521714646550901 47.2278526991611,-1.5504753767742476 47.229236980562256,-1.5493804339650867 47.2301112449252)))";
         assert_eq!(expected_wkt, wkt);
     }
 }
