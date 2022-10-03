@@ -83,7 +83,15 @@ impl geozero::GeomProcessor for TestWriter {
         tm: Option<u64>,
         idx: usize,
     ) -> Result<()> {
-        self.0.push(Cmd::Coordinate { idx, x, y, z, m, t, tm });
+        self.0.push(Cmd::Coordinate {
+            idx,
+            x,
+            y,
+            z,
+            m,
+            t,
+            tm,
+        });
         Ok(())
     }
 

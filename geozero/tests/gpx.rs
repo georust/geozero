@@ -4,7 +4,7 @@ use std::io;
 
 mod test_writer;
 
-use test_writer::{TestWriter, Cmd};
+use test_writer::{Cmd, TestWriter};
 
 #[test]
 fn test_empty_str() {
