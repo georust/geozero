@@ -118,7 +118,7 @@ mod wikipedia_example_conversions {
     #[test]
     fn to_wkt() {
         let gpx_str = include_str!("data/wikipedia_example.gpx");
-        let mut reader = Gpx(gpx_str);
+        let reader = Gpx(gpx_str);
 
         use geozero::ToWkt;
         let wkt = reader.to_wkt().unwrap();
@@ -148,7 +148,7 @@ mod extensive_conversion {
     #[test]
     fn to_svg() {
         let gpx_str = include_str!("data/extensive.gpx");
-        let mut reader = Gpx(gpx_str);
+        let reader = Gpx(gpx_str);
 
         use geozero::ToSvg;
         let actual_svg = reader.to_svg().unwrap();
@@ -159,7 +159,7 @@ mod extensive_conversion {
     #[test]
     fn to_wkt() {
         let gpx_str = include_str!("data/extensive.gpx");
-        let mut reader = Gpx(gpx_str);
+        let reader = Gpx(gpx_str);
 
         use geozero::ToWkt;
         let wkt = reader.to_wkt().unwrap();
