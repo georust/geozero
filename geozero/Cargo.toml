@@ -31,7 +31,7 @@ with-tessellator = ["lyon"]
 [dependencies]
 csv = { version = "1.1.6", optional = true }
 thiserror = "1.0"
-geojson = { version = "0.23.0", optional = true }
+geojson = { version = "0.24.0", optional = true }
 serde_json = "1.0.79"
 geo-types = { version = "0.7", default-features = false, optional = true }
 geos = { version = "8.0", optional = true }
@@ -65,10 +65,8 @@ tokio = { version = "1.17.0", default-features = false, features = ["macros"] }
 prost-build = { version = "0.10", optional = true }
 
 [package.metadata.docs.rs]
-#all-features = true
-#rustc-args = ["--cfg", "docsrs"]
-# Disable GDAL for docs.rs build, as a workaround for https://github.com/georust/gdal/issues/240
-features = ["with-geos", "with-wkb", "with-gpkg", "with-postgis-sqlx", "with-postgis-postgres", "with-mvt", "with-tessellator", "with-csv", "with-arrow", "with-gpx"]
+all-features = true
+rustc-args = ["--cfg", "docsrs"]
 
 [[test]]
 name = "gdal"

@@ -22,6 +22,7 @@ fn fgb_to_geojson() -> Result<()> {
 }
 
 #[allow(dead_code)]
+// #[tokio::test]
 async fn http_fbg_to_json() -> Result<()> {
     let url = "https://flatgeobuf.org/test/data/countries.fgb";
     let mut fgb = HttpFgbReader::open(url)
@@ -35,11 +36,3 @@ async fn http_fbg_to_json() -> Result<()> {
 
     Ok(())
 }
-
-// #[test]
-// fn http_json() {
-//     assert!(tokio::runtime::Runtime::new()
-//         .unwrap()
-//         .block_on(http_fbg_to_json())
-//         .is_ok());
-// }

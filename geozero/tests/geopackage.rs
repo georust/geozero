@@ -1,7 +1,7 @@
 use geozero::wkb;
 use sqlx::sqlite::SqlitePoolOptions;
-use tokio::runtime::Runtime;
 
+#[tokio::test]
 async fn geometry_columns_query() -> Result<(), sqlx::Error> {
     let pool = SqlitePoolOptions::new()
         .max_connections(5)
@@ -20,17 +20,7 @@ async fn geometry_columns_query() -> Result<(), sqlx::Error> {
     Ok(())
 }
 
-#[test]
-fn async_geometry_columns_query() {
-    assert_eq!(
-        Runtime::new()
-            .unwrap()
-            .block_on(geometry_columns_query())
-            .map_err(|e| e.to_string()),
-        Ok(())
-    );
-}
-
+#[tokio::test]
 async fn blob_query() -> Result<(), sqlx::Error> {
     use geozero::ToWkt;
 
@@ -49,17 +39,7 @@ async fn blob_query() -> Result<(), sqlx::Error> {
     Ok(())
 }
 
-#[test]
-fn async_blob_query() {
-    assert_eq!(
-        Runtime::new()
-            .unwrap()
-            .block_on(blob_query())
-            .map_err(|e| e.to_string()),
-        Ok(())
-    );
-}
-
+#[tokio::test]
 async fn rust_geo_query() -> Result<(), sqlx::Error> {
     use geozero::ToWkt;
 
@@ -81,17 +61,7 @@ async fn rust_geo_query() -> Result<(), sqlx::Error> {
     Ok(())
 }
 
-#[test]
-fn async_rust_geo_query() {
-    assert_eq!(
-        Runtime::new()
-            .unwrap()
-            .block_on(rust_geo_query())
-            .map_err(|e| e.to_string()),
-        Ok(())
-    );
-}
-
+#[tokio::test]
 #[cfg(feature = "with-geos")]
 async fn geos_query() -> Result<(), sqlx::Error> {
     use geos::Geom;
@@ -128,16 +98,4 @@ async fn geos_query() -> Result<(), sqlx::Error> {
     // tx.commit().await?;
 
     Ok(())
-}
-
-#[test]
-#[cfg(feature = "with-geos")]
-fn async_geos_query() {
-    assert_eq!(
-        Runtime::new()
-            .unwrap()
-            .block_on(geos_query())
-            .map_err(|e| e.to_string()),
-        Ok(())
-    );
 }
