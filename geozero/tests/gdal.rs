@@ -1,3 +1,4 @@
+use gdal::vector::LayerAccess;
 use gdal::Dataset;
 use geozero::gdal::process_geom;
 use geozero::svg::SvgWriter;
