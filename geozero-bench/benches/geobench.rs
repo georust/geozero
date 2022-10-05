@@ -216,7 +216,7 @@ mod gpkg {
 
 mod gdal {
     use super::Extent;
-    use gdal::vector::{Geometry, Layer};
+    use gdal::vector::{Geometry, Layer, LayerAccess};
     use gdal::Dataset;
     use std::path::Path;
 
