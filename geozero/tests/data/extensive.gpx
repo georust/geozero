@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<gpx version="1.1" creator="Raidy">
+    <metadata>
+        <name>GPX DEMO</name>
+        <desc>A full featured gpx demo file</desc>
+        <author>
+            <name>Demo Author</name>
+            <email id="demo" domain="example.com"></email>
+            <link href="http://example.com">
+                <text>Author website</text>
+                <type>Web</type>
+            </link>
+        </author>
+        <copyright author="Lucas Trebouet Voisin">
+            <year>2020</year>
+            <license>MIT</license>
+        </copyright>
+        <link href="http://example.com">
+            <text>Author website</text>
+            <type>Web</type>
+        </link>
+        <time>2019-10-12T07:20:50.52Z</time>
+        <keywords>Demo, gpx, file</keywords>
+        <bounds minlat="40.12965660728301" minlon="-1.5521714646550901" maxlat="45.85097922514941"
+                maxlon="4.336738935765406"></bounds>
+    </metadata>
+    <wpt lat="47.253146555709" lon="-1.5153741828293">
+        <name>Porte de Carquefou</name>
+        <desc>Route</desc>
+        <ele>35</ele>
+        <time>2020-02-02T07:54:30Z</time>
+        <cmt>Warning</cmt>
+    </wpt>
+    <wpt lat="47.235331031612" lon="-1.5482325613225">
+        <name>Pont de la Tortière</name>
+        <desc>Route</desc>
+        <ele>20</ele>
+        <time>2020-02-02T07:54:30Z</time>
+        <cmt>Bridge</cmt>
+    </wpt>
+    <trk>
+        <name>Track</name>
+        <cmt>Bridge</cmt>
+        <desc>Demo track</desc>
+        <src>GPX Parser</src>
+        <number>1</number>
+        <link href="http://example.com">
+            <text>Author website</text>
+            <type>Web</type>
+        </link>
+        <type>MTB</type>
+        <trkseg>
+            <trkpt lat="47.2278526991611" lon="-1.5521714646550901">
+                <ele>12.36</ele>
+                <time>2020-02-02T07:54:30Z</time>
+            </trkpt>
+            <trkpt lat="47.229236980562256" lon="-1.5504753767742476">
+                <ele>7.08</ele>
+                <time>2020-02-02T07:54:30Z</time>
+            </trkpt>
+        </trkseg>
+        <trkseg>
+            <trkpt lat="47.2301112449252" lon="-1.5493804339650867">
+                <ele>7.07</ele>
+                <time>2020-02-02T07:54:30Z</time>
+            </trkpt>
+            <trkpt lat="47.230562942529104" lon="-1.5485645942249218">
+                <ele>7.44</ele>
+                <time>2020-02-02T07:54:30Z</time>
+            </trkpt>
+        </trkseg>
+    </trk>
+    <rte>
+        <name>Track</name>
+        <cmt>Bridge</cmt>
+        <desc>Demo track</desc>
+        <src>GPX Parser</src>
+        <number>1</number>
+        <link href="http://example.com">
+            <text>Author website</text>
+            <type>Web</type>
+        </link>
+        <type>MTB</type>
+        <rtept lat="47.2278526991611" lon="-1.5521714646550901">
+            <ele>12.36</ele>
+            <time>2020-02-02T07:54:30Z</time>
+        </rtept>
+        <rtept lat="47.229236980562256" lon="-1.5504753767742476">
+            <ele>7.08</ele>
+            <time>2020-02-02T07:54:30Z</time>
+        </rtept>
+        <rtept lat="47.2301112449252" lon="-1.5493804339650867">
+            <ele>7.07</ele>
+            <time>2020-02-02T07:54:30Z</time>
+        </rtept>
+    </rte>
+</gpx>

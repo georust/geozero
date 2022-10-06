@@ -25,6 +25,7 @@
 //! | GeoJSON   | [GeoJson](geojson::GeoJson), [GeoJsonString](geojson::GeoJsonString) | XYZ        | [GeoJsonReader](geojson::GeoJsonReader), [GeoJson](geojson::GeoJson) | [ToJson]            | [GeoJsonWriter](geojson::GeoJsonWriter) |
 //! | GDAL      | `gdal::vector::Geometry`                                             | XYZ        | -                                                                    | [ToGdal]            | [GdalWriter](gdal::GdalWriter)          |
 //! | GEOS      | `geos::Geometry`                                                     | XYZ        | -                                                                    | [ToGeos]            | [GeosWriter](geos::GeosWriter)          |
+//! | GPX       |                                                                      | XY         | [GpxReader](gpx::GpxReader)                                          |                     |                                         |
 //! | MVT       | [mvt::tile::Feature]                                                 | XY         | [mvt::tile::Layer]                                                   | [ToMvt]             | [MvtWriter](mvt::MvtWriter)             |
 //! | SVG       | -                                                                    | XY         | -                                                                    | [ToSvg]             | [SvgWriter](svg::SvgWriter)             |
 //! | WKB       | [Wkb](wkb::Wkb), [Ewkb](wkb::Ewkb), [GpkgWkb](wkb::GpkgWkb)          | XYZM       | -                                                                    | [ToWkb]             | [WkbWriter](wkb::WkbWriter)             |
@@ -73,6 +74,9 @@ pub use crate::geos::conversion::*;
 
 #[cfg(feature = "with-gpkg")]
 pub mod gpkg;
+
+#[cfg(feature = "with-gpx")]
+pub mod gpx;
 
 #[cfg(any(feature = "with-postgis-postgres", feature = "with-postgis-sqlx"))]
 pub mod postgis;

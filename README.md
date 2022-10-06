@@ -32,6 +32,7 @@ Supported dimensions: X, Y, Z, M, T
 * SVG Writer
 * [geo-types](https://github.com/georust/geo) Reader + Writer
 * MVT (Mapbox Vector Tiles) Reader + Writer
+* GPX Reader
 
 [geozero-shp](https://github.com/georust/geozero/tree/master/geozero-shp) [![crates.io version](https://img.shields.io/crates/v/geozero-shp.svg)](https://crates.io/crates/geozero-shp)
 [![docs.rs docs](https://docs.rs/geozero-shp/badge.svg)](https://docs.rs/geozero-shp)
