@@ -44,7 +44,7 @@ mod test {
     fn multipoly_file() -> arrow2::error::Result<()> {
         let mut file = File::open("tests/data/countries.arrow")?;
         let metadata = read::read_file_metadata(&mut file)?;
-        let mut reader = read::FileReader::new(file, metadata, None);
+        let mut reader = read::FileReader::new(file, metadata, None, None);
 
         let columns = reader.next().unwrap()?;
 
