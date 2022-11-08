@@ -55,7 +55,7 @@ geo = "0.23"
 wkt = "0.10.0"
 kdbush = "0.2"
 polylabel = "2.4"
-flatgeobuf = "0.8.0"
+flatgeobuf = "3.24.0"
 #flatgeobuf = { git = "https://github.com/pka/flatgeobuf", branch="geozero-0.9" }
 postgres = "0.19"
 sqlx = { version = "0.6", default-features = false, features = [ "runtime-tokio-native-tls", "macros", "time", "postgres", "sqlite" ] }
