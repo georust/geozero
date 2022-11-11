@@ -36,7 +36,7 @@ serde_json = "1.0.79"
 geo-types = { version = "0.7", default-features = false, optional = true }
 geos = { version = "8.0", optional = true }
 gdal = { version = "0.13", default-features = false, optional = true }
-gdal-sys = { version = "0.7", optional = true }
+gdal-sys = { version = "0.8", optional = true }
 gpx = { version = "0.8", default-features = false, optional = true }
 lyon = { version = "1.0", optional = true }
 log = "0.4.17"
