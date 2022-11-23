@@ -35,7 +35,7 @@ pub fn process_geoarrow_wkb_geom<T: Offset>(
     Ok(())
 }
 
-pub fn process_geoarrow_feature_chunk(
+pub fn process_geoarrow_wkb_feature_chunk(
     chunk: &Chunk<Box<dyn Array>>,
     schema: &Schema,
     processor: &mut impl FeatureProcessor,

@@ -1,4 +1,4 @@
-use crate::arrow::process_geoarrow_feature_chunk;
+use crate::arrow::process_geoarrow_wkb_feature_chunk;
 use crate::error::{GeozeroError, Result};
 use arrow2::io::parquet::read::{infer_schema, read_metadata, FileReader};
 use serde::{Deserialize, Serialize};
@@ -86,7 +86,7 @@ pub fn process_geoparquet_features<R: io::Read + io::Seek, P: crate::FeatureProc
     // Iterate over row groups in the parquet file
     for maybe_chunk in file_reader {
         let chunk = maybe_chunk.unwrap();
-        process_geoarrow_feature_chunk(
+        process_geoarrow_wkb_feature_chunk(
             &chunk,
             &schema,
             processor,
