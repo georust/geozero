@@ -127,28 +127,29 @@ pub mod sqlx {
 ///     PgConnection::establish(&database_url).unwrap()
 /// }
 ///
-/// fn main() {
-///     let conn = &mut establish_connection();
+/// # async fn rust_geo_query() -> Result<(), diesel::result::Error> {
+/// let conn = &mut establish_connection();
 ///
-///     let wkb = Ewkb(vec![
-///         1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 64, 0, 0, 0, 0, 0, 0, 52, 192,
-///     ]);
+/// let wkb = Ewkb(vec![
+///     1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 64, 0, 0, 0, 0, 0, 0, 52, 192,
+/// ]);
 ///
-///     let insert_geometry = Geom {
-///         name: "GeoZeroTest".to_string(),
-///         geom: Some(wkb),
-///     };
+/// let insert_geometry = Geom {
+///     name: "GeoZeroTest".to_string(),
+///     geom: Some(wkb),
+/// };
 ///
-///     let inserted: Geom = diesel::insert_into(geometries::table)
-///         .values(&insert_geometry)
-///         .get_result(conn)
-///         .expect("Unable to insert into postgis");
+/// let inserted: Geom = diesel::insert_into(geometries::table)
+///     .values(&insert_geometry)
+///     .get_result(conn)
+///     .expect("Unable to insert into postgis");
 ///
-///     let geometry_vec: Vec<Geom> = geometries::dsl::geometries
-///         .limit(10)
-///         .load::<Geom>(conn)
-///         .expect("Error loading geometries");
-/// }
+/// let geometry_vec: Vec<Geom> = geometries::dsl::geometries
+///     .limit(10)
+///     .load::<Geom>(conn)
+///     .expect("Error loading geometries");
+/// # Ok(())
+/// # }
 /// ```
 #[cfg(feature = "with-postgis-diesel")]
 pub mod diesel {
