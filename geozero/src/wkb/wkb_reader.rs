@@ -4,6 +4,11 @@ use crate::{GeomProcessor, GeozeroGeometry};
 use scroll::IOread;
 use std::io::Read;
 
+#[cfg(feature = "with-postgis-diesel")]
+use crate::postgis::diesel::sql_types::{Geography, Geometry};
+#[cfg(feature = "with-postgis-diesel")]
+use diesel::expression::AsExpression;
+
 /// WKB reader.
 pub struct Wkb(pub Vec<u8>);
 
@@ -14,6 +19,12 @@ impl GeozeroGeometry for Wkb {
 }
 
 /// EWKB reader.
+#[cfg_attr(
+    feature = "with-postgis-diesel",
+    derive(Debug, AsExpression, PartialEq)
+)]
+#[cfg_attr(feature = "with-postgis-diesel", diesel(sql_type = Geometry))]
+#[cfg_attr(feature = "with-postgis-diesel", diesel(sql_type = Geography))]
 pub struct Ewkb(pub Vec<u8>);
 
 impl GeozeroGeometry for Ewkb {

@@ -3,6 +3,8 @@
 //! All geometry types implementing [GeozeroGeometry](crate::GeozeroGeometry) can be encoded as PostGIS EWKB geometry using [wkb::Encode](crate::wkb::Encode).
 //!
 //! Geometry types implementing [FromWkb](crate::wkb::FromWkb) can be decoded from PostGIS geometries using [wkb::Decode](crate::wkb::Decode).
+#[cfg(feature = "with-postgis-diesel")]
+mod postgis_diesel;
 #[cfg(feature = "with-postgis-postgres")]
 mod postgis_postgres;
 #[cfg(feature = "with-postgis-sqlx")]
@@ -88,4 +90,68 @@ pub mod postgres {
 #[cfg(feature = "with-postgis-sqlx")]
 pub mod sqlx {
     pub use super::postgis_sqlx::*;
+}
+
+/// Postgis geometry type encoding for Diesel.
+///
+/// # PostGIS usage example with Diesel
+///
+/// Declare model and select Ewkb types directly with GeoZero and Diesel
+///
+/// ```
+/// use diesel::pg::PgConnection;
+/// use diesel::{Connection, QueryDsl, RunQueryDsl};
+/// use diesel::prelude::*;
+///
+/// use geozero::wkb::Ewkb;
+///
+/// diesel::table! {
+///     use diesel::sql_types::*;
+///     use geozero::postgis::diesel::sql_types::*;
+///
+///     geometries (name) {
+///         name -> Varchar,
+///         geom -> Nullable<Geometry>,
+///     }
+/// }
+///
+/// #[derive(Queryable, Debug, Insertable)]
+/// #[diesel(table_name = geometries)]
+/// pub struct Geom {
+///     pub name: String,
+///     pub geom: Option<Ewkb>,
+/// }
+///
+/// pub fn establish_connection() -> PgConnection {
+///     let database_url = std::env::var("DATABASE_URL").expect("Unable to find database url.");
+///     PgConnection::establish(&database_url).unwrap()
+/// }
+///
+/// # async fn rust_geo_query() -> Result<(), diesel::result::Error> {
+/// let conn = &mut establish_connection();
+///
+/// let wkb = Ewkb(vec![
+///     1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 64, 0, 0, 0, 0, 0, 0, 52, 192,
+/// ]);
+///
+/// let insert_geometry = Geom {
+///     name: "GeoZeroTest".to_string(),
+///     geom: Some(wkb),
+/// };
+///
+/// let inserted: Geom = diesel::insert_into(geometries::table)
+///     .values(&insert_geometry)
+///     .get_result(conn)
+///     .expect("Unable to insert into postgis");
+///
+/// let geometry_vec: Vec<Geom> = geometries::dsl::geometries
+///     .limit(10)
+///     .load::<Geom>(conn)
+///     .expect("Error loading geometries");
+/// # Ok(())
+/// # }
+/// ```
+#[cfg(feature = "with-postgis-diesel")]
+pub mod diesel {
+    pub use super::postgis_diesel::*;
 }

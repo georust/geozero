@@ -78,7 +78,11 @@ pub mod gpkg;
 #[cfg(feature = "with-gpx")]
 pub mod gpx;
 
-#[cfg(any(feature = "with-postgis-postgres", feature = "with-postgis-sqlx"))]
+#[cfg(any(
+    feature = "with-postgis-postgres",
+    feature = "with-postgis-sqlx",
+    feature = "with-postgis-diesel"
+))]
 pub mod postgis;
 
 #[cfg(feature = "with-svg")]
