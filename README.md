@@ -24,7 +24,7 @@ Supported dimensions: X, Y, Z, M, T
 * [GEOS](https://github.com/georust/geos) Reader + Writer
 * [GDAL](https://github.com/georust/gdal) geometry Reader + Writer
 * WKB Reader + Writer supporting
-  - PostGIS geometries for [rust-postgres](https://github.com/sfackler/rust-postgres) and [SQLx](https://github.com/launchbadge/sqlx)
+  - PostGIS geometries for [rust-postgres](https://github.com/sfackler/rust-postgres), [SQLx](https://github.com/launchbadge/sqlx) and [Diesel](https://github.com/diesel-rs/diesel).
   - GeoPackage geometries for [SQLx](https://github.com/launchbadge/sqlx)
 * [WKT](https://github.com/georust/wkt) Reader + Writer
 * CSV Reader + Writer
