@@ -1,3 +1,10 @@
+## 0.9.6 (UNRELEASED)
+
+* GPX Read support
+* Diesel support for Ewkb type for PostGIS
+* geojson: escape quotes in written property name/values
+* Updated dependencies: geojson, dbase, gdal, gdal-sys, geo, arrow, flatgeobuf
+
 ## 0.9.5 (2022-07-21)
 
 * Add CSV writer and reader

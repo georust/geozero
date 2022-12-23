@@ -54,8 +54,8 @@ async fn rust_geo_query() -> Result<(), sqlx::Error> {
     let geom = row.0.geometry.unwrap();
     println!("{}", geom.to_wkt().unwrap());
     assert_eq!(
-        &format!("{:?}", geom),
-        "Point(Point(Coordinate { x: 1.1, y: 1.1 }))"
+        &format!("{geom:?}"),
+        "Point(Point(Coord { x: 1.1, y: 1.1 }))"
     );
 
     Ok(())
