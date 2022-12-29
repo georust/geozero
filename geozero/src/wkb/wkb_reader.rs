@@ -7,7 +7,7 @@ use std::io::Read;
 #[cfg(feature = "with-postgis-diesel")]
 use crate::postgis::diesel::sql_types::{Geography, Geometry};
 #[cfg(feature = "with-postgis-diesel")]
-use diesel::expression::AsExpression;
+use diesel::{deserialize::FromSqlRow, expression::AsExpression};
 
 /// WKB reader.
 pub struct Wkb(pub Vec<u8>);
@@ -21,7 +21,7 @@ impl GeozeroGeometry for Wkb {
 /// EWKB reader.
 #[cfg_attr(
     feature = "with-postgis-diesel",
-    derive(Debug, AsExpression, PartialEq)
+    derive(Debug, AsExpression, FromSqlRow, PartialEq)
 )]
 #[cfg_attr(feature = "with-postgis-diesel", diesel(sql_type = Geometry))]
 #[cfg_attr(feature = "with-postgis-diesel", diesel(sql_type = Geography))]
