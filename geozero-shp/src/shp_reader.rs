@@ -32,8 +32,8 @@ impl RecordHeader {
 }
 
 /// Read and process one shape record
-pub(crate) fn read_shape<P: GeomProcessor, T: Read>(
-    processor: &mut P,
+pub(crate) fn read_shape<'a, P: GeomProcessor + 'a, T: Read>(
+    processor: &'a mut P,
     mut source: &mut T,
 ) -> Result<RecordHeader, Error> {
     let hdr = RecordHeader::read_from(&mut source)?;
