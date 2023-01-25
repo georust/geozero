@@ -13,6 +13,6 @@ path = "src/main.rs"
 geozero = { version = "0.9.4", features = ["with-csv"] }
 flatgeobuf = "3.24.0"
 async-trait = "0.1"
-clap = { version = "3.1.18", features = ["derive"] }
+clap = { version = "4.1.4", features = ["derive"] }
 tokio = { version = "1.2.0", features = ["full"] }
 env_logger = "0.10.0"
