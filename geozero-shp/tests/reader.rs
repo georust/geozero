@@ -68,18 +68,23 @@ fn shp_to_json() -> Result<(), geozero_shp::Error> {
 
 #[test]
 fn shp_to_geo() -> Result<(), geozero_shp::Error> {
+    use geo_types::Geometry;
     use geozero::geo_types::GeoWriter;
 
     let reader = geozero_shp::Reader::from_path("./tests/data/poly.shp")?;
+    let mut geo = GeoWriter::new();
     let mut cnt = 0;
-    for _ in reader.iter_geometries(&mut GeoWriter::new()) {
+    for _geom in reader.iter_geometries(&mut geo) {
         cnt += 1;
     }
     assert_eq!(cnt, 10);
-
-    // Currently unsupported:
-    // let mut geo = GeoWriter::new();
-    // for _geom in reader.iter_geometries(&mut geo)? {}
+    if let Some(Geometry::GeometryCollection(geo_types::GeometryCollection(gc))) =
+        geo.take_geometry()
+    {
+        assert_eq!(gc.len(), 10);
+    } else {
+        assert!(false, "unexpected geometry");
+    }
 
     Ok(())
 }
