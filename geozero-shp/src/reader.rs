@@ -73,10 +73,11 @@ impl<'a, P: FeatureProcessor, T: Read + Seek + 'a> Iterator for ShapeRecordItera
 
             self.shape_iter.processor.geometry_begin().ok();
         }
-        let _ = match self.shape_iter.next()? {
-            Err(e) => return Some(Err(e)),
-            Ok(_) => (),
-        };
+
+        if let Err(e) = self.shape_iter.next()? {
+            return Some(Err(e));
+        }
+
         {
             let processor = &mut self.shape_iter.processor;
             processor.geometry_end().ok();
