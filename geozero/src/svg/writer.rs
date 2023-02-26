@@ -2,9 +2,6 @@ use crate::error::Result;
 use crate::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 use std::io::Write;
 
-/// SVG String.
-pub struct SvgString(pub String);
-
 /// SVG writer.
 pub struct SvgWriter<'a, W: Write> {
     out: &'a mut W,
