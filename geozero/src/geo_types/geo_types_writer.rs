@@ -4,6 +4,7 @@ use geo_types::*;
 use std::mem;
 
 /// Generator for geo-types geometry type.
+#[derive(Default)]
 pub struct GeoWriter {
     geoms: Vec<Geometry<f64>>,
     // Stack of any in-progress (potentially nested) GeometryCollections
@@ -18,13 +19,7 @@ pub struct GeoWriter {
 
 impl GeoWriter {
     pub fn new() -> GeoWriter {
-        GeoWriter {
-            geoms: Vec::new(),
-            coords: None,
-            line_strings: None,
-            polygons: None,
-            collections: Vec::new(),
-        }
+        Default::default()
     }
 
     pub fn take_geometry(&mut self) -> Option<Geometry<f64>> {
