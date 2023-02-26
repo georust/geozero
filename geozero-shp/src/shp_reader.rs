@@ -306,8 +306,10 @@ impl MultiPartShape {
             if as_poly {
                 processor.polygon_begin(tagged, num_rings, geom_idx)?;
             }
-            let mut ring_idx = 0;
-            for start_end in self.parts_index[geom_start..=geom_end].windows(2) {
+            for (ring_idx, start_end) in self.parts_index[geom_start..=geom_end]
+                .windows(2)
+                .enumerate()
+            {
                 let (start_index, end_index) = (start_end[0], start_end[1]);
                 let num_points_in_part = end_index - start_index;
                 processor.linestring_begin(tagged, num_points_in_part, ring_idx)?;
@@ -331,7 +333,6 @@ impl MultiPartShape {
                     }
                 }
                 processor.linestring_end(tagged, ring_idx)?;
-                ring_idx += 1;
             }
             if as_poly {
                 processor.polygon_end(tagged, geom_idx)?;
