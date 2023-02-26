@@ -129,7 +129,7 @@ impl<T: Read + Seek> Reader<T> {
     /// Read and return _only_ the records contained in the *.dbf* file
     pub fn read_records(self) -> Result<Vec<dbase::Record>, Error> {
         let mut dbf_reader = self.dbf_reader.ok_or(Error::MissingDbf)?;
-        dbf_reader.read().or_else(|e| Err(Error::DbaseError(e)))
+        dbf_reader.read().map_err(Error::DbaseError)
     }
     ///Return the FieldInfo from the dbf file
     ///Note that the deletion flag is not included in the results
