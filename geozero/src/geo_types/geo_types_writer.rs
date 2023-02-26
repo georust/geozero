@@ -135,7 +135,7 @@ impl GeomProcessor for GeoWriter {
             "Missing LineStrings for Polygon".to_string(),
         ))?;
 
-        let polygon = if line_strings.len() == 0 {
+        let polygon = if line_strings.is_empty() {
             Polygon::new(LineString(vec![]), vec![])
         } else {
             let exterior = line_strings.remove(0);
@@ -220,7 +220,7 @@ mod test {
         println!("{:?}", geo);
         match geo {
             Geometry::MultiPolygon(mp) => {
-                let poly = mp.clone().into_iter().next().unwrap();
+                let poly = mp.into_iter().next().unwrap();
                 assert_eq!(
                     poly.exterior().points().next().unwrap(),
                     Point::new(173.020375, -40.919052)

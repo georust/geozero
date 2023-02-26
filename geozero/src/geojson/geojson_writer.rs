@@ -77,7 +77,7 @@ impl<W: Write> GeomProcessor for GeoJsonWriter<'_, W> {
     }
     fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
         self.comma(idx)?;
-        self.out.write_all(&format!("[{},{}]", x, y).as_bytes())?;
+        self.out.write_all(format!("[{},{}]", x, y).as_bytes())?;
         Ok(())
     }
     fn coordinate(
@@ -91,9 +91,9 @@ impl<W: Write> GeomProcessor for GeoJsonWriter<'_, W> {
         idx: usize,
     ) -> Result<()> {
         self.comma(idx)?;
-        self.out.write_all(&format!("[{},{}", x, y).as_bytes())?;
+        self.out.write_all(format!("[{},{}", x, y).as_bytes())?;
         if let Some(z) = z {
-            self.out.write_all(&format!(",{}", z).as_bytes())?;
+            self.out.write_all(format!(",{}", z).as_bytes())?;
         }
         self.out.write_all(b"]")?;
         Ok(())
@@ -187,16 +187,16 @@ impl<W: Write> GeomProcessor for GeoJsonWriter<'_, W> {
 }
 
 fn write_num_prop<'a, W: Write>(out: &'a mut W, colname: &str, v: &dyn Display) -> Result<()> {
-    out.write_all(&format!(r#""{}": {v}"#, colname.replace("\"", "\\\"")).as_bytes())?;
+    out.write_all(format!(r#""{}": {v}"#, colname.replace('\"', "\\\"")).as_bytes())?;
     Ok(())
 }
 
 fn write_str_prop<'a, W: Write>(out: &'a mut W, colname: &str, v: &str) -> Result<()> {
     out.write_all(
-        &format!(
+        format!(
             r#""{}": "{}""#,
-            colname.replace("\"", "\\\""),
-            v.replace("\"", "\\\"")
+            colname.replace('\"', "\\\""),
+            v.replace('\"', "\\\"")
         )
         .as_bytes(),
     )?;
@@ -220,9 +220,9 @@ impl<W: Write> PropertyProcessor for GeoJsonWriter<'_, W> {
             ColumnValue::ULong(v) => write_num_prop(self.out, colname, &v)?,
             ColumnValue::Float(v) => write_num_prop(self.out, colname, &v)?,
             ColumnValue::Double(v) => write_num_prop(self.out, colname, &v)?,
-            ColumnValue::String(v) => write_str_prop(self.out, colname, &v)?,
+            ColumnValue::String(v) => write_str_prop(self.out, colname, v)?,
             ColumnValue::Json(_v) => (),
-            ColumnValue::DateTime(v) => write_str_prop(self.out, colname, &v)?,
+            ColumnValue::DateTime(v) => write_str_prop(self.out, colname, v)?,
             ColumnValue::Binary(_v) => (),
         };
         Ok(false)

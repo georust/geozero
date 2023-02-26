@@ -511,7 +511,7 @@ POINT(1 45),904 7th Av,05/22/2019 12:55:00 PM,F190051945,Car Fire
 "POLYGON((3 1,3 2,3 1))",Bar
 "#;
 
-        let actual_output = crate::geojson::GeoJson(&input_geojson).to_csv().unwrap();
+        let actual_output = crate::geojson::GeoJson(input_geojson).to_csv().unwrap();
 
         assert_eq!(expected_output, actual_output);
     }

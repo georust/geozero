@@ -48,11 +48,11 @@ impl<W: Write> FeatureProcessor for SvgWriter<'_, W> {
         )?;
         if let Some((width, height)) = self.size {
             self.out
-                .write_all(&format!("width=\"{}\" height=\"{}\" ", width, height).as_bytes())?;
+                .write_all(format!("width=\"{}\" height=\"{}\" ", width, height).as_bytes())?;
         }
         if let Some((xmin, ymin, xmax, ymax)) = self.view_box {
             self.out.write_all(
-                &format!(
+                format!(
                     "viewBox=\"{} {} {} {}\" ",
                     xmin,
                     ymin,
@@ -88,7 +88,7 @@ impl<W: Write> FeatureProcessor for SvgWriter<'_, W> {
 impl<W: Write> GeomProcessor for SvgWriter<'_, W> {
     fn xy(&mut self, x: f64, y: f64, _idx: usize) -> Result<()> {
         let y = if self.invert_y { -y } else { y };
-        self.out.write_all(&format!("{} {} ", x, y).as_bytes())?;
+        self.out.write_all(format!("{} {} ", x, y).as_bytes())?;
         Ok(())
     }
     fn point_begin(&mut self, _idx: usize) -> Result<()> {

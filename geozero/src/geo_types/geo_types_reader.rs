@@ -46,21 +46,21 @@ fn process_geom_n<P: GeomProcessor>(
         Geometry::MultiLineString(ref geom) => {
             processor.multilinestring_begin(geom.0.len(), idx)?;
             for (i, line) in geom.0.iter().enumerate() {
-                process_linestring(&line, false, i, processor)?;
+                process_linestring(line, false, i, processor)?;
             }
             processor.multilinestring_end(idx)?;
         }
         Geometry::MultiPolygon(ref geom) => {
             processor.multipolygon_begin(geom.0.len(), idx)?;
             for (i, poly) in geom.0.iter().enumerate() {
-                process_polygon(&poly, false, i, processor)?;
+                process_polygon(poly, false, i, processor)?;
             }
             processor.multipolygon_end(idx)?;
         }
         Geometry::GeometryCollection(ref geom) => {
             processor.geometrycollection_begin(geom.0.len(), idx)?;
             for (i, g) in geom.0.iter().enumerate() {
-                process_geom_n(&g, i, processor)?;
+                process_geom_n(g, i, processor)?;
             }
             processor.geometrycollection_end(idx)?;
         }
@@ -114,10 +114,10 @@ fn process_polygon<P: GeomProcessor>(
     let interiors = geom.interiors();
     processor.polygon_begin(tagged, interiors.len() + 1, idx)?;
     // Exterior ring
-    process_linestring(&geom.exterior(), false, 0, processor)?;
+    process_linestring(geom.exterior(), false, 0, processor)?;
     // Interior rings
     for (i, ring) in interiors.iter().enumerate() {
-        process_linestring(&ring, false, i + 1, processor)?;
+        process_linestring(ring, false, i + 1, processor)?;
     }
     processor.polygon_end(tagged, idx)
 }

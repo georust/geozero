@@ -117,7 +117,7 @@ fn property_access() -> Result<(), geozero_shp::Error> {
             }
             // Use String HashMap
             let props = feat.properties()?;
-            assert!(props["EAS_ID"].starts_with("1"));
+            assert!(props["EAS_ID"].starts_with('1'));
             // field access
             assert!(feat.property::<f64>("EAS_ID").unwrap() > 100.0);
         } else {

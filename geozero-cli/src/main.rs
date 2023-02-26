@@ -39,7 +39,7 @@ pub struct Extent {
 
 fn parse_extent(src: &str) -> std::result::Result<Extent, ParseFloatError> {
     let arr: Vec<f64> = src
-        .split(",")
+        .split(',')
         .map(|v| {
             v.parse()
                 .expect("Error parsing 'extent' as list of float values")

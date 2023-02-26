@@ -201,19 +201,19 @@ fn process_properties<P: PropertyProcessor>(
     for (i, (key, value)) in properties.iter().enumerate() {
         // Could we provide a stable property index?
         match value {
-            JsonValue::String(v) => processor.property(i, &key, &ColumnValue::String(v))?,
+            JsonValue::String(v) => processor.property(i, key, &ColumnValue::String(v))?,
             JsonValue::Number(v) if v.is_f64() => {
-                processor.property(i, &key, &ColumnValue::Double(v.as_f64().unwrap()))?
+                processor.property(i, key, &ColumnValue::Double(v.as_f64().unwrap()))?
             }
             JsonValue::Number(v) if v.is_i64() => {
-                processor.property(i, &key, &ColumnValue::Long(v.as_i64().unwrap()))?
+                processor.property(i, key, &ColumnValue::Long(v.as_i64().unwrap()))?
             }
             JsonValue::Number(v) if v.is_u64() => {
-                processor.property(i, &key, &ColumnValue::ULong(v.as_u64().unwrap()))?
+                processor.property(i, key, &ColumnValue::ULong(v.as_u64().unwrap()))?
             }
-            JsonValue::Bool(v) => processor.property(i, &key, &ColumnValue::Bool(*v))?,
+            JsonValue::Bool(v) => processor.property(i, key, &ColumnValue::Bool(*v))?,
             // Null, Array(Vec<Value>), Object(Map<String, Value>)
-            _ => processor.property(i, &key, &ColumnValue::String(&value.to_string()))?,
+            _ => processor.property(i, key, &ColumnValue::String(&value.to_string()))?,
         };
     }
     Ok(())
@@ -234,7 +234,7 @@ fn process_coord<P: GeomProcessor>(
         processor.coordinate(
             point_type[0],
             point_type[1],
-            point_type.get(2).map(|v| *v),
+            point_type.get(2).copied(),
             None,
             None,
             None,
@@ -289,7 +289,7 @@ fn process_multilinestring<P: GeomProcessor>(
 ) -> Result<()> {
     processor.multilinestring_begin(multilinestring_type.len(), idx)?;
     for (idxc, linestring_type) in multilinestring_type.iter().enumerate() {
-        process_linestring(&linestring_type, false, idxc, processor)?
+        process_linestring(linestring_type, false, idxc, processor)?
     }
     processor.multilinestring_end(idx)
 }
@@ -314,7 +314,7 @@ fn process_multi_polygon<P: GeomProcessor>(
 ) -> Result<()> {
     processor.multipolygon_begin(multi_polygon_type.len(), idx)?;
     for (idxp, polygon_type) in multi_polygon_type.iter().enumerate() {
-        process_polygon(&polygon_type, false, idxp, processor)?;
+        process_polygon(polygon_type, false, idxp, processor)?;
     }
     processor.multipolygon_end(idx)
 }

@@ -45,9 +45,9 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
     }
     fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
         if idx == 0 {
-            self.out.write_all(&format!("{} {}", x, y).as_bytes())?;
+            self.out.write_all(format!("{} {}", x, y).as_bytes())?;
         } else {
-            self.out.write_all(&format!(",{} {}", x, y).as_bytes())?;
+            self.out.write_all(format!(",{} {}", x, y).as_bytes())?;
         }
         Ok(())
     }
@@ -62,15 +62,15 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
         idx: usize,
     ) -> Result<()> {
         if idx == 0 {
-            self.out.write_all(&format!("{} {}", x, y).as_bytes())?;
+            self.out.write_all(format!("{} {}", x, y).as_bytes())?;
         } else {
-            self.out.write_all(&format!(",{} {}", x, y).as_bytes())?;
+            self.out.write_all(format!(",{} {}", x, y).as_bytes())?;
         }
         if let Some(z) = z {
-            self.out.write_all(&format!(" {}", z).as_bytes())?;
+            self.out.write_all(format!(" {}", z).as_bytes())?;
         }
         if let Some(m) = m {
-            self.out.write_all(&format!(" {}", m).as_bytes())?;
+            self.out.write_all(format!(" {}", m).as_bytes())?;
         }
         Ok(())
     }
