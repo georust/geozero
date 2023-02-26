@@ -75,7 +75,7 @@ fn process_geom_n<P: GeomProcessor>(
 }
 
 fn process_coord<P: GeomProcessor>(
-    coord: &Coordinate<f64>,
+    coord: &Coord<f64>,
     idx: usize,
     processor: &mut P,
 ) -> Result<()> {

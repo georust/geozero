@@ -14,7 +14,7 @@ pub struct GeoWriter {
     // In-progress polygon or multi_linestring
     line_strings: Option<Vec<LineString<f64>>>,
     // In-progress point or line_string
-    coords: Option<Vec<Coordinate<f64>>>,
+    coords: Option<Vec<Coord<f64>>>,
 }
 
 impl GeoWriter {
