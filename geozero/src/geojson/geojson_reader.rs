@@ -58,11 +58,10 @@ pub fn read_geojson<R: Read, P: FeatureProcessor>(mut reader: R, processor: &mut
 }
 
 pub fn read_geojson_fc<R: Read, P: FeatureProcessor>(reader: R, processor: &mut P) -> Result<()> {
-    let mut idx = 0;
-    for feature in FeatureReader::from_reader(reader).features() {
+    for (idx, feature) in FeatureReader::from_reader(reader).features().enumerate() {
         process_geojson_feature(&feature?, idx, processor)?;
-        idx += 1;
     }
+
     Ok(())
 }
 
