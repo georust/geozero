@@ -53,10 +53,12 @@ impl Header {
         let version = source.read_i32::<LittleEndian>()?;
         let shape_type = ShapeType::read_from(&mut source)?;
 
-        let mut hdr = Header::default();
-        hdr.shape_type = shape_type;
-        hdr.version = version;
-        hdr.file_length = file_length_16_bit;
+        let mut hdr = Header {
+            shape_type,
+            version,
+            file_length: file_length_16_bit,
+            ..Default::default()
+        };
 
         hdr.bbox.min.x = source.read_f64::<LittleEndian>()?;
         hdr.bbox.min.y = source.read_f64::<LittleEndian>()?;
