@@ -11,7 +11,7 @@ fn ogr_to_svg() -> Result<(), gdal::errors::GdalError> {
     let mut out: Vec<u8> = Vec::new();
     for feature in layer.features() {
         let geom = feature.geometry();
-        assert!(process_geom(&geom, &mut SvgWriter::new(&mut out, true)).is_ok());
+        assert!(process_geom(geom, &mut SvgWriter::new(&mut out, true)).is_ok());
     }
     assert_eq!(
         &std::str::from_utf8(&out).unwrap()[..53],

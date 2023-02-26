@@ -127,7 +127,7 @@ impl<'a, W: Write> WkbWriter<'a, W> {
         if self.empty {
             flags |= 0b0001_0000;
         }
-        let env_info: u8 = if self.envelope.len() == 0 {
+        let env_info: u8 = if self.envelope.is_empty() {
             0 // no envelope
         } else {
             match (self.envelope_dims.z, self.envelope_dims.m) {

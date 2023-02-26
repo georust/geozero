@@ -6,7 +6,7 @@ use super::mvt_commands::{Command, CommandInteger, ParameterInteger};
 
 impl GeozeroDatasource for tile::Layer {
     fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> Result<()> {
-        process(&self, processor)
+        process(self, processor)
     }
 }
 
@@ -181,7 +181,7 @@ fn process_linestrings<P: GeomProcessor>(
     let mut line_string_slices: Vec<&[u32]> = vec![];
     let mut geom: &[u32] = &geom.geometry;
 
-    while geom.len() > 0 {
+    while !geom.is_empty() {
         let lineto = CommandInteger(geom[3]);
         let slice_size = 4 + lineto.count() as usize * 2;
         let (slice, rest) = geom.split_at(slice_size);
@@ -223,7 +223,7 @@ fn process_polygon<P: GeomProcessor>(
             return Err(GeozeroError::GeometryFormat);
         }
         processor.linestring_begin(false, 1 + lineto.count() as usize, i)?;
-        let mut start_cursor = cursor.clone();
+        let mut start_cursor = *cursor;
         process_coord(cursor, &ring[1..3], 0, processor)?;
         for i in 0..lineto.count() as usize {
             process_coord(cursor, &ring[4 + i * 2..6 + i * 2], i + 1, processor)?;
@@ -251,12 +251,12 @@ fn process_polygons<P: GeomProcessor>(
     let mut polygon_slices: Vec<Vec<&[u32]>> = vec![];
     let mut geom: &[u32] = &geom.geometry;
 
-    while geom.len() > 0 {
+    while !geom.is_empty() {
         let lineto = CommandInteger(geom[3]);
         let slice_size = 4 + lineto.count() as usize * 2 + 1;
         let (slice, rest) = geom.split_at(slice_size);
         let positive_area = is_area_positive(
-            cursor.clone(),
+            *cursor,
             &slice[1..3],
             &slice[4..4 + lineto.count() as usize * 2],
         );
@@ -361,7 +361,7 @@ mod test {
         let geojson = mvt_layer.to_json().unwrap();
 
         assert_eq!(
-            geojson.replace("\n", "").replace(" ", ""),
+            geojson.replace(['\n', ' '], ""),
             r#"{
     "type": "FeatureCollection",
     "name": "points",
@@ -391,8 +391,7 @@ mod test {
         }
     ]
 }"#
-            .replace("\n", "")
-            .replace(" ", "")
+            .replace(['\n', ' '], "")
         );
     }
 

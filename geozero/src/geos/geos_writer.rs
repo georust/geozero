@@ -101,7 +101,7 @@ impl GeomProcessor for GeosWriter<'_> {
         let gglines = self
             .cs
             .drain(..)
-            .map(|cs| GGeometry::create_line_string(cs))
+            .map(GGeometry::create_line_string)
             .collect::<GResult<Vec<GGeometry>>>()?;
         self.geom = GGeometry::create_multiline_string(gglines)?;
         Ok(())
@@ -120,7 +120,7 @@ impl GeomProcessor for GeosWriter<'_> {
         let interiors = self
             .cs
             .drain(..)
-            .map(|cs| GGeometry::create_linear_ring(cs))
+            .map(GGeometry::create_linear_ring)
             .collect::<GResult<Vec<GGeometry>>>()?;
         let gpoly = GGeometry::create_polygon(exterior_ring, interiors)?;
         if tagged {

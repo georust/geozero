@@ -198,7 +198,7 @@ pub(crate) fn process_wkb_geom_n<R: Read, P: GeomProcessor>(
     match info.base_type {
         WKBGeometryType::Point => {
             processor.point_begin(idx)?;
-            process_coord(raw, &info, processor.multi_dim(), 0, processor)?;
+            process_coord(raw, info, processor.multi_dim(), 0, processor)?;
             processor.point_end(idx)?;
         }
         WKBGeometryType::MultiPoint => {
@@ -212,13 +212,13 @@ pub(crate) fn process_wkb_geom_n<R: Read, P: GeomProcessor>(
             processor.multipoint_end(idx)?;
         }
         WKBGeometryType::LineString => {
-            process_linestring(raw, &info, true, idx, processor)?;
+            process_linestring(raw, info, true, idx, processor)?;
         }
         WKBGeometryType::CircularString => {
-            process_circularstring(raw, &info, idx, processor)?;
+            process_circularstring(raw, info, idx, processor)?;
         }
         WKBGeometryType::CompoundCurve => {
-            process_compoundcurve(raw, &info, read_header, idx, processor)?;
+            process_compoundcurve(raw, info, read_header, idx, processor)?;
         }
         WKBGeometryType::MultiLineString => {
             let n_lines = raw.ioread_with::<u32>(info.endian)? as usize;
@@ -238,13 +238,13 @@ pub(crate) fn process_wkb_geom_n<R: Read, P: GeomProcessor>(
             processor.multicurve_end(idx)?;
         }
         WKBGeometryType::Polygon => {
-            process_polygon(raw, &info, true, idx, processor)?;
+            process_polygon(raw, info, true, idx, processor)?;
         }
         WKBGeometryType::Triangle => {
-            process_triangle(raw, &info, true, idx, processor)?;
+            process_triangle(raw, info, true, idx, processor)?;
         }
         WKBGeometryType::CurvePolygon => {
-            process_curvepolygon(raw, &info, read_header, idx, processor)?;
+            process_curvepolygon(raw, info, read_header, idx, processor)?;
         }
         WKBGeometryType::MultiPolygon => {
             let n_polys = raw.ioread_with::<u32>(info.endian)? as usize;

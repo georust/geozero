@@ -153,7 +153,7 @@ mod test_mvt {
     use crate::mvt::vector_tile::Tile;
 
     // https://github.com/mapbox/vector-tile-spec/tree/master/2.1#45-example
-    const TILE_EXAMPLE: &'static str = r#"Tile {
+    const TILE_EXAMPLE: &str = r#"Tile {
     layers: [
         Layer {
             version: 2,

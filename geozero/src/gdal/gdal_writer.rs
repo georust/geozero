@@ -23,7 +23,7 @@ impl<'a> GdalWriter {
         &self.geom
     }
     fn wkb_type(&mut self, base: OGRwkbGeometryType::Type) -> OGRwkbGeometryType::Type {
-        let mut type_id = base as u32;
+        let mut type_id = base;
         if self.dims.z {
             type_id += 1000;
         }
@@ -38,7 +38,7 @@ impl<'a> GdalWriter {
 }
 
 fn wkb_base_type(wkb_type: OGRwkbGeometryType::Type) -> OGRwkbGeometryType::Type {
-    (wkb_type as u32) % 1000
+    wkb_type % 1000
 }
 
 impl From<gdal::errors::GdalError> for GeozeroError {
