@@ -53,10 +53,12 @@ impl Header {
         let version = source.read_i32::<LittleEndian>()?;
         let shape_type = ShapeType::read_from(&mut source)?;
 
-        let mut hdr = Header::default();
-        hdr.shape_type = shape_type;
-        hdr.version = version;
-        hdr.file_length = file_length_16_bit;
+        let mut hdr = Header {
+            shape_type,
+            version,
+            file_length: file_length_16_bit,
+            ..Default::default()
+        };
 
         hdr.bbox.min.x = source.read_f64::<LittleEndian>()?;
         hdr.bbox.min.y = source.read_f64::<LittleEndian>()?;
@@ -130,41 +132,38 @@ impl ShapeType {
 
     /// Returns whether the ShapeType has the third dimension Z
     pub fn has_z(self) -> bool {
-        match self {
-            ShapeType::PointZ
-            | ShapeType::PolylineZ
-            | ShapeType::PolygonZ
-            | ShapeType::MultipointZ => true,
-            _ => false,
-        }
+        matches!(
+            self,
+            ShapeType::PointZ | ShapeType::PolylineZ | ShapeType::PolygonZ | ShapeType::MultipointZ
+        )
     }
 
     /// Returns whether the ShapeType has the optional measure dimension
     pub fn has_m(self) -> bool {
-        match self {
+        matches!(
+            self,
             ShapeType::PointZ
-            | ShapeType::PolylineZ
-            | ShapeType::PolygonZ
-            | ShapeType::MultipointZ
-            | ShapeType::PointM
-            | ShapeType::PolylineM
-            | ShapeType::PolygonM
-            | ShapeType::MultipointM => true,
-            _ => false,
-        }
+                | ShapeType::PolylineZ
+                | ShapeType::PolygonZ
+                | ShapeType::MultipointZ
+                | ShapeType::PointM
+                | ShapeType::PolylineM
+                | ShapeType::PolygonM
+                | ShapeType::MultipointM
+        )
     }
 
     /// Returns true if the shape may have multiple parts
     pub fn is_multipart(self) -> bool {
-        match self {
+        !matches!(
+            self,
             ShapeType::Point
-            | ShapeType::PointM
-            | ShapeType::PointZ
-            | ShapeType::Multipoint
-            | ShapeType::MultipointM
-            | ShapeType::MultipointZ => false,
-            _ => true,
-        }
+                | ShapeType::PointM
+                | ShapeType::PointZ
+                | ShapeType::Multipoint
+                | ShapeType::MultipointM
+                | ShapeType::MultipointZ
+        )
     }
 }
 

@@ -158,8 +158,8 @@ fn read_multipoint<P: GeomProcessor, T: Read>(
     };
 
     let multi_dim = processor.multi_dim();
-    let get_z = processor.dimensions().z && z_values.len() > 0;
-    let get_m = processor.dimensions().m && m_values.len() > 0;
+    let get_z = processor.dimensions().z && !z_values.is_empty();
+    let get_m = processor.dimensions().m && !m_values.is_empty();
 
     processor.multipoint_begin(num_points, 0)?;
     for idx in 0..num_points {
@@ -286,8 +286,8 @@ impl MultiPartShape {
     fn process<P: GeomProcessor>(&self, processor: &mut P, as_poly: bool) -> Result<(), Error> {
         let tagged = false;
         let multi_dim = processor.dimensions().z || processor.dimensions().m;
-        let get_z = processor.dimensions().z && self.z_values.len() > 0;
-        let get_m = processor.dimensions().m && self.m_values.len() > 0;
+        let get_z = processor.dimensions().z && !self.z_values.is_empty();
+        let get_m = processor.dimensions().m && !self.m_values.is_empty();
 
         let geom_parts_indices = if as_poly {
             self.detect_polys()
@@ -306,8 +306,10 @@ impl MultiPartShape {
             if as_poly {
                 processor.polygon_begin(tagged, num_rings, geom_idx)?;
             }
-            let mut ring_idx = 0;
-            for start_end in self.parts_index[geom_start..=geom_end].windows(2) {
+            for (ring_idx, start_end) in self.parts_index[geom_start..=geom_end]
+                .windows(2)
+                .enumerate()
+            {
                 let (start_index, end_index) = (start_end[0], start_end[1]);
                 let num_points_in_part = end_index - start_index;
                 processor.linestring_begin(tagged, num_points_in_part, ring_idx)?;
@@ -331,7 +333,6 @@ impl MultiPartShape {
                     }
                 }
                 processor.linestring_end(tagged, ring_idx)?;
-                ring_idx += 1;
             }
             if as_poly {
                 processor.polygon_end(tagged, geom_idx)?;
