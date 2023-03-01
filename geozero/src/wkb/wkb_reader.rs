@@ -44,20 +44,20 @@ impl GeozeroGeometry for GpkgWkb {
 
 /// Process WKB geometry.
 pub fn process_wkb_geom<R: Read, P: GeomProcessor>(raw: &mut R, processor: &mut P) -> Result<()> {
-    let info = read_wkb_header(raw)?;
-    process_wkb_geom_n(raw, &info, read_wkb_header, 0, processor)
+    let info = WkbInfo::read_wkb_header(raw)?;
+    process_wkb_geom_n(raw, &info, WkbInfo::read_wkb_header, 0, processor)
 }
 
 /// Process EWKB geometry.
 pub fn process_ewkb_geom<R: Read, P: GeomProcessor>(raw: &mut R, processor: &mut P) -> Result<()> {
-    let info = read_ewkb_header(raw)?;
-    process_wkb_geom_n(raw, &info, read_ewkb_header, 0, processor)
+    let info = WkbInfo::read_ewkb_header(raw)?;
+    process_wkb_geom_n(raw, &info, WkbInfo::read_ewkb_header, 0, processor)
 }
 
 /// Process GPKG geometry.
 pub fn process_gpkg_geom<R: Read, P: GeomProcessor>(raw: &mut R, processor: &mut P) -> Result<()> {
-    let info = read_gpkg_header(raw)?;
-    process_wkb_geom_n(raw, &info, read_wkb_header, 0, processor)
+    let info = WkbInfo::read_gpkg_header(raw)?;
+    process_wkb_geom_n(raw, &info, WkbInfo::read_wkb_header, 0, processor)
 }
 
 /// Process WKB type geometry..
@@ -74,7 +74,7 @@ pub fn process_wkb_type_geom<R: Read, P: GeomProcessor>(
 }
 
 #[derive(Debug)]
-pub(crate) struct WkbInfo {
+pub struct WkbInfo {
     endian: scroll::Endian,
     base_type: WKBGeometryType,
     has_z: bool,
@@ -85,105 +85,124 @@ pub(crate) struct WkbInfo {
     envelope: Vec<f64>,
 }
 
-/// OGC WKB header.
-pub(crate) fn read_wkb_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
-    let byte_order = raw.ioread::<u8>()?;
-    let endian = if byte_order == WKBByteOrder::XDR as u8 {
-        scroll::BE
-    } else {
-        scroll::LE
-    };
-    let type_id = raw.ioread_with::<u32>(endian)?;
-    let base_type = WKBGeometryType::from_u32(type_id % 1000);
-    let type_id_dim = type_id / 1000;
-    let has_z = type_id_dim == 1 || type_id_dim == 3;
-    let has_m = type_id_dim == 2 || type_id_dim == 3;
-
-    let info = WkbInfo {
-        endian,
-        base_type,
-        has_z,
-        has_m,
-        srid: None,
-        envelope: Vec::new(),
-    };
-    Ok(info)
-}
-
-/// EWKB header according to https://git.osgeo.org/gitea/postgis/postgis/src/branch/master/doc/ZMSgeoms.txt
-fn read_ewkb_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
-    let byte_order = raw.ioread::<u8>()?;
-    let endian = if byte_order == WKBByteOrder::XDR as u8 {
-        scroll::BE
-    } else {
-        scroll::LE
-    };
-
-    let type_id = raw.ioread_with::<u32>(endian)?;
-    let base_type = WKBGeometryType::from_u32(type_id & 0xFF);
-    let has_z = type_id & 0x80000000 == 0x80000000;
-    let has_m = type_id & 0x40000000 == 0x40000000;
-
-    let srid = if type_id & 0x20000000 == 0x20000000 {
-        Some(raw.ioread_with::<i32>(endian)?)
-    } else {
-        None
-    };
-
-    let info = WkbInfo {
-        endian,
-        base_type,
-        has_z,
-        has_m,
-        srid,
-        envelope: Vec::new(),
-    };
-    Ok(info)
-}
-
-/// GPKG geometry header according to http://www.geopackage.org/spec/#gpb_format
-fn read_gpkg_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
-    let magic = [raw.ioread::<u8>()?, raw.ioread::<u8>()?];
-    if &magic != b"GP" {
-        return Err(GeozeroError::GeometryFormat);
+impl WkbInfo {
+    pub fn base_type(&self) -> WKBGeometryType {
+        self.base_type
     }
-    let _version = raw.ioread::<u8>()?;
-    let flags = raw.ioread::<u8>()?;
-    // println!("flags: {:#010b}", flags);
-    let _extended = (flags & 0b0010_0000) >> 5 == 1;
-    let _empty = (flags & 0b0001_0000) >> 4 == 1;
-    let env_len = match (flags & 0b0000_1110) >> 1 {
-        0 => 0,
-        1 => 4,
-        2 => 6,
-        3 => 6,
-        4 => 8,
-        _ => {
+
+    pub fn has_z(&self) -> bool {
+        self.has_z
+    }
+
+    pub fn has_m(&self) -> bool {
+        self.has_m
+    }
+
+    pub fn srid(&self) -> Option<i32> {
+        self.srid
+    }
+
+    pub fn envelope(&self) -> &[f64] {
+        &self.envelope
+    }
+
+    /// OGC WKB header.
+    pub fn read_wkb_header<R: Read>(raw: &mut R) -> Result<Self> {
+        let byte_order = raw.ioread::<u8>()?;
+        let endian = if byte_order == WKBByteOrder::XDR as u8 {
+            scroll::BE
+        } else {
+            scroll::LE
+        };
+        let type_id = raw.ioread_with::<u32>(endian)?;
+        let base_type = WKBGeometryType::from_u32(type_id % 1000);
+        let type_id_dim = type_id / 1000;
+        let has_z = type_id_dim == 1 || type_id_dim == 3;
+        let has_m = type_id_dim == 2 || type_id_dim == 3;
+
+        Ok(Self {
+            endian,
+            base_type,
+            has_z,
+            has_m,
+            srid: None,
+            envelope: Vec::new(),
+        })
+    }
+
+    /// EWKB header according to https://git.osgeo.org/gitea/postgis/postgis/src/branch/master/doc/ZMSgeoms.txt
+    pub fn read_ewkb_header<R: Read>(raw: &mut R) -> Result<Self> {
+        let byte_order = raw.ioread::<u8>()?;
+        let endian = if byte_order == WKBByteOrder::XDR as u8 {
+            scroll::BE
+        } else {
+            scroll::LE
+        };
+
+        let type_id = raw.ioread_with::<u32>(endian)?;
+        let base_type = WKBGeometryType::from_u32(type_id & 0xFF);
+        let has_z = type_id & 0x80000000 == 0x80000000;
+        let has_m = type_id & 0x40000000 == 0x40000000;
+
+        let srid = if type_id & 0x20000000 == 0x20000000 {
+            Some(raw.ioread_with::<i32>(endian)?)
+        } else {
+            None
+        };
+
+        Ok(Self {
+            endian,
+            base_type,
+            has_z,
+            has_m,
+            srid,
+            envelope: Vec::new(),
+        })
+    }
+
+    /// GPKG geometry header according to http://www.geopackage.org/spec/#gpb_format
+    pub fn read_gpkg_header<R: Read>(raw: &mut R) -> Result<Self> {
+        let magic = [raw.ioread::<u8>()?, raw.ioread::<u8>()?];
+        if &magic != b"GP" {
             return Err(GeozeroError::GeometryFormat);
         }
-    };
-    let endian = if flags & 0b0000_0001 == 0 {
-        scroll::BE
-    } else {
-        scroll::LE
-    };
-    let srid = raw.ioread_with::<i32>(endian)?;
-    let envelope: std::result::Result<Vec<f64>, _> = (0..env_len)
-        .map(|_| raw.ioread_with::<f64>(endian))
-        .collect();
-    let envelope = envelope?;
+        let _version = raw.ioread::<u8>()?;
+        let flags = raw.ioread::<u8>()?;
+        // println!("flags: {:#010b}", flags);
+        let _extended = (flags & 0b0010_0000) >> 5 == 1;
+        let _empty = (flags & 0b0001_0000) >> 4 == 1;
+        let env_len = match (flags & 0b0000_1110) >> 1 {
+            0 => 0,
+            1 => 4,
+            2 => 6,
+            3 => 6,
+            4 => 8,
+            _ => {
+                return Err(GeozeroError::GeometryFormat);
+            }
+        };
+        let endian = if flags & 0b0000_0001 == 0 {
+            scroll::BE
+        } else {
+            scroll::LE
+        };
+        let srid = raw.ioread_with::<i32>(endian)?;
+        let envelope: std::result::Result<Vec<f64>, _> = (0..env_len)
+            .map(|_| raw.ioread_with::<f64>(endian))
+            .collect();
+        let envelope = envelope?;
 
-    let ogc_info = read_wkb_header(raw)?;
+        let ogc_info = Self::read_wkb_header(raw)?;
 
-    let info = WkbInfo {
-        endian,
-        base_type: ogc_info.base_type,
-        has_z: ogc_info.has_z,
-        has_m: ogc_info.has_m,
-        srid: Some(srid),
-        envelope,
-    };
-    Ok(info)
+        Ok(Self {
+            endian,
+            base_type: ogc_info.base_type,
+            has_z: ogc_info.has_z,
+            has_m: ogc_info.has_m,
+            srid: Some(srid),
+            envelope,
+        })
+    }
 }
 
 // TODO: Spatialite https://www.gaia-gis.it/gaia-sins/BLOB-Geometry.html
