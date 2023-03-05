@@ -24,7 +24,7 @@ impl<T: FromWkb + Sized> FromSql<'_> for wkb::Decode<T> {
     }
 }
 
-impl<'a, T: GeozeroGeometry + Sized> ToSql for wkb::Encode<T> {
+impl<T: GeozeroGeometry + Sized> ToSql for wkb::Encode<T> {
     fn to_sql(
         &self,
         _ty: &Type,

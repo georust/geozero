@@ -11,7 +11,7 @@ pub struct GdalWriter {
     line: Geometry,
 }
 
-impl<'a> GdalWriter {
+impl GdalWriter {
     pub fn new() -> Self {
         GdalWriter {
             dims: CoordDimensions::default(),
