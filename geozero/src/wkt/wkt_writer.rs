@@ -178,7 +178,16 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
 
 impl<W: Write> PropertyProcessor for WktWriter<'_, W> {}
 
-impl<W: Write> FeatureProcessor for WktWriter<'_, W> {}
+impl<W: Write> FeatureProcessor for WktWriter<'_, W> {
+    // Feature Collections may contain multiple geometries, so we need to wrap
+    // them in a GeometryCollection to ensure we output valid geometry.
+    fn dataset_begin(&mut self, _name: Option<&str>) -> Result<()> {
+        self.geometrycollection_begin(0, 0)
+    }
+    fn dataset_end(&mut self) -> Result<()> {
+        self.geometrycollection_end(0)
+    }
+}
 
 #[cfg(test)]
 mod test {
