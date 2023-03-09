@@ -55,7 +55,7 @@ arrow2 = { version = "0.14", optional = true, features = ["io_ipc"]}
 [dev-dependencies]
 seek_bufread = "1.2"
 hex = "0.4"
-geo = "0.23"
+geo = "0.24"
 wkt = "0.10.0"
 kdbush = "0.2"
 polylabel = "2.4"

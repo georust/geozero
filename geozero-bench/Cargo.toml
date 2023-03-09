@@ -15,7 +15,7 @@ futures-util = "0.3.5"
 geojson = "0.24.0"
 criterion = "0.4.0"
 geo-types = { version = "0.7", default-features = false }
-geo = "0.23" # { version = "0.17", features = ["postgis-integration"] }
+geo = "0.24" # { version = "0.17", features = ["postgis-integration"] }
 flatgeobuf = "3.24.0"
 seek_bufread = "1.2"
 postgres = "0.19"
