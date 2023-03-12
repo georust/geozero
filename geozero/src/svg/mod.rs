@@ -1,10 +1,12 @@
 //! SVG conversions.
-mod svg;
+mod writer;
+pub use writer::SvgWriter;
 
-pub use svg::*;
+/// SVG String.
+pub struct SvgString(pub String);
 
 pub(crate) mod conversion {
-    use super::svg::*;
+    use super::*;
     use crate::error::Result;
     use crate::FeatureProcessor;
     use crate::{GeozeroDatasource, GeozeroGeometry};
@@ -80,7 +82,7 @@ pub(crate) mod conversion {
 
 #[cfg(feature = "with-wkb")]
 mod wkb {
-    use super::svg::*;
+    use super::*;
     use crate::error::Result;
     use crate::wkb::{FromWkb, WkbDialect};
     use std::io::Read;

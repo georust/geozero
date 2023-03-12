@@ -122,7 +122,7 @@ pub fn process_csv_geom(
             .get(geometry_idx)
             .ok_or(GeozeroError::ColumnNotFound)?;
         use std::str::FromStr;
-        let wkt = wkt::Wkt::from_str(&geometry_field)
+        let wkt = wkt::Wkt::from_str(geometry_field)
             .map_err(|e| GeozeroError::Geometry(e.to_string()))?;
         crate::wkt::wkt_reader::process_wkt_geom_n(&wkt.item, record_idx, processor).map_err(
             |e| {

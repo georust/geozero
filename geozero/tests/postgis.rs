@@ -39,7 +39,7 @@ mod postgis_postgres {
                 vec![(0.0, 0.0), (2.0, 0.0), (2.0, 2.0), (0.0, 2.0), (0.0, 0.0)].into()
             );
         } else {
-            assert!(false, "Conversion to geo_types::Geometry failed");
+            panic!("Conversion to geo_types::Geometry failed");
         }
 
         let row = client.query_one("SELECT NULL::geometry", &[])?;
@@ -105,10 +105,7 @@ mod postgis_postgres {
             }
 
             fn accepts(ty: &Type) -> bool {
-                match ty.name() {
-                    "geography" | "geometry" => true,
-                    _ => false,
-                }
+                matches!(ty.name(), "geography" | "geometry")
             }
         }
 
@@ -204,7 +201,7 @@ mod postgis_sqlx {
                 vec![(0.0, 0.0), (2.0, 0.0), (2.0, 2.0), (0.0, 2.0), (0.0, 0.0)].into()
             );
         } else {
-            assert!(false, "Conversion to geo_types::Geometry failed");
+            panic!("Conversion to geo_types::Geometry failed");
         }
 
         let row: (wkb::Decode<geo_types::Geometry<f64>>,) = sqlx::query_as("SELECT NULL::geometry")

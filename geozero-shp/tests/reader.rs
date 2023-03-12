@@ -83,7 +83,7 @@ fn shp_to_geo() -> Result<(), geozero_shp::Error> {
     {
         assert_eq!(gc.len(), 10);
     } else {
-        assert!(false, "unexpected geometry");
+        panic!("unexpected geometry");
     }
 
     Ok(())
@@ -113,15 +113,15 @@ fn property_access() -> Result<(), geozero_shp::Error> {
             if let Some(FieldValue::Numeric(Some(val))) = feat.record.get("EAS_ID") {
                 assert!(*val > 100.0);
             } else {
-                assert!(false, "record field access failed");
+                panic!("record field access failed");
             }
             // Use String HashMap
             let props = feat.properties()?;
-            assert!(props["EAS_ID"].starts_with("1"));
+            assert!(props["EAS_ID"].starts_with('1'));
             // field access
             assert!(feat.property::<f64>("EAS_ID").unwrap() > 100.0);
         } else {
-            assert!(false, "record field access failed");
+            panic!("record field access failed");
         }
         cnt += 1;
     }

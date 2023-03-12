@@ -4,6 +4,7 @@ use geo_types::*;
 use std::mem;
 
 /// Generator for geo-types geometry type.
+#[derive(Default)]
 pub struct GeoWriter {
     geoms: Vec<Geometry<f64>>,
     // Stack of any in-progress (potentially nested) GeometryCollections
@@ -13,18 +14,12 @@ pub struct GeoWriter {
     // In-progress polygon or multi_linestring
     line_strings: Option<Vec<LineString<f64>>>,
     // In-progress point or line_string
-    coords: Option<Vec<Coordinate<f64>>>,
+    coords: Option<Vec<Coord<f64>>>,
 }
 
 impl GeoWriter {
     pub fn new() -> GeoWriter {
-        GeoWriter {
-            geoms: Vec::new(),
-            coords: None,
-            line_strings: None,
-            polygons: None,
-            collections: Vec::new(),
-        }
+        Default::default()
     }
 
     pub fn take_geometry(&mut self) -> Option<Geometry<f64>> {
@@ -135,7 +130,7 @@ impl GeomProcessor for GeoWriter {
             "Missing LineStrings for Polygon".to_string(),
         ))?;
 
-        let polygon = if line_strings.len() == 0 {
+        let polygon = if line_strings.is_empty() {
             Polygon::new(LineString(vec![]), vec![])
         } else {
             let exterior = line_strings.remove(0);
@@ -206,7 +201,7 @@ mod test {
                     Point::new(1875038.447610231, -3269648.6879248763)
                 );
             }
-            _ => assert!(false),
+            _ => unreachable!(),
         }
         Ok(())
     }
@@ -220,13 +215,13 @@ mod test {
         println!("{:?}", geo);
         match geo {
             Geometry::MultiPolygon(mp) => {
-                let poly = mp.clone().into_iter().next().unwrap();
+                let poly = mp.into_iter().next().unwrap();
                 assert_eq!(
                     poly.exterior().points().next().unwrap(),
                     Point::new(173.020375, -40.919052)
                 );
             }
-            _ => assert!(false),
+            _ => unreachable!(),
         }
         Ok(())
     }

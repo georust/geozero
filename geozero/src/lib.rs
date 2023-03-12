@@ -109,11 +109,12 @@ pub mod mvt;
 pub use crate::mvt::conversion::*;
 
 /// Empty processor implementation
+#[derive(Default)]
 pub struct ProcessorSink;
 
 impl ProcessorSink {
     pub fn new() -> ProcessorSink {
-        ProcessorSink {}
+        Default::default()
     }
 }
 

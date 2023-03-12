@@ -47,6 +47,12 @@ jobs:
           command: check
           args: --workspace --all-features --bins --examples --tests --benches
 
+      - name: run clippy
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: --workspace --all-features --bins --examples --tests --benches
+
       - name: tests
         run: |
           cargo test --workspace --all-features

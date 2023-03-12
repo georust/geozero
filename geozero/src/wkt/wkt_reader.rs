@@ -156,7 +156,7 @@ fn process_multilinestring<P: GeomProcessor>(
 ) -> Result<()> {
     processor.multilinestring_begin(multilinestring.0.len(), idx)?;
     for (idxc, linestring) in multilinestring.0.iter().enumerate() {
-        process_linestring(&linestring, false, idxc, processor)?
+        process_linestring(linestring, false, idxc, processor)?
     }
     processor.multilinestring_end(idx)
 }
@@ -181,7 +181,7 @@ fn process_multi_polygon<P: GeomProcessor>(
 ) -> Result<()> {
     processor.multipolygon_begin(multi_polygon.0.len(), idx)?;
     for (idxp, polygon) in multi_polygon.0.iter().enumerate() {
-        process_polygon(&polygon, false, idxp, processor)?;
+        process_polygon(polygon, false, idxp, processor)?;
     }
     processor.multipolygon_end(idx)
 }

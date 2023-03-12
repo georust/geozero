@@ -6,7 +6,7 @@ use super::mvt_commands::{Command, CommandInteger, ParameterInteger};
 
 impl GeozeroDatasource for tile::Layer {
     fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> Result<()> {
-        process(&self, processor)
+        process(self, processor)
     }
 }
 
@@ -181,7 +181,7 @@ fn process_linestrings<P: GeomProcessor>(
     let mut line_string_slices: Vec<&[u32]> = vec![];
     let mut geom: &[u32] = &geom.geometry;
 
-    while geom.len() > 0 {
+    while !geom.is_empty() {
         let lineto = CommandInteger(geom[3]);
         let slice_size = 4 + lineto.count() as usize * 2;
         let (slice, rest) = geom.split_at(slice_size);
@@ -191,8 +191,8 @@ fn process_linestrings<P: GeomProcessor>(
 
     if line_string_slices.len() > 1 {
         processor.multilinestring_begin(line_string_slices.len(), idx)?;
-        for i in 0..line_string_slices.len() {
-            process_linestring(cursor, line_string_slices[i], false, i, processor)?;
+        for (i, line_string_slice) in line_string_slices.iter().enumerate() {
+            process_linestring(cursor, line_string_slice, false, i, processor)?;
         }
         processor.multilinestring_end(idx)?;
     } else {
@@ -223,7 +223,7 @@ fn process_polygon<P: GeomProcessor>(
             return Err(GeozeroError::GeometryFormat);
         }
         processor.linestring_begin(false, 1 + lineto.count() as usize, i)?;
-        let mut start_cursor = cursor.clone();
+        let mut start_cursor = *cursor;
         process_coord(cursor, &ring[1..3], 0, processor)?;
         for i in 0..lineto.count() as usize {
             process_coord(cursor, &ring[4 + i * 2..6 + i * 2], i + 1, processor)?;
@@ -251,12 +251,12 @@ fn process_polygons<P: GeomProcessor>(
     let mut polygon_slices: Vec<Vec<&[u32]>> = vec![];
     let mut geom: &[u32] = &geom.geometry;
 
-    while geom.len() > 0 {
+    while !geom.is_empty() {
         let lineto = CommandInteger(geom[3]);
         let slice_size = 4 + lineto.count() as usize * 2 + 1;
         let (slice, rest) = geom.split_at(slice_size);
         let positive_area = is_area_positive(
-            cursor.clone(),
+            *cursor,
             &slice[1..3],
             &slice[4..4 + lineto.count() as usize * 2],
         );
@@ -274,8 +274,8 @@ fn process_polygons<P: GeomProcessor>(
 
     if polygon_slices.len() > 1 {
         processor.multipolygon_begin(polygon_slices.len(), idx)?;
-        for i in 0..polygon_slices.len() {
-            process_polygon(cursor, &polygon_slices[i], false, i, processor)?;
+        for (i, polygon_slice) in polygon_slices.iter().enumerate() {
+            process_polygon(cursor, polygon_slice, false, i, processor)?;
         }
         processor.multipolygon_end(idx)?;
     } else {
@@ -314,10 +314,12 @@ mod test {
     #[test]
     fn layer() {
         // https://github.com/mapbox/vector-tile-spec/tree/master/2.1#45-example
-        let mut mvt_layer = tile::Layer::default();
-        mvt_layer.version = 2;
-        mvt_layer.name = String::from("points");
-        mvt_layer.extent = Some(4096);
+        let mut mvt_layer = tile::Layer {
+            version: 2,
+            name: String::from("points"),
+            extent: Some(4096),
+            ..Default::default()
+        };
 
         mvt_layer.keys.push(String::from("hello"));
         mvt_layer.keys.push(String::from("h"));
@@ -341,27 +343,31 @@ mod test {
         });
 
         {
-            let mut mvt_feature = tile::Feature::default();
-            mvt_feature.id = Some(1);
+            let mut mvt_feature = tile::Feature {
+                id: Some(1),
+                tags: [0, 0, 1, 0, 2, 1].to_vec(),
+                geometry: [9, 2410, 3080].to_vec(),
+                ..Default::default()
+            };
             mvt_feature.set_type(GeomType::Point);
-            mvt_feature.tags = [0, 0, 1, 0, 2, 1].to_vec();
-            mvt_feature.geometry = [9, 2410, 3080].to_vec();
             mvt_layer.features.push(mvt_feature);
         }
 
         {
-            let mut mvt_feature = tile::Feature::default();
-            mvt_feature.id = Some(2);
+            let mut mvt_feature = tile::Feature {
+                id: Some(2),
+                tags: [0, 2, 2, 3].to_vec(),
+                geometry: [9, 2410, 3080].to_vec(),
+                ..Default::default()
+            };
             mvt_feature.set_type(GeomType::Point);
-            mvt_feature.tags = [0, 2, 2, 3].to_vec();
-            mvt_feature.geometry = [9, 2410, 3080].to_vec();
             mvt_layer.features.push(mvt_feature);
         }
 
         let geojson = mvt_layer.to_json().unwrap();
 
         assert_eq!(
-            geojson.replace("\n", "").replace(" ", ""),
+            geojson.replace(['\n', ' '], ""),
             r#"{
     "type": "FeatureCollection",
     "name": "points",
@@ -391,8 +397,7 @@ mod test {
         }
     ]
 }"#
-            .replace("\n", "")
-            .replace(" ", "")
+            .replace(['\n', ' '], "")
         );
     }
 
