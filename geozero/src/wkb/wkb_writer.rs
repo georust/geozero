@@ -65,9 +65,9 @@ impl<'a, W: Write> WkbWriter<'a, W> {
     /// OGC WKB header
     fn write_wkb_header(&mut self, wkb_type: WKBGeometryType) -> Result<()> {
         let byte_order = if self.endian == scroll::BE {
-            WKBByteOrder::XDR
+            WKBByteOrder::Xdr
         } else {
-            WKBByteOrder::NDR
+            WKBByteOrder::Ndr
         };
         self.out.iowrite(byte_order as u8)?;
         let mut type_id = wkb_type as u32;
@@ -84,9 +84,9 @@ impl<'a, W: Write> WkbWriter<'a, W> {
     /// EWKB header according to https://git.osgeo.org/gitea/postgis/postgis/src/branch/master/doc/ZMSgeoms.txt
     fn write_ewkb_header(&mut self, wkb_type: WKBGeometryType) -> Result<()> {
         let byte_order = if self.endian == scroll::BE {
-            WKBByteOrder::XDR
+            WKBByteOrder::Xdr
         } else {
-            WKBByteOrder::NDR
+            WKBByteOrder::Ndr
         };
         self.out.iowrite(byte_order as u8)?;
 

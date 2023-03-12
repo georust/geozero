@@ -88,7 +88,7 @@ pub(crate) struct WkbInfo {
 /// OGC WKB header.
 pub(crate) fn read_wkb_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
     let byte_order = raw.ioread::<u8>()?;
-    let endian = if byte_order == WKBByteOrder::XDR as u8 {
+    let endian = if byte_order == WKBByteOrder::Xdr as u8 {
         scroll::BE
     } else {
         scroll::LE
@@ -113,7 +113,7 @@ pub(crate) fn read_wkb_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
 /// EWKB header according to https://git.osgeo.org/gitea/postgis/postgis/src/branch/master/doc/ZMSgeoms.txt
 fn read_ewkb_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
     let byte_order = raw.ioread::<u8>()?;
-    let endian = if byte_order == WKBByteOrder::XDR as u8 {
+    let endian = if byte_order == WKBByteOrder::Xdr as u8 {
         scroll::BE
     } else {
         scroll::LE

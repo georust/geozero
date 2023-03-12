@@ -195,6 +195,6 @@ impl WKBGeometryType {
 }
 
 pub(crate) enum WKBByteOrder {
-    XDR = 0, // Big Endian
-    NDR = 1, // Little Endian
+    Xdr = 0, // Big Endian
+    Ndr = 1, // Little Endian
 }
