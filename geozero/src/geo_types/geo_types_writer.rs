@@ -201,7 +201,7 @@ mod test {
                     Point::new(1875038.447610231, -3269648.6879248763)
                 );
             }
-            _ => assert!(false),
+            _ => unreachable!(),
         }
         Ok(())
     }
@@ -221,7 +221,7 @@ mod test {
                     Point::new(173.020375, -40.919052)
                 );
             }
-            _ => assert!(false),
+            _ => unreachable!(),
         }
         Ok(())
     }
