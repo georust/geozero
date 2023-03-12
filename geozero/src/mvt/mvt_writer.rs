@@ -25,13 +25,7 @@ enum LineState {
 
 impl MvtWriter {
     pub fn new() -> MvtWriter {
-        MvtWriter {
-            feature: tile::Feature::default(),
-            last_x: 0,
-            last_y: 0,
-            line_state: LineState::None,
-            is_multiline: false,
-        }
+        Default::default()
     }
     pub fn geometry(&self) -> &tile::Feature {
         &self.feature
@@ -42,6 +36,18 @@ impl MvtWriter {
             self.feature
                 .geometry
                 .reserve(total - self.feature.geometry.capacity());
+        }
+    }
+}
+
+impl Default for MvtWriter {
+    fn default() -> Self {
+        Self {
+            feature: tile::Feature::default(),
+            last_x: 0,
+            last_y: 0,
+            line_state: LineState::None,
+            is_multiline: false,
         }
     }
 }

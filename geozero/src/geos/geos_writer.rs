@@ -13,11 +13,7 @@ pub struct GeosWriter<'a> {
 
 impl<'a> GeosWriter<'a> {
     pub fn new() -> Self {
-        GeosWriter {
-            geom: GGeometry::create_empty_point().unwrap(),
-            cs: Vec::new(),
-            polys: Vec::new(),
-        }
+        Default::default()
     }
     fn add_coord_seq(&mut self, len: usize) -> Result<()> {
         self.cs
@@ -26,6 +22,16 @@ impl<'a> GeosWriter<'a> {
     }
     pub fn geometry(&self) -> &GGeometry<'a> {
         &self.geom
+    }
+}
+
+impl<'a> Default for GeosWriter<'a> {
+    fn default() -> Self {
+        GeosWriter {
+            geom: GGeometry::create_empty_point().unwrap(),
+            cs: Vec::new(),
+            polys: Vec::new(),
+        }
     }
 }
 

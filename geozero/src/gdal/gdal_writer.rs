@@ -13,11 +13,7 @@ pub struct GdalWriter {
 
 impl GdalWriter {
     pub fn new() -> Self {
-        GdalWriter {
-            dims: CoordDimensions::default(),
-            geom: Geometry::empty(OGRwkbGeometryType::wkbPoint).unwrap(),
-            line: Geometry::empty(OGRwkbGeometryType::wkbLineString).unwrap(),
-        }
+        Default::default()
     }
     pub fn geometry(&self) -> &Geometry {
         &self.geom
@@ -34,6 +30,16 @@ impl GdalWriter {
     }
     fn empty_geom(&mut self, base: OGRwkbGeometryType::Type) -> Result<Geometry> {
         Geometry::empty(self.wkb_type(base)).map_err(|e| e.into())
+    }
+}
+
+impl Default for GdalWriter {
+    fn default() -> Self {
+        GdalWriter {
+            dims: CoordDimensions::default(),
+            geom: Geometry::empty(OGRwkbGeometryType::wkbPoint).unwrap(),
+            line: Geometry::empty(OGRwkbGeometryType::wkbLineString).unwrap(),
+        }
     }
 }
 
