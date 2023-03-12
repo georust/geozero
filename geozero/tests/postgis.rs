@@ -105,10 +105,7 @@ mod postgis_postgres {
             }
 
             fn accepts(ty: &Type) -> bool {
-                match ty.name() {
-                    "geography" | "geometry" => true,
-                    _ => false,
-                }
+                matches!(ty.name(), "geography" | "geometry")
             }
         }
 
