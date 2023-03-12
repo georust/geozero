@@ -263,25 +263,33 @@ mod test_mvt {
         // https://github.com/mapbox/vector-tile-spec/tree/master/2.1#45-example
         let mut mvt_tile = Tile::default();
 
-        let mut mvt_layer = tile::Layer::default();
-        mvt_layer.version = 2;
+        let mut mvt_layer = tile::Layer {
+            version: 2,
+            ..Default::default()
+        };
         mvt_layer.name = String::from("points");
         mvt_layer.extent = Some(4096);
 
-        let mut mvt_feature = tile::Feature::default();
-        mvt_feature.id = Some(1);
+        let mut mvt_feature = tile::Feature {
+            id: Some(1),
+            ..Default::default()
+        };
         mvt_feature.set_type(GeomType::Point);
         mvt_feature.geometry = [9, 490, 6262].to_vec();
 
-        let mut mvt_value = tile::Value::default();
-        mvt_value.string_value = Some(String::from("world"));
+        let mvt_value = tile::Value {
+            string_value: Some(String::from("world")),
+            ..Default::default()
+        };
         add_feature_attribute(
             &mut mvt_layer,
             &mut mvt_feature,
             String::from("hello"),
             mvt_value,
         );
-        let mut mvt_value = tile::Value::default();
+        let mut mvt_value = tile::Value {
+            ..Default::default()
+        };
         mvt_value.string_value = Some(String::from("world"));
         add_feature_attribute(
             &mut mvt_layer,
@@ -289,8 +297,10 @@ mod test_mvt {
             String::from("h"),
             mvt_value,
         );
-        let mut mvt_value = tile::Value::default();
-        mvt_value.double_value = Some(1.23);
+        let mvt_value = tile::Value {
+            double_value: Some(1.23),
+            ..Default::default()
+        };
         add_feature_attribute(
             &mut mvt_layer,
             &mut mvt_feature,
@@ -305,16 +315,20 @@ mod test_mvt {
         mvt_feature.set_type(GeomType::Point);
         mvt_feature.geometry = [9, 490, 6262].to_vec();
 
-        let mut mvt_value = tile::Value::default();
-        mvt_value.string_value = Some(String::from("again"));
+        let mvt_value = tile::Value {
+            string_value: Some(String::from("again")),
+            ..Default::default()
+        };
         add_feature_attribute(
             &mut mvt_layer,
             &mut mvt_feature,
             String::from("hello"),
             mvt_value,
         );
-        let mut mvt_value = tile::Value::default();
-        mvt_value.int_value = Some(2);
+        let mvt_value = tile::Value {
+            int_value: Some(2),
+            ..Default::default()
+        };
         add_feature_attribute(
             &mut mvt_layer,
             &mut mvt_feature,

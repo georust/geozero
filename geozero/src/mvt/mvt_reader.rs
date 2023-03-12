@@ -314,10 +314,12 @@ mod test {
     #[test]
     fn layer() {
         // https://github.com/mapbox/vector-tile-spec/tree/master/2.1#45-example
-        let mut mvt_layer = tile::Layer::default();
-        mvt_layer.version = 2;
-        mvt_layer.name = String::from("points");
-        mvt_layer.extent = Some(4096);
+        let mut mvt_layer = tile::Layer {
+            version: 2,
+            name: String::from("points"),
+            extent: Some(4096),
+            ..Default::default()
+        };
 
         mvt_layer.keys.push(String::from("hello"));
         mvt_layer.keys.push(String::from("h"));
@@ -341,20 +343,24 @@ mod test {
         });
 
         {
-            let mut mvt_feature = tile::Feature::default();
-            mvt_feature.id = Some(1);
+            let mut mvt_feature = tile::Feature {
+                id: Some(1),
+                tags: [0, 0, 1, 0, 2, 1].to_vec(),
+                geometry: [9, 2410, 3080].to_vec(),
+                ..Default::default()
+            };
             mvt_feature.set_type(GeomType::Point);
-            mvt_feature.tags = [0, 0, 1, 0, 2, 1].to_vec();
-            mvt_feature.geometry = [9, 2410, 3080].to_vec();
             mvt_layer.features.push(mvt_feature);
         }
 
         {
-            let mut mvt_feature = tile::Feature::default();
-            mvt_feature.id = Some(2);
+            let mut mvt_feature = tile::Feature {
+                id: Some(2),
+                tags: [0, 2, 2, 3].to_vec(),
+                geometry: [9, 2410, 3080].to_vec(),
+                ..Default::default()
+            };
             mvt_feature.set_type(GeomType::Point);
-            mvt_feature.tags = [0, 2, 2, 3].to_vec();
-            mvt_feature.geometry = [9, 2410, 3080].to_vec();
             mvt_layer.features.push(mvt_feature);
         }
 
