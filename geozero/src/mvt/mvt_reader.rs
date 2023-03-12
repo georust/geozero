@@ -191,8 +191,8 @@ fn process_linestrings<P: GeomProcessor>(
 
     if line_string_slices.len() > 1 {
         processor.multilinestring_begin(line_string_slices.len(), idx)?;
-        for i in 0..line_string_slices.len() {
-            process_linestring(cursor, line_string_slices[i], false, i, processor)?;
+        for (i, line_string_slice) in line_string_slices.iter().enumerate() {
+            process_linestring(cursor, line_string_slice, false, i, processor)?;
         }
         processor.multilinestring_end(idx)?;
     } else {
@@ -274,8 +274,8 @@ fn process_polygons<P: GeomProcessor>(
 
     if polygon_slices.len() > 1 {
         processor.multipolygon_begin(polygon_slices.len(), idx)?;
-        for i in 0..polygon_slices.len() {
-            process_polygon(cursor, &polygon_slices[i], false, i, processor)?;
+        for (i, polygon_slice) in polygon_slices.iter().enumerate() {
+            process_polygon(cursor, polygon_slice, false, i, processor)?;
         }
         processor.multipolygon_end(idx)?;
     } else {
