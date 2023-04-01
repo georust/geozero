@@ -83,7 +83,7 @@ pub trait FeatureProperties {
         self.process_properties(&mut reader)?;
         reader.value
     }
-    /// Return all properties in a HashMap
+    /// Return all properties in a `HashMap`
     ///
     /// Use `process_properties` for zero-copy access
     fn properties(&self) -> Result<HashMap<String, String>> {

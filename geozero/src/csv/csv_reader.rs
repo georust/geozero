@@ -2,6 +2,7 @@ use crate::error::{GeozeroError, Result};
 use crate::{ColumnValue, FeatureProcessor, GeomProcessor, GeozeroDatasource, GeozeroGeometry};
 
 use std::io::Read;
+use std::str::FromStr;
 
 pub struct Csv<'a> {
     csv_text: &'a str,
@@ -121,7 +122,6 @@ pub fn process_csv_geom(
         let geometry_field = record
             .get(geometry_idx)
             .ok_or(GeozeroError::ColumnNotFound)?;
-        use std::str::FromStr;
         let wkt = wkt::Wkt::from_str(geometry_field)
             .map_err(|e| GeozeroError::Geometry(e.to_string()))?;
         crate::wkt::wkt_reader::process_wkt_geom_n(&wkt.item, record_idx, processor).map_err(
@@ -272,7 +272,7 @@ mod tests {
         let actual_geojson = csv.to_json().unwrap();
         let actual_geojson: serde_json::Value = serde_json::from_str(&actual_geojson).unwrap();
 
-        assert_eq!(expected_geojson, actual_geojson,)
+        assert_eq!(expected_geojson, actual_geojson)
     }
     #[test]
     fn csv_string_feature_processor() {
@@ -320,7 +320,7 @@ mod tests {
         let actual_geojson = csv.to_json().unwrap();
         let actual_geojson: serde_json::Value = serde_json::from_str(&actual_geojson).unwrap();
 
-        assert_eq!(expected_geojson, actual_geojson,)
+        assert_eq!(expected_geojson, actual_geojson)
     }
 
     #[test]
@@ -369,7 +369,7 @@ mod tests {
         let actual_geojson = csv.to_json().unwrap();
         let actual_geojson: serde_json::Value = serde_json::from_str(&actual_geojson).unwrap();
 
-        assert_eq!(expected_geojson, actual_geojson,)
+        assert_eq!(expected_geojson, actual_geojson)
     }
 
     #[test]

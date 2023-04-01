@@ -99,7 +99,7 @@ fn property_filter() -> Result<(), geozero_shp::Error> {
         .count();
     assert_eq!(cnt, 5);
     // Filter does not work as expected. *All* features are written and converted into GeoJSON!
-    assert!(&from_utf8(&json).unwrap().contains("\"AREA\": 5268.813"));
+    assert!(from_utf8(&json).unwrap().contains(r#""AREA": 5268.813"#));
     Ok(())
 }
 

@@ -261,7 +261,7 @@ mod buffering_wkt_writer {
         }
 
         pub(crate) fn clear(&mut self) {
-            self.buffer.clear()
+            self.buffer.clear();
         }
 
         pub(crate) fn bytes(&self) -> &[u8] {

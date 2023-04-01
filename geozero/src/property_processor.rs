@@ -1,6 +1,7 @@
 use crate::error::{GeozeroError, Result};
 use std::collections::HashMap;
 use std::fmt;
+use std::hash::BuildHasher;
 
 /// Feature property value.
 #[derive(PartialEq, Debug)]
@@ -154,7 +155,7 @@ impl PropertyReadType for String {
     }
 }
 
-impl PropertyProcessor for HashMap<String, String> {
+impl<S: BuildHasher> PropertyProcessor for HashMap<String, String, S> {
     fn property(&mut self, _idx: usize, colname: &str, colval: &ColumnValue) -> Result<bool> {
         self.insert(colname.to_string(), colval.to_string());
         Ok(false)
@@ -175,6 +176,6 @@ fn convert_column_value() {
     assert_eq!(Result::<String>::from(v).unwrap(), "Yes".to_string());
     assert_eq!(
         Result::<i32>::from(v).unwrap_err().to_string(),
-        "expected a `ColumnValue::Int` value but found `String(\"Yes\")`"
+        r#"expected a `ColumnValue::Int` value but found `String("Yes")`"#
     );
 }

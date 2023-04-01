@@ -1,4 +1,4 @@
-use crate::postgis::postgis_diesel::sql_types::*;
+use crate::postgis::postgis_diesel::sql_types::{Geography, Geometry};
 use crate::wkb::Ewkb;
 
 use byteorder::WriteBytesExt;
