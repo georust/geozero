@@ -15,17 +15,19 @@ impl<'a, W: Write> WktWriter<'a, W> {
             out,
         }
     }
-    fn geom_begin(&mut self, idx: usize, tag: &[u8]) -> Result<()> {
+    fn comma(&mut self, idx: usize) -> Result<()> {
         if idx > 0 {
             self.out.write_all(b",")?;
         }
+        Ok(())
+    }
+    fn geom_begin(&mut self, idx: usize, tag: &[u8]) -> Result<()> {
+        self.comma(idx)?;
         self.out.write_all(tag)?;
         Ok(())
     }
     fn tagged_geom_begin(&mut self, tagged: bool, idx: usize, tag: &[u8]) -> Result<()> {
-        if idx > 0 {
-            self.out.write_all(b",")?;
-        }
+        self.comma(idx)?;
         if tagged {
             self.out.write_all(tag)?;
         } else {
@@ -45,9 +47,7 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
     }
 
     fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
-        if idx > 0 {
-            self.out.write_all(b",")?;
-        }
+        self.comma(idx)?;
         self.out.write_all(format!("{x} {y}").as_bytes())?;
         Ok(())
     }
@@ -62,9 +62,7 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
         _tm: Option<u64>,
         idx: usize,
     ) -> Result<()> {
-        if idx > 0 {
-            self.out.write_all(b",")?;
-        }
+        self.comma(idx)?;
         self.out.write_all(format!("{x} {y}").as_bytes())?;
         if let Some(z) = z {
             self.out.write_all(format!(" {z}").as_bytes())?;
@@ -75,18 +73,16 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
         Ok(())
     }
 
+    fn empty_point(&mut self, idx: usize) -> Result<()> {
+        self.geom_begin(idx, b"POINT EMPTY")
+        // we intentionally omit calling geom_end(), because POINT EMPTY has no closing paren
+    }
     fn point_begin(&mut self, idx: usize) -> Result<()> {
         self.geom_begin(idx, b"POINT(")
     }
     fn point_end(&mut self, _idx: usize) -> Result<()> {
         self.geom_end()
     }
-
-    fn empty_point(&mut self, idx: usize) -> Result<()> {
-        self.geom_begin(idx, b"POINT EMPTY")
-        // we intentionally omit calling geom_end(), because POINT EMPTY has no closing paren
-    }
-
     fn multipoint_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
         self.geom_begin(idx, b"MULTIPOINT(")
     }
@@ -133,7 +129,6 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
     fn compoundcurve_begin(&mut self, _size: usize, idx: usize) -> Result<()> {
         self.geom_begin(idx, b"COMPOUNDCURVE(")
     }
-
     fn compoundcurve_end(&mut self, _idx: usize) -> Result<()> {
         self.geom_end()
     }
@@ -155,7 +150,6 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
     fn multisurface_end(&mut self, _idx: usize) -> Result<()> {
         self.geom_end()
     }
-
     fn triangle_begin(&mut self, tagged: bool, _size: usize, idx: usize) -> Result<()> {
         self.tagged_geom_begin(tagged, idx, b"TRIANGLE(")
     }

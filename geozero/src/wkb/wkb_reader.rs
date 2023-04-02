@@ -607,8 +607,8 @@ mod test {
         );
     }
 
-    fn ewkb_to_wkt(ewkbstr: &str, with_z: bool) -> String {
-        let ewkb = hex::decode(ewkbstr).unwrap();
+    fn ewkb_to_wkt(ewkb_str: &str, with_z: bool) -> String {
+        let ewkb = hex::decode(ewkb_str).unwrap();
         let mut wkt_data: Vec<u8> = Vec::new();
         let mut writer = WktWriter::new(&mut wkt_data);
         writer.dims.z = with_z;
