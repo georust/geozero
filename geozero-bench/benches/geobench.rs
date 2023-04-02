@@ -40,7 +40,7 @@ mod fgb {
         bbox: &Option<Extent>,
         count: usize,
     ) -> Result<()> {
-        let url = format!("http://127.0.0.1:3333/{}", fname);
+        let url = format!("http://127.0.0.1:3333/{fname}");
         let opened_fgb = HttpFgbReader::open(&url).await?;
         let mut selected_fgb = if let Some(bbox) = bbox {
             opened_fgb
@@ -78,11 +78,11 @@ mod postgis_postgres {
         srid: i32,
         count: usize,
     ) -> std::result::Result<(), postgres::error::Error> {
-        let mut sql = format!("SELECT geom FROM {}", table);
+        let mut sql = format!("SELECT geom FROM {table}");
         if let Some(bbox) = bbox {
             sql += &format!(
-                " WHERE geom && ST_MakeEnvelope({}, {}, {}, {}, {})",
-                bbox.minx, bbox.miny, bbox.maxx, bbox.maxy, srid
+                " WHERE geom && ST_MakeEnvelope({}, {}, {}, {}, {srid})",
+                bbox.minx, bbox.miny, bbox.maxx, bbox.maxy
             );
         }
 
@@ -109,11 +109,11 @@ mod rust_postgis {
         srid: i32,
         count: usize,
     ) -> std::result::Result<(), postgres::error::Error> {
-        let mut sql = format!("SELECT geom FROM {}", table);
+        let mut sql = format!("SELECT geom FROM {table}");
         if let Some(bbox) = bbox {
             sql += &format!(
-                " WHERE geom && ST_MakeEnvelope({}, {}, {}, {}, {})",
-                bbox.minx, bbox.miny, bbox.maxx, bbox.maxy, srid
+                " WHERE geom && ST_MakeEnvelope({}, {}, {}, {}, {srid})",
+                bbox.minx, bbox.miny, bbox.maxx, bbox.maxy
             );
         }
 
@@ -149,11 +149,11 @@ mod postgis_sqlx {
         srid: i32,
         count: usize,
     ) -> std::result::Result<(), sqlx::Error> {
-        let mut sql = format!("SELECT geom FROM {}", table);
+        let mut sql = format!("SELECT geom FROM {table}");
         if let Some(bbox) = bbox {
             sql += &format!(
-                " WHERE geom && ST_MakeEnvelope({}, {}, {}, {}, {})",
-                bbox.minx, bbox.miny, bbox.maxx, bbox.maxy, srid
+                " WHERE geom && ST_MakeEnvelope({}, {}, {}, {}, {srid})",
+                bbox.minx, bbox.miny, bbox.maxx, bbox.maxy
             );
         }
         let mut cursor = sqlx::query(&sql).fetch(conn);
@@ -187,16 +187,16 @@ mod gpkg {
         bbox: &Option<Extent>,
         count: usize,
     ) -> std::result::Result<(), sqlx::Error> {
-        let mut conn = SqliteConnection::connect(&format!("sqlite://{}", fpath)).await?;
+        let mut conn = SqliteConnection::connect(&format!("sqlite://{fpath}")).await?;
 
         // http://erouault.blogspot.com/2017/03/dealing-with-huge-vector-geopackage.html
-        let mut sql = format!("SELECT geom FROM {}", table);
+        let mut sql = format!("SELECT geom FROM {table}");
         if let Some(bbox) = bbox {
             sql += &format!(
-                " JOIN rtree_{}_geom r ON {}.fid = r.id
+                " JOIN rtree_{table}_geom r ON {table}.fid = r.id
                     WHERE r.minx <= {} AND r.maxx >= {} AND
                           r.miny <= {} AND r.maxy >= {}",
-                table, table, bbox.maxx, bbox.minx, bbox.maxy, bbox.miny
+                bbox.maxx, bbox.minx, bbox.maxy, bbox.miny
             );
         }
         let mut cursor = sqlx::query(&sql).fetch(&mut conn);

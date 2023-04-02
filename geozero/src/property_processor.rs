@@ -34,7 +34,7 @@ pub enum ColumnValue<'a> {
 ///
 /// impl PropertyProcessor for PropertyPrinter {
 ///     fn property(&mut self, i: usize, n: &str, v: &ColumnValue) -> Result<bool> {
-///         println!("columnidx: {} name: {} value: {:?}", i, n, v);
+///         println!("columnidx: {i} name: {n} value: {v:?}");
 ///         Ok(false) // don't abort
 ///     }
 /// }
@@ -50,20 +50,20 @@ pub trait PropertyProcessor {
 impl fmt::Display for ColumnValue<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ColumnValue::Byte(v) => write!(f, "{}", v),
-            ColumnValue::UByte(v) => write!(f, "{}", v),
-            ColumnValue::Bool(v) => write!(f, "{}", v),
-            ColumnValue::Short(v) => write!(f, "{}", v),
-            ColumnValue::UShort(v) => write!(f, "{}", v),
-            ColumnValue::Int(v) => write!(f, "{}", v),
-            ColumnValue::UInt(v) => write!(f, "{}", v),
-            ColumnValue::Long(v) => write!(f, "{}", v),
-            ColumnValue::ULong(v) => write!(f, "{}", v),
-            ColumnValue::Float(v) => write!(f, "{}", v),
-            ColumnValue::Double(v) => write!(f, "{}", v),
-            ColumnValue::String(v) => write!(f, "{}", v),
-            ColumnValue::Json(v) => write!(f, "{}", v),
-            ColumnValue::DateTime(v) => write!(f, "{}", v),
+            ColumnValue::Byte(v) => write!(f, "{v}"),
+            ColumnValue::UByte(v) => write!(f, "{v}"),
+            ColumnValue::Bool(v) => write!(f, "{v}"),
+            ColumnValue::Short(v) => write!(f, "{v}"),
+            ColumnValue::UShort(v) => write!(f, "{v}"),
+            ColumnValue::Int(v) => write!(f, "{v}"),
+            ColumnValue::UInt(v) => write!(f, "{v}"),
+            ColumnValue::Long(v) => write!(f, "{v}"),
+            ColumnValue::ULong(v) => write!(f, "{v}"),
+            ColumnValue::Float(v) => write!(f, "{v}"),
+            ColumnValue::Double(v) => write!(f, "{v}"),
+            ColumnValue::String(v) | ColumnValue::Json(v) | ColumnValue::DateTime(v) => {
+                write!(f, "{v}")
+            }
             ColumnValue::Binary(_v) => write!(f, "[BINARY]"),
         }
     }

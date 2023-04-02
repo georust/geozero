@@ -128,12 +128,7 @@ pub fn process_csv_geom(
             |e| {
                 // +2 to start at line 1 and to account for the header row
                 let line = record_idx + 2;
-                log::warn!(
-                    "line {}: invalid WKT: '{}', record: {:?}",
-                    line,
-                    geometry_field,
-                    &record
-                );
+                log::warn!("line {line}: invalid WKT: '{geometry_field}', record: {record:?}");
                 e
             },
         )?;
@@ -190,12 +185,7 @@ pub fn process_csv_features(
                 |e| {
                     // +2 to start at line 1 and to account for the header row
                     let line = feature_idx + 2;
-                    log::warn!(
-                        "line {}: invalid WKT: '{}', record: {:?}",
-                        line,
-                        geometry_field,
-                        &record
-                    );
+                    log::warn!("line {line}: invalid WKT: '{geometry_field}', record: {record:?}");
                     e
                 },
             )?;

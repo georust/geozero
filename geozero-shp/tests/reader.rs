@@ -153,11 +153,9 @@ fn property_file() -> Result<(), geozero_shp::Error> {
                 'I' => String::from("INTEGER"),
                 'B' => String::from("REAL"),
                 'M' => String::from("BLOB"),
-                _ => {
-                    unimplemented!();
-                }
+                _ => unimplemented!(),
             };
-            format!("{} {}", name, sql_type)
+            format!("{name} {sql_type}")
         })
         .collect::<Vec<String>>()
         .join(",");

@@ -92,7 +92,7 @@ while let Some(feature) = fgb.next()? {
     if let Ok(Geometry::MultiPolygon(mpoly)) = feature.to_geo() {
         if let Some(poly) = &mpoly.0.iter().next() {
             let label_pos = polylabel(&poly, &0.10).unwrap();
-            println!("{}: {:?}", name, label_pos);
+            println!("{name}: {label_pos:?}");
         }
     }
 }

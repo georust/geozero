@@ -125,7 +125,7 @@ pub struct ObjWriter;
 
 impl VertexOutput for ObjWriter {
     fn vertex(&self, x: f32, y: f32, z: f32) {
-        println!("v {} {} {}", x, y, z);
+        println!("v {x} {y} {z}");
     }
     fn triangle(&self, idx0: u16, idx1: u16, idx2: u16) {
         println!("f {} {} {}", idx0 + 1, idx1 + 1, idx2 + 1);
