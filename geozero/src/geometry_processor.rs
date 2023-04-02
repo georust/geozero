@@ -133,35 +133,35 @@ pub trait GeomProcessor {
         Ok(())
     }
 
-    /// Begin of LineString processing
+    /// Begin of `LineString` processing
     ///
-    /// An untagged LineString is either a Polygon ring or part of a MultiLineString
+    /// An untagged `LineString` is either a Polygon ring or part of a `MultiLineString`
     ///
     /// Next: size * xy/coordinate
     fn linestring_begin(&mut self, tagged: bool, size: usize, idx: usize) -> Result<()> {
         Ok(())
     }
 
-    /// End of LineString processing
+    /// End of `LineString` processing
     fn linestring_end(&mut self, tagged: bool, idx: usize) -> Result<()> {
         Ok(())
     }
 
-    /// Begin of MultiLineString processing
+    /// Begin of `MultiLineString` processing
     ///
     /// Next: size * LineString (untagged)
     fn multilinestring_begin(&mut self, size: usize, idx: usize) -> Result<()> {
         Ok(())
     }
 
-    /// End of MultiLineString processing
+    /// End of `MultiLineString` processing
     fn multilinestring_end(&mut self, idx: usize) -> Result<()> {
         Ok(())
     }
 
     /// Begin of Polygon processing
     ///
-    /// An untagged Polygon is part of a MultiPolygon
+    /// An untagged Polygon is part of a `MultiPolygon`
     ///
     /// Next: size * LineString (untagged) = rings
     fn polygon_begin(&mut self, tagged: bool, size: usize, idx: usize) -> Result<()> {
@@ -173,31 +173,36 @@ pub trait GeomProcessor {
         Ok(())
     }
 
-    /// Begin of MultiPolygon processing
+    /// Begin of `MultiPolygon` processing
     ///
     /// Next: size * Polygon (untagged)
     fn multipolygon_begin(&mut self, size: usize, idx: usize) -> Result<()> {
         Ok(())
     }
 
-    /// End of MultiPolygon processing
+    /// End of `MultiPolygon` processing
     fn multipolygon_end(&mut self, idx: usize) -> Result<()> {
         Ok(())
     }
 
-    /// Begin of GeometryCollection processing
+    /// Begin of `GeometryCollection` processing
     fn geometrycollection_begin(&mut self, size: usize, idx: usize) -> Result<()> {
         Ok(())
     }
 
-    /// End of GeometryCollection processing
+    /// End of `GeometryCollection` processing
     fn geometrycollection_end(&mut self, idx: usize) -> Result<()> {
         Ok(())
     }
 
-    /// Begin of CircularString processing
+    /// Begin of `CircularString` processing
     ///
-    /// The CircularString is the basic curve type, similar to a LineString in the linear world. A single segment required three points, the start and end points (first and third) and any other point on the arc. The exception to this is for a closed circle, where the start and end points are the same. In this case the second point MUST be the center of the arc, ie the opposite side of the circle. To chain arcs together, the last point of the previous arc becomes the first point of the next arc, just like in LineString. This means that a valid circular string must have an odd number of points greated than 1.
+    /// The `CircularString` is the basic curve type, similar to a `LineString` in the linear world.
+    /// A single segment required three points, the start and end points (first and third) and any other point on the arc.
+    /// The exception to this is for a closed circle, where the start and end points are the same.
+    /// In this case the second point MUST be the center of the arc, ie the opposite side of the circle.
+    /// To chain arcs together, the last point of the previous arc becomes the first point of the next arc,
+    /// just like in LineString. This means that a valid circular string must have an odd number of points greater than 1.
     ///
     /// Next: size * xy/coordinate
     fn circularstring_begin(&mut self, size: usize, idx: usize) -> Result<()> {

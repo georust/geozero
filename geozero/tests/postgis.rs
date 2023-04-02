@@ -259,9 +259,7 @@ mod postgis_sqlx {
 
         let mut tx = pool.begin().await?;
 
-        let _ = sqlx::query!("DELETE FROM point2d",)
-            .execute(&mut tx)
-            .await?;
+        let _ = sqlx::query!("DELETE FROM point2d").execute(&mut tx).await?;
 
         let rec = sqlx::query!("SELECT count(*) as count FROM point2d")
             .fetch_one(&mut tx)

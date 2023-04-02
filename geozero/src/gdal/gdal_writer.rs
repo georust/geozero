@@ -13,7 +13,7 @@ pub struct GdalWriter {
 
 impl GdalWriter {
     pub fn new() -> Self {
-        Default::default()
+        Self::default()
     }
     pub fn geometry(&self) -> &Geometry {
         &self.geom

@@ -92,13 +92,13 @@ impl<'a, W: Write> WkbWriter<'a, W> {
 
         let mut type_id = wkb_type as u32;
         if self.dims.z {
-            type_id |= 0x80000000;
+            type_id |= 0x8000_0000;
         }
         if self.dims.m {
-            type_id |= 0x40000000;
+            type_id |= 0x4000_0000;
         }
         if self.srid.is_some() && self.first_header {
-            type_id |= 0x20000000;
+            type_id |= 0x2000_0000;
         }
         self.out.iowrite_with(type_id, self.endian)?;
 

@@ -48,6 +48,7 @@ mod postgis_sqlx;
 pub mod postgres {
     pub use super::postgis_postgres::*;
 }
+
 /// PostGIS geometry type encoding/decoding for SQLx.
 ///
 /// # PostGIS usage example with SQLx

@@ -6,8 +6,8 @@ pub use gdal_reader::*;
 pub use gdal_writer::*;
 
 pub(crate) mod conversion {
-    use super::gdal_writer::*;
     use crate::error::Result;
+    use crate::gdal::GdalWriter;
     use crate::{CoordDimensions, GeozeroGeometry};
     use gdal::vector::Geometry;
 
@@ -34,8 +34,8 @@ pub(crate) mod conversion {
 
 #[cfg(feature = "with-wkb")]
 mod wkb {
-    use super::gdal_writer::*;
     use crate::error::Result;
+    use crate::gdal::GdalWriter;
     use crate::wkb::{FromWkb, WkbDialect};
     use std::io::Read;
 

@@ -220,9 +220,10 @@ impl<W: Write> PropertyProcessor for GeoJsonWriter<'_, W> {
             ColumnValue::ULong(v) => write_num_prop(self.out, colname, &v)?,
             ColumnValue::Float(v) => write_num_prop(self.out, colname, &v)?,
             ColumnValue::Double(v) => write_num_prop(self.out, colname, &v)?,
-            ColumnValue::String(v) => write_str_prop(self.out, colname, v)?,
+            ColumnValue::String(v) | ColumnValue::DateTime(v) => {
+                write_str_prop(self.out, colname, v)?;
+            }
             ColumnValue::Json(_v) => (),
-            ColumnValue::DateTime(v) => write_str_prop(self.out, colname, v)?,
             ColumnValue::Binary(_v) => (),
         };
         Ok(false)

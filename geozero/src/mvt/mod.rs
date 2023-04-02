@@ -11,9 +11,9 @@ pub use prost::Message;
 pub use vector_tile::*;
 
 pub(crate) mod conversion {
-    use super::mvt_writer::*;
     use crate::error::Result;
     use crate::mvt::vector_tile::tile;
+    use crate::mvt::MvtWriter;
     use crate::GeozeroGeometry;
 
     /// Convert to MVT geometry.
@@ -33,9 +33,9 @@ pub(crate) mod conversion {
 
 #[cfg(feature = "with-wkb")]
 mod wkb {
-    use super::mvt_writer::*;
     use crate::error::Result;
     use crate::mvt::vector_tile::tile;
+    use crate::mvt::MvtWriter;
     use crate::wkb::{FromWkb, WkbDialect};
     use std::io::Read;
 

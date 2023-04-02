@@ -2,7 +2,7 @@
 //! <https://github.com/mapbox/vector-tile-spec/tree/master/2.1>
 
 use crate::error::{GeozeroError, Result};
-use crate::mvt::mvt_commands::*;
+use crate::mvt::mvt_commands::{Command, CommandInteger, ParameterInteger};
 use crate::mvt::vector_tile::{tile, tile::GeomType};
 use crate::GeomProcessor;
 
@@ -18,18 +18,20 @@ pub struct MvtWriter {
 #[derive(PartialEq)]
 enum LineState {
     None,
-    // Issue LineTo command afer first point
+    // Issue LineTo command after first point
     Line(usize),
     Ring(usize),
 }
 
 impl MvtWriter {
     pub fn new() -> MvtWriter {
-        Default::default()
+        Self::default()
     }
+
     pub fn geometry(&self) -> &tile::Feature {
         &self.feature
     }
+
     fn reserve(&mut self, capacity: usize) {
         let total = self.feature.geometry.len() + capacity;
         if total > self.feature.geometry.capacity() {
@@ -359,20 +361,20 @@ mod test_mvt {
         key: String,
         mvt_value: tile::Value,
     ) {
-        let keyentry = mvt_layer.keys.iter().position(|k| *k == key);
+        let key_entry = mvt_layer.keys.iter().position(|k| *k == key);
         // Optimization: maintain a hash table with key/index pairs
-        let keyidx = match keyentry {
+        let key_idx = match key_entry {
             None => {
                 mvt_layer.keys.push(key);
                 mvt_layer.keys.len() - 1
             }
             Some(idx) => idx,
         };
-        mvt_feature.tags.push(keyidx as u32);
+        mvt_feature.tags.push(key_idx as u32);
 
-        let valentry = mvt_layer.values.iter().position(|v| *v == mvt_value);
+        let val_entry = mvt_layer.values.iter().position(|v| *v == mvt_value);
         // Optimization: maintain a hash table with value/index pairs
-        let validx = match valentry {
+        let validx = match val_entry {
             None => {
                 mvt_layer.values.push(mvt_value);
                 mvt_layer.values.len() - 1

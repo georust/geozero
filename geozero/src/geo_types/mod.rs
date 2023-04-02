@@ -6,8 +6,8 @@ pub use geo_types_reader::*;
 pub use geo_types_writer::*;
 
 pub(crate) mod conversion {
-    use super::geo_types_writer::*;
     use crate::error::{GeozeroError, Result};
+    use crate::geo_types::GeoWriter;
     use crate::GeozeroGeometry;
 
     /// Convert to geo-types Geometry.
@@ -28,8 +28,8 @@ pub(crate) mod conversion {
 
 #[cfg(feature = "with-wkb")]
 mod wkb {
-    use super::geo_types_writer::*;
     use crate::error::{GeozeroError, Result};
+    use crate::geo_types::GeoWriter;
     use crate::wkb::{FromWkb, WkbDialect};
     use std::io::Read;
 

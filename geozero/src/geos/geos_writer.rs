@@ -13,7 +13,7 @@ pub struct GeosWriter<'a> {
 
 impl<'a> GeosWriter<'a> {
     pub fn new() -> Self {
-        Default::default()
+        Self::default()
     }
     fn add_coord_seq(&mut self, len: usize) -> Result<()> {
         self.cs
@@ -132,7 +132,7 @@ impl GeomProcessor for GeosWriter<'_> {
         if tagged {
             self.geom = gpoly;
         } else {
-            self.polys.push(gpoly)
+            self.polys.push(gpoly);
         }
         Ok(())
     }

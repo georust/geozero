@@ -1,25 +1,28 @@
 use crate::error::{GeozeroError, Result};
 use crate::{FeatureProcessor, GeomProcessor, PropertyProcessor};
-use geo_types::*;
+use geo_types::{
+    coord, Coord, Geometry, GeometryCollection, LineString, MultiLineString, MultiPoint,
+    MultiPolygon, Point, Polygon,
+};
 use std::mem;
 
 /// Generator for geo-types geometry type.
 #[derive(Default)]
 pub struct GeoWriter {
     geoms: Vec<Geometry<f64>>,
-    // Stack of any in-progress (potentially nested) GeometryCollections
+    /// Stack of any in-progress (potentially nested) GeometryCollections
     collections: Vec<Vec<Geometry<f64>>>,
-    // In-progress multi-polygon
+    /// In-progress multi-polygon
     polygons: Option<Vec<Polygon<f64>>>,
-    // In-progress polygon or multi_linestring
+    /// In-progress polygon or multi_linestring
     line_strings: Option<Vec<LineString<f64>>>,
-    // In-progress point or line_string
+    /// In-progress point or line_string
     coords: Option<Vec<Coord<f64>>>,
 }
 
 impl GeoWriter {
     pub fn new() -> GeoWriter {
-        Default::default()
+        Self::default()
     }
 
     pub fn take_geometry(&mut self) -> Option<Geometry<f64>> {
@@ -27,7 +30,7 @@ impl GeoWriter {
             0 => None,
             1 => Some(self.geoms.pop().unwrap()),
             _ => {
-                let geoms = std::mem::take(&mut self.geoms);
+                let geoms = mem::take(&mut self.geoms);
                 Some(Geometry::GeometryCollection(GeometryCollection(geoms)))
             }
         }

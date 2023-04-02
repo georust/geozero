@@ -144,7 +144,7 @@ fn process_linestring<P: GeomProcessor>(
     processor.linestring_begin(tagged, linestring.0.len(), idx)?;
     let multi_dim = processor.multi_dim();
     for (idxc, coord) in linestring.0.iter().enumerate() {
-        process_coord(coord, multi_dim, idxc, processor)?
+        process_coord(coord, multi_dim, idxc, processor)?;
     }
     processor.linestring_end(tagged, idx)
 }
@@ -156,7 +156,7 @@ fn process_multilinestring<P: GeomProcessor>(
 ) -> Result<()> {
     processor.multilinestring_begin(multilinestring.0.len(), idx)?;
     for (idxc, linestring) in multilinestring.0.iter().enumerate() {
-        process_linestring(linestring, false, idxc, processor)?
+        process_linestring(linestring, false, idxc, processor)?;
     }
     processor.multilinestring_end(idx)
 }
@@ -169,7 +169,7 @@ fn process_polygon<P: GeomProcessor>(
 ) -> Result<()> {
     processor.polygon_begin(tagged, polygon.0.len(), idx)?;
     for (idxl, linestring_type) in polygon.0.iter().enumerate() {
-        process_linestring(linestring_type, false, idxl, processor)?
+        process_linestring(linestring_type, false, idxl, processor)?;
     }
     processor.polygon_end(tagged, idx)
 }

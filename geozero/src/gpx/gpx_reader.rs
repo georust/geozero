@@ -58,10 +58,7 @@ fn process_top_level_tracks<P: crate::GeomProcessor>(
     processor: &mut P,
     index: &mut usize,
 ) -> crate::error::Result<()> {
-    if gpx_reader.tracks.is_empty() {
-        return Ok(());
-    }
-    for track in gpx_reader.tracks.iter() {
+    for track in &gpx_reader.tracks {
         process_track_segments(track, processor, *index)?;
         *index += 1;
     }
