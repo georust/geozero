@@ -242,9 +242,15 @@ mod test {
 
     #[test]
     fn polygon_geom() {
-        let geojson = GeoJson(
-            r#"{"type": "Polygon", "coordinates": [[[0, 0], [0, 3], [3, 3], [3, 0], [0, 0]],[[0.2, 0.2], [0.2, 2], [2, 2], [2, 0.2], [0.2, 0.2]]]}"#,
-        );
+        let geojson = r#"{
+            "type": "Polygon",
+            "coordinates": [[
+                [0, 0], [0, 3], [3, 3], [3, 0], [0, 0]
+            ],[
+                [0.2, 0.2], [0.2, 2], [2, 2], [2, 0.2], [0.2, 0.2]
+            ]]
+        }"#;
+        let geojson = GeoJson(geojson);
         let wkt = "POLYGON ((0 0,0 3,3 3,3 0,0 0),(0.2 0.2,0.2 2.0,2 2,2.0 0.2,0.2 0.2))";
         let geom = geojson.to_gdal().unwrap();
         assert_eq!(geom.wkt().unwrap(), wkt);

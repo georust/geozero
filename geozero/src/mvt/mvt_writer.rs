@@ -436,9 +436,23 @@ mod test {
 
     #[test]
     fn multipolygon_geom() {
-        let geojson = GeoJson(
-            r#"{"type": "MultiPolygon", "coordinates": [[[[0,0],[10,0],[10,10],[0,10],[0,0]]],[[[11,11],[20,11],[20,20],[11,20],[11,11]],[[13,13],[13,17],[17,17],[17,13],[13,13]]]]}"#,
-        );
+        let geojson = r#"{
+            "type": "MultiPolygon",
+            "coordinates": [
+                [
+                    [
+                        [0,0],[10,0],[10,10],[0,10],[0,0]
+                    ]
+                ],[
+                    [
+                        [11,11],[20,11],[20,20],[11,20],[11,11]
+                    ],[
+                        [13,13],[13,17],[17,17],[17,13],[13,13]
+                    ]
+                ]
+            ]
+        }"#;
+        let geojson = GeoJson(geojson);
         let mvt = geojson.to_mvt().unwrap();
         assert_eq!(
             mvt.geometry,
