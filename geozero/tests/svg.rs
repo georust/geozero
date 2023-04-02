@@ -11,7 +11,7 @@ use std::io::Write;
 fn json_to_svg() -> Result<()> {
     let mut f = File::open("tests/data/places.json")?;
     let svg = GeoJsonReader(&mut f).to_svg().unwrap();
-    println!("{}", &svg);
+    println!("{svg}");
     assert_eq!(
         &svg[svg.len() - 100..],
         r#"387481909902 1.294979325105942 Z"/>

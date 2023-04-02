@@ -8,8 +8,8 @@ pub use wkt_reader::*;
 pub use wkt_writer::*;
 
 pub(crate) mod conversion {
-    use super::wkt_writer::*;
     use crate::error::Result;
+    use crate::wkt::WktWriter;
     use crate::{CoordDimensions, GeozeroGeometry};
 
     /// Convert to WKT.
@@ -38,10 +38,9 @@ pub(crate) mod conversion {
 
 #[cfg(feature = "with-wkb")]
 mod wkb {
-    use super::wkt_reader::*;
-    use super::wkt_writer::*;
     use crate::error::Result;
     use crate::wkb::{FromWkb, WkbDialect};
+    use crate::wkt::{WktString, WktWriter};
     use std::io::Read;
 
     impl FromWkb for WktString {

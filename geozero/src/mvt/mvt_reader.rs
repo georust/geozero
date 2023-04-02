@@ -44,11 +44,11 @@ fn process_properties(
         let key = layer
             .keys
             .get(*key_idx as usize)
-            .ok_or_else(|| GeozeroError::Feature(format!("invalid key index {}", key_idx)))?;
+            .ok_or_else(|| GeozeroError::Feature(format!("invalid key index {key_idx}")))?;
         let value = layer
             .values
             .get(*value_idx as usize)
-            .ok_or_else(|| GeozeroError::Feature(format!("invalid value index {}", value_idx)))?;
+            .ok_or_else(|| GeozeroError::Feature(format!("invalid value index {value_idx}")))?;
 
         if let Some(ref v) = value.string_value {
             processor.property(i, key, &ColumnValue::String(v))?;
@@ -66,8 +66,7 @@ fn process_properties(
             processor.property(i, key, &ColumnValue::Bool(v))?;
         } else {
             return Err(GeozeroError::Property(format!(
-                "unsupported value type for key {}",
-                key
+                "unsupported value type for key {key}",
             )));
         }
     }

@@ -19,7 +19,7 @@ impl FeatureProperties for ShapeRecord {
                     processor.property(i, name, &ColumnValue::Bool(*val))?
                 }
                 FieldValue::Date(Some(_)) => {
-                    let s = format!("{}", value);
+                    let s = value.to_string();
                     processor.property(i, name, &ColumnValue::DateTime(&s))?
                 }
                 FieldValue::Float(Some(val)) => {
@@ -33,7 +33,7 @@ impl FeatureProperties for ShapeRecord {
                     processor.property(i, name, &ColumnValue::Double(*val))?
                 }
                 FieldValue::DateTime(_) => {
-                    let s = format!("{}", value);
+                    let s = value.to_string();
                     processor.property(i, name, &ColumnValue::DateTime(&s))?
                 }
                 FieldValue::Memo(val) => processor.property(i, name, &ColumnValue::String(val))?,

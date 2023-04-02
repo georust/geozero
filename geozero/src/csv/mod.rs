@@ -6,7 +6,7 @@ pub use csv_reader::*;
 pub use csv_writer::*;
 
 pub(crate) mod conversion {
-    use super::csv_writer::*;
+    use crate::csv::CsvWriter;
     use crate::error::Result;
     use crate::GeozeroDatasource;
 

@@ -44,7 +44,7 @@ impl ParameterInteger {
 }
 
 #[test]
-fn test_paremeters() {
+fn test_parameters() {
     assert_eq!(ParameterInteger(50).value(), 25);
     assert_eq!(ParameterInteger::from(25), 50);
 }

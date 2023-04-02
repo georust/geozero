@@ -121,10 +121,10 @@ fn read_ewkb_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
 
     let type_id = raw.ioread_with::<u32>(endian)?;
     let base_type = WKBGeometryType::from_u32(type_id & 0xFF);
-    let has_z = type_id & 0x80000000 == 0x80000000;
-    let has_m = type_id & 0x40000000 == 0x40000000;
+    let has_z = type_id & 0x8000_0000 == 0x8000_0000;
+    let has_m = type_id & 0x4000_0000 == 0x4000_0000;
 
-    let srid = if type_id & 0x20000000 == 0x20000000 {
+    let srid = if type_id & 0x2000_0000 == 0x2000_0000 {
         Some(raw.ioread_with::<i32>(endian)?)
     } else {
         None
@@ -155,12 +155,9 @@ fn read_gpkg_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
     let env_len = match (flags & 0b0000_1110) >> 1 {
         0 => 0,
         1 => 4,
-        2 => 6,
-        3 => 6,
+        2 | 3 => 6,
         4 => 8,
-        _ => {
-            return Err(GeozeroError::GeometryFormat);
-        }
+        _ => Err(GeozeroError::GeometryFormat)?,
     };
     let endian = if flags & 0b0000_0001 == 0 {
         scroll::BE

@@ -1,6 +1,6 @@
 //! Zero-Copy reading and writing of geospatial data.
 //!
-//! GeoZero defines an API for reading geospatial data formats without an intermediate representation.
+//! `GeoZero` defines an API for reading geospatial data formats without an intermediate representation.
 //! It defines traits which can be implemented to read and convert to an arbitrary format
 //! or render geometries directly.
 //!
@@ -17,7 +17,7 @@
 //!
 //! ## Format conversion overview
 //!
-//! |           |                          [GeozeroGeometry]                           | Dimensions |                         [GeozeroDatasource]                          | Geometry Conversion |             [GeomProcessor]             |
+//! |           |                         [`GeozeroGeometry`]                          | Dimensions |                        [`GeozeroDatasource`]                         | Geometry Conversion |            [`GeomProcessor`]            |
 //! |-----------|----------------------------------------------------------------------|------------|----------------------------------------------------------------------|---------------------|-----------------------------------------|
 //! | CSV       | [csv::Csv], [csv::CsvString]                                         | XY         | -                                                                    | [ProcessToCsv]      | [CsvWriter](csv::CsvWriter)             |
 //! | geo-types | `geo_types::Geometry<f64>`                                           | XY         | -                                                                    | [ToGeo]             | [GeoWriter](geo_types::GeoWriter)       |
@@ -30,6 +30,21 @@
 //! | SVG       | -                                                                    | XY         | -                                                                    | [ToSvg]             | [SvgWriter](svg::SvgWriter)             |
 //! | WKB       | [Wkb](wkb::Wkb), [Ewkb](wkb::Ewkb), [GpkgWkb](wkb::GpkgWkb)          | XYZM       | -                                                                    | [ToWkb]             | [WkbWriter](wkb::WkbWriter)             |
 //! | WKT       | [wkt::WktStr], [wkt::WktString]                                      | XYZM       | [wkt::WktReader], [wkt::WktStr], [wkt::WktString]                    | [ToWkt]             | [WktWriter](wkt::WktWriter)             |
+
+#![allow(
+    clippy::many_single_char_names,
+    clippy::similar_names,
+    clippy::doc_markdown,
+    clippy::missing_errors_doc,
+    clippy::struct_excessive_bools,
+    clippy::must_use_candidate,
+    clippy::cast_sign_loss,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::redundant_closure_for_method_calls,
+    clippy::missing_panics_doc,
+    clippy::module_name_repetitions
+)]
 
 mod api;
 pub mod error;
@@ -114,7 +129,7 @@ pub struct ProcessorSink;
 
 impl ProcessorSink {
     pub fn new() -> ProcessorSink {
-        Default::default()
+        Self::default()
     }
 }
 

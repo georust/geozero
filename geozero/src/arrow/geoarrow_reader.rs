@@ -1,7 +1,8 @@
 use crate::error::Result;
 use crate::wkb::wkb_reader::{process_wkb_geom_n, read_wkb_header};
 use crate::{GeomProcessor, GeozeroGeometry};
-use arrow2::array::{BinaryArray, Offset};
+use arrow2::array::BinaryArray;
+use arrow2::types::Offset;
 
 impl GeozeroGeometry for BinaryArray<i32> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {

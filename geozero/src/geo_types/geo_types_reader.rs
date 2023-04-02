@@ -1,6 +1,6 @@
 use crate::error::Result;
 use crate::{GeomProcessor, GeozeroGeometry};
-use geo_types::*;
+use geo_types::{Coord, Geometry, LineString, Polygon};
 
 impl GeozeroGeometry for geo_types::Geometry<f64> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {

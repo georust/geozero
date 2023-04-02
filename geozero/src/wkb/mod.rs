@@ -19,9 +19,8 @@ pub use wkb_reader::*;
 pub use wkb_writer::*;
 
 pub(crate) mod conversion {
-    use super::wkb_writer::*;
     use crate::error::Result;
-    use crate::wkb::WkbDialect;
+    use crate::wkb::{WkbDialect, WkbWriter};
     use crate::{CoordDimensions, GeozeroGeometry};
 
     /// Convert to WKB.
