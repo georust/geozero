@@ -179,6 +179,6 @@ fn main() {
         process(args).map_err(|e| e.to_string())
     };
     if let Err(msg) = result {
-        println!("Processing failed: {}", msg);
+        println!("Processing failed: {msg}");
     }
 }

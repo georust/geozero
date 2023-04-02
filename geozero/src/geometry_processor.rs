@@ -59,7 +59,7 @@ impl CoordDimensions {
 ///
 /// impl GeomProcessor for CoordPrinter {
 ///     fn xy(&mut self, x: f64, y: f64, _idx: usize) -> Result<()> {
-///         Ok(println!("({} {})", x, y))
+///         Ok(println!("({x} {y})"))
 ///     }
 /// }
 /// ```

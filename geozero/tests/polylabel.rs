@@ -16,7 +16,7 @@ fn country_labels() -> Result<()> {
         if let Ok(Geometry::MultiPolygon(mpoly)) = feature.to_geo() {
             if let Some(poly) = &mpoly.0.first() {
                 let label_pos = polylabel(poly, &0.10).unwrap();
-                println!("{}: {:?}", name, label_pos);
+                println!("{name}: {label_pos:?}");
                 if !vec!["Bermuda", "Falkland Islands"].contains(&name.as_str()) {
                     assert!(mpoly.contains(&label_pos));
                 }
