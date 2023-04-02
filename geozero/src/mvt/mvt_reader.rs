@@ -34,16 +34,20 @@ fn process_properties(
     processor: &mut impl FeatureProcessor,
 ) -> Result<()> {
     processor.properties_begin()?;
-    for i in 0..feature.tags.len() / 2 {
-        let key_idx = feature.tags[i * 2];
-        let value_idx = feature.tags[i * 2 + 1];
+    for (i, pair) in feature.tags.chunks(2).enumerate() {
+        let [key_idx, value_idx] = pair else {
+            return Err(GeozeroError::Feature(format!(
+                "invalid feature.tags length: {:?}",
+                feature.tags.len()
+            )));
+        };
         let key = layer
             .keys
-            .get(key_idx as usize)
+            .get(*key_idx as usize)
             .ok_or_else(|| GeozeroError::Feature(format!("invalid key index {}", key_idx)))?;
         let value = layer
             .values
-            .get(value_idx as usize)
+            .get(*value_idx as usize)
             .ok_or_else(|| GeozeroError::Feature(format!("invalid value index {}", value_idx)))?;
 
         if let Some(ref v) = value.string_value {
