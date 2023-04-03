@@ -9,19 +9,19 @@ repository = "https://github.com/georust/geozero"
 license = "MIT/Apache-2.0"
 
 [dependencies]
-geozero = { path = "../geozero", features = ["with-geo", "with-geojson", "with-geos", "with-gpkg", "with-postgis-sqlx", "with-postgis-postgres"] }
-sqlx = { version = "0.6", default-features = false, features = [ "runtime-tokio-native-tls", "postgres", "sqlite" ] }
-futures-util = "0.3.5"
-geojson = "0.24.0"
 criterion = "0.4.0"
-geo-types = { version = "0.7", default-features = false }
-geo = "0.23" # { version = "0.17", features = ["postgis-integration"] }
 flatgeobuf = "3.25.0"
-seek_bufread = "1.2"
-postgres = "0.19"
-postgis = "0.9.0"
+futures-util = "0.3.5"
 gdal = { version = "0.14", default-features = false }
 gdal-sys = { version = "0.8" }
+geo = "0.23" # { version = "0.17", features = ["postgis-integration"] }
+geo-types = { version = "0.7", default-features = false }
+geojson = "0.24.0"
+geozero = { path = "../geozero", features = ["with-geo", "with-geojson", "with-geos", "with-gpkg", "with-postgis-sqlx", "with-postgis-postgres"] }
+postgis = "0.9.0"
+postgres = "0.19"
+seek_bufread = "1.2"
+sqlx = { version = "0.6", default-features = false, features = ["runtime-tokio-native-tls", "postgres", "sqlite"] }
 tokio = { version = "1.27.0", default-features = false, features = ["rt-multi-thread"] }
 
 [[bench]]
