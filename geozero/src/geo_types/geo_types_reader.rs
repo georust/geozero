@@ -2,7 +2,7 @@ use crate::error::Result;
 use crate::{GeomProcessor, GeozeroGeometry};
 use geo_types::{Coord, Geometry, LineString, Polygon};
 
-impl GeozeroGeometry for geo_types::Geometry<f64> {
+impl GeozeroGeometry for Geometry<f64> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
         process_geom(self, processor)
     }

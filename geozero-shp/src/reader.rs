@@ -109,7 +109,7 @@ impl<T: Read + Seek> Reader<T> {
     ///
     /// Will also return an error if the data is not a shapefile (Wrong file code)
     ///
-    /// Will also return an error if the shapetype read from the input source is invalid
+    /// Will also return an error if the shape type read from the input source is invalid
     pub fn new(mut source: T) -> Result<Reader<T>, Error> {
         let header = header::Header::read_from(&mut source)?;
 

@@ -167,8 +167,8 @@ fn process_polygon<P: GeomProcessor>(
     processor: &mut P,
 ) -> Result<()> {
     processor.polygon_begin(tagged, polygon.0.len(), idx)?;
-    for (idxl, linestring_type) in polygon.0.iter().enumerate() {
-        process_linestring(linestring_type, false, idxl, processor)?;
+    for (idx2, linestring_type) in polygon.0.iter().enumerate() {
+        process_linestring(linestring_type, false, idx2, processor)?;
     }
     processor.polygon_end(tagged, idx)
 }
@@ -296,10 +296,10 @@ mod test {
         let expected: geo_types::Geometry<f64> = geo_types::MultiPolygon(vec![
             polygon![(x: 40.0, y: 40.0), (x: 20.0, y: 45.0), (x: 45.0, y: 30.0), (x: 40.0, y: 40.0)],
             polygon!(
-            exterior: [(x: 35.0,  y: 10.0), (x: 45.0, y: 45.0), (x: 15.0, y: 40.0), (x: 10.0, y: 20.0), (x: 35.0, y: 10.0)],
-            interiors: [
-                [(x: 20.0, y: 30.0), (x: 35.0, y: 35.0), (x: 30.0, y: 20.0), (x: 20.0, y: 30.0)]
-            ])
+                exterior: [(x: 35.0,  y: 10.0), (x: 45.0, y: 45.0), (x: 15.0, y: 40.0), (x: 10.0, y: 20.0), (x: 35.0, y: 10.0)],
+                interiors: [
+                    [(x: 20.0, y: 30.0), (x: 35.0, y: 35.0), (x: 30.0, y: 20.0), (x: 20.0, y: 30.0)]
+                ])
         ]).into();
 
         assert_eq!(expected, actual);
@@ -328,9 +328,9 @@ mod test {
         let wkt = WktStr(str);
 
         use crate::wkt::conversion::ToWkt;
-        let roundtripped = wkt.to_wkt().unwrap();
+        let round_tripped = wkt.to_wkt().unwrap();
 
-        assert_eq!(str, &roundtripped);
+        assert_eq!(str, &round_tripped);
     }
 
     mod empties {
@@ -356,9 +356,9 @@ mod test {
             let wkt = WktStr(str);
 
             use crate::wkt::conversion::ToWkt;
-            let roundtripped = wkt.to_wkt().unwrap();
+            let round_tripped = wkt.to_wkt().unwrap();
 
-            assert_eq!(str, &roundtripped);
+            assert_eq!(str, &round_tripped);
         }
 
         #[test]

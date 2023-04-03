@@ -167,8 +167,8 @@ fn process_geojson_geom_n<P: GeomProcessor>(
         Value::MultiPolygon(ref geometry) => process_multi_polygon(geometry, idx, processor),
         Value::GeometryCollection(ref collection) => {
             processor.geometrycollection_begin(collection.len(), idx)?;
-            for (idxg, geometry) in collection.iter().enumerate() {
-                process_geojson_geom_n(geometry, idxg, processor)?;
+            for (idx2, geometry) in collection.iter().enumerate() {
+                process_geojson_geom_n(geometry, idx2, processor)?;
             }
             processor.geometrycollection_end(idx)
         }
@@ -283,8 +283,8 @@ fn process_polygon<P: GeomProcessor>(
     processor: &mut P,
 ) -> Result<()> {
     processor.polygon_begin(tagged, polygon_type.len(), idx)?;
-    for (idxl, linestring_type) in polygon_type.iter().enumerate() {
-        process_linestring(linestring_type, false, idxl, processor)?;
+    for (idx2, linestring_type) in polygon_type.iter().enumerate() {
+        process_linestring(linestring_type, false, idx2, processor)?;
     }
     processor.polygon_end(tagged, idx)
 }

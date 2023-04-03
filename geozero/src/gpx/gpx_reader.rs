@@ -1,4 +1,4 @@
-use crate::error::{GeozeroError, Result};
+use crate::error::GeozeroError;
 use std::io;
 
 /// GPX reader
@@ -15,7 +15,7 @@ impl<'a, R: io::Read> crate::GeozeroDatasource for GpxReader<'a, R> {
 }
 
 impl<'a> crate::GeozeroGeometry for Gpx<'a> {
-    fn process_geom<P: crate::GeomProcessor>(&self, processor: &mut P) -> Result<()> {
+    fn process_geom<P: crate::GeomProcessor>(&self, processor: &mut P) -> crate::error::Result<()> {
         read_gpx(&mut self.0.as_bytes(), processor)
     }
 }

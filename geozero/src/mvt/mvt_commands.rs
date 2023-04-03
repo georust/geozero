@@ -51,7 +51,7 @@ fn test_parameters() {
 
 #[test]
 fn test_sequence() {
-    type CommandSequence = std::vec::Vec<u32>;
+    type CommandSequence = Vec<u32>;
 
     let mut seq = CommandSequence::new();
     seq.push(CommandInteger::from(Command::MoveTo, 1));

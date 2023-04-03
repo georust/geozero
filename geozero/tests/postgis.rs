@@ -119,8 +119,8 @@ mod postgis_postgres {
                 &[],
             )?;
 
-            let wktgeom: Wkt = row.get(0);
-            assert_eq!(&wktgeom.0, "POLYGON((0 0,2 0,2 2,0 2,0 0))");
+            let wkt_geom: Wkt = row.get(0);
+            assert_eq!(&wkt_geom.0, "POLYGON((0 0,2 0,2 2,0 2,0 0))");
             Ok(())
         }
     }
@@ -437,7 +437,7 @@ impl GeozeroGeometry for PointZ {
     fn process_geom<P: GeomProcessor>(
         &self,
         processor: &mut P,
-    ) -> std::result::Result<(), geozero::error::GeozeroError> {
+    ) -> Result<(), geozero::error::GeozeroError> {
         processor.point_begin(0)?;
         processor.coordinate(self.x, self.y, Some(self.z), None, None, None, 0)?;
         processor.point_end(0)
