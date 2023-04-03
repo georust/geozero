@@ -39,13 +39,7 @@ fn process_geom_n<P: GeomProcessor>(geo: &Geometry, idx: usize, processor: &mut 
         OGRwkbGeometryType::wkbMultiLineString => {
             let n_lines = geo.geometry_count();
             processor.multilinestring_begin(n_lines, idx)?;
-            for i in 0..n_lines {
-                let line = unsafe { geo.get_unowned_geometry(i) };
-                if type2d(line.geometry_type()) != OGRwkbGeometryType::wkbLineString {
-                    return Err(GeozeroError::GeometryFormat);
-                }
-                process_linestring(&line, false, i, processor)?;
-            }
+            process_linestring_seq(geo, processor, n_lines)?;
             processor.multilinestring_end(idx)?;
         }
         OGRwkbGeometryType::wkbPolygon => {
@@ -112,6 +106,21 @@ fn process_point<P: GeomProcessor>(geo: &Geometry, idx: usize, processor: &mut P
     Ok(())
 }
 
+fn process_linestring_seq<P: GeomProcessor>(
+    geo: &Geometry,
+    processor: &mut P,
+    geom_count: usize,
+) -> Result<()> {
+    for i in 0..geom_count {
+        let geom = unsafe { geo.get_unowned_geometry(i) };
+        if type2d(geom.geometry_type()) != OGRwkbGeometryType::wkbLineString {
+            return Err(GeozeroError::GeometryFormat);
+        }
+        process_linestring(&geom, false, i, processor)?;
+    }
+    Ok(())
+}
+
 fn process_linestring<P: GeomProcessor>(
     geo: &Geometry,
     tagged: bool,
@@ -140,13 +149,7 @@ fn process_polygon<P: GeomProcessor>(
 ) -> Result<()> {
     let ring_count = geo.geometry_count();
     processor.polygon_begin(tagged, ring_count, idx)?;
-    for i in 0..ring_count {
-        let ring = unsafe { geo.get_unowned_geometry(i) };
-        if type2d(ring.geometry_type()) != OGRwkbGeometryType::wkbLineString {
-            return Err(GeozeroError::GeometryFormat);
-        }
-        process_linestring(&ring, false, i, processor)?;
-    }
+    process_linestring_seq(geo, processor, ring_count)?;
     processor.polygon_end(tagged, idx)
 }
 

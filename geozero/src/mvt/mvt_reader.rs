@@ -313,6 +313,7 @@ fn is_area_positive(mut cursor: [i32; 2], first: &[u32], rest: &[u32]) -> bool {
 mod test {
     use super::*;
     use crate::{ProcessToJson, ToJson};
+    use serde_json::json;
 
     #[test]
     fn layer() {
@@ -370,37 +371,36 @@ mod test {
         let geojson = mvt_layer.to_json().unwrap();
 
         assert_eq!(
-            geojson.replace(['\n', ' '], ""),
-            r#"{
-    "type": "FeatureCollection",
-    "name": "points",
-    "features": [
-        {
-            "type": "Feature",
-            "properties": {
-                "hello": "world",
-                "h": "world",
-                "count": 1.23
-            },
-            "geometry": {
-                "type": "Point",
-                "coordinates": [1205,1540]
-            }
-        },
-        {
-            "type": "Feature",
-            "properties": {
-                "hello": "again",
-                "count": 2
-            },
-            "geometry": {
-                "type": "Point",
-                "coordinates": [1205,1540]
-            }
-        }
-    ]
-}"#
-            .replace(['\n', ' '], "")
+            serde_json::from_str::<serde_json::Value>(&geojson).unwrap(),
+            json!({
+                "type": "FeatureCollection",
+                "name": "points",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "hello": "world",
+                            "h": "world",
+                            "count": 1.23
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [1205,1540]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "hello": "again",
+                            "count": 2
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [1205,1540]
+                        }
+                    }
+                ]
+            })
         );
     }
 
@@ -412,7 +412,13 @@ mod test {
 
         let geojson = mvt_feature.to_json().unwrap();
 
-        assert_eq!(geojson, r#"{"type": "Point", "coordinates": [25,17]}"#);
+        assert_eq!(
+            serde_json::from_str::<serde_json::Value>(&geojson).unwrap(),
+            json!({
+                "type": "Point",
+                "coordinates": [25,17]
+            })
+        );
     }
 
     #[test]
@@ -424,8 +430,11 @@ mod test {
         let geojson = mvt_feature.to_json().unwrap();
 
         assert_eq!(
-            geojson,
-            r#"{"type": "MultiPoint", "coordinates": [[5,7],[3,2]]}"#
+            serde_json::from_str::<serde_json::Value>(&geojson).unwrap(),
+            json!({
+                "type": "MultiPoint",
+                "coordinates": [[5,7],[3,2]]
+            })
         );
     }
 
@@ -438,8 +447,11 @@ mod test {
         let geojson = mvt_feature.to_json().unwrap();
 
         assert_eq!(
-            geojson,
-            r#"{"type": "LineString", "coordinates": [[2,2],[2,10],[10,10]]}"#
+            serde_json::from_str::<serde_json::Value>(&geojson).unwrap(),
+            json!({
+                "type": "LineString",
+                "coordinates": [[2,2],[2,10],[10,10]]
+            })
         );
     }
 
@@ -452,8 +464,11 @@ mod test {
         let geojson = mvt_feature.to_json().unwrap();
 
         assert_eq!(
-            geojson,
-            r#"{"type": "MultiLineString", "coordinates": [[[2,2],[2,10],[10,10]],[[1,1],[3,5]]]}"#
+            serde_json::from_str::<serde_json::Value>(&geojson).unwrap(),
+            json!({
+                "type": "MultiLineString",
+                "coordinates": [[[2,2],[2,10],[10,10]],[[1,1],[3,5]]]
+            })
         );
     }
 
@@ -466,8 +481,11 @@ mod test {
         let geojson = mvt_feature.to_json().unwrap();
 
         assert_eq!(
-            geojson,
-            r#"{"type": "Polygon", "coordinates": [[[3,6],[8,12],[20,34],[3,6]]]}"#
+            serde_json::from_str::<serde_json::Value>(&geojson).unwrap(),
+            json!({
+                "type": "Polygon",
+                "coordinates": [[[3,6],[8,12],[20,34],[3,6]]]
+            })
         );
     }
 
@@ -484,8 +502,11 @@ mod test {
         let geojson = mvt_feature.to_json().unwrap();
 
         assert_eq!(
-            geojson,
-            r#"{"type": "MultiPolygon", "coordinates": [[[[0,0],[10,0],[10,10],[0,10],[0,0]]],[[[11,11],[20,11],[20,20],[11,20],[11,11]],[[13,13],[13,17],[17,17],[17,13],[13,13]]]]}"#
+            serde_json::from_str::<serde_json::Value>(&geojson).unwrap(),
+            json!({
+                "type": "MultiPolygon",
+                "coordinates": [[[[0,0],[10,0],[10,10],[0,10],[0,0]]],[[[11,11],[20,11],[20,20],[11,20],[11,11]],[[13,13],[13,17],[17,17],[17,13],[13,13]]]]
+            })
         );
     }
 }

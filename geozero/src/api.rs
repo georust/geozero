@@ -1,8 +1,8 @@
-//! API traits for reading datasets and features with geomeries.
+//! API traits for reading datasets and features with geometries.
 //!
 //! Features are usually consumed by datasource iterators.
 //! The current feature can be processed with `FeatureAccess` processing API methods.
-//! Some datasources process features during consumation (e.g. reading from file).
+//! Some datasources process features during consumption (e.g. reading from file).
 
 use crate::error::{GeozeroError, Result};
 use crate::feature_processor::FeatureProcessor;

@@ -133,6 +133,6 @@ impl ProcessorSink {
     }
 }
 
-impl feature_processor::FeatureProcessor for ProcessorSink {}
-impl geometry_processor::GeomProcessor for ProcessorSink {}
-impl property_processor::PropertyProcessor for ProcessorSink {}
+impl FeatureProcessor for ProcessorSink {}
+impl GeomProcessor for ProcessorSink {}
+impl PropertyProcessor for ProcessorSink {}

@@ -290,7 +290,7 @@ mod test {
 
     #[test]
     fn to_geo() -> Result<()> {
-        let geom: geo_types::Geometry<f64> = geo_types::Point::new(10.0, 20.0).into();
+        let geom: Geometry<f64> = Point::new(10.0, 20.0).into();
         assert_eq!(geom.clone().to_geo().unwrap(), geom);
         Ok(())
     }
