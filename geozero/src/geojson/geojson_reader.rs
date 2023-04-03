@@ -95,14 +95,11 @@ fn process_geojson<P: FeatureProcessor>(gj: &GeoGeoJson, processor: &mut P) -> R
                 }
                 processor.feature_end(idx as u64)?;
             }
-            processor.dataset_end()?;
+            processor.dataset_end()
         }
-        GeoGeoJson::Feature(ref feature) => process_geojson_feature(feature, 0, processor)?,
-        GeoGeoJson::Geometry(ref geometry) => {
-            process_geojson_geom_n(geometry, 0, processor)?;
-        }
+        GeoGeoJson::Feature(ref feature) => process_geojson_feature(feature, 0, processor),
+        GeoGeoJson::Geometry(ref geometry) => process_geojson_geom_n(geometry, 0, processor),
     }
-    Ok(())
 }
 
 /// Process top-level GeoJSON items
@@ -126,8 +123,7 @@ fn process_geojson_feature<P: FeatureProcessor>(
         }
         processor.feature_end(idx as u64)?;
     }
-    processor.dataset_end()?;
-    Ok(())
+    processor.dataset_end()
 }
 
 /// Process top-level GeoJSON items (geometry only)
@@ -163,33 +159,20 @@ fn process_geojson_geom_n<P: GeomProcessor>(
     processor: &mut P,
 ) -> Result<()> {
     match geom.value {
-        Value::Point(ref geometry) => {
-            process_point(geometry, idx, processor)?;
-        }
-        Value::MultiPoint(ref geometry) => {
-            process_multi_point(geometry, idx, processor)?;
-        }
-        Value::LineString(ref geometry) => {
-            process_linestring(geometry, true, idx, processor)?;
-        }
-        Value::MultiLineString(ref geometry) => {
-            process_multilinestring(geometry, idx, processor)?;
-        }
-        Value::Polygon(ref geometry) => {
-            process_polygon(geometry, true, idx, processor)?;
-        }
-        Value::MultiPolygon(ref geometry) => {
-            process_multi_polygon(geometry, idx, processor)?;
-        }
+        Value::Point(ref geometry) => process_point(geometry, idx, processor),
+        Value::MultiPoint(ref geometry) => process_multi_point(geometry, idx, processor),
+        Value::LineString(ref geometry) => process_linestring(geometry, true, idx, processor),
+        Value::MultiLineString(ref geometry) => process_multilinestring(geometry, idx, processor),
+        Value::Polygon(ref geometry) => process_polygon(geometry, true, idx, processor),
+        Value::MultiPolygon(ref geometry) => process_multi_polygon(geometry, idx, processor),
         Value::GeometryCollection(ref collection) => {
             processor.geometrycollection_begin(collection.len(), idx)?;
             for (idxg, geometry) in collection.iter().enumerate() {
                 process_geojson_geom_n(geometry, idxg, processor)?;
             }
-            processor.geometrycollection_end(idx)?;
+            processor.geometrycollection_end(idx)
         }
     }
-    Ok(())
 }
 
 /// Process GeoJSON properties

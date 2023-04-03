@@ -24,8 +24,7 @@ pub fn process(layer: &tile::Layer, processor: &mut impl FeatureProcessor) -> Re
 
         processor.feature_end(idx as u64)?;
     }
-    processor.dataset_end()?;
-    Ok(())
+    processor.dataset_end()
 }
 
 fn process_properties(
@@ -70,8 +69,7 @@ fn process_properties(
             )));
         }
     }
-    processor.properties_end()?;
-    Ok(())
+    processor.properties_end()
 }
 
 impl GeozeroGeometry for tile::Feature {
@@ -93,17 +91,16 @@ fn process_geom_n<P: GeomProcessor>(
     let mut cursor: [i32; 2] = [0, 0];
     match geom.r#type {
         Some(r#type) if r#type == GeomType::Point as i32 => {
-            process_point(&mut cursor, &geom.geometry, idx, processor)?;
+            process_point(&mut cursor, &geom.geometry, idx, processor)
         }
         Some(r#type) if r#type == GeomType::Linestring as i32 => {
-            process_linestrings(&mut cursor, geom, idx, processor)?;
+            process_linestrings(&mut cursor, geom, idx, processor)
         }
         Some(r#type) if r#type == GeomType::Polygon as i32 => {
-            process_polygons(&mut cursor, geom, idx, processor)?;
+            process_polygons(&mut cursor, geom, idx, processor)
         }
-        _ => {}
+        _ => Ok(()),
     }
-    Ok(())
 }
 
 fn process_coord<P: GeomProcessor>(
@@ -123,11 +120,10 @@ fn process_coord<P: GeomProcessor>(
             None,
             None,
             idx,
-        )?;
+        )
     } else {
-        processor.xy(cursor[0] as f64, cursor[1] as f64, idx)?;
+        processor.xy(cursor[0] as f64, cursor[1] as f64, idx)
     }
-    Ok(())
 }
 
 fn process_point<P: GeomProcessor>(
@@ -141,15 +137,14 @@ fn process_point<P: GeomProcessor>(
     if count == 1 {
         processor.point_begin(idx)?;
         process_coord(cursor, &geom[1..3], 0, processor)?;
-        processor.point_end(idx)?;
+        processor.point_end(idx)
     } else {
         processor.multipoint_begin(count, idx)?;
         for i in 0..count {
             process_coord(cursor, &geom[1 + i * 2..3 + i * 2], i, processor)?;
         }
-        processor.multipoint_end(idx)?;
+        processor.multipoint_end(idx)
     }
-    Ok(())
 }
 
 fn process_linestring<P: GeomProcessor>(
@@ -171,8 +166,7 @@ fn process_linestring<P: GeomProcessor>(
     for i in 0..lineto.count() as usize {
         process_coord(cursor, &geom[4 + i * 2..6 + i * 2], i + 1, processor)?;
     }
-    processor.linestring_end(tagged, idx)?;
-    Ok(())
+    processor.linestring_end(tagged, idx)
 }
 
 fn process_linestrings<P: GeomProcessor>(
@@ -197,12 +191,10 @@ fn process_linestrings<P: GeomProcessor>(
         for (i, line_string_slice) in line_string_slices.iter().enumerate() {
             process_linestring(cursor, line_string_slice, false, i, processor)?;
         }
-        processor.multilinestring_end(idx)?;
+        processor.multilinestring_end(idx)
     } else {
-        process_linestring(cursor, line_string_slices[0], true, idx, processor)?;
+        process_linestring(cursor, line_string_slices[0], true, idx, processor)
     }
-
-    Ok(())
 }
 
 fn process_polygon<P: GeomProcessor>(
@@ -240,9 +232,7 @@ fn process_polygon<P: GeomProcessor>(
         processor.linestring_end(false, i)?;
     }
 
-    processor.polygon_end(tagged, idx)?;
-
-    Ok(())
+    processor.polygon_end(tagged, idx)
 }
 
 fn process_polygons<P: GeomProcessor>(
@@ -280,12 +270,10 @@ fn process_polygons<P: GeomProcessor>(
         for (i, polygon_slice) in polygon_slices.iter().enumerate() {
             process_polygon(cursor, polygon_slice, false, i, processor)?;
         }
-        processor.multipolygon_end(idx)?;
+        processor.multipolygon_end(idx)
     } else {
-        process_polygon(cursor, &polygon_slices[0], true, idx, processor)?;
+        process_polygon(cursor, &polygon_slices[0], true, idx, processor)
     }
-
-    Ok(())
 }
 
 // using surveyor's formula

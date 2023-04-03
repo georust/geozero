@@ -50,17 +50,16 @@ impl<'a, W: Write> WkbWriter<'a, W> {
     /// Write header in selected format
     fn write_header(&mut self, wkb_type: WKBGeometryType) -> Result<()> {
         match self.dialect {
-            WkbDialect::Wkb => self.write_wkb_header(wkb_type)?,
-            WkbDialect::Ewkb => self.write_ewkb_header(wkb_type)?,
+            WkbDialect::Wkb => self.write_wkb_header(wkb_type),
+            WkbDialect::Ewkb => self.write_ewkb_header(wkb_type),
             WkbDialect::Geopackage => {
                 if self.first_header {
                     self.write_gpkg_header()?;
                     self.first_header = false;
                 }
-                self.write_wkb_header(wkb_type)?;
+                self.write_wkb_header(wkb_type)
             }
         }
-        Ok(())
     }
     /// OGC WKB header
     fn write_wkb_header(&mut self, wkb_type: WKBGeometryType) -> Result<()> {

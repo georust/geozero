@@ -61,8 +61,7 @@ impl GeomProcessor for GeosWriter<'_> {
     }
     fn multipoint_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
         self.cs = Vec::with_capacity(1);
-        self.add_coord_seq(size)?;
-        Ok(())
+        self.add_coord_seq(size)
     }
     fn multipoint_end(&mut self, _idx: usize) -> Result<()> {
         // Create points from CoordSeq elements
@@ -86,8 +85,7 @@ impl GeomProcessor for GeosWriter<'_> {
         if tagged {
             self.cs = Vec::with_capacity(1);
         } // else allocated in multilinestring_begin or polygon_begin
-        self.add_coord_seq(size)?;
-        Ok(())
+        self.add_coord_seq(size)
     }
     fn linestring_end(&mut self, tagged: bool, _idx: usize) -> Result<()> {
         if tagged {

@@ -65,15 +65,14 @@ pub(crate) fn process_wkt_geom_n<P: GeomProcessor>(
 ) -> Result<()> {
     let multi_dim = processor.multi_dim();
     match geometry {
-        Geometry::Point(g) => process_point(g, multi_dim, idx, processor)?,
-        Geometry::MultiPoint(g) => process_multi_point(g, idx, processor)?,
-        Geometry::LineString(g) => process_linestring(g, true, idx, processor)?,
-        Geometry::MultiLineString(g) => process_multilinestring(g, idx, processor)?,
-        Geometry::Polygon(g) => process_polygon(g, true, idx, processor)?,
-        Geometry::MultiPolygon(g) => process_multi_polygon(g, idx, processor)?,
-        Geometry::GeometryCollection(g) => process_geometry_collection(g, idx, processor)?,
+        Geometry::Point(g) => process_point(g, multi_dim, idx, processor),
+        Geometry::MultiPoint(g) => process_multi_point(g, idx, processor),
+        Geometry::LineString(g) => process_linestring(g, true, idx, processor),
+        Geometry::MultiLineString(g) => process_multilinestring(g, idx, processor),
+        Geometry::Polygon(g) => process_polygon(g, true, idx, processor),
+        Geometry::MultiPolygon(g) => process_multi_polygon(g, idx, processor),
+        Geometry::GeometryCollection(g) => process_geometry_collection(g, idx, processor),
     }
-    Ok(())
 }
 
 fn process_geometry_collection<P: GeomProcessor>(

@@ -22,56 +22,47 @@ fn process_geom_n<P: GeomProcessor>(
         Geometry::Point(ref geom) => {
             processor.point_begin(idx)?;
             process_coord(&geom.0, 0, processor)?;
-            processor.point_end(idx)?;
+            processor.point_end(idx)
         }
         Geometry::Line(geom) => {
             processor.linestring_begin(true, 2, idx)?;
             process_coord(&geom.start, 0, processor)?;
             process_coord(&geom.end, 1, processor)?;
-            processor.linestring_end(true, idx)?;
+            processor.linestring_end(true, idx)
         }
-        Geometry::LineString(ref geom) => {
-            process_linestring(geom, true, idx, processor)?;
-        }
-        Geometry::Polygon(ref geom) => {
-            process_polygon(geom, true, idx, processor)?;
-        }
+        Geometry::LineString(ref geom) => process_linestring(geom, true, idx, processor),
+        Geometry::Polygon(ref geom) => process_polygon(geom, true, idx, processor),
         Geometry::MultiPoint(ref geom) => {
             processor.multipoint_begin(geom.0.len(), idx)?;
             for (i, pt) in geom.0.iter().enumerate() {
                 process_coord(&pt.0, i, processor)?;
             }
-            processor.multipoint_end(idx)?;
+            processor.multipoint_end(idx)
         }
         Geometry::MultiLineString(ref geom) => {
             processor.multilinestring_begin(geom.0.len(), idx)?;
             for (i, line) in geom.0.iter().enumerate() {
                 process_linestring(line, false, i, processor)?;
             }
-            processor.multilinestring_end(idx)?;
+            processor.multilinestring_end(idx)
         }
         Geometry::MultiPolygon(ref geom) => {
             processor.multipolygon_begin(geom.0.len(), idx)?;
             for (i, poly) in geom.0.iter().enumerate() {
                 process_polygon(poly, false, i, processor)?;
             }
-            processor.multipolygon_end(idx)?;
+            processor.multipolygon_end(idx)
         }
         Geometry::GeometryCollection(ref geom) => {
             processor.geometrycollection_begin(geom.0.len(), idx)?;
             for (i, g) in geom.0.iter().enumerate() {
                 process_geom_n(g, i, processor)?;
             }
-            processor.geometrycollection_end(idx)?;
+            processor.geometrycollection_end(idx)
         }
-        Geometry::Rect(geom) => {
-            process_polygon(&geom.to_polygon(), true, idx, processor)?;
-        }
-        Geometry::Triangle(geom) => {
-            process_polygon(&geom.to_polygon(), true, idx, processor)?;
-        }
+        Geometry::Rect(geom) => process_polygon(&geom.to_polygon(), true, idx, processor),
+        Geometry::Triangle(geom) => process_polygon(&geom.to_polygon(), true, idx, processor),
     }
-    Ok(())
 }
 
 fn process_coord<P: GeomProcessor>(
@@ -80,11 +71,10 @@ fn process_coord<P: GeomProcessor>(
     processor: &mut P,
 ) -> Result<()> {
     if processor.multi_dim() {
-        processor.coordinate(coord.x, coord.y, None, None, None, None, idx)?;
+        processor.coordinate(coord.x, coord.y, None, None, None, None, idx)
     } else {
-        processor.xy(coord.x, coord.y, idx)?;
+        processor.xy(coord.x, coord.y, idx)
     }
-    Ok(())
 }
 
 fn process_linestring<P: GeomProcessor>(

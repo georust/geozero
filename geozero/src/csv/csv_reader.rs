@@ -134,9 +134,7 @@ pub fn process_csv_geom(
         )?;
     }
 
-    processor.geometrycollection_end(0)?;
-
-    Ok(())
+    processor.geometrycollection_end(0)
 }
 
 pub fn process_csv_features(
@@ -195,8 +193,7 @@ pub fn process_csv_features(
         processor.feature_end(feature_idx as u64)?;
     }
 
-    processor.dataset_end()?;
-    Ok(())
+    processor.dataset_end()
 }
 
 impl From<csv::Error> for GeozeroError {

@@ -29,9 +29,7 @@ pub fn process_geoarrow_wkb_geom<T: Offset>(
         process_wkb_geom_n(raw, &info, read_wkb_header, i, processor)?;
     }
 
-    processor.geometrycollection_end(array_len - 1)?;
-
-    Ok(())
+    processor.geometrycollection_end(array_len - 1)
 }
 
 #[cfg(test)]
