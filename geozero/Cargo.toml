@@ -31,40 +31,40 @@ with-mvt = ["prost", "prost-build"]
 with-tessellator = ["lyon"]
 
 [dependencies]
+arrow2 = { version = "0.17", optional = true, features = ["io_ipc"] }
+byteorder = { version = "1.4.3", default-features = false, optional = true }
+bytes = { version = "1.4", optional = true }
 csv = { version = "1.2.1", optional = true }
-thiserror = "1.0"
-geojson = { version = "0.24.0", default-features = false, optional = true }
-serde_json = "1.0.79"
-geo-types = { version = "0.7", default-features = false, optional = true }
-geos = { version = "8.1", optional = true }
+diesel = { version = "2.0.2", default-features = false, optional = true }
 gdal = { version = "0.14", default-features = false, optional = true }
 gdal-sys = { version = "0.8", optional = true }
+geo-types = { version = "0.7", default-features = false, optional = true }
+geojson = { version = "0.24.0", default-features = false, optional = true }
+geos = { version = "8.1", optional = true }
 gpx = { version = "0.8", default-features = false, optional = true }
-lyon = { version = "1.0", optional = true }
 log = "0.4.17"
-scroll = { version = "0.11", optional = true }
-sqlx = { version = "0.6", default-features = false, optional = true }
-diesel = { version = "2.0.2", default-features = false, optional = true }
-byteorder = { version = "1.4.3", default-features = false, optional = true }
+lyon = { version = "1.0", optional = true }
 postgres-types = { version = "0.2", optional = true }
-bytes = { version = "1.4", optional = true }
 prost = { version = "0.11.0", optional = true }
+scroll = { version = "0.11", optional = true }
+serde_json = "1.0.79"
+sqlx = { version = "0.6", default-features = false, optional = true }
+thiserror = "1.0"
 wkt = { version = "0.10.0", optional = true }
-arrow2 = { version = "0.17", optional = true, features = ["io_ipc"]}
 
 [dev-dependencies]
-seek_bufread = "1.2"
-hex = "0.4"
+diesel = { version = "2.0.2", default-features = false, features = ["postgres"] }
+#flatgeobuf = { git = "https://github.com/pka/flatgeobuf", branch="geozero-0.9" }
+flatgeobuf = "3.25.0"
 geo = "0.23"
-wkt = "0.10.0"
+hex = "0.4"
 kdbush = "0.2"
 polylabel = "2.4"
-flatgeobuf = "3.25.0"
-#flatgeobuf = { git = "https://github.com/pka/flatgeobuf", branch="geozero-0.9" }
 postgres = "0.19"
-sqlx = { version = "0.6", default-features = false, features = [ "runtime-tokio-native-tls", "macros", "time", "postgres", "sqlite" ] }
-diesel = { version = "2.0.2", default-features = false, features = [ "postgres" ] }
+seek_bufread = "1.2"
+sqlx = { version = "0.6", default-features = false, features = ["runtime-tokio-native-tls", "macros", "time", "postgres", "sqlite"] }
 tokio = { version = "1.27.0", default-features = false, features = ["macros"] }
+wkt = "0.10.0"
 
 [build-dependencies]
 prost-build = { version = "0.11", optional = true }
