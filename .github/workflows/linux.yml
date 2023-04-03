@@ -51,7 +51,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: --workspace --all-features --bins --examples --tests --benches
+          args: --workspace --all-features --bins --examples --tests --benches -- -D warnings
 
       - name: tests
         run: |
