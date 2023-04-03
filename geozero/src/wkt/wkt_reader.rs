@@ -2,10 +2,7 @@ use crate::error::{GeozeroError, Result};
 use crate::{FeatureProcessor, GeomProcessor, GeozeroDatasource, GeozeroGeometry};
 
 use std::io::Read;
-use wkt::types::{
-    Coord, GeometryCollection, LineString, MultiLineString, MultiPoint, MultiPolygon, Point,
-    Polygon,
-};
+use wkt::types::{Coord, LineString, Polygon};
 use wkt::Geometry;
 
 /// WKT String.
@@ -65,26 +62,53 @@ pub(crate) fn process_wkt_geom_n<P: GeomProcessor>(
 ) -> Result<()> {
     let multi_dim = processor.multi_dim();
     match geometry {
-        Geometry::Point(g) => process_point(g, multi_dim, idx, processor),
-        Geometry::MultiPoint(g) => process_multi_point(g, idx, processor),
+        Geometry::Point(g) => {
+            if let Some(ref coord) = g.0 {
+                processor.point_begin(idx)?;
+                process_coord(coord, multi_dim, 0, processor)?;
+                processor.point_end(idx)
+            } else {
+                processor.empty_point(idx)
+            }
+        }
+        Geometry::MultiPoint(g) => {
+            processor.multipoint_begin(g.0.len(), idx)?;
+            let multi_dim1 = processor.multi_dim();
+            for (idxc, point) in g.0.iter().enumerate() {
+                if let Some(ref coord) = point.0 {
+                    process_coord(coord, multi_dim1, idxc, processor)?;
+                } else {
+                    // skip processing of the untagged empty POINT, since no other formats support it.
+                    // Alternatively we could error here, but likely omitting the empty coord won't affect
+                    // the output of most computations (area, length, etc.)
+                }
+            }
+            processor.multipoint_end(idx)
+        }
         Geometry::LineString(g) => process_linestring(g, true, idx, processor),
-        Geometry::MultiLineString(g) => process_multilinestring(g, idx, processor),
+        Geometry::MultiLineString(g) => {
+            processor.multilinestring_begin(g.0.len(), idx)?;
+            for (idxc, linestring) in g.0.iter().enumerate() {
+                process_linestring(linestring, false, idxc, processor)?;
+            }
+            processor.multilinestring_end(idx)
+        }
         Geometry::Polygon(g) => process_polygon(g, true, idx, processor),
-        Geometry::MultiPolygon(g) => process_multi_polygon(g, idx, processor),
-        Geometry::GeometryCollection(g) => process_geometry_collection(g, idx, processor),
+        Geometry::MultiPolygon(g) => {
+            processor.multipolygon_begin(g.0.len(), idx)?;
+            for (idx2, polygon) in g.0.iter().enumerate() {
+                process_polygon(polygon, false, idx2, processor)?;
+            }
+            processor.multipolygon_end(idx)
+        }
+        Geometry::GeometryCollection(g) => {
+            processor.geometrycollection_begin(g.0.len(), idx)?;
+            for (idx2, geometry) in g.0.iter().enumerate() {
+                process_wkt_geom_n(geometry, idx2, processor)?;
+            }
+            processor.geometrycollection_end(idx)
+        }
     }
-}
-
-fn process_geometry_collection<P: GeomProcessor>(
-    geometry_collection: &GeometryCollection<f64>,
-    idx: usize,
-    processor: &mut P,
-) -> Result<()> {
-    processor.geometrycollection_begin(geometry_collection.0.len(), idx)?;
-    for (idxg, geometry) in geometry_collection.0.iter().enumerate() {
-        process_wkt_geom_n(geometry, idxg, processor)?;
-    }
-    processor.geometrycollection_end(idx)
 }
 
 fn process_coord<P: GeomProcessor>(
@@ -98,40 +122,6 @@ fn process_coord<P: GeomProcessor>(
     } else {
         processor.xy(coord.x, coord.y, idx)
     }
-}
-
-fn process_point<P: GeomProcessor>(
-    point: &Point<f64>,
-    multi_dim: bool,
-    idx: usize,
-    processor: &mut P,
-) -> Result<()> {
-    if let Some(ref coord) = point.0 {
-        processor.point_begin(idx)?;
-        process_coord(coord, multi_dim, 0, processor)?;
-        processor.point_end(idx)
-    } else {
-        processor.empty_point(idx)
-    }
-}
-
-fn process_multi_point<P: GeomProcessor>(
-    multi_point: &MultiPoint<f64>,
-    idx: usize,
-    processor: &mut P,
-) -> Result<()> {
-    processor.multipoint_begin(multi_point.0.len(), idx)?;
-    let multi_dim = processor.multi_dim();
-    for (idxc, point) in multi_point.0.iter().enumerate() {
-        if let Some(ref coord) = point.0 {
-            process_coord(coord, multi_dim, idxc, processor)?;
-        } else {
-            // skip processing of the untagged empty POINT, since no other formats support it.
-            // Alternatively we could error here, but likely omitting the empty coord won't affect
-            // the output of most computations (area, length, etc.)
-        }
-    }
-    processor.multipoint_end(idx)
 }
 
 fn process_linestring<P: GeomProcessor>(
@@ -148,18 +138,6 @@ fn process_linestring<P: GeomProcessor>(
     processor.linestring_end(tagged, idx)
 }
 
-fn process_multilinestring<P: GeomProcessor>(
-    multilinestring: &MultiLineString<f64>,
-    idx: usize,
-    processor: &mut P,
-) -> Result<()> {
-    processor.multilinestring_begin(multilinestring.0.len(), idx)?;
-    for (idxc, linestring) in multilinestring.0.iter().enumerate() {
-        process_linestring(linestring, false, idxc, processor)?;
-    }
-    processor.multilinestring_end(idx)
-}
-
 fn process_polygon<P: GeomProcessor>(
     polygon: &Polygon<f64>,
     tagged: bool,
@@ -171,18 +149,6 @@ fn process_polygon<P: GeomProcessor>(
         process_linestring(linestring_type, false, idx2, processor)?;
     }
     processor.polygon_end(tagged, idx)
-}
-
-fn process_multi_polygon<P: GeomProcessor>(
-    multi_polygon: &MultiPolygon<f64>,
-    idx: usize,
-    processor: &mut P,
-) -> Result<()> {
-    processor.multipolygon_begin(multi_polygon.0.len(), idx)?;
-    for (idxp, polygon) in multi_polygon.0.iter().enumerate() {
-        process_polygon(polygon, false, idxp, processor)?;
-    }
-    processor.multipolygon_end(idx)
 }
 
 #[cfg(all(test, feature = "with-geo"))]

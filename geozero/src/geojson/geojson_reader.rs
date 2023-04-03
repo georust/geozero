@@ -159,12 +159,35 @@ fn process_geojson_geom_n<P: GeomProcessor>(
     processor: &mut P,
 ) -> Result<()> {
     match geom.value {
-        Value::Point(ref geometry) => process_point(geometry, idx, processor),
-        Value::MultiPoint(ref geometry) => process_multi_point(geometry, idx, processor),
+        Value::Point(ref geometry) => {
+            processor.point_begin(idx)?;
+            process_coord(geometry, processor.multi_dim(), 0, processor)?;
+            processor.point_end(idx)
+        }
+        Value::MultiPoint(ref geometry) => {
+            processor.multipoint_begin(geometry.len(), idx)?;
+            let multi_dim = processor.multi_dim();
+            for (idxc, point_type) in geometry.iter().enumerate() {
+                process_coord(point_type, multi_dim, idxc, processor)?;
+            }
+            processor.multipoint_end(idx)
+        }
         Value::LineString(ref geometry) => process_linestring(geometry, true, idx, processor),
-        Value::MultiLineString(ref geometry) => process_multilinestring(geometry, idx, processor),
+        Value::MultiLineString(ref geometry) => {
+            processor.multilinestring_begin(geometry.len(), idx)?;
+            for (idx2, linestring_type) in geometry.iter().enumerate() {
+                process_linestring(linestring_type, false, idx2, processor)?;
+            }
+            processor.multilinestring_end(idx)
+        }
         Value::Polygon(ref geometry) => process_polygon(geometry, true, idx, processor),
-        Value::MultiPolygon(ref geometry) => process_multi_polygon(geometry, idx, processor),
+        Value::MultiPolygon(ref geometry) => {
+            processor.multipolygon_begin(geometry.len(), idx)?;
+            for (idx2, polygon_type) in geometry.iter().enumerate() {
+                process_polygon(polygon_type, false, idx2, processor)?;
+            }
+            processor.multipolygon_end(idx)
+        }
         Value::GeometryCollection(ref collection) => {
             processor.geometrycollection_begin(collection.len(), idx)?;
             for (idx2, geometry) in collection.iter().enumerate() {
@@ -227,29 +250,6 @@ fn process_coord<P: GeomProcessor>(
     }
 }
 
-fn process_point<P: GeomProcessor>(
-    point_type: &PointType,
-    idx: usize,
-    processor: &mut P,
-) -> Result<()> {
-    processor.point_begin(idx)?;
-    process_coord(point_type, processor.multi_dim(), 0, processor)?;
-    processor.point_end(idx)
-}
-
-fn process_multi_point<P: GeomProcessor>(
-    multi_point_type: &[PointType],
-    idx: usize,
-    processor: &mut P,
-) -> Result<()> {
-    processor.multipoint_begin(multi_point_type.len(), idx)?;
-    let multi_dim = processor.multi_dim();
-    for (idxc, point_type) in multi_point_type.iter().enumerate() {
-        process_coord(point_type, multi_dim, idxc, processor)?;
-    }
-    processor.multipoint_end(idx)
-}
-
 fn process_linestring<P: GeomProcessor>(
     linestring_type: &LineStringType,
     tagged: bool,
@@ -264,18 +264,6 @@ fn process_linestring<P: GeomProcessor>(
     processor.linestring_end(tagged, idx)
 }
 
-fn process_multilinestring<P: GeomProcessor>(
-    multilinestring_type: &[LineStringType],
-    idx: usize,
-    processor: &mut P,
-) -> Result<()> {
-    processor.multilinestring_begin(multilinestring_type.len(), idx)?;
-    for (idxc, linestring_type) in multilinestring_type.iter().enumerate() {
-        process_linestring(linestring_type, false, idxc, processor)?;
-    }
-    processor.multilinestring_end(idx)
-}
-
 fn process_polygon<P: GeomProcessor>(
     polygon_type: &PolygonType,
     tagged: bool,
@@ -287,18 +275,6 @@ fn process_polygon<P: GeomProcessor>(
         process_linestring(linestring_type, false, idx2, processor)?;
     }
     processor.polygon_end(tagged, idx)
-}
-
-fn process_multi_polygon<P: GeomProcessor>(
-    multi_polygon_type: &[PolygonType],
-    idx: usize,
-    processor: &mut P,
-) -> Result<()> {
-    processor.multipolygon_begin(multi_polygon_type.len(), idx)?;
-    for (idxp, polygon_type) in multi_polygon_type.iter().enumerate() {
-        process_polygon(polygon_type, false, idxp, processor)?;
-    }
-    processor.multipolygon_end(idx)
 }
 
 #[cfg(test)]
