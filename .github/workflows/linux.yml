@@ -58,3 +58,10 @@ jobs:
           cargo test --workspace --all-features
           cargo test --manifest-path geozero/Cargo.toml
           cargo test --manifest-path geozero/Cargo.toml --no-default-features
+
+      - name: Ensure valid cfg usage
+        if: matrix.version == 'stable'
+        run: |
+          rustup toolchain install nightly
+          export RUSTFLAGS='-D warnings'
+          cargo +nightly check -Z unstable-options -Z check-cfg=features,names,values,output --workspace --all-features

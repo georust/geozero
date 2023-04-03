@@ -105,7 +105,7 @@ pub mod svg;
 #[cfg(feature = "with-svg")]
 pub use crate::svg::conversion::*;
 
-#[cfg(feature = "with-tesselator")]
+#[cfg(feature = "with-tessellator")]
 pub mod tessellator;
 
 #[cfg(feature = "with-wkb")]
