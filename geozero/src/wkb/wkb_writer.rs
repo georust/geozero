@@ -296,8 +296,8 @@ mod test {
     use crate::wkb::{process_ewkb_geom, process_gpkg_geom};
     use crate::ToWkb;
 
-    fn ewkb_roundtrip(ewkbstr: &str, with_z: bool, srid: Option<i32>) -> bool {
-        let wkb_in = hex::decode(ewkbstr).unwrap();
+    fn ewkb_roundtrip(ewkb_str: &str, with_z: bool, srid: Option<i32>) -> bool {
+        let wkb_in = hex::decode(ewkb_str).unwrap();
         let mut wkb_out: Vec<u8> = Vec::new();
         let mut writer = WkbWriter::new(&mut wkb_out, WkbDialect::Ewkb);
         writer.dims.z = with_z;
@@ -369,12 +369,12 @@ mod test {
     }
 
     fn gpkg_roundtrip(
-        ewkbstr: &str,
+        ewkb_str: &str,
         dims: CoordDimensions,
         srid: Option<i32>,
         envelope: Vec<f64>,
     ) -> bool {
-        let wkb_in = hex::decode(ewkbstr).unwrap();
+        let wkb_in = hex::decode(ewkb_str).unwrap();
         let mut wkb_out: Vec<u8> = Vec::new();
         let mut writer = WkbWriter::new(&mut wkb_out, WkbDialect::Geopackage);
         writer.dims = dims;

@@ -135,7 +135,7 @@ impl VertexOutput for ObjWriter {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::geojson_reader::read_geojson;
+    use crate::geojson::geojson_reader::read_geojson;
 
     #[test]
     fn point_geom() {

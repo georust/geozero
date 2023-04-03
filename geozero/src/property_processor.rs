@@ -34,7 +34,7 @@ pub enum ColumnValue<'a> {
 ///
 /// impl PropertyProcessor for PropertyPrinter {
 ///     fn property(&mut self, i: usize, n: &str, v: &ColumnValue) -> Result<bool> {
-///         println!("columnidx: {i} name: {n} value: {v:?}");
+///         println!("column idx: {i} name: {n} value: {v:?}");
 ///         Ok(false) // don't abort
 ///     }
 /// }

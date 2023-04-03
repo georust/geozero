@@ -67,7 +67,7 @@ mod postgis_postgres {
     // export DATABASE_URL=postgresql://pi@%2Fvar%2Frun%2Fpostgresql/testdb
     // export DATABASE_URL=postgresql://pi@localhost/testdb
 
-    pub(super) fn connect() -> std::result::Result<Client, postgres::error::Error> {
+    pub(super) fn connect() -> Result<Client, postgres::error::Error> {
         Client::connect(&std::env::var("DATABASE_URL").unwrap(), NoTls)
     }
 
@@ -77,7 +77,7 @@ mod postgis_postgres {
         bbox: &Option<Extent>,
         srid: i32,
         count: usize,
-    ) -> std::result::Result<(), postgres::error::Error> {
+    ) -> Result<(), postgres::error::Error> {
         let mut sql = format!("SELECT geom FROM {table}");
         if let Some(bbox) = bbox {
             sql += &format!(
@@ -108,7 +108,7 @@ mod rust_postgis {
         bbox: &Option<Extent>,
         srid: i32,
         count: usize,
-    ) -> std::result::Result<(), postgres::error::Error> {
+    ) -> Result<(), postgres::error::Error> {
         let mut sql = format!("SELECT geom FROM {table}");
         if let Some(bbox) = bbox {
             sql += &format!(
@@ -138,7 +138,7 @@ mod postgis_sqlx {
     // export DATABASE_URL=postgresql://pi@%2Fvar%2Frun%2Fpostgresql/testdb
     // export DATABASE_URL=postgresql://pi@localhost/testdb
 
-    pub(super) async fn connect() -> std::result::Result<PgConnection, sqlx::Error> {
+    pub(super) async fn connect() -> Result<PgConnection, sqlx::Error> {
         PgConnection::connect(&std::env::var("DATABASE_URL").unwrap()).await
     }
 
@@ -148,7 +148,7 @@ mod postgis_sqlx {
         bbox: &Option<Extent>,
         srid: i32,
         count: usize,
-    ) -> std::result::Result<(), sqlx::Error> {
+    ) -> Result<(), sqlx::Error> {
         let mut sql = format!("SELECT geom FROM {table}");
         if let Some(bbox) = bbox {
             sql += &format!(
@@ -186,7 +186,7 @@ mod gpkg {
         table: &str,
         bbox: &Option<Extent>,
         count: usize,
-    ) -> std::result::Result<(), sqlx::Error> {
+    ) -> Result<(), sqlx::Error> {
         let mut conn = SqliteConnection::connect(&format!("sqlite://{fpath}")).await?;
 
         // http://erouault.blogspot.com/2017/03/dealing-with-huge-vector-geopackage.html
@@ -224,7 +224,7 @@ mod gdal {
         fpath: &str,
         bbox: &Option<Extent>,
         count: usize,
-    ) -> std::result::Result<(), gdal::errors::GdalError> {
+    ) -> Result<(), gdal::errors::GdalError> {
         let dataset = Dataset::open(Path::new(fpath))?;
         let mut layer = dataset.layer(0)?;
         // omit fields when fetching features

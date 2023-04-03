@@ -19,7 +19,7 @@ pub(crate) struct RecordHeader {
 }
 
 impl RecordHeader {
-    pub(crate) const SIZE: usize = 2 * std::mem::size_of::<i32>();
+    pub(crate) const SIZE: usize = 2 * size_of::<i32>();
 
     pub fn read_from<T: Read>(source: &mut T) -> Result<RecordHeader, Error> {
         let record_number = source.read_i32::<BigEndian>()?;
@@ -47,12 +47,12 @@ fn read_shape_rec<P: GeomProcessor, T: Read>(
     mut source: &mut T,
     record_size: usize,
 ) -> Result<(), Error> {
-    let shapetype = ShapeType::read_from(&mut source)?;
-    let record_size = record_size - std::mem::size_of::<i32>();
-    match shapetype {
-        ShapeType::Point => read_point(processor, &mut source, record_size, shapetype)?,
-        ShapeType::PointM => read_point(processor, &mut source, record_size, shapetype)?,
-        ShapeType::PointZ => read_point(processor, &mut source, record_size, shapetype)?,
+    let shape_type = ShapeType::read_from(&mut source)?;
+    let record_size = record_size - size_of::<i32>();
+    match shape_type {
+        ShapeType::Point => read_point(processor, &mut source, record_size, shape_type)?,
+        ShapeType::PointM => read_point(processor, &mut source, record_size, shape_type)?,
+        ShapeType::PointZ => read_point(processor, &mut source, record_size, shape_type)?,
         ShapeType::Multipoint => {
             read_multipoint(processor, &mut source, record_size, ShapeType::Point)?
         }
@@ -409,7 +409,7 @@ enum RingType {
 /// `
 ///
 /// Inner Rings defines holes -> points are in counterclockwise order
-/// Outer Rings's points are un clockwise order
+/// Outer Rings' points are un clockwise order
 ///
 /// https://stackoverflow.com/questions/1165647/how-to-determine-if-a-list-of-polygon-points-are-in-clockwise-order/1180256#1180256
 fn ring_type_from_points_ordering(points: &[Coord]) -> RingType {
