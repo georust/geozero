@@ -69,7 +69,7 @@ pub(crate) fn process_wkt_geom_n<P: GeomProcessor>(
                 processor.point_end(idx)
             } else {
                 processor.empty_point(idx)
-            }?
+            }
         }
         Geometry::MultiPoint(g) => {
             processor.multipoint_begin(g.0.len(), idx)?;
@@ -83,33 +83,32 @@ pub(crate) fn process_wkt_geom_n<P: GeomProcessor>(
                     // the output of most computations (area, length, etc.)
                 }
             }
-            processor.multipoint_end(idx)?
+            processor.multipoint_end(idx)
         }
-        Geometry::LineString(g) => process_linestring(g, true, idx, processor)?,
+        Geometry::LineString(g) => process_linestring(g, true, idx, processor),
         Geometry::MultiLineString(g) => {
             processor.multilinestring_begin(g.0.len(), idx)?;
             for (idxc, linestring) in g.0.iter().enumerate() {
                 process_linestring(linestring, false, idxc, processor)?;
             }
-            processor.multilinestring_end(idx)?
+            processor.multilinestring_end(idx)
         }
-        Geometry::Polygon(g) => process_polygon(g, true, idx, processor)?,
+        Geometry::Polygon(g) => process_polygon(g, true, idx, processor),
         Geometry::MultiPolygon(g) => {
             processor.multipolygon_begin(g.0.len(), idx)?;
             for (idx2, polygon) in g.0.iter().enumerate() {
                 process_polygon(polygon, false, idx2, processor)?;
             }
-            processor.multipolygon_end(idx)?
+            processor.multipolygon_end(idx)
         }
         Geometry::GeometryCollection(g) => {
             processor.geometrycollection_begin(g.0.len(), idx)?;
             for (idx2, geometry) in g.0.iter().enumerate() {
                 process_wkt_geom_n(geometry, idx2, processor)?;
             }
-            processor.geometrycollection_end(idx)?
+            processor.geometrycollection_end(idx)
         }
     }
-    Ok(())
 }
 
 fn process_coord<P: GeomProcessor>(

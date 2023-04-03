@@ -36,9 +36,7 @@ pub fn read_gpx<R: io::Read, P: crate::GeomProcessor>(
     process_top_level_waypoints(&gpx_reader, processor, &mut index)?;
     process_top_level_tracks(&gpx_reader, processor, &mut index)?;
     process_top_level_routes(&gpx_reader, processor, &mut index)?;
-    processor.geometrycollection_end(0)?;
-
-    Ok(())
+    processor.geometrycollection_end(0)
 }
 
 fn process_top_level_waypoints<P: crate::GeomProcessor>(
@@ -122,8 +120,7 @@ fn process_route<P: crate::GeomProcessor>(
     }
     processor.linestring_begin(false, route.points.len(), index)?;
     process_waypoints_iter(route.points.iter(), processor, &mut 0, false)?;
-    processor.linestring_end(false, index)?;
-    Ok(())
+    processor.linestring_end(false, index)
 }
 
 fn process_waypoints_iter<'a, P: crate::GeomProcessor>(

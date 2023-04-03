@@ -19,7 +19,7 @@ fn process_geom_n<P: GeomProcessor>(geo: &Geometry, idx: usize, processor: &mut 
         OGRwkbGeometryType::wkbPoint => {
             processor.point_begin(idx)?;
             process_point(geo, 0, processor)?;
-            processor.point_end(idx)?;
+            processor.point_end(idx)
         }
         OGRwkbGeometryType::wkbMultiPoint => {
             let n_pts = geo.geometry_count();
@@ -31,20 +31,16 @@ fn process_geom_n<P: GeomProcessor>(geo: &Geometry, idx: usize, processor: &mut 
                 }
                 process_point(&pt, i, processor)?;
             }
-            processor.multipoint_end(idx)?;
+            processor.multipoint_end(idx)
         }
-        OGRwkbGeometryType::wkbLineString => {
-            process_linestring(geo, true, idx, processor)?;
-        }
+        OGRwkbGeometryType::wkbLineString => process_linestring(geo, true, idx, processor),
         OGRwkbGeometryType::wkbMultiLineString => {
             let n_lines = geo.geometry_count();
             processor.multilinestring_begin(n_lines, idx)?;
             process_linestring_seq(geo, processor, n_lines)?;
-            processor.multilinestring_end(idx)?;
+            processor.multilinestring_end(idx)
         }
-        OGRwkbGeometryType::wkbPolygon => {
-            process_polygon(geo, true, idx, processor)?;
-        }
+        OGRwkbGeometryType::wkbPolygon => process_polygon(geo, true, idx, processor),
         OGRwkbGeometryType::wkbMultiPolygon => {
             let n_polys = geo.geometry_count();
             processor.multipolygon_begin(n_polys, idx)?;
@@ -55,7 +51,7 @@ fn process_geom_n<P: GeomProcessor>(geo: &Geometry, idx: usize, processor: &mut 
                 }
                 process_polygon(&poly, false, i, processor)?;
             }
-            processor.multipolygon_end(idx)?;
+            processor.multipolygon_end(idx)
         }
         OGRwkbGeometryType::wkbGeometryCollection => {
             let n_geoms = geo.geometry_count();
@@ -64,11 +60,10 @@ fn process_geom_n<P: GeomProcessor>(geo: &Geometry, idx: usize, processor: &mut 
                 let g = unsafe { geo.get_unowned_geometry(i) };
                 process_geom_n(&g, i, processor)?;
             }
-            processor.geometrycollection_end(idx)?;
+            processor.geometrycollection_end(idx)
         }
-        _ => return Err(GeozeroError::GeometryFormat),
+        _ => Err(GeozeroError::GeometryFormat),
     }
-    Ok(())
 }
 
 fn type2d(wkb_type: OGRwkbGeometryType::Type) -> OGRwkbGeometryType::Type {
@@ -99,11 +94,10 @@ fn process_point<P: GeomProcessor>(geo: &Geometry, idx: usize, processor: &mut P
     let multi = processor.dimensions().z;
     let (x, y, z) = geo.get_point(0);
     if multi {
-        processor.coordinate(x, y, Some(z), None, None, None, idx)?;
+        processor.coordinate(x, y, Some(z), None, None, None, idx)
     } else {
-        processor.xy(x, y, idx)?;
+        processor.xy(x, y, idx)
     }
-    Ok(())
 }
 
 fn process_linestring_seq<P: GeomProcessor>(
