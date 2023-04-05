@@ -1,0 +1,72 @@
+use crate::mvt::tile_value::TileValue;
+use dup_indexer::DupIndexer;
+use std::hash::Hash;
+
+/// A builder for key-value pairs, where the key is a `String` or `&str`, and the value is a
+/// [`TileValue`] enum which can hold any of the MVT value types.
+///
+/// # Example
+/// ```rust
+/// use geozero::mvt::{TagsBuilder, TileValue};
+/// # fn main() {
+/// let mut builder = TagsBuilder::new();
+/// // Use returned key and value indexes in a MVT tile construction
+/// let (key_idx, val_idx) = builder.insert("name", TileValue::Str("value1".to_string()));
+/// let (key_idx, val_idx) = builder.insert("name", TileValue::Str("value2".to_string()));
+/// // Get the keys and values as vectors and save them as MVT key and value tables///
+/// let (keys, values) = builder.into_tags();
+/// # }
+#[derive(Debug)]
+pub struct TagsBuilder<K> {
+    keys: DupIndexer<K>,
+    values: DupIndexer<TileValue>,
+}
+
+impl<K: Default + Eq + Hash> Default for TagsBuilder<K> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<K: Eq + Hash> TagsBuilder<K> {
+    pub fn new() -> Self {
+        Self {
+            keys: DupIndexer::new(),
+            values: DupIndexer::new(),
+        }
+    }
+
+    pub fn insert(&mut self, key: K, value: TileValue) -> (u32, u32) {
+        (
+            self.keys.insert(key) as u32,
+            self.values.insert(value) as u32,
+        )
+    }
+
+    pub fn into_tags(self) -> (Vec<K>, Vec<TileValue>) {
+        (self.keys.into_vec(), self.values.into_vec())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::TileValue::*;
+    use super::*;
+
+    fn s(s: &str) -> String {
+        s.to_string()
+    }
+
+    #[test]
+    fn test_add_value() {
+        let mut lb = TagsBuilder::new();
+        assert_eq!((0, 0), lb.insert(s("foo"), Str(s("bar"))));
+        assert_eq!((0, 1), lb.insert(s("foo"), Str(s("baz"))));
+        assert_eq!((0, 2), lb.insert(s("foo"), Int(42)));
+        assert_eq!((1, 2), lb.insert(s("bar"), Int(42)));
+
+        let (keys, values) = lb.into_tags();
+        assert_eq!(vec![s("foo"), s("bar")], keys);
+        assert_eq!(vec![Str(s("bar")), Str(s("baz")), Int(42)], values);
+    }
+}

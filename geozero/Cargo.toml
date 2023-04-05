@@ -15,20 +15,20 @@ categories = ["Geospatial"]
 default = ["with-svg", "with-wkt", "with-geo", "with-geojson"]
 with-arrow = ["arrow2"]
 with-csv = ["csv", "with-wkt"]
-with-svg = []
-with-wkt = ["wkt"]
+with-gdal = ["gdal", "gdal-sys"]
 with-geo = ["geo-types"]
 with-geojson = ["geojson"]
-with-gdal = ["gdal", "gdal-sys"]
 with-geos = ["geos"]
-with-wkb = ["scroll", "with-wkt"]
 with-gpkg = ["with-wkb", "sqlx/sqlite"]
 with-gpx = ["gpx"]
-with-postgis-sqlx = ["with-wkb", "sqlx/postgres"]
-with-postgis-postgres = ["with-wkb", "postgres-types", "bytes"]
+with-mvt = ["prost", "prost-build", "dup-indexer"]
 with-postgis-diesel = ["with-wkb", "diesel", "byteorder"]
-with-mvt = ["prost", "prost-build"]
+with-postgis-postgres = ["with-wkb", "postgres-types", "bytes"]
+with-postgis-sqlx = ["with-wkb", "sqlx/postgres"]
+with-svg = []
 with-tessellator = ["lyon"]
+with-wkb = ["scroll", "with-wkt"]
+with-wkt = ["wkt"]
 
 [dependencies]
 arrow2 = { version = "0.17", optional = true, features = ["io_ipc"] }
@@ -36,6 +36,7 @@ byteorder = { version = "1.4.3", default-features = false, optional = true }
 bytes = { version = "1.4", optional = true }
 csv = { version = "1.2.1", optional = true }
 diesel = { version = "2.0.2", default-features = false, optional = true }
+dup-indexer = { version = "0.2", optional = true }
 gdal = { version = "0.14", default-features = false, optional = true }
 gdal-sys = { version = "0.8", optional = true }
 geo-types = { version = "0.7", default-features = false, optional = true }
