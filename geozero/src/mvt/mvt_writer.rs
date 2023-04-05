@@ -93,6 +93,7 @@ impl GeomProcessor for MvtWriter {
         }
         Ok(())
     }
+
     fn point_begin(&mut self, _idx: usize) -> Result<()> {
         self.feature.set_type(GeomType::Point);
         self.reserve(3);
@@ -101,6 +102,7 @@ impl GeomProcessor for MvtWriter {
             .push(CommandInteger::from(Command::MoveTo, 1));
         Ok(())
     }
+
     fn multipoint_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
         self.feature.set_type(GeomType::Point);
         self.reserve(1 + 2 * size);
@@ -109,6 +111,7 @@ impl GeomProcessor for MvtWriter {
             .push(CommandInteger::from(Command::MoveTo, size as u32));
         Ok(())
     }
+
     fn linestring_begin(&mut self, tagged: bool, size: usize, _idx: usize) -> Result<()> {
         if tagged {
             self.feature.set_type(GeomType::Linestring);
@@ -125,6 +128,7 @@ impl GeomProcessor for MvtWriter {
             .push(CommandInteger::from(Command::MoveTo, 1));
         Ok(())
     }
+
     fn linestring_end(&mut self, _tagged: bool, _idx: usize) -> Result<()> {
         if let LineState::Ring(_) = self.line_state {
             self.feature
@@ -134,21 +138,25 @@ impl GeomProcessor for MvtWriter {
         self.line_state = LineState::None;
         Ok(())
     }
+
     fn multilinestring_begin(&mut self, _size: usize, _idx: usize) -> Result<()> {
         self.is_multiline = true;
         self.feature.set_type(GeomType::Linestring);
         Ok(())
     }
+
     fn multilinestring_end(&mut self, _size: usize) -> Result<()> {
         self.is_multiline = false;
         Ok(())
     }
+
     fn polygon_begin(&mut self, tagged: bool, _size: usize, _idx: usize) -> Result<()> {
         if tagged {
             self.feature.set_type(GeomType::Polygon);
         }
         Ok(())
     }
+
     fn multipolygon_begin(&mut self, _size: usize, _idx: usize) -> Result<()> {
         self.feature.set_type(GeomType::Polygon);
         Ok(())
@@ -159,6 +167,7 @@ impl GeomProcessor for MvtWriter {
 mod test_mvt {
     use super::*;
     use crate::mvt::vector_tile::Tile;
+    use crate::mvt::TileValue;
 
     // https://github.com/mapbox/vector-tile-spec/tree/master/2.1#45-example
     const TILE_EXAMPLE: &str = r#"Tile {
@@ -285,35 +294,23 @@ mod test_mvt {
         mvt_feature.set_type(GeomType::Point);
         mvt_feature.geometry = [9, 490, 6262].to_vec();
 
-        let mvt_value = tile::Value {
-            string_value: Some(String::from("world")),
-            ..Default::default()
-        };
         add_feature_attribute(
             &mut mvt_layer,
             &mut mvt_feature,
             String::from("hello"),
-            mvt_value,
+            TileValue::Str("world".to_string()),
         );
-        let mut mvt_value = tile::Value {
-            ..Default::default()
-        };
-        mvt_value.string_value = Some(String::from("world"));
         add_feature_attribute(
             &mut mvt_layer,
             &mut mvt_feature,
             String::from("h"),
-            mvt_value,
+            TileValue::Str("world".to_string()),
         );
-        let mvt_value = tile::Value {
-            double_value: Some(1.23),
-            ..Default::default()
-        };
         add_feature_attribute(
             &mut mvt_layer,
             &mut mvt_feature,
             String::from("count"),
-            mvt_value,
+            TileValue::Double(1.23),
         );
 
         mvt_layer.features.push(mvt_feature);
@@ -323,25 +320,17 @@ mod test_mvt {
         mvt_feature.set_type(GeomType::Point);
         mvt_feature.geometry = [9, 490, 6262].to_vec();
 
-        let mvt_value = tile::Value {
-            string_value: Some(String::from("again")),
-            ..Default::default()
-        };
         add_feature_attribute(
             &mut mvt_layer,
             &mut mvt_feature,
             String::from("hello"),
-            mvt_value,
+            TileValue::Str("again".to_string()),
         );
-        let mvt_value = tile::Value {
-            int_value: Some(2),
-            ..Default::default()
-        };
         add_feature_attribute(
             &mut mvt_layer,
             &mut mvt_feature,
             String::from("count"),
-            mvt_value,
+            TileValue::Int(2),
         );
 
         mvt_layer.features.push(mvt_feature);
@@ -359,8 +348,9 @@ mod test_mvt {
         mvt_layer: &mut tile::Layer,
         mvt_feature: &mut tile::Feature,
         key: String,
-        mvt_value: tile::Value,
+        value: TileValue,
     ) {
+        let mvt_value = value.into();
         let key_entry = mvt_layer.keys.iter().position(|k| *k == key);
         // Optimization: maintain a hash table with key/index pairs
         let key_idx = match key_entry {

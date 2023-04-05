@@ -2,6 +2,13 @@
 mod mvt_commands;
 pub(crate) mod mvt_reader;
 pub(crate) mod mvt_writer;
+
+mod tag_builder;
+pub use tag_builder::TagsBuilder;
+
+mod tile_value;
+pub use tile_value::TileValue;
+
 #[rustfmt::skip]
 mod vector_tile;
 
