@@ -1,5 +1,3 @@
-#![allow(unused_variables)]
-
 use geozero::mvt::Message;
 use geozero::mvt::Tile;
 use geozero::{

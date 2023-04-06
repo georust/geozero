@@ -14,7 +14,7 @@ pub struct CoordDimensions {
 }
 
 impl CoordDimensions {
-    pub fn xy() -> Self {
+    pub const fn xy() -> Self {
         CoordDimensions {
             z: false,
             m: false,
@@ -22,7 +22,7 @@ impl CoordDimensions {
             tm: false,
         }
     }
-    pub fn xyz() -> Self {
+    pub const fn xyz() -> Self {
         CoordDimensions {
             z: true,
             m: false,
@@ -30,7 +30,7 @@ impl CoordDimensions {
             tm: false,
         }
     }
-    pub fn xyzm() -> Self {
+    pub const fn xyzm() -> Self {
         CoordDimensions {
             z: true,
             m: true,
@@ -38,7 +38,7 @@ impl CoordDimensions {
             tm: false,
         }
     }
-    pub fn xym() -> Self {
+    pub const fn xym() -> Self {
         CoordDimensions {
             z: false,
             m: true,
