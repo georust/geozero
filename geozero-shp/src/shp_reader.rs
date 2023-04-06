@@ -110,8 +110,9 @@ fn read_point<P: GeomProcessor, T: Read>(
 
     processor.point_begin(0)?;
     if processor.multi_dim() {
-        let z = if processor.dimensions().z { z } else { None };
-        let m = if processor.dimensions().m { m } else { None };
+        let dimensions = processor.dimensions();
+        let z = if dimensions.z { z } else { None };
+        let m = if dimensions.m { m } else { None };
         processor.coordinate(x, y, z, m, None, None, 0)?;
     } else {
         processor.xy(x, y, 0)?;
@@ -158,8 +159,9 @@ fn read_multipoint<P: GeomProcessor, T: Read>(
     };
 
     let multi_dim = processor.multi_dim();
-    let get_z = processor.dimensions().z && !z_values.is_empty();
-    let get_m = processor.dimensions().m && !m_values.is_empty();
+    let dimensions = processor.dimensions();
+    let get_z = dimensions.z && !z_values.is_empty();
+    let get_m = dimensions.m && !m_values.is_empty();
 
     processor.multipoint_begin(num_points, 0)?;
     for idx in 0..num_points {
@@ -285,9 +287,10 @@ impl MultiPartShape {
 
     fn process<P: GeomProcessor>(&self, processor: &mut P, as_poly: bool) -> Result<(), Error> {
         let tagged = false;
-        let multi_dim = processor.dimensions().z || processor.dimensions().m;
-        let get_z = processor.dimensions().z && !self.z_values.is_empty();
-        let get_m = processor.dimensions().m && !self.m_values.is_empty();
+        let dimensions = processor.dimensions();
+        let multi_dim = dimensions.z || dimensions.m;
+        let get_z = dimensions.z && !self.z_values.is_empty();
+        let get_m = dimensions.m && !self.m_values.is_empty();
 
         let geom_parts_indices = if as_poly {
             self.detect_polys()

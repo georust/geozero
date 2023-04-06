@@ -1,0 +1,687 @@
+---------- start layer cities ----------
+dataset_begin Some("cities")
+feature_begin 0
+  properties_begin
+    property 0: name = String("Vancouver")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 647, 1401, 0
+    point_end 0
+  geometry_end
+feature_end 0
+feature_begin 1
+  properties_begin
+    property 0: name = String("San Francisco")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 655, 1583, 0
+    point_end 0
+  geometry_end
+feature_end 1
+feature_begin 2
+  properties_begin
+    property 0: name = String("Los Angeles")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 703, 1636, 0
+    point_end 0
+  geometry_end
+feature_end 2
+feature_begin 3
+  properties_begin
+    property 0: name = String("Denver")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 853, 1554, 0
+    point_end 0
+  geometry_end
+feature_end 3
+feature_begin 4
+  properties_begin
+    property 0: name = String("Monterrey")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 906, 1745, 0
+    point_end 0
+  geometry_end
+feature_end 4
+feature_begin 5
+  properties_begin
+    property 0: name = String("Houston")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 963, 1692, 0
+    point_end 0
+  geometry_end
+feature_end 5
+feature_begin 6
+  properties_begin
+    property 0: name = String("Mexico City")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 920, 1822, 0
+    point_end 0
+  geometry_end
+feature_end 6
+feature_begin 7
+  properties_begin
+    property 0: name = String("Chicago")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 1049, 1523, 0
+    point_end 0
+  geometry_end
+feature_end 7
+feature_begin 8
+  properties_begin
+    property 0: name = String("Toronto")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 1144, 1494, 0
+    point_end 0
+  geometry_end
+feature_end 8
+feature_begin 9
+  properties_begin
+    property 0: name = String("Atlanta")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 1087, 1638, 0
+    point_end 0
+  geometry_end
+feature_end 9
+feature_begin 10
+  properties_begin
+    property 0: name = String("Miami")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 1135, 1744, 0
+    point_end 0
+  geometry_end
+feature_end 10
+feature_begin 11
+  properties_begin
+    property 0: name = String("Washington, D.C.")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 1171, 1566, 0
+    point_end 0
+  geometry_end
+feature_end 11
+feature_begin 12
+  properties_begin
+    property 0: name = String("New York")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 1206, 1539, 0
+    point_end 0
+  geometry_end
+feature_end 12
+feature_begin 13
+  properties_begin
+    property 0: name = String("Bogota")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 1205, 1995, 0
+    point_end 0
+  geometry_end
+feature_end 13
+feature_begin 14
+  properties_begin
+    property 0: name = String("Caracas")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 1286, 1927, 0
+    point_end 0
+  geometry_end
+feature_end 14
+feature_begin 15
+  properties_begin
+    property 0: name = String("London")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 2046, 1362, 0
+    point_end 0
+  geometry_end
+feature_end 15
+feature_begin 16
+  properties_begin
+    property 0: name = String("Casablanca")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 1961, 1641, 0
+    point_end 0
+  geometry_end
+feature_end 16
+feature_begin 17
+  properties_begin
+    property 0: name = String("Madrid")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 2006, 1544, 0
+    point_end 0
+  geometry_end
+feature_end 17
+feature_begin 18
+  properties_begin
+    property 0: name = String("Dakar")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 1849, 1878, 0
+    point_end 0
+  geometry_end
+feature_end 18
+feature_begin 19
+  properties_begin
+    property 0: name = String("Lima")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 1171, 2186, 0
+    point_end 0
+  geometry_end
+feature_end 19
+feature_begin 20
+  properties_begin
+    property 0: name = String("Santiago")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 1243, 2452, 0
+    point_end 0
+  geometry_end
+feature_end 20
+feature_begin 21
+  properties_begin
+    property 0: name = String("Buenos Aires")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 1383, 2468, 0
+    point_end 0
+  geometry_end
+feature_end 21
+feature_begin 22
+  properties_begin
+    property 0: name = String("São Paulo")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 1517, 2323, 0
+    point_end 0
+  geometry_end
+feature_end 22
+feature_begin 23
+  properties_begin
+    property 0: name = String("Rio de Janeiro")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 1556, 2316, 0
+    point_end 0
+  geometry_end
+feature_end 23
+feature_begin 24
+  properties_begin
+    property 0: name = String("Stockholm")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 2253, 1204, 0
+    point_end 0
+  geometry_end
+feature_end 24
+feature_begin 25
+  properties_begin
+    property 0: name = String("Amsterdam")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 2103, 1346, 0
+    point_end 0
+  geometry_end
+feature_end 25
+feature_begin 26
+  properties_begin
+    property 0: name = String("Paris")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 2074, 1408, 0
+    point_end 0
+  geometry_end
+feature_end 26
+feature_begin 27
+  properties_begin
+    property 0: name = String("Geneva")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 2117, 1453, 0
+    point_end 0
+  geometry_end
+feature_end 27
+feature_begin 28
+  properties_begin
+    property 0: name = String("Berlin")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 2200, 1343, 0
+    point_end 0
+  geometry_end
+feature_end 28
+feature_begin 29
+  properties_begin
+    property 0: name = String("Vienna")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 2234, 1420, 0
+    point_end 0
+  geometry_end
+feature_end 29
+feature_begin 30
+  properties_begin
+    property 0: name = String("Rome")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 2190, 1522, 0
+    point_end 0
+  geometry_end
+feature_end 30
+feature_begin 31
+  properties_begin
+    property 0: name = String("Kiev")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 2395, 1381, 0
+    point_end 0
+  geometry_end
+feature_end 31
+feature_begin 32
+  properties_begin
+    property 0: name = String("Istanbul")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 2378, 1534, 0
+    point_end 0
+  geometry_end
+feature_end 32
+feature_begin 33
+  properties_begin
+    property 0: name = String("Moscow")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 2475, 1280, 0
+    point_end 0
+  geometry_end
+feature_end 33
+feature_begin 34
+  properties_begin
+    property 0: name = String("Lagos")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 2086, 1974, 0
+    point_end 0
+  geometry_end
+feature_end 34
+feature_begin 35
+  properties_begin
+    property 0: name = String("Athens")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 2318, 1580, 0
+    point_end 0
+  geometry_end
+feature_end 35
+feature_begin 36
+  properties_begin
+    property 0: name = String("Cairo")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 2403, 1689, 0
+    point_end 0
+  geometry_end
+feature_end 36
+feature_begin 37
+  properties_begin
+    property 0: name = String("Baghdad")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 2553, 1645, 0
+    point_end 0
+  geometry_end
+feature_end 37
+feature_begin 38
+  properties_begin
+    property 0: name = String("Addis Ababa")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 2488, 1944, 0
+    point_end 0
+  geometry_end
+feature_end 38
+feature_begin 39
+  properties_begin
+    property 0: name = String("Tashkent")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 2836, 1530, 0
+    point_end 0
+  geometry_end
+feature_end 39
+feature_begin 40
+  properties_begin
+    property 0: name = String("Ürümqi")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 3044, 1492, 0
+    point_end 0
+  geometry_end
+feature_end 40
+feature_begin 41
+  properties_begin
+    property 0: name = String("Tehran")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 2633, 1613, 0
+    point_end 0
+  geometry_end
+feature_end 41
+feature_begin 42
+  properties_begin
+    property 0: name = String("Riyadh")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 2580, 1758, 0
+    point_end 0
+  geometry_end
+feature_end 42
+feature_begin 43
+  properties_begin
+    property 0: name = String("Dubai")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 2676, 1751, 0
+    point_end 0
+  geometry_end
+feature_end 43
+feature_begin 44
+  properties_begin
+    property 0: name = String("Kabul")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 2835, 1629, 0
+    point_end 0
+  geometry_end
+feature_end 44
+feature_begin 45
+  properties_begin
+    property 0: name = String("New Delhi")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 2926, 1708, 0
+    point_end 0
+  geometry_end
+feature_end 45
+feature_begin 46
+  properties_begin
+    property 0: name = String("Kolkata")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 3052, 1785, 0
+    point_end 0
+  geometry_end
+feature_end 46
+feature_begin 47
+  properties_begin
+    property 0: name = String("Mumbai")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 2876, 1827, 0
+    point_end 0
+  geometry_end
+feature_end 47
+feature_begin 48
+  properties_begin
+    property 0: name = String("Bangalore")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 2930, 1899, 0
+    point_end 0
+  geometry_end
+feature_end 48
+feature_begin 49
+  properties_begin
+    property 0: name = String("Chengdu")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 3232, 1681, 0
+    point_end 0
+  geometry_end
+feature_end 49
+feature_begin 50
+  properties_begin
+    property 0: name = String("Bangkok")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 3191, 1890, 0
+    point_end 0
+  geometry_end
+feature_end 50
+feature_begin 51
+  properties_begin
+    property 0: name = String("Singapore")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 3229, 2033, 0
+    point_end 0
+  geometry_end
+feature_end 51
+feature_begin 52
+  properties_begin
+    property 0: name = String("Beijing")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 3372, 1551, 0
+    point_end 0
+  geometry_end
+feature_end 52
+feature_begin 53
+  properties_begin
+    property 0: name = String("Hong Kong")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 3347, 1787, 0
+    point_end 0
+  geometry_end
+feature_end 53
+feature_begin 54
+  properties_begin
+    property 0: name = String("Shanghai")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 3429, 1673, 0
+    point_end 0
+  geometry_end
+feature_end 54
+feature_begin 55
+  properties_begin
+    property 0: name = String("Taipei")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 3431, 1753, 0
+    point_end 0
+  geometry_end
+feature_end 55
+feature_begin 56
+  properties_begin
+    property 0: name = String("Seoul")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 3492, 1586, 0
+    point_end 0
+  geometry_end
+feature_end 56
+feature_begin 57
+  properties_begin
+    property 0: name = String("Manila")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 3424, 1879, 0
+    point_end 0
+  geometry_end
+feature_end 57
+feature_begin 58
+  properties_begin
+    property 0: name = String("Ōsaka")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 3589, 1625, 0
+    point_end 0
+  geometry_end
+feature_end 58
+feature_begin 59
+  properties_begin
+    property 0: name = String("Tokyo")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 3638, 1612, 0
+    point_end 0
+  geometry_end
+feature_end 59
+feature_begin 60
+  properties_begin
+    property 0: name = String("Kinshasa")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 2222, 2097, 0
+    point_end 0
+  geometry_end
+feature_end 60
+feature_begin 61
+  properties_begin
+    property 0: name = String("Cape Town")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 2257, 2458, 0
+    point_end 0
+  geometry_end
+feature_end 61
+feature_begin 62
+  properties_begin
+    property 0: name = String("Nairobi")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 2466, 2062, 0
+    point_end 0
+  geometry_end
+feature_end 62
+feature_begin 63
+  properties_begin
+    property 0: name = String("Johannesburg")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 2366, 2356, 0
+    point_end 0
+  geometry_end
+feature_end 63
+feature_begin 64
+  properties_begin
+    property 0: name = String("Jakarta")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 3263, 2118, 0
+    point_end 0
+  geometry_end
+feature_end 64
+feature_begin 65
+  properties_begin
+    property 0: name = String("Melbourne")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 3697, 2513, 0
+    point_end 0
+  geometry_end
+feature_end 65
+feature_begin 66
+  properties_begin
+    property 0: name = String("Sydney")
+  properties_end
+  geometry_begin
+    point_begin 0
+      xy: 3768, 2458, 0
+    point_end 0
+  geometry_end
+feature_end 66
+feature_begin 67
+  properties_begin
+    property 0: name = String("Auckland")
+  properties_end
+  geometry_begin
+    multipoint_begin 2, 0
+      xy: 4036, 2499, 0
+      xy: -60, 2499, 1
+    multipoint_end 0
+  geometry_end
+feature_end 67
+dataset_end
+::: dimensions = 0
+::: multi_dim = 69
+---------- end layer cities ----------

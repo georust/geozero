@@ -17,7 +17,7 @@ gdal-sys = { version = "0.8" }
 geo = "0.23" # { version = "0.17", features = ["postgis-integration"] }
 geo-types = { version = "0.7", default-features = false }
 geojson = "0.24.0"
-geozero = { path = "../geozero", features = ["with-geo", "with-geojson", "with-geos", "with-gpkg", "with-postgis-sqlx", "with-postgis-postgres"] }
+geozero = { path = "../geozero", features = ["with-geo", "with-geojson", "with-geos", "with-gpkg", "with-mvt", "with-postgis-postgres", "with-postgis-sqlx"] }
 postgis = "0.9.0"
 postgres = "0.19"
 seek_bufread = "1.2"
@@ -26,4 +26,8 @@ tokio = { version = "1.27.0", default-features = false, features = ["rt-multi-th
 
 [[bench]]
 name = "geobench"
+harness = false
+
+[[bench]]
+name = "mvtbench"
 harness = false
