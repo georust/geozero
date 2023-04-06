@@ -110,6 +110,11 @@ path = "tests/kdbush.rs"
 required-features = ["with-geojson"]
 
 [[test]]
+name = "mvt"
+path = "tests/mvt.rs"
+required-features = ["with-mvt"]
+
+[[test]]
 name = "polylabel"
 path = "tests/polylabel.rs"
 required-features = ["with-geo"]
