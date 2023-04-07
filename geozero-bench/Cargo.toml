@@ -14,7 +14,7 @@ flatgeobuf = "3.25.0"
 futures-util = "0.3.5"
 gdal = { version = "0.14", default-features = false }
 gdal-sys = { version = "0.8" }
-geo = "0.23" # { version = "0.17", features = ["postgis-integration"] }
+geo = "0.24.1" # { version = "0.17", features = ["postgis-integration"] }
 geo-types = { version = "0.7", default-features = false }
 geojson = "0.24.0"
 geozero = { path = "../geozero", features = ["with-geo", "with-geojson", "with-geos", "with-gpkg", "with-mvt", "with-postgis-postgres", "with-postgis-sqlx"] }
