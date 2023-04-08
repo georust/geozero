@@ -46,6 +46,7 @@ jobs:
           username: ci
           password: ci
           database: test
+          rights: --superuser
           port: 34837
         id: pg
 
