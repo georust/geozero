@@ -146,14 +146,7 @@ async fn process_url(args: Cli) -> Result<()> {
 
 fn set_dimensions(processor: &mut SvgWriter<BufWriter<File>>, extent: Option<Extent>) {
     if let Some(extent) = extent {
-        processor.set_dimensions(
-            extent.minx,
-            extent.miny,
-            extent.maxx,
-            extent.maxy,
-            800,
-            600,
-        );
+        processor.set_dimensions(extent.minx, extent.miny, extent.maxx, extent.maxy, 800, 600);
     } else {
         // TODO: get image size as opts and full extent from data
         processor.set_dimensions(-180.0, -90.0, 180.0, 90.0, 800, 600);
