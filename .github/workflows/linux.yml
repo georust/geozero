@@ -52,7 +52,7 @@ jobs:
       - name: PostGIS tests
         shell: bash
         run: |
-          psql -P pager=off -v ON_ERROR_STOP=1 -f geozero/tests/data/postgis.sql
+          psql -P pager=off -v ON_ERROR_STOP=1 -f geozero/tests/data/postgis.sql $DATABASE_URL
           cargo test -p geozero --all-features -- --ignored postgis --test-threads 1
         env:
           DATABASE_URL: "${{ steps.pg.outputs.connection-uri }}?sslmode=disable"
