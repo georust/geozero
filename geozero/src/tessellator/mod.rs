@@ -1,10 +1,11 @@
 use crate::error::Result;
 use crate::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 use lyon::math::{point, Point};
-use lyon::path::{Builder, Path};
+use lyon::path::path::Builder;
+use lyon::path::Path;
 use lyon::tessellation::geometry_builder::simple_builder;
 use lyon::tessellation::*;
-use std::cell::RefCell;
+use std::mem;
 
 /// Triangle generator output
 #[allow(unused_variables)]
@@ -16,7 +17,8 @@ pub trait VertexOutput {
 /// Tessellator.
 pub struct Tessellator<'a> {
     vertex_out: &'a dyn VertexOutput,
-    builder: RefCell<Builder>,
+    has_started: bool,
+    builder: Builder,
     num_rings: usize,
 }
 
@@ -24,7 +26,8 @@ impl<'a> Tessellator<'a> {
     pub fn new(out: &'a dyn VertexOutput) -> Self {
         Tessellator {
             vertex_out: out,
-            builder: RefCell::new(Path::builder()),
+            has_started: false,
+            builder: Path::builder(),
             num_rings: 0,
         }
     }
@@ -33,9 +36,10 @@ impl<'a> Tessellator<'a> {
 impl<'a> GeomProcessor for Tessellator<'a> {
     fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
         if idx == 0 {
-            self.builder.borrow_mut().move_to(point(x as f32, y as f32));
+            self.has_started = true;
+            self.builder.begin(point(x as f32, y as f32));
         } else {
-            self.builder.borrow_mut().line_to(point(x as f32, y as f32));
+            self.builder.line_to(point(x as f32, y as f32));
         }
         Ok(())
     }
@@ -57,14 +61,14 @@ impl<'a> GeomProcessor for Tessellator<'a> {
         }
         Ok(())
     }
-    fn linestring_end(&mut self, tagged: bool, idx: usize) -> Result<()> {
-        if idx == self.num_rings {
-            self.builder.borrow_mut().close();
+    fn linestring_end(&mut self, tagged: bool, _idx: usize) -> Result<()> {
+        if self.has_started {
+            self.has_started = false;
+            self.builder.close();
         }
         if tagged {
-            let builder = self.builder.replace(Path::builder());
-            let path = builder.build();
-            tessellate_line(&path);
+            let builder = mem::replace(&mut self.builder, Path::builder());
+            tessellate_line(&builder.build());
         }
         Ok(())
     }
@@ -79,9 +83,12 @@ impl<'a> GeomProcessor for Tessellator<'a> {
         Ok(())
     }
     fn polygon_end(&mut self, _tagged: bool, _idx: usize) -> Result<()> {
-        let builder = self.builder.replace(Path::builder());
-        let path = builder.build();
-        tessellate_poly(&path, self.vertex_out);
+        let mut builder = mem::replace(&mut self.builder, Path::builder());
+        if self.has_started {
+            self.has_started = false;
+            builder.close();
+        }
+        tessellate_poly(&builder.build(), self.vertex_out);
         Ok(())
     }
 }
@@ -106,7 +113,8 @@ fn tessellate_poly(path: &Path, out: &dyn VertexOutput) {
         .tessellate_path(
             path,
             &FillOptions::default(),
-            &mut BuffersBuilder::new(&mut buffers, |pos: Point, _: FillAttributes| {
+            &mut BuffersBuilder::new(&mut buffers, |pos: FillVertex| {
+                let pos = pos.position();
                 out.vertex(pos.x, pos.y, 0.0);
             }),
         )
@@ -153,8 +161,24 @@ mod test {
     }
 
     #[test]
+    fn multipoint_empty_geom() {
+        let geojson = r#"{"type": "MultiPoint", "coordinates": []}"#;
+        let out = ObjWriter {};
+        let mut tessellator = Tessellator::new(&out);
+        assert!(read_geojson(geojson.as_bytes(), &mut tessellator).is_ok());
+    }
+
+    #[test]
     fn line_geom() {
         let geojson = r#"{"type": "LineString", "coordinates": [[1,1], [2,2]]}"#;
+        let out = ObjWriter {};
+        let mut tessellator = Tessellator::new(&out);
+        assert!(read_geojson(geojson.as_bytes(), &mut tessellator).is_ok());
+    }
+
+    #[test]
+    fn line_empty_geom() {
+        let geojson = r#"{"type": "LineString", "coordinates": []}"#;
         let out = ObjWriter {};
         let mut tessellator = Tessellator::new(&out);
         assert!(read_geojson(geojson.as_bytes(), &mut tessellator).is_ok());
@@ -178,8 +202,34 @@ mod test {
     }
 
     #[test]
+    fn multiline_empty_geom() {
+        let geojson = r#"{"type": "MultiLineString", "coordinates": [[],[]]}"#;
+        let out = ObjWriter {};
+        let mut tessellator = Tessellator::new(&out);
+        assert!(read_geojson(geojson.as_bytes(), &mut tessellator).is_ok());
+
+        let geojson = r#"{"type": "MultiLineString", "coordinates": []}"#;
+        let out = ObjWriter {};
+        let mut tessellator = Tessellator::new(&out);
+        assert!(read_geojson(geojson.as_bytes(), &mut tessellator).is_ok());
+    }
+
+    #[test]
     fn polygon_geom() {
         let geojson = r#"{"type": "Polygon", "coordinates": [[[0, 0], [0, 3], [3, 3], [3, 0], [0, 0]],[[0.2, 0.2], [0.2, 2], [2, 2], [2, 0.2], [0.2, 0.2]]]}"#;
+        let out = ObjWriter {};
+        let mut tessellator = Tessellator::new(&out);
+        assert!(read_geojson(geojson.as_bytes(), &mut tessellator).is_ok());
+    }
+
+    #[test]
+    fn polygon_empty_geom() {
+        let geojson = r#"{"type": "Polygon", "coordinates": [[],[]]}"#;
+        let out = ObjWriter {};
+        let mut tessellator = Tessellator::new(&out);
+        assert!(read_geojson(geojson.as_bytes(), &mut tessellator).is_ok());
+
+        let geojson = r#"{"type": "Polygon", "coordinates": []}"#;
         let out = ObjWriter {};
         let mut tessellator = Tessellator::new(&out);
         assert!(read_geojson(geojson.as_bytes(), &mut tessellator).is_ok());
@@ -189,6 +239,22 @@ mod test {
     fn multipolygon_geom() {
         let geojson =
             r#"{"type": "MultiPolygon", "coordinates": [[[[0,0],[0,1],[1,1],[1,0],[0,0]]]]}"#;
+        let out = ObjWriter {};
+        let mut tessellator = Tessellator::new(&out);
+        assert!(read_geojson(geojson.as_bytes(), &mut tessellator).is_ok());
+    }
+
+    #[test]
+    fn multipolygon_empty_geom() {
+        let geojson = r#"{"type": "MultiPolygon", "coordinates": [[[]]]}"#;
+        let out = ObjWriter {};
+        let mut tessellator = Tessellator::new(&out);
+        assert!(read_geojson(geojson.as_bytes(), &mut tessellator).is_ok());
+        let geojson = r#"{"type": "MultiPolygon", "coordinates": [[]]}"#;
+        let out = ObjWriter {};
+        let mut tessellator = Tessellator::new(&out);
+        assert!(read_geojson(geojson.as_bytes(), &mut tessellator).is_ok());
+        let geojson = r#"{"type": "MultiPolygon", "coordinates": []}"#;
         let out = ObjWriter {};
         let mut tessellator = Tessellator::new(&out);
         assert!(read_geojson(geojson.as_bytes(), &mut tessellator).is_ok());
