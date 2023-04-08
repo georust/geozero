@@ -5,8 +5,8 @@ which causes build conflicts when doing major version updates.
 
 ## geozero
 
-* Make sure local branch is up-to-date (`git pull --rebase`)
 * `cd geozero`
+* Make sure local branch is up-to-date (`git pull --rebase`)
 * Check for compatible major updates with `cargo outdated`
 * `cargo test --all-features`
 * `export DATABASE_URL="postgresql://$USER@localhost/postgistest?sslmode=disable"` (see `tests/data/postgis.sql`)
