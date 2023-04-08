@@ -84,7 +84,10 @@ mod postgis_postgres {
         )?;
 
         let value: wkb::Decode<geos::Geometry> = row.get(0);
-        assert_eq!(value.geometry.unwrap().to_wkt().unwrap(), "POLYGON ((0.0000000000000000 0.0000000000000000, 2.0000000000000000 0.0000000000000000, 2.0000000000000000 2.0000000000000000, 0.0000000000000000 2.0000000000000000, 0.0000000000000000 0.0000000000000000))");
+        assert_eq!(
+            value.geometry.unwrap().to_wkt().unwrap(),
+            "POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))"
+        );
 
         // Insert geometry
         let geom = geos::Geometry::new_from_wkt("POINT(1 3)").expect("Invalid geometry");
@@ -309,7 +312,10 @@ mod postgis_sqlx {
                 .fetch_one(&pool)
                 .await?;
         let value = row.0;
-        assert_eq!(value.geometry.unwrap().to_wkt().unwrap(), "POLYGON ((0.0000000000000000 0.0000000000000000, 2.0000000000000000 0.0000000000000000, 2.0000000000000000 2.0000000000000000, 0.0000000000000000 2.0000000000000000, 0.0000000000000000 0.0000000000000000))");
+        assert_eq!(
+            value.geometry.unwrap().to_wkt().unwrap(),
+            "POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))"
+        );
 
         let row: (wkb::Decode<geos::Geometry>,) = sqlx::query_as("SELECT NULL::geometry")
             .fetch_one(&pool)
