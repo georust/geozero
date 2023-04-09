@@ -149,7 +149,7 @@ fn read_gpkg_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
     }
     let _version = raw.ioread::<u8>()?;
     let flags = raw.ioread::<u8>()?;
-    // println!("flags: {:#010b}", flags);
+    // println!("flags: {flags:#010b}");
     let _extended = (flags & 0b0010_0000) >> 5 == 1;
     let _empty = (flags & 0b0001_0000) >> 4 == 1;
     let env_len = match (flags & 0b0000_1110) >> 1 {

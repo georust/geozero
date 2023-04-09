@@ -334,13 +334,13 @@ mod test_mvt {
         );
 
         mvt_layer.features.push(mvt_feature);
-
         mvt_tile.layers.push(mvt_layer);
-        println!("{:#?}", mvt_tile);
+
+        // println!("{mvt_tile:#?}");
         // Ignore trailing commas because of https://github.com/rust-lang/rust/pull/59076/
         assert_eq!(
             TILE_EXAMPLE.replace(",\n", "\n"),
-            &*format!("{:#?}", mvt_tile).replace(",\n", "\n")
+            &*format!("{mvt_tile:#?}").replace(",\n", "\n")
         );
     }
 
