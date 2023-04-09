@@ -1,6 +1,6 @@
 [package]
 name = "geozero"
-version = "0.9.8"
+version = "0.9.9"
 authors = ["Pirmin Kalberer <pka@sourcepole.ch>"]
 edition = "2021"
 description = "Zero-Copy reading and writing of geospatial data in WKT/WKB, GeoJSON, MVT, GDAL, and other formats."
