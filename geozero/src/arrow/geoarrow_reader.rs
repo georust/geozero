@@ -1,9 +1,11 @@
 use crate::error::{GeozeroError, Result};
-use crate::wkb::wkb_reader::{process_wkb_geom, process_wkb_geom_n, read_wkb_header};
+use crate::wkb::process_wkb_geom;
+use crate::wkb::wkb_reader::{process_wkb_geom_n, read_wkb_header};
 use crate::{FeatureProcessor, GeomProcessor, GeozeroGeometry};
-use arrow2::array::{Array, BinaryArray, Offset};
+use arrow2::array::{Array, BinaryArray};
 use arrow2::chunk::Chunk;
 use arrow2::datatypes::Schema;
+use arrow2::types::Offset;
 
 impl GeozeroGeometry for BinaryArray<i32> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
@@ -30,9 +32,7 @@ pub fn process_geoarrow_wkb_geom<T: Offset>(
         process_wkb_geom_n(raw, &info, read_wkb_header, i, processor)?;
     }
 
-    processor.geometrycollection_end(array_len - 1)?;
-
-    Ok(())
+    processor.geometrycollection_end(array_len - 1)
 }
 
 pub fn process_geoarrow_wkb_feature_chunk(

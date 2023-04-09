@@ -11,22 +11,24 @@ use std::ffi::OsStr;
 use std::fs::File;
 use std::io::{BufReader, BufWriter};
 use std::num::ParseFloatError;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 #[derive(Parser)]
+#[command(about, version)]
 struct Cli {
+    /// When processing CSV, the name of the column holding a WKT geometry.
+    #[arg(long)]
+    csv_geometry_column: Option<String>,
+
+    /// Geometries within extent
+    #[arg(short, long, value_parser = parse_extent)]
+    extent: Option<Extent>,
+
     /// The path or URL to the FlatGeobuf file to read
     input: String,
-    /// Geometries within extent
-    #[clap(short, long, parse(try_from_str = parse_extent))]
-    extent: Option<Extent>,
-    /// The path to the file to write
-    #[clap(parse(from_os_str))]
-    dest: std::path::PathBuf,
 
-    /// When processing CSV, the name of the column holding a WKT geometry.
-    #[clap(long)]
-    csv_geometry_column: Option<String>,
+    /// The path to the file to write
+    dest: PathBuf,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -39,7 +41,7 @@ pub struct Extent {
 
 fn parse_extent(src: &str) -> std::result::Result<Extent, ParseFloatError> {
     let arr: Vec<f64> = src
-        .split(",")
+        .split(',')
         .map(|v| {
             v.parse()
                 .expect("Error parsing 'extent' as list of float values")
@@ -54,9 +56,9 @@ fn parse_extent(src: &str) -> std::result::Result<Extent, ParseFloatError> {
 }
 
 fn transform<P: FeatureProcessor>(args: Cli, processor: &mut P) -> Result<()> {
-    let pathin = Path::new(&args.input);
-    let mut filein = BufReader::new(File::open(pathin)?);
-    match pathin.extension().and_then(OsStr::to_str) {
+    let path_in = Path::new(&args.input);
+    let mut filein = BufReader::new(File::open(path_in)?);
+    match path_in.extension().and_then(OsStr::to_str) {
         Some("csv") => {
             let geometry_column_name = args
                 .csv_geometry_column
@@ -81,7 +83,7 @@ fn transform<P: FeatureProcessor>(args: Cli, processor: &mut P) -> Result<()> {
             let mut ds = WktReader(&mut filein);
             GeozeroDatasource::process(&mut ds, processor)?;
         }
-        _ => panic!("Unkown input file extension"),
+        _ => panic!("Unknown input file extension"),
     };
     Ok(())
 }
@@ -104,26 +106,14 @@ fn process(args: Cli) -> Result<()> {
         }
         Some("svg") => {
             let mut processor = SvgWriter::new(&mut fout, true);
-            if let Some(extent) = args.extent {
-                processor.set_dimensions(
-                    extent.minx,
-                    extent.miny,
-                    extent.maxx,
-                    extent.maxy,
-                    800,
-                    600,
-                );
-            } else {
-                // TODO: get image size as opts and full extent from data
-                processor.set_dimensions(-180.0, -90.0, 180.0, 90.0, 800, 600);
-            }
+            set_dimensions(&mut processor, args.extent);
             transform(args, &mut processor)?;
         }
         Some("wkt") => {
             let mut processor = WktWriter::new(&mut fout);
             transform(args, &mut processor)?;
         }
-        _ => panic!("Unkown output file extension"),
+        _ => panic!("Unknown output file extension"),
     }
     Ok(())
 }
@@ -146,23 +136,21 @@ async fn process_url(args: Cli) -> Result<()> {
         }
         Some("svg") => {
             let mut processor = SvgWriter::new(&mut fout, true);
-            if let Some(extent) = args.extent {
-                processor.set_dimensions(
-                    extent.minx,
-                    extent.miny,
-                    extent.maxx,
-                    extent.maxy,
-                    800,
-                    600,
-                );
-            } else {
-                processor.set_dimensions(-180.0, -90.0, 180.0, 90.0, 800, 600);
-            }
+            set_dimensions(&mut processor, args.extent);
             ds.process_features(&mut processor).await?;
         }
-        _ => panic!("Unkown output format"),
+        _ => panic!("Unknown output format"),
     }
     Ok(())
+}
+
+fn set_dimensions(processor: &mut SvgWriter<BufWriter<File>>, extent: Option<Extent>) {
+    if let Some(extent) = extent {
+        processor.set_dimensions(extent.minx, extent.miny, extent.maxx, extent.maxy, 800, 600);
+    } else {
+        // TODO: get image size as opts and full extent from data
+        processor.set_dimensions(-180.0, -90.0, 180.0, 90.0, 800, 600);
+    }
 }
 
 fn main() {
@@ -179,6 +167,6 @@ fn main() {
         process(args).map_err(|e| e.to_string())
     };
     if let Err(msg) = result {
-        println!("Processing failed: {}", msg);
+        println!("Processing failed: {msg}");
     }
 }

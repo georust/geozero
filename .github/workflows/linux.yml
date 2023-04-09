@@ -7,48 +7,60 @@ env:
 
 jobs:
   build_and_test:
-    strategy:
-      fail-fast: false
-      matrix:
-        version:
-          - stable
 
-    name: ${{ matrix.version }} - x86_64-unknown-linux-gnu
-    runs-on: ubuntu-20.04
+    name: stable - x86_64-unknown-linux-gnu
+    runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v3
 
-      - name: install dependencies
+      - name: Install dependencies
+        shell: bash
         run: |
+          rustc --version
+          cargo --version
           sudo apt-get update
           sudo apt-get install -y libgdal-dev libgeos-dev
-
-      # - name: Set up Postgresql with Postgis
-      #   uses: huaxk/postgis-action@v1
-      #   with:
-      #     postgresql user: 'ci'
-      #     postgresql password: 'ci'
-      #     postgresql db: 'test'
-
-      - name: Install ${{ matrix.version }}
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ matrix.version }}-x86_64-unknown-linux-gnu
-          profile: minimal
-          override: true
 
       - name: Install protoc
         uses: arduino/setup-protoc@v1
 
-      - name: check build
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: --workspace --all-features --bins --examples --tests --benches
-
-      - name: tests
+      - name: Format, Check, Clippy
+        shell: bash
         run: |
+          cargo fmt --all -- --check
+          cargo check --workspace --all-features --bins --examples --tests --benches
+          cargo clippy --workspace --all-features --bins --examples --tests --benches -- -D warnings
+
+      - name: Tests
+        shell: bash
+        run: |
+          cargo test -p geozero
+          cargo test -p geozero --no-default-features
           cargo test --workspace --all-features
-          cargo test --manifest-path geozero/Cargo.toml
-          cargo test --manifest-path geozero/Cargo.toml --no-default-features
+
+      - name: Set up PostgreSQL with PostGIS
+        uses: nyurik/action-setup-postgis@v1
+        with:
+          username: ci
+          password: ci
+          database: test
+          rights: --superuser
+          port: 34837
+        id: pg
+
+      - name: PostGIS tests
+        shell: bash
+        run: |
+          psql -P pager=off -v ON_ERROR_STOP=1 -f geozero/tests/data/postgis.sql $DATABASE_URL
+          cargo test -p geozero --all-features -- --ignored postgis --test-threads 1
+        env:
+          DATABASE_URL: "${{ steps.pg.outputs.connection-uri }}?sslmode=disable"
+
+      - name: Ensure valid cfg usage
+        shell: bash
+        run: |
+          rustup toolchain install nightly
+          export RUSTFLAGS='-D warnings'
+          cargo +nightly check -Z unstable-options -Z check-cfg=features,names,values,output --workspace --all-features

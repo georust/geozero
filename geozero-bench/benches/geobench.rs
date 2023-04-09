@@ -40,7 +40,7 @@ mod fgb {
         bbox: &Option<Extent>,
         count: usize,
     ) -> Result<()> {
-        let url = format!("http://127.0.0.1:3333/{}", fname);
+        let url = format!("http://127.0.0.1:3333/{fname}");
         let opened_fgb = HttpFgbReader::open(&url).await?;
         let mut selected_fgb = if let Some(bbox) = bbox {
             opened_fgb
@@ -67,7 +67,7 @@ mod postgis_postgres {
     // export DATABASE_URL=postgresql://pi@%2Fvar%2Frun%2Fpostgresql/testdb
     // export DATABASE_URL=postgresql://pi@localhost/testdb
 
-    pub(super) fn connect() -> std::result::Result<Client, postgres::error::Error> {
+    pub(super) fn connect() -> Result<Client, postgres::error::Error> {
         Client::connect(&std::env::var("DATABASE_URL").unwrap(), NoTls)
     }
 
@@ -77,12 +77,12 @@ mod postgis_postgres {
         bbox: &Option<Extent>,
         srid: i32,
         count: usize,
-    ) -> std::result::Result<(), postgres::error::Error> {
-        let mut sql = format!("SELECT geom FROM {}", table);
+    ) -> Result<(), postgres::error::Error> {
+        let mut sql = format!("SELECT geom FROM {table}");
         if let Some(bbox) = bbox {
             sql += &format!(
-                " WHERE geom && ST_MakeEnvelope({}, {}, {}, {}, {})",
-                bbox.minx, bbox.miny, bbox.maxx, bbox.maxy, srid
+                " WHERE geom && ST_MakeEnvelope({}, {}, {}, {}, {srid})",
+                bbox.minx, bbox.miny, bbox.maxx, bbox.maxy
             );
         }
 
@@ -108,12 +108,12 @@ mod rust_postgis {
         bbox: &Option<Extent>,
         srid: i32,
         count: usize,
-    ) -> std::result::Result<(), postgres::error::Error> {
-        let mut sql = format!("SELECT geom FROM {}", table);
+    ) -> Result<(), postgres::error::Error> {
+        let mut sql = format!("SELECT geom FROM {table}");
         if let Some(bbox) = bbox {
             sql += &format!(
-                " WHERE geom && ST_MakeEnvelope({}, {}, {}, {}, {})",
-                bbox.minx, bbox.miny, bbox.maxx, bbox.maxy, srid
+                " WHERE geom && ST_MakeEnvelope({}, {}, {}, {}, {srid})",
+                bbox.minx, bbox.miny, bbox.maxx, bbox.maxy
             );
         }
 
@@ -138,7 +138,7 @@ mod postgis_sqlx {
     // export DATABASE_URL=postgresql://pi@%2Fvar%2Frun%2Fpostgresql/testdb
     // export DATABASE_URL=postgresql://pi@localhost/testdb
 
-    pub(super) async fn connect() -> std::result::Result<PgConnection, sqlx::Error> {
+    pub(super) async fn connect() -> Result<PgConnection, sqlx::Error> {
         PgConnection::connect(&std::env::var("DATABASE_URL").unwrap()).await
     }
 
@@ -148,12 +148,12 @@ mod postgis_sqlx {
         bbox: &Option<Extent>,
         srid: i32,
         count: usize,
-    ) -> std::result::Result<(), sqlx::Error> {
-        let mut sql = format!("SELECT geom FROM {}", table);
+    ) -> Result<(), sqlx::Error> {
+        let mut sql = format!("SELECT geom FROM {table}");
         if let Some(bbox) = bbox {
             sql += &format!(
-                " WHERE geom && ST_MakeEnvelope({}, {}, {}, {}, {})",
-                bbox.minx, bbox.miny, bbox.maxx, bbox.maxy, srid
+                " WHERE geom && ST_MakeEnvelope({}, {}, {}, {}, {srid})",
+                bbox.minx, bbox.miny, bbox.maxx, bbox.maxy
             );
         }
         let mut cursor = sqlx::query(&sql).fetch(conn);
@@ -186,17 +186,17 @@ mod gpkg {
         table: &str,
         bbox: &Option<Extent>,
         count: usize,
-    ) -> std::result::Result<(), sqlx::Error> {
-        let mut conn = SqliteConnection::connect(&format!("sqlite://{}", fpath)).await?;
+    ) -> Result<(), sqlx::Error> {
+        let mut conn = SqliteConnection::connect(&format!("sqlite://{fpath}")).await?;
 
         // http://erouault.blogspot.com/2017/03/dealing-with-huge-vector-geopackage.html
-        let mut sql = format!("SELECT geom FROM {}", table);
+        let mut sql = format!("SELECT geom FROM {table}");
         if let Some(bbox) = bbox {
             sql += &format!(
-                " JOIN rtree_{}_geom r ON {}.fid = r.id
+                " JOIN rtree_{table}_geom r ON {table}.fid = r.id
                     WHERE r.minx <= {} AND r.maxx >= {} AND
                           r.miny <= {} AND r.maxy >= {}",
-                table, table, bbox.maxx, bbox.minx, bbox.maxy, bbox.miny
+                bbox.maxx, bbox.minx, bbox.maxy, bbox.miny
             );
         }
         let mut cursor = sqlx::query(&sql).fetch(&mut conn);
@@ -224,7 +224,7 @@ mod gdal {
         fpath: &str,
         bbox: &Option<Extent>,
         count: usize,
-    ) -> std::result::Result<(), gdal::errors::GdalError> {
+    ) -> Result<(), gdal::errors::GdalError> {
         let dataset = Dataset::open(Path::new(fpath))?;
         let mut layer = dataset.layer(0)?;
         // omit fields when fetching features

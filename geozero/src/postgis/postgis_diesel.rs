@@ -1,7 +1,6 @@
-use crate::postgis::postgis_diesel::sql_types::*;
+use crate::postgis::postgis_diesel::sql_types::{Geography, Geometry};
 use crate::wkb::Ewkb;
-
-use byteorder::WriteBytesExt;
+use std::io::Write as _;
 
 use diesel::deserialize::{self, FromSql};
 use diesel::pg::{self, Pg};
@@ -22,18 +21,14 @@ pub mod sql_types {
 
 impl ToSql<Geometry, Pg> for Ewkb {
     fn to_sql(&self, out: &mut Output<Pg>) -> serialize::Result {
-        for ewkb_byte in &self.0 {
-            out.write_u8(*ewkb_byte)?;
-        }
+        out.write_all(&self.0)?;
         Ok(IsNull::No)
     }
 }
 
 impl ToSql<Geography, Pg> for Ewkb {
     fn to_sql(&self, out: &mut Output<Pg>) -> serialize::Result {
-        for ewkb_byte in &self.0 {
-            out.write_u8(*ewkb_byte)?;
-        }
+        out.write_all(&self.0)?;
         Ok(IsNull::No)
     }
 }

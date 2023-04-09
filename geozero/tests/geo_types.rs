@@ -1,5 +1,5 @@
 use geo::algorithm::{centroid::Centroid, coords_iter::CoordsIter};
-use geo::simplifyvw::SimplifyVWPreserve;
+use geo::simplify_vw::SimplifyVwPreserve;
 use geo::{Geometry, Point};
 use geozero::geojson::GeoJson;
 use geozero::ToGeo;
@@ -21,7 +21,7 @@ fn simplify() {
     );
     if let Ok(Geometry::LineString(line)) = geojson.to_geo() {
         assert_eq!(line.coords_count(), 7);
-        let simplified = line.simplifyvw_preserve(&800000.0);
+        let simplified = line.simplify_vw_preserve(&800000.0);
         assert_eq!(simplified.coords_count(), 4);
     }
 }

@@ -2,6 +2,7 @@ use crate::error::{GeozeroError, Result};
 use crate::{ColumnValue, FeatureProcessor, GeomProcessor, GeozeroDatasource, GeozeroGeometry};
 
 use std::io::Read;
+use std::str::FromStr;
 
 pub struct Csv<'a> {
     csv_text: &'a str,
@@ -121,27 +122,19 @@ pub fn process_csv_geom(
         let geometry_field = record
             .get(geometry_idx)
             .ok_or(GeozeroError::ColumnNotFound)?;
-        use std::str::FromStr;
-        let wkt = wkt::Wkt::from_str(&geometry_field)
+        let wkt = wkt::Wkt::from_str(geometry_field)
             .map_err(|e| GeozeroError::Geometry(e.to_string()))?;
         crate::wkt::wkt_reader::process_wkt_geom_n(&wkt.item, record_idx, processor).map_err(
             |e| {
                 // +2 to start at line 1 and to account for the header row
                 let line = record_idx + 2;
-                log::warn!(
-                    "line {}: invalid WKT: '{}', record: {:?}",
-                    line,
-                    geometry_field,
-                    &record
-                );
+                log::warn!("line {line}: invalid WKT: '{geometry_field}', record: {record:?}");
                 e
             },
         )?;
     }
 
-    processor.geometrycollection_end(0)?;
-
-    Ok(())
+    processor.geometrycollection_end(0)
 }
 
 pub fn process_csv_features(
@@ -190,12 +183,7 @@ pub fn process_csv_features(
                 |e| {
                     // +2 to start at line 1 and to account for the header row
                     let line = feature_idx + 2;
-                    log::warn!(
-                        "line {}: invalid WKT: '{}', record: {:?}",
-                        line,
-                        geometry_field,
-                        &record
-                    );
+                    log::warn!("line {line}: invalid WKT: '{geometry_field}', record: {record:?}");
                     e
                 },
             )?;
@@ -205,8 +193,7 @@ pub fn process_csv_features(
         processor.feature_end(feature_idx as u64)?;
     }
 
-    processor.dataset_end()?;
-    Ok(())
+    processor.dataset_end()
 }
 
 impl From<csv::Error> for GeozeroError {
@@ -272,7 +259,7 @@ mod tests {
         let actual_geojson = csv.to_json().unwrap();
         let actual_geojson: serde_json::Value = serde_json::from_str(&actual_geojson).unwrap();
 
-        assert_eq!(expected_geojson, actual_geojson,)
+        assert_eq!(expected_geojson, actual_geojson)
     }
     #[test]
     fn csv_string_feature_processor() {
@@ -320,7 +307,7 @@ mod tests {
         let actual_geojson = csv.to_json().unwrap();
         let actual_geojson: serde_json::Value = serde_json::from_str(&actual_geojson).unwrap();
 
-        assert_eq!(expected_geojson, actual_geojson,)
+        assert_eq!(expected_geojson, actual_geojson)
     }
 
     #[test]
@@ -369,7 +356,7 @@ mod tests {
         let actual_geojson = csv.to_json().unwrap();
         let actual_geojson: serde_json::Value = serde_json::from_str(&actual_geojson).unwrap();
 
-        assert_eq!(expected_geojson, actual_geojson,)
+        assert_eq!(expected_geojson, actual_geojson)
     }
 
     #[test]

@@ -11,19 +11,15 @@ pub struct GdalWriter {
     line: Geometry,
 }
 
-impl<'a> GdalWriter {
+impl GdalWriter {
     pub fn new() -> Self {
-        GdalWriter {
-            dims: CoordDimensions::default(),
-            geom: Geometry::empty(OGRwkbGeometryType::wkbPoint).unwrap(),
-            line: Geometry::empty(OGRwkbGeometryType::wkbLineString).unwrap(),
-        }
+        Self::default()
     }
     pub fn geometry(&self) -> &Geometry {
         &self.geom
     }
     fn wkb_type(&mut self, base: OGRwkbGeometryType::Type) -> OGRwkbGeometryType::Type {
-        let mut type_id = base as u32;
+        let mut type_id = base;
         if self.dims.z {
             type_id += 1000;
         }
@@ -37,8 +33,18 @@ impl<'a> GdalWriter {
     }
 }
 
+impl Default for GdalWriter {
+    fn default() -> Self {
+        GdalWriter {
+            dims: CoordDimensions::default(),
+            geom: Geometry::empty(OGRwkbGeometryType::wkbPoint).unwrap(),
+            line: Geometry::empty(OGRwkbGeometryType::wkbLineString).unwrap(),
+        }
+    }
+}
+
 fn wkb_base_type(wkb_type: OGRwkbGeometryType::Type) -> OGRwkbGeometryType::Type {
-    (wkb_type as u32) % 1000
+    wkb_type % 1000
 }
 
 impl From<gdal::errors::GdalError> for GeozeroError {
@@ -236,9 +242,15 @@ mod test {
 
     #[test]
     fn polygon_geom() {
-        let geojson = GeoJson(
-            r#"{"type": "Polygon", "coordinates": [[[0, 0], [0, 3], [3, 3], [3, 0], [0, 0]],[[0.2, 0.2], [0.2, 2], [2, 2], [2, 0.2], [0.2, 0.2]]]}"#,
-        );
+        let geojson = r#"{
+            "type": "Polygon",
+            "coordinates": [[
+                [0, 0], [0, 3], [3, 3], [3, 0], [0, 0]
+            ],[
+                [0.2, 0.2], [0.2, 2], [2, 2], [2, 0.2], [0.2, 0.2]
+            ]]
+        }"#;
+        let geojson = GeoJson(geojson);
         let wkt = "POLYGON ((0 0,0 3,3 3,3 0,0 0),(0.2 0.2,0.2 2.0,2 2,2.0 0.2,0.2 0.2))";
         let geom = geojson.to_gdal().unwrap();
         assert_eq!(geom.wkt().unwrap(), wkt);

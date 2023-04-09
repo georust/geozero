@@ -34,7 +34,7 @@ Supported dimensions: X, Y, Z, M, T
 * MVT (Mapbox Vector Tiles) Reader + Writer
 * GPX Reader
 
-[geozero-shp](https://github.com/georust/geozero/tree/master/geozero-shp) [![crates.io version](https://img.shields.io/crates/v/geozero-shp.svg)](https://crates.io/crates/geozero-shp)
+[geozero-shp](https://github.com/georust/geozero/tree/main/geozero-shp) [![crates.io version](https://img.shields.io/crates/v/geozero-shp.svg)](https://crates.io/crates/geozero-shp)
 [![docs.rs docs](https://docs.rs/geozero-shp/badge.svg)](https://docs.rs/geozero-shp)
 
 * Shapefile Reader
@@ -54,7 +54,7 @@ Supported dimensions: X, Y, Z, M, T
 ## Conversion API
 
 Convert a GeoJSON polygon to geo-types and calculate centroid:
-```rust
+```rust,ignore
 let geojson = GeoJson(r#"{"type": "Polygon", "coordinates": [[[0, 0], [10, 0], [10, 6], [0, 6], [0, 0]]]}"#);
 if let Ok(Geometry::Polygon(poly)) = geojson.to_geo() {
     assert_eq!(poly.centroid().unwrap(), Point::new(5.0, 3.0));
@@ -64,7 +64,7 @@ Full source code: [geo_types.rs](./geozero/tests/geo_types.rs)
 
 
 Convert GeoJSON to a [GEOS](https://github.com/georust/geos) prepared geometry:
-```rust
+```rust,ignore
 let geojson = GeoJson(r#"{"type": "Polygon", "coordinates": [[[0, 0], [10, 0], [10, 6], [0, 6], [0, 0]]]}"#);
 let geom = geojson.to_geos().expect("GEOS conversion failed");
 let prepared_geom = geom.to_prepared_geom().expect("to_prepared_geom failed");
@@ -75,7 +75,7 @@ Full source code: [geos.rs](./geozero/tests/geos.rs)
 
 
 Read FlatGeobuf subset as GeoJSON:
-```rust
+```rust,ignore
 let mut file = BufReader::new(File::open("countries.fgb")?);
 let mut fgb = FgbReader::open(&mut file)?.select_bbox(8.8, 47.2, 9.5, 55.3)?;
 println!("{}", fgb.to_json()?);
@@ -84,7 +84,7 @@ Full source code: [geojson.rs](./geozero/tests/geojson.rs)
 
 
 Read FlatGeobuf data as geo-types geometries and calculate label position with [polylabel-rs](https://github.com/urschrei/polylabel-rs):
-```rust
+```rust,ignore
 let mut file = BufReader::new(File::open("countries.fgb")?);
 let mut fgb = FgbReader::open(&mut file)?.select_all()?;
 while let Some(feature) = fgb.next()? {
@@ -92,7 +92,7 @@ while let Some(feature) = fgb.next()? {
     if let Ok(Geometry::MultiPolygon(mpoly)) = feature.to_geo() {
         if let Some(poly) = &mpoly.0.iter().next() {
             let label_pos = polylabel(&poly, &0.10).unwrap();
-            println!("{}: {:?}", name, label_pos);
+            println!("{name}: {label_pos:?}");
         }
     }
 }
@@ -103,7 +103,7 @@ Full source code: [polylabel.rs](./geozero/tests/polylabel.rs)
 ## PostGIS usage examples
 
 Select and insert geo-types geometries with rust-postgres:
-```rust
+```rust,ignore
 let mut client = Client::connect(&std::env::var("DATABASE_URL").unwrap(), NoTls)?;
 
 let row = client.query_one(
@@ -128,7 +128,7 @@ let _ = client.execute(
 ```
 
 Select and insert geo-types geometries with SQLx:
-```rust
+```rust,ignore
 let pool = PgPoolOptions::new()
     .max_connections(5)
     .connect(&env::var("DATABASE_URL").unwrap())
@@ -157,7 +157,7 @@ let _ = sqlx::query(
 ```
 
 Using compile-time verification requires [type overrides](https://docs.rs/sqlx/latest/sqlx/macro.query.html#force-a-differentcustom-type): 
-```rust
+```rust,ignore
 let _ = sqlx::query!(
     "INSERT INTO point2d (datetimefield, geom) VALUES(now(), $1::geometry)",
     wkb::Encode(geom) as _
@@ -187,7 +187,7 @@ Full source code: [postgis.rs](./geozero/tests/postgis.rs)
 ## Processing API
 
 Count vertices of an input geometry:
-```rust
+```rust,ignore
 struct VertexCounter(u64);
 
 impl GeomProcessor for VertexCounter {
@@ -203,7 +203,7 @@ geometry.process(&mut vertex_counter, GeometryType::MultiPolygon)?;
 Full source code: [geozero-api.rs](./geozero/tests/geozero-api.rs)
 
 Find maximal height in 3D polygons:
-```rust
+```rust,ignore
 struct MaxHeightFinder(f64);
 
 impl GeomProcessor for MaxHeightFinder {
@@ -226,7 +226,7 @@ while let Some(feature) = fgb.next()? {
 Full source code: [geozero-api.rs](./geozero/tests/geozero-api.rs)
 
 Render polygons:
-```rust
+```rust,ignore
 struct PathDrawer<'a> {
     canvas: &'a mut CanvasRenderingContext2D,
     path: Path2D,
@@ -254,7 +254,7 @@ impl<'a> GeomProcessor for PathDrawer<'a> {
 Full source code: [flatgeobuf-gpu](https://github.com/pka/flatgeobuf-gpu)
 
 Read a FlatGeobuf dataset with async HTTP client applying a bbox filter and convert to GeoJSON:
-```rust
+```rust,ignore
 let url = "https://flatgeobuf.org/test/data/countries.fgb";
 let mut fgb = HttpFgbReader::open(url)
     .await?
@@ -269,7 +269,7 @@ Full source code: [geojson.rs](./geozero/tests/geojson.rs)
 
 
 Create a KD-tree index with [kdbush](https://github.com/pka/rust-kdbush):
-```rust
+```rust,ignore
 struct PointIndex {
     pos: usize,
     index: KDBush,

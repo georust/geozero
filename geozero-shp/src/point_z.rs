@@ -57,7 +57,7 @@ impl fmt::Display for PointZ {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Default)]
 pub struct BBoxZ {
     pub max: PointZ,
     pub min: PointZ,
@@ -78,14 +78,5 @@ impl BBoxZ {
 
     pub fn m_range(&self) -> [f64; 2] {
         [self.min.m(), self.max.m()]
-    }
-}
-
-impl Default for BBoxZ {
-    fn default() -> Self {
-        Self {
-            max: PointZ::default(),
-            min: PointZ::default(),
-        }
     }
 }

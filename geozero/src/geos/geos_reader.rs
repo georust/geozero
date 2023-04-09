@@ -20,13 +20,13 @@ impl GeozeroGeometry for geos::Geometry<'_> {
 impl From<geos::Error> for GeozeroError {
     fn from(error: geos::Error) -> Self {
         match error {
-            geos::Error::InvalidGeometry(e) => GeozeroError::Geometry(e),
-            geos::Error::ImpossibleOperation(e) => GeozeroError::Geometry(e),
-            geos::Error::GeosError(e) => GeozeroError::Geometry(e),
+            geos::Error::InvalidGeometry(e)
+            | geos::Error::ImpossibleOperation(e)
+            | geos::Error::GeosError(e)
+            | geos::Error::NoConstructionFromNullPtr(e)
+            | geos::Error::ConversionError(e)
+            | geos::Error::GenericError(e) => GeozeroError::Geometry(e),
             geos::Error::GeosFunctionError(_, _) => GeozeroError::GeometryFormat,
-            geos::Error::NoConstructionFromNullPtr(e) => GeozeroError::Geometry(e),
-            geos::Error::ConversionError(e) => GeozeroError::Geometry(e),
-            geos::Error::GenericError(e) => GeozeroError::Geometry(e),
         }
     }
 }
@@ -45,7 +45,7 @@ fn process_geom_n<'a, P: GeomProcessor, G: Geom<'a>>(
         GeometryTypes::Point => {
             processor.point_begin(idx)?;
             process_point(ggeom, 0, processor)?;
-            processor.point_end(idx)?;
+            processor.point_end(idx)
         }
         GeometryTypes::MultiPoint => {
             let n_pts = ggeom.get_num_geometries()?;
@@ -54,10 +54,10 @@ fn process_geom_n<'a, P: GeomProcessor, G: Geom<'a>>(
                 let pt = ggeom.get_geometry_n(i)?;
                 process_point(&pt, i, processor)?;
             }
-            processor.multipoint_end(idx)?;
+            processor.multipoint_end(idx)
         }
         GeometryTypes::LineString | GeometryTypes::LinearRing => {
-            process_linestring(ggeom, true, idx, processor)?;
+            process_linestring(ggeom, true, idx, processor)
         }
         GeometryTypes::MultiLineString => {
             let n_lines = ggeom.get_num_geometries()?;
@@ -66,11 +66,9 @@ fn process_geom_n<'a, P: GeomProcessor, G: Geom<'a>>(
                 let line = ggeom.get_geometry_n(i)?;
                 process_linestring(&line, false, i, processor)?;
             }
-            processor.multilinestring_end(idx)?;
+            processor.multilinestring_end(idx)
         }
-        GeometryTypes::Polygon => {
-            process_polygon(ggeom, true, idx, processor)?;
-        }
+        GeometryTypes::Polygon => process_polygon(ggeom, true, idx, processor),
         GeometryTypes::MultiPolygon => {
             let n_polys = ggeom.get_num_geometries()?;
             processor.multipolygon_begin(n_polys, idx)?;
@@ -78,7 +76,7 @@ fn process_geom_n<'a, P: GeomProcessor, G: Geom<'a>>(
                 let poly = ggeom.get_geometry_n(i)?;
                 process_polygon(&poly, false, i, processor)?;
             }
-            processor.multipolygon_end(idx)?;
+            processor.multipolygon_end(idx)
         }
         GeometryTypes::GeometryCollection => {
             let n_geoms = ggeom.get_num_geometries()?;
@@ -87,11 +85,10 @@ fn process_geom_n<'a, P: GeomProcessor, G: Geom<'a>>(
                 let g = ggeom.get_geometry_n(i)?;
                 process_geom_n(&g, i, processor)?;
             }
-            processor.geometrycollection_end(idx)?;
+            processor.geometrycollection_end(idx)
         }
-        GeometryTypes::__Unknown(_) => return Err(GeozeroError::GeometryFormat),
+        GeometryTypes::__Unknown(_) => Err(GeozeroError::GeometryFormat),
     }
-    Ok(())
 }
 
 fn process_coord_seq<P: GeomProcessor>(
@@ -131,8 +128,7 @@ fn process_point<'a, P: GeomProcessor, G: Geom<'a>>(
     let cs = ggeom.get_coord_seq()?;
     // NOTE: this clones the underlying CoordSeq!
     // let x = GEOSGeom_getX_r(ggeom.get_raw_context(), ggeom.as_raw());
-    process_coord_seq(&cs, idx, processor)?;
-    Ok(())
+    process_coord_seq(&cs, idx, processor)
 }
 
 fn process_linestring<'a, P: GeomProcessor, G: Geom<'a>>(

@@ -6,8 +6,8 @@ pub use geojson_reader::*;
 pub use geojson_writer::*;
 
 pub(crate) mod conversion {
-    use super::geojson_writer::*;
     use crate::error::Result;
+    use crate::geojson::GeoJsonWriter;
     use crate::{GeozeroDatasource, GeozeroGeometry};
 
     /// Convert to GeoJSON.
@@ -56,9 +56,8 @@ impl From<geojson::Error> for crate::error::GeozeroError {
 
 #[cfg(feature = "with-wkb")]
 mod wkb {
-    use super::geojson_writer::*;
     use crate::error::Result;
-    use crate::geojson::GeoJsonString;
+    use crate::geojson::{GeoJsonString, GeoJsonWriter};
     use crate::wkb::{FromWkb, WkbDialect};
     use std::io::Read;
 

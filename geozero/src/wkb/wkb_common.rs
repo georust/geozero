@@ -8,16 +8,16 @@ use std::io::Read;
 pub struct Encode<T: GeozeroGeometry>(pub T);
 
 /// Decode from WKB
-// Used to impl deccoding for foreign types
+// Used to impl decoding for foreign types
 pub struct Decode<T: FromWkb> {
     /// Decoded geometry. `None` for `NULL` value.
     pub geometry: Option<T>,
 }
 
 // required by postgres ToSql
-impl<'a, T: GeozeroGeometry + Sized> fmt::Debug for Encode<T> {
+impl<T: GeozeroGeometry + Sized> fmt::Debug for Encode<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&self.0.to_wkt().unwrap_or("<unkown geometry>".to_string()))
+        f.write_str(&self.0.to_wkt().unwrap_or("<unknown geometry>".to_string()))
     }
 }
 
@@ -195,6 +195,6 @@ impl WKBGeometryType {
 }
 
 pub(crate) enum WKBByteOrder {
-    XDR = 0, // Big Endian
-    NDR = 1, // Little Endian
+    Xdr = 0, // Big Endian
+    Ndr = 1, // Little Endian
 }

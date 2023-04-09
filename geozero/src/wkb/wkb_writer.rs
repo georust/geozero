@@ -50,24 +50,23 @@ impl<'a, W: Write> WkbWriter<'a, W> {
     /// Write header in selected format
     fn write_header(&mut self, wkb_type: WKBGeometryType) -> Result<()> {
         match self.dialect {
-            WkbDialect::Wkb => self.write_wkb_header(wkb_type)?,
-            WkbDialect::Ewkb => self.write_ewkb_header(wkb_type)?,
+            WkbDialect::Wkb => self.write_wkb_header(wkb_type),
+            WkbDialect::Ewkb => self.write_ewkb_header(wkb_type),
             WkbDialect::Geopackage => {
                 if self.first_header {
                     self.write_gpkg_header()?;
                     self.first_header = false;
                 }
-                self.write_wkb_header(wkb_type)?;
+                self.write_wkb_header(wkb_type)
             }
         }
-        Ok(())
     }
     /// OGC WKB header
     fn write_wkb_header(&mut self, wkb_type: WKBGeometryType) -> Result<()> {
         let byte_order = if self.endian == scroll::BE {
-            WKBByteOrder::XDR
+            WKBByteOrder::Xdr
         } else {
-            WKBByteOrder::NDR
+            WKBByteOrder::Ndr
         };
         self.out.iowrite(byte_order as u8)?;
         let mut type_id = wkb_type as u32;
@@ -84,21 +83,21 @@ impl<'a, W: Write> WkbWriter<'a, W> {
     /// EWKB header according to https://git.osgeo.org/gitea/postgis/postgis/src/branch/master/doc/ZMSgeoms.txt
     fn write_ewkb_header(&mut self, wkb_type: WKBGeometryType) -> Result<()> {
         let byte_order = if self.endian == scroll::BE {
-            WKBByteOrder::XDR
+            WKBByteOrder::Xdr
         } else {
-            WKBByteOrder::NDR
+            WKBByteOrder::Ndr
         };
         self.out.iowrite(byte_order as u8)?;
 
         let mut type_id = wkb_type as u32;
         if self.dims.z {
-            type_id |= 0x80000000;
+            type_id |= 0x8000_0000;
         }
         if self.dims.m {
-            type_id |= 0x40000000;
+            type_id |= 0x4000_0000;
         }
         if self.srid.is_some() && self.first_header {
-            type_id |= 0x20000000;
+            type_id |= 0x2000_0000;
         }
         self.out.iowrite_with(type_id, self.endian)?;
 
@@ -127,7 +126,7 @@ impl<'a, W: Write> WkbWriter<'a, W> {
         if self.empty {
             flags |= 0b0001_0000;
         }
-        let env_info: u8 = if self.envelope.len() == 0 {
+        let env_info: u8 = if self.envelope.is_empty() {
             0 // no envelope
         } else {
             match (self.envelope_dims.z, self.envelope_dims.m) {
@@ -296,8 +295,8 @@ mod test {
     use crate::wkb::{process_ewkb_geom, process_gpkg_geom};
     use crate::ToWkb;
 
-    fn ewkb_roundtrip(ewkbstr: &str, with_z: bool, srid: Option<i32>) -> bool {
-        let wkb_in = hex::decode(ewkbstr).unwrap();
+    fn ewkb_roundtrip(ewkb_str: &str, with_z: bool, srid: Option<i32>) -> bool {
+        let wkb_in = hex::decode(ewkb_str).unwrap();
         let mut wkb_out: Vec<u8> = Vec::new();
         let mut writer = WkbWriter::new(&mut wkb_out, WkbDialect::Ewkb);
         writer.dims.z = with_z;
@@ -369,12 +368,12 @@ mod test {
     }
 
     fn gpkg_roundtrip(
-        ewkbstr: &str,
+        ewkb_str: &str,
         dims: CoordDimensions,
         srid: Option<i32>,
         envelope: Vec<f64>,
     ) -> bool {
-        let wkb_in = hex::decode(ewkbstr).unwrap();
+        let wkb_in = hex::decode(ewkb_str).unwrap();
         let mut wkb_out: Vec<u8> = Vec::new();
         let mut writer = WkbWriter::new(&mut wkb_out, WkbDialect::Geopackage);
         writer.dims = dims;

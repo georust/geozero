@@ -6,8 +6,8 @@ pub use geos_reader::*;
 pub use geos_writer::*;
 
 pub(crate) mod conversion {
-    use super::geos_writer::*;
     use crate::error::Result;
+    use crate::geos::GeosWriter;
     use crate::GeozeroGeometry;
 
     /// Convert to GEOS geometry.
@@ -27,8 +27,8 @@ pub(crate) mod conversion {
 
 #[cfg(feature = "with-wkb")]
 mod wkb {
-    use super::geos_writer::*;
     use crate::error::Result;
+    use crate::geos::GeosWriter;
     use crate::wkb::{FromWkb, WkbDialect};
     use std::io::Read;
 

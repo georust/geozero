@@ -13,11 +13,7 @@ pub struct GeosWriter<'a> {
 
 impl<'a> GeosWriter<'a> {
     pub fn new() -> Self {
-        GeosWriter {
-            geom: GGeometry::create_empty_point().unwrap(),
-            cs: Vec::new(),
-            polys: Vec::new(),
-        }
+        Self::default()
     }
     fn add_coord_seq(&mut self, len: usize) -> Result<()> {
         self.cs
@@ -26,6 +22,16 @@ impl<'a> GeosWriter<'a> {
     }
     pub fn geometry(&self) -> &GGeometry<'a> {
         &self.geom
+    }
+}
+
+impl<'a> Default for GeosWriter<'a> {
+    fn default() -> Self {
+        GeosWriter {
+            geom: GGeometry::create_empty_point().unwrap(),
+            cs: Vec::new(),
+            polys: Vec::new(),
+        }
     }
 }
 
@@ -55,8 +61,7 @@ impl GeomProcessor for GeosWriter<'_> {
     }
     fn multipoint_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
         self.cs = Vec::with_capacity(1);
-        self.add_coord_seq(size)?;
-        Ok(())
+        self.add_coord_seq(size)
     }
     fn multipoint_end(&mut self, _idx: usize) -> Result<()> {
         // Create points from CoordSeq elements
@@ -80,8 +85,7 @@ impl GeomProcessor for GeosWriter<'_> {
         if tagged {
             self.cs = Vec::with_capacity(1);
         } // else allocated in multilinestring_begin or polygon_begin
-        self.add_coord_seq(size)?;
-        Ok(())
+        self.add_coord_seq(size)
     }
     fn linestring_end(&mut self, tagged: bool, _idx: usize) -> Result<()> {
         if tagged {
@@ -101,7 +105,7 @@ impl GeomProcessor for GeosWriter<'_> {
         let gglines = self
             .cs
             .drain(..)
-            .map(|cs| GGeometry::create_line_string(cs))
+            .map(GGeometry::create_line_string)
             .collect::<GResult<Vec<GGeometry>>>()?;
         self.geom = GGeometry::create_multiline_string(gglines)?;
         Ok(())
@@ -120,13 +124,13 @@ impl GeomProcessor for GeosWriter<'_> {
         let interiors = self
             .cs
             .drain(..)
-            .map(|cs| GGeometry::create_linear_ring(cs))
+            .map(GGeometry::create_linear_ring)
             .collect::<GResult<Vec<GGeometry>>>()?;
         let gpoly = GGeometry::create_polygon(exterior_ring, interiors)?;
         if tagged {
             self.geom = gpoly;
         } else {
-            self.polys.push(gpoly)
+            self.polys.push(gpoly);
         }
         Ok(())
     }
@@ -196,9 +200,15 @@ mod test {
 
     #[test]
     fn polygon_geom() {
-        let geojson = GeoJson(
-            r#"{"type": "Polygon", "coordinates": [[[0, 0], [0, 3], [3, 3], [3, 0], [0, 0]],[[0.2, 0.2], [0.2, 2], [2, 2], [2, 0.2], [0.2, 0.2]]]}"#,
-        );
+        let geojson = r#"{
+            "type": "Polygon",
+            "coordinates": [[
+                [0, 0], [0, 3], [3, 3], [3, 0], [0, 0]
+            ],[
+                [0.2, 0.2], [0.2, 2], [2, 2], [2, 0.2], [0.2, 0.2]
+            ]]
+        }"#;
+        let geojson = GeoJson(geojson);
         let wkt = "POLYGON ((0.0000000000000000 0.0000000000000000, 0.0000000000000000 3.0000000000000000, 3.0000000000000000 3.0000000000000000, 3.0000000000000000 0.0000000000000000, 0.0000000000000000 0.0000000000000000), (0.2000000000000000 0.2000000000000000, 0.2000000000000000 2.0000000000000000, 2.0000000000000000 2.0000000000000000, 2.0000000000000000 0.2000000000000000, 0.2000000000000000 0.2000000000000000))";
         let geos = geojson.to_geos().unwrap();
         assert_eq!(geos.to_wkt().unwrap(), wkt);
@@ -206,9 +216,13 @@ mod test {
 
     #[test]
     fn multipolygon_geom() {
-        let geojson = GeoJson(
-            r#"{"type": "MultiPolygon", "coordinates": [[[[0,0],[0,1],[1,1],[1,0],[0,0]]]]}"#,
-        );
+        let geojson = r#"{
+            "type": "MultiPolygon",
+            "coordinates": [[[
+                [0,0],[0,1],[1,1],[1,0],[0,0]
+            ]]]
+        }"#;
+        let geojson = GeoJson(geojson);
         let wkt = "MULTIPOLYGON (((0.0000000000000000 0.0000000000000000, 0.0000000000000000 1.0000000000000000, 1.0000000000000000 1.0000000000000000, 1.0000000000000000 0.0000000000000000, 0.0000000000000000 0.0000000000000000)))";
         let geos = geojson.to_geos().unwrap();
         assert_eq!(geos.to_wkt().unwrap(), wkt);

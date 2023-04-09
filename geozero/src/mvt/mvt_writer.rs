@@ -2,7 +2,7 @@
 //! <https://github.com/mapbox/vector-tile-spec/tree/master/2.1>
 
 use crate::error::{GeozeroError, Result};
-use crate::mvt::mvt_commands::*;
+use crate::mvt::mvt_commands::{Command, CommandInteger, ParameterInteger};
 use crate::mvt::vector_tile::{tile, tile::GeomType};
 use crate::GeomProcessor;
 
@@ -18,30 +18,38 @@ pub struct MvtWriter {
 #[derive(PartialEq)]
 enum LineState {
     None,
-    // Issue LineTo command afer first point
+    // Issue LineTo command after first point
     Line(usize),
     Ring(usize),
 }
 
 impl MvtWriter {
     pub fn new() -> MvtWriter {
-        MvtWriter {
-            feature: tile::Feature::default(),
-            last_x: 0,
-            last_y: 0,
-            line_state: LineState::None,
-            is_multiline: false,
-        }
+        Self::default()
     }
+
     pub fn geometry(&self) -> &tile::Feature {
         &self.feature
     }
+
     fn reserve(&mut self, capacity: usize) {
         let total = self.feature.geometry.len() + capacity;
         if total > self.feature.geometry.capacity() {
             self.feature
                 .geometry
                 .reserve(total - self.feature.geometry.capacity());
+        }
+    }
+}
+
+impl Default for MvtWriter {
+    fn default() -> Self {
+        Self {
+            feature: tile::Feature::default(),
+            last_x: 0,
+            last_y: 0,
+            line_state: LineState::None,
+            is_multiline: false,
         }
     }
 }
@@ -85,6 +93,7 @@ impl GeomProcessor for MvtWriter {
         }
         Ok(())
     }
+
     fn point_begin(&mut self, _idx: usize) -> Result<()> {
         self.feature.set_type(GeomType::Point);
         self.reserve(3);
@@ -93,6 +102,7 @@ impl GeomProcessor for MvtWriter {
             .push(CommandInteger::from(Command::MoveTo, 1));
         Ok(())
     }
+
     fn multipoint_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
         self.feature.set_type(GeomType::Point);
         self.reserve(1 + 2 * size);
@@ -101,6 +111,7 @@ impl GeomProcessor for MvtWriter {
             .push(CommandInteger::from(Command::MoveTo, size as u32));
         Ok(())
     }
+
     fn linestring_begin(&mut self, tagged: bool, size: usize, _idx: usize) -> Result<()> {
         if tagged {
             self.feature.set_type(GeomType::Linestring);
@@ -117,6 +128,7 @@ impl GeomProcessor for MvtWriter {
             .push(CommandInteger::from(Command::MoveTo, 1));
         Ok(())
     }
+
     fn linestring_end(&mut self, _tagged: bool, _idx: usize) -> Result<()> {
         if let LineState::Ring(_) = self.line_state {
             self.feature
@@ -126,21 +138,25 @@ impl GeomProcessor for MvtWriter {
         self.line_state = LineState::None;
         Ok(())
     }
+
     fn multilinestring_begin(&mut self, _size: usize, _idx: usize) -> Result<()> {
         self.is_multiline = true;
         self.feature.set_type(GeomType::Linestring);
         Ok(())
     }
+
     fn multilinestring_end(&mut self, _size: usize) -> Result<()> {
         self.is_multiline = false;
         Ok(())
     }
+
     fn polygon_begin(&mut self, tagged: bool, _size: usize, _idx: usize) -> Result<()> {
         if tagged {
             self.feature.set_type(GeomType::Polygon);
         }
         Ok(())
     }
+
     fn multipolygon_begin(&mut self, _size: usize, _idx: usize) -> Result<()> {
         self.feature.set_type(GeomType::Polygon);
         Ok(())
@@ -151,9 +167,10 @@ impl GeomProcessor for MvtWriter {
 mod test_mvt {
     use super::*;
     use crate::mvt::vector_tile::Tile;
+    use crate::mvt::TileValue;
 
     // https://github.com/mapbox/vector-tile-spec/tree/master/2.1#45-example
-    const TILE_EXAMPLE: &'static str = r#"Tile {
+    const TILE_EXAMPLE: &str = r#"Tile {
     layers: [
         Layer {
             version: 2,
@@ -263,39 +280,37 @@ mod test_mvt {
         // https://github.com/mapbox/vector-tile-spec/tree/master/2.1#45-example
         let mut mvt_tile = Tile::default();
 
-        let mut mvt_layer = tile::Layer::default();
-        mvt_layer.version = 2;
+        let mut mvt_layer = tile::Layer {
+            version: 2,
+            ..Default::default()
+        };
         mvt_layer.name = String::from("points");
         mvt_layer.extent = Some(4096);
 
-        let mut mvt_feature = tile::Feature::default();
-        mvt_feature.id = Some(1);
+        let mut mvt_feature = tile::Feature {
+            id: Some(1),
+            ..Default::default()
+        };
         mvt_feature.set_type(GeomType::Point);
         mvt_feature.geometry = [9, 490, 6262].to_vec();
 
-        let mut mvt_value = tile::Value::default();
-        mvt_value.string_value = Some(String::from("world"));
         add_feature_attribute(
             &mut mvt_layer,
             &mut mvt_feature,
             String::from("hello"),
-            mvt_value,
+            TileValue::Str("world".to_string()),
         );
-        let mut mvt_value = tile::Value::default();
-        mvt_value.string_value = Some(String::from("world"));
         add_feature_attribute(
             &mut mvt_layer,
             &mut mvt_feature,
             String::from("h"),
-            mvt_value,
+            TileValue::Str("world".to_string()),
         );
-        let mut mvt_value = tile::Value::default();
-        mvt_value.double_value = Some(1.23);
         add_feature_attribute(
             &mut mvt_layer,
             &mut mvt_feature,
             String::from("count"),
-            mvt_value,
+            TileValue::Double(1.23),
         );
 
         mvt_layer.features.push(mvt_feature);
@@ -305,21 +320,17 @@ mod test_mvt {
         mvt_feature.set_type(GeomType::Point);
         mvt_feature.geometry = [9, 490, 6262].to_vec();
 
-        let mut mvt_value = tile::Value::default();
-        mvt_value.string_value = Some(String::from("again"));
         add_feature_attribute(
             &mut mvt_layer,
             &mut mvt_feature,
             String::from("hello"),
-            mvt_value,
+            TileValue::Str("again".to_string()),
         );
-        let mut mvt_value = tile::Value::default();
-        mvt_value.int_value = Some(2);
         add_feature_attribute(
             &mut mvt_layer,
             &mut mvt_feature,
             String::from("count"),
-            mvt_value,
+            TileValue::Int(2),
         );
 
         mvt_layer.features.push(mvt_feature);
@@ -337,22 +348,23 @@ mod test_mvt {
         mvt_layer: &mut tile::Layer,
         mvt_feature: &mut tile::Feature,
         key: String,
-        mvt_value: tile::Value,
+        value: TileValue,
     ) {
-        let keyentry = mvt_layer.keys.iter().position(|k| *k == key);
+        let mvt_value = value.into();
+        let key_entry = mvt_layer.keys.iter().position(|k| *k == key);
         // Optimization: maintain a hash table with key/index pairs
-        let keyidx = match keyentry {
+        let key_idx = match key_entry {
             None => {
                 mvt_layer.keys.push(key);
                 mvt_layer.keys.len() - 1
             }
             Some(idx) => idx,
         };
-        mvt_feature.tags.push(keyidx as u32);
+        mvt_feature.tags.push(key_idx as u32);
 
-        let valentry = mvt_layer.values.iter().position(|v| *v == mvt_value);
+        let val_entry = mvt_layer.values.iter().position(|v| *v == mvt_value);
         // Optimization: maintain a hash table with value/index pairs
-        let validx = match valentry {
+        let validx = match val_entry {
             None => {
                 mvt_layer.values.push(mvt_value);
                 mvt_layer.values.len() - 1
@@ -416,9 +428,23 @@ mod test {
 
     #[test]
     fn multipolygon_geom() {
-        let geojson = GeoJson(
-            r#"{"type": "MultiPolygon", "coordinates": [[[[0,0],[10,0],[10,10],[0,10],[0,0]]],[[[11,11],[20,11],[20,20],[11,20],[11,11]],[[13,13],[13,17],[17,17],[17,13],[13,13]]]]}"#,
-        );
+        let geojson = r#"{
+            "type": "MultiPolygon",
+            "coordinates": [
+                [
+                    [
+                        [0,0],[10,0],[10,10],[0,10],[0,0]
+                    ]
+                ],[
+                    [
+                        [11,11],[20,11],[20,20],[11,20],[11,11]
+                    ],[
+                        [13,13],[13,17],[17,17],[17,13],[13,13]
+                    ]
+                ]
+            ]
+        }"#;
+        let geojson = GeoJson(geojson);
         let mvt = geojson.to_mvt().unwrap();
         assert_eq!(
             mvt.geometry,

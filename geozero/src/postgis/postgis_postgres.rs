@@ -17,14 +17,11 @@ impl<T: FromWkb + Sized> FromSql<'_> for wkb::Decode<T> {
     }
 
     fn accepts(ty: &Type) -> bool {
-        match ty.name() {
-            "geography" | "geometry" => true,
-            _ => false,
-        }
+        matches!(ty.name(), "geography" | "geometry")
     }
 }
 
-impl<'a, T: GeozeroGeometry + Sized> ToSql for wkb::Encode<T> {
+impl<T: GeozeroGeometry + Sized> ToSql for wkb::Encode<T> {
     fn to_sql(
         &self,
         _ty: &Type,
@@ -39,10 +36,7 @@ impl<'a, T: GeozeroGeometry + Sized> ToSql for wkb::Encode<T> {
     }
 
     fn accepts(ty: &Type) -> bool {
-        match ty.name() {
-            "geography" | "geometry" => true,
-            _ => false,
-        }
+        matches!(ty.name(), "geography" | "geometry")
     }
 
     to_sql_checked!();

@@ -7,7 +7,7 @@ use std::io::Read;
 #[cfg(feature = "with-postgis-diesel")]
 use crate::postgis::diesel::sql_types::{Geography, Geometry};
 #[cfg(feature = "with-postgis-diesel")]
-use diesel::expression::AsExpression;
+use diesel::{deserialize::FromSqlRow, expression::AsExpression};
 
 /// WKB reader.
 pub struct Wkb(pub Vec<u8>);
@@ -21,7 +21,7 @@ impl GeozeroGeometry for Wkb {
 /// EWKB reader.
 #[cfg_attr(
     feature = "with-postgis-diesel",
-    derive(Debug, AsExpression, PartialEq)
+    derive(Debug, AsExpression, FromSqlRow, PartialEq)
 )]
 #[cfg_attr(feature = "with-postgis-diesel", diesel(sql_type = Geometry))]
 #[cfg_attr(feature = "with-postgis-diesel", diesel(sql_type = Geography))]
@@ -88,7 +88,7 @@ pub(crate) struct WkbInfo {
 /// OGC WKB header.
 pub(crate) fn read_wkb_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
     let byte_order = raw.ioread::<u8>()?;
-    let endian = if byte_order == WKBByteOrder::XDR as u8 {
+    let endian = if byte_order == WKBByteOrder::Xdr as u8 {
         scroll::BE
     } else {
         scroll::LE
@@ -113,7 +113,7 @@ pub(crate) fn read_wkb_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
 /// EWKB header according to https://git.osgeo.org/gitea/postgis/postgis/src/branch/master/doc/ZMSgeoms.txt
 fn read_ewkb_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
     let byte_order = raw.ioread::<u8>()?;
-    let endian = if byte_order == WKBByteOrder::XDR as u8 {
+    let endian = if byte_order == WKBByteOrder::Xdr as u8 {
         scroll::BE
     } else {
         scroll::LE
@@ -121,10 +121,10 @@ fn read_ewkb_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
 
     let type_id = raw.ioread_with::<u32>(endian)?;
     let base_type = WKBGeometryType::from_u32(type_id & 0xFF);
-    let has_z = type_id & 0x80000000 == 0x80000000;
-    let has_m = type_id & 0x40000000 == 0x40000000;
+    let has_z = type_id & 0x8000_0000 == 0x8000_0000;
+    let has_m = type_id & 0x4000_0000 == 0x4000_0000;
 
-    let srid = if type_id & 0x20000000 == 0x20000000 {
+    let srid = if type_id & 0x2000_0000 == 0x2000_0000 {
         Some(raw.ioread_with::<i32>(endian)?)
     } else {
         None
@@ -155,12 +155,9 @@ fn read_gpkg_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
     let env_len = match (flags & 0b0000_1110) >> 1 {
         0 => 0,
         1 => 4,
-        2 => 6,
-        3 => 6,
+        2 | 3 => 6,
         4 => 8,
-        _ => {
-            return Err(GeozeroError::GeometryFormat);
-        }
+        _ => Err(GeozeroError::GeometryFormat)?,
     };
     let endian = if flags & 0b0000_0001 == 0 {
         scroll::BE
@@ -198,8 +195,8 @@ pub(crate) fn process_wkb_geom_n<R: Read, P: GeomProcessor>(
     match info.base_type {
         WKBGeometryType::Point => {
             processor.point_begin(idx)?;
-            process_coord(raw, &info, processor.multi_dim(), 0, processor)?;
-            processor.point_end(idx)?;
+            process_coord(raw, info, processor.multi_dim(), 0, processor)?;
+            processor.point_end(idx)
         }
         WKBGeometryType::MultiPoint => {
             let n_pts = raw.ioread_with::<u32>(info.endian)? as usize;
@@ -209,16 +206,12 @@ pub(crate) fn process_wkb_geom_n<R: Read, P: GeomProcessor>(
                 let info = read_header(raw)?;
                 process_coord(raw, &info, multi, i, processor)?;
             }
-            processor.multipoint_end(idx)?;
+            processor.multipoint_end(idx)
         }
-        WKBGeometryType::LineString => {
-            process_linestring(raw, &info, true, idx, processor)?;
-        }
-        WKBGeometryType::CircularString => {
-            process_circularstring(raw, &info, idx, processor)?;
-        }
+        WKBGeometryType::LineString => process_linestring(raw, info, true, idx, processor),
+        WKBGeometryType::CircularString => process_circularstring(raw, info, idx, processor),
         WKBGeometryType::CompoundCurve => {
-            process_compoundcurve(raw, &info, read_header, idx, processor)?;
+            process_compoundcurve(raw, info, read_header, idx, processor)
         }
         WKBGeometryType::MultiLineString => {
             let n_lines = raw.ioread_with::<u32>(info.endian)? as usize;
@@ -227,7 +220,7 @@ pub(crate) fn process_wkb_geom_n<R: Read, P: GeomProcessor>(
                 let info = read_header(raw)?;
                 process_linestring(raw, &info, false, i, processor)?;
             }
-            processor.multilinestring_end(idx)?;
+            processor.multilinestring_end(idx)
         }
         WKBGeometryType::MultiCurve => {
             let n_curves = raw.ioread_with::<u32>(info.endian)? as usize;
@@ -235,16 +228,12 @@ pub(crate) fn process_wkb_geom_n<R: Read, P: GeomProcessor>(
             for i in 0..n_curves {
                 process_curve(raw, read_header, i, processor)?;
             }
-            processor.multicurve_end(idx)?;
+            processor.multicurve_end(idx)
         }
-        WKBGeometryType::Polygon => {
-            process_polygon(raw, &info, true, idx, processor)?;
-        }
-        WKBGeometryType::Triangle => {
-            process_triangle(raw, &info, true, idx, processor)?;
-        }
+        WKBGeometryType::Polygon => process_polygon(raw, info, true, idx, processor),
+        WKBGeometryType::Triangle => process_triangle(raw, info, true, idx, processor),
         WKBGeometryType::CurvePolygon => {
-            process_curvepolygon(raw, &info, read_header, idx, processor)?;
+            process_curvepolygon(raw, info, read_header, idx, processor)
         }
         WKBGeometryType::MultiPolygon => {
             let n_polys = raw.ioread_with::<u32>(info.endian)? as usize;
@@ -253,7 +242,7 @@ pub(crate) fn process_wkb_geom_n<R: Read, P: GeomProcessor>(
                 let info = read_header(raw)?;
                 process_polygon(raw, &info, false, i, processor)?;
             }
-            processor.multipolygon_end(idx)?;
+            processor.multipolygon_end(idx)
         }
         WKBGeometryType::PolyhedralSurface => {
             let n_polys = raw.ioread_with::<u32>(info.endian)? as usize;
@@ -262,7 +251,7 @@ pub(crate) fn process_wkb_geom_n<R: Read, P: GeomProcessor>(
                 let info = read_header(raw)?;
                 process_polygon(raw, &info, false, i, processor)?;
             }
-            processor.polyhedralsurface_end(idx)?;
+            processor.polyhedralsurface_end(idx)
         }
         WKBGeometryType::Tin => {
             let n_triangles = raw.ioread_with::<u32>(info.endian)? as usize;
@@ -271,7 +260,7 @@ pub(crate) fn process_wkb_geom_n<R: Read, P: GeomProcessor>(
                 let info = read_header(raw)?;
                 process_triangle(raw, &info, false, i, processor)?;
             }
-            processor.tin_end(idx)?;
+            processor.tin_end(idx)
         }
         WKBGeometryType::MultiSurface => {
             let n_polys = raw.ioread_with::<u32>(info.endian)? as usize;
@@ -288,7 +277,7 @@ pub(crate) fn process_wkb_geom_n<R: Read, P: GeomProcessor>(
                     _ => return Err(GeozeroError::GeometryFormat),
                 }
             }
-            processor.multisurface_end(idx)?;
+            processor.multisurface_end(idx)
         }
 
         WKBGeometryType::GeometryCollection => {
@@ -298,11 +287,10 @@ pub(crate) fn process_wkb_geom_n<R: Read, P: GeomProcessor>(
                 let info = read_header(raw)?;
                 process_wkb_geom_n(raw, &info, read_header, i, processor)?;
             }
-            processor.geometrycollection_end(idx)?;
+            processor.geometrycollection_end(idx)
         }
-        _ => return Err(GeozeroError::GeometryFormat),
+        _ => Err(GeozeroError::GeometryFormat),
     }
-    Ok(())
 }
 
 fn process_coord<R: Read, P: GeomProcessor>(
@@ -325,11 +313,10 @@ fn process_coord<R: Read, P: GeomProcessor>(
         None
     };
     if multi_dim {
-        processor.coordinate(x, y, z, m, None, None, idx)?;
+        processor.coordinate(x, y, z, m, None, None, idx)
     } else {
-        processor.xy(x, y, idx)?;
+        processor.xy(x, y, idx)
     }
-    Ok(())
 }
 
 fn process_linestring<R: Read, P: GeomProcessor>(
@@ -425,18 +412,13 @@ fn process_curve<R: Read, P: GeomProcessor>(
 ) -> Result<()> {
     let info = read_header(raw)?;
     match info.base_type {
-        WKBGeometryType::CircularString => {
-            process_circularstring(raw, &info, idx, processor)?;
-        }
-        WKBGeometryType::LineString => {
-            process_linestring(raw, &info, false, idx, processor)?;
-        }
+        WKBGeometryType::CircularString => process_circularstring(raw, &info, idx, processor),
+        WKBGeometryType::LineString => process_linestring(raw, &info, false, idx, processor),
         WKBGeometryType::CompoundCurve => {
-            process_compoundcurve(raw, &info, read_header, idx, processor)?;
+            process_compoundcurve(raw, &info, read_header, idx, processor)
         }
-        _ => return Err(GeozeroError::GeometryFormat),
+        _ => Err(GeozeroError::GeometryFormat),
     }
-    Ok(())
 }
 
 fn process_curvepolygon<R: Read, P: GeomProcessor>(
@@ -610,8 +592,8 @@ mod test {
         );
     }
 
-    fn ewkb_to_wkt(ewkbstr: &str, with_z: bool) -> String {
-        let ewkb = hex::decode(ewkbstr).unwrap();
+    fn ewkb_to_wkt(ewkb_str: &str, with_z: bool) -> String {
+        let ewkb = hex::decode(ewkb_str).unwrap();
         let mut wkt_data: Vec<u8> = Vec::new();
         let mut writer = WktWriter::new(&mut wkt_data);
         writer.dims.z = with_z;

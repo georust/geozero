@@ -95,17 +95,18 @@ impl geozero::GeomProcessor for TestWriter {
         Ok(())
     }
 
+    fn empty_point(&mut self, idx: usize) -> Result<()> {
+        self.0.push(Cmd::EmptyPoint { idx });
+        Ok(())
+    }
+
     fn point_begin(&mut self, idx: usize) -> Result<()> {
         self.0.push(Cmd::PointBegin { idx });
         Ok(())
     }
+
     fn point_end(&mut self, idx: usize) -> Result<()> {
         self.0.push(Cmd::PointEnd { idx });
-        Ok(())
-    }
-
-    fn empty_point(&mut self, idx: usize) -> Result<()> {
-        self.0.push(Cmd::EmptyPoint { idx });
         Ok(())
     }
 

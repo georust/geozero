@@ -108,5 +108,15 @@ pub mod tile {
                 GeomType::Polygon => "POLYGON",
             }
         }
+        /// Creates an enum from field names used in the ProtoBuf definition.
+        pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+            match value {
+                "UNKNOWN" => Some(Self::Unknown),
+                "POINT" => Some(Self::Point),
+                "LINESTRING" => Some(Self::Linestring),
+                "POLYGON" => Some(Self::Polygon),
+                _ => None,
+            }
+        }
     }
 }

@@ -19,7 +19,7 @@ pub(crate) struct RecordHeader {
 }
 
 impl RecordHeader {
-    pub(crate) const SIZE: usize = 2 * std::mem::size_of::<i32>();
+    pub(crate) const SIZE: usize = 2 * size_of::<i32>();
 
     pub fn read_from<T: Read>(source: &mut T) -> Result<RecordHeader, Error> {
         let record_number = source.read_i32::<BigEndian>()?;
@@ -32,8 +32,8 @@ impl RecordHeader {
 }
 
 /// Read and process one shape record
-pub(crate) fn read_shape<P: GeomProcessor, T: Read>(
-    processor: &mut P,
+pub(crate) fn read_shape<'a, P: GeomProcessor + 'a, T: Read>(
+    processor: &'a mut P,
     mut source: &mut T,
 ) -> Result<RecordHeader, Error> {
     let hdr = RecordHeader::read_from(&mut source)?;
@@ -47,12 +47,12 @@ fn read_shape_rec<P: GeomProcessor, T: Read>(
     mut source: &mut T,
     record_size: usize,
 ) -> Result<(), Error> {
-    let shapetype = ShapeType::read_from(&mut source)?;
-    let record_size = record_size - std::mem::size_of::<i32>();
-    match shapetype {
-        ShapeType::Point => read_point(processor, &mut source, record_size, shapetype)?,
-        ShapeType::PointM => read_point(processor, &mut source, record_size, shapetype)?,
-        ShapeType::PointZ => read_point(processor, &mut source, record_size, shapetype)?,
+    let shape_type = ShapeType::read_from(&mut source)?;
+    let record_size = record_size - size_of::<i32>();
+    match shape_type {
+        ShapeType::Point => read_point(processor, &mut source, record_size, shape_type)?,
+        ShapeType::PointM => read_point(processor, &mut source, record_size, shape_type)?,
+        ShapeType::PointZ => read_point(processor, &mut source, record_size, shape_type)?,
         ShapeType::Multipoint => {
             read_multipoint(processor, &mut source, record_size, ShapeType::Point)?
         }
@@ -110,8 +110,9 @@ fn read_point<P: GeomProcessor, T: Read>(
 
     processor.point_begin(0)?;
     if processor.multi_dim() {
-        let z = if processor.dimensions().z { z } else { None };
-        let m = if processor.dimensions().m { m } else { None };
+        let dimensions = processor.dimensions();
+        let z = if dimensions.z { z } else { None };
+        let m = if dimensions.m { m } else { None };
         processor.coordinate(x, y, z, m, None, None, 0)?;
     } else {
         processor.xy(x, y, 0)?;
@@ -158,8 +159,9 @@ fn read_multipoint<P: GeomProcessor, T: Read>(
     };
 
     let multi_dim = processor.multi_dim();
-    let get_z = processor.dimensions().z && z_values.len() > 0;
-    let get_m = processor.dimensions().m && m_values.len() > 0;
+    let dimensions = processor.dimensions();
+    let get_z = dimensions.z && !z_values.is_empty();
+    let get_m = dimensions.m && !m_values.is_empty();
 
     processor.multipoint_begin(num_points, 0)?;
     for idx in 0..num_points {
@@ -285,9 +287,10 @@ impl MultiPartShape {
 
     fn process<P: GeomProcessor>(&self, processor: &mut P, as_poly: bool) -> Result<(), Error> {
         let tagged = false;
-        let multi_dim = processor.dimensions().z || processor.dimensions().m;
-        let get_z = processor.dimensions().z && self.z_values.len() > 0;
-        let get_m = processor.dimensions().m && self.m_values.len() > 0;
+        let dimensions = processor.dimensions();
+        let multi_dim = dimensions.z || dimensions.m;
+        let get_z = dimensions.z && !self.z_values.is_empty();
+        let get_m = dimensions.m && !self.m_values.is_empty();
 
         let geom_parts_indices = if as_poly {
             self.detect_polys()
@@ -306,8 +309,10 @@ impl MultiPartShape {
             if as_poly {
                 processor.polygon_begin(tagged, num_rings, geom_idx)?;
             }
-            let mut ring_idx = 0;
-            for start_end in self.parts_index[geom_start..=geom_end].windows(2) {
+            for (ring_idx, start_end) in self.parts_index[geom_start..=geom_end]
+                .windows(2)
+                .enumerate()
+            {
                 let (start_index, end_index) = (start_end[0], start_end[1]);
                 let num_points_in_part = end_index - start_index;
                 processor.linestring_begin(tagged, num_points_in_part, ring_idx)?;
@@ -331,7 +336,6 @@ impl MultiPartShape {
                     }
                 }
                 processor.linestring_end(tagged, ring_idx)?;
-                ring_idx += 1;
             }
             if as_poly {
                 processor.polygon_end(tagged, geom_idx)?;
@@ -408,7 +412,7 @@ enum RingType {
 /// `
 ///
 /// Inner Rings defines holes -> points are in counterclockwise order
-/// Outer Rings's points are un clockwise order
+/// Outer Rings' points are un clockwise order
 ///
 /// https://stackoverflow.com/questions/1165647/how-to-determine-if-a-list-of-polygon-points-are-in-clockwise-order/1180256#1180256
 fn ring_type_from_points_ordering(points: &[Coord]) -> RingType {

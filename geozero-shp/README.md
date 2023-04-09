@@ -16,7 +16,7 @@ Originally based on shapefile-rs from Thomas Montaigu.
 
 ## Usage example
 
-```Rust
+```rust,ignore
 use geozero::geojson::GeoJsonWriter;
 
 let reader = geozero_shp::Reader::from_path("poly.shp")?;

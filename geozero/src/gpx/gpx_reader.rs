@@ -1,4 +1,4 @@
-use crate::error::{GeozeroError, Result};
+use crate::error::GeozeroError;
 use std::io;
 
 /// GPX reader
@@ -15,7 +15,7 @@ impl<'a, R: io::Read> crate::GeozeroDatasource for GpxReader<'a, R> {
 }
 
 impl<'a> crate::GeozeroGeometry for Gpx<'a> {
-    fn process_geom<P: crate::GeomProcessor>(&self, processor: &mut P) -> Result<()> {
+    fn process_geom<P: crate::GeomProcessor>(&self, processor: &mut P) -> crate::error::Result<()> {
         read_gpx(&mut self.0.as_bytes(), processor)
     }
 }
@@ -36,9 +36,7 @@ pub fn read_gpx<R: io::Read, P: crate::GeomProcessor>(
     process_top_level_waypoints(&gpx_reader, processor, &mut index)?;
     process_top_level_tracks(&gpx_reader, processor, &mut index)?;
     process_top_level_routes(&gpx_reader, processor, &mut index)?;
-    processor.geometrycollection_end(0)?;
-
-    Ok(())
+    processor.geometrycollection_end(0)
 }
 
 fn process_top_level_waypoints<P: crate::GeomProcessor>(
@@ -58,10 +56,7 @@ fn process_top_level_tracks<P: crate::GeomProcessor>(
     processor: &mut P,
     index: &mut usize,
 ) -> crate::error::Result<()> {
-    if gpx_reader.tracks.is_empty() {
-        return Ok(());
-    }
-    for track in gpx_reader.tracks.iter() {
+    for track in &gpx_reader.tracks {
         process_track_segments(track, processor, *index)?;
         *index += 1;
     }
@@ -125,8 +120,7 @@ fn process_route<P: crate::GeomProcessor>(
     }
     processor.linestring_begin(false, route.points.len(), index)?;
     process_waypoints_iter(route.points.iter(), processor, &mut 0, false)?;
-    processor.linestring_end(false, index)?;
-    Ok(())
+    processor.linestring_end(false, index)
 }
 
 fn process_waypoints_iter<'a, P: crate::GeomProcessor>(

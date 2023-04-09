@@ -6,7 +6,7 @@ use super::mvt_commands::{Command, CommandInteger, ParameterInteger};
 
 impl GeozeroDatasource for tile::Layer {
     fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> Result<()> {
-        process(&self, processor)
+        process(self, processor)
     }
 }
 
@@ -24,8 +24,7 @@ pub fn process(layer: &tile::Layer, processor: &mut impl FeatureProcessor) -> Re
 
         processor.feature_end(idx as u64)?;
     }
-    processor.dataset_end()?;
-    Ok(())
+    processor.dataset_end()
 }
 
 fn process_properties(
@@ -34,17 +33,21 @@ fn process_properties(
     processor: &mut impl FeatureProcessor,
 ) -> Result<()> {
     processor.properties_begin()?;
-    for i in 0..feature.tags.len() / 2 {
-        let key_idx = feature.tags[i * 2];
-        let value_idx = feature.tags[i * 2 + 1];
+    for (i, pair) in feature.tags.chunks(2).enumerate() {
+        let [key_idx, value_idx] = pair else {
+            return Err(GeozeroError::Feature(format!(
+                "invalid feature.tags length: {:?}",
+                feature.tags.len()
+            )));
+        };
         let key = layer
             .keys
-            .get(key_idx as usize)
-            .ok_or_else(|| GeozeroError::Feature(format!("invalid key index {}", key_idx)))?;
+            .get(*key_idx as usize)
+            .ok_or_else(|| GeozeroError::Feature(format!("invalid key index {key_idx}")))?;
         let value = layer
             .values
-            .get(value_idx as usize)
-            .ok_or_else(|| GeozeroError::Feature(format!("invalid value index {}", value_idx)))?;
+            .get(*value_idx as usize)
+            .ok_or_else(|| GeozeroError::Feature(format!("invalid value index {value_idx}")))?;
 
         if let Some(ref v) = value.string_value {
             processor.property(i, key, &ColumnValue::String(v))?;
@@ -62,13 +65,11 @@ fn process_properties(
             processor.property(i, key, &ColumnValue::Bool(v))?;
         } else {
             return Err(GeozeroError::Property(format!(
-                "unsupported value type for key {}",
-                key
+                "unsupported value type for key {key}",
             )));
         }
     }
-    processor.properties_end()?;
-    Ok(())
+    processor.properties_end()
 }
 
 impl GeozeroGeometry for tile::Feature {
@@ -90,17 +91,16 @@ fn process_geom_n<P: GeomProcessor>(
     let mut cursor: [i32; 2] = [0, 0];
     match geom.r#type {
         Some(r#type) if r#type == GeomType::Point as i32 => {
-            process_point(&mut cursor, &geom.geometry, idx, processor)?;
+            process_point(&mut cursor, &geom.geometry, idx, processor)
         }
         Some(r#type) if r#type == GeomType::Linestring as i32 => {
-            process_linestrings(&mut cursor, geom, idx, processor)?;
+            process_linestrings(&mut cursor, geom, idx, processor)
         }
         Some(r#type) if r#type == GeomType::Polygon as i32 => {
-            process_polygons(&mut cursor, geom, idx, processor)?;
+            process_polygons(&mut cursor, geom, idx, processor)
         }
-        _ => {}
+        _ => Ok(()),
     }
-    Ok(())
 }
 
 fn process_coord<P: GeomProcessor>(
@@ -120,11 +120,10 @@ fn process_coord<P: GeomProcessor>(
             None,
             None,
             idx,
-        )?;
+        )
     } else {
-        processor.xy(cursor[0] as f64, cursor[1] as f64, idx)?;
+        processor.xy(cursor[0] as f64, cursor[1] as f64, idx)
     }
-    Ok(())
 }
 
 fn process_point<P: GeomProcessor>(
@@ -138,15 +137,14 @@ fn process_point<P: GeomProcessor>(
     if count == 1 {
         processor.point_begin(idx)?;
         process_coord(cursor, &geom[1..3], 0, processor)?;
-        processor.point_end(idx)?;
+        processor.point_end(idx)
     } else {
         processor.multipoint_begin(count, idx)?;
         for i in 0..count {
             process_coord(cursor, &geom[1 + i * 2..3 + i * 2], i, processor)?;
         }
-        processor.multipoint_end(idx)?;
+        processor.multipoint_end(idx)
     }
-    Ok(())
 }
 
 fn process_linestring<P: GeomProcessor>(
@@ -168,8 +166,7 @@ fn process_linestring<P: GeomProcessor>(
     for i in 0..lineto.count() as usize {
         process_coord(cursor, &geom[4 + i * 2..6 + i * 2], i + 1, processor)?;
     }
-    processor.linestring_end(tagged, idx)?;
-    Ok(())
+    processor.linestring_end(tagged, idx)
 }
 
 fn process_linestrings<P: GeomProcessor>(
@@ -181,7 +178,7 @@ fn process_linestrings<P: GeomProcessor>(
     let mut line_string_slices: Vec<&[u32]> = vec![];
     let mut geom: &[u32] = &geom.geometry;
 
-    while geom.len() > 0 {
+    while !geom.is_empty() {
         let lineto = CommandInteger(geom[3]);
         let slice_size = 4 + lineto.count() as usize * 2;
         let (slice, rest) = geom.split_at(slice_size);
@@ -191,15 +188,13 @@ fn process_linestrings<P: GeomProcessor>(
 
     if line_string_slices.len() > 1 {
         processor.multilinestring_begin(line_string_slices.len(), idx)?;
-        for i in 0..line_string_slices.len() {
-            process_linestring(cursor, line_string_slices[i], false, i, processor)?;
+        for (i, line_string_slice) in line_string_slices.iter().enumerate() {
+            process_linestring(cursor, line_string_slice, false, i, processor)?;
         }
-        processor.multilinestring_end(idx)?;
+        processor.multilinestring_end(idx)
     } else {
-        process_linestring(cursor, line_string_slices[0], true, idx, processor)?;
+        process_linestring(cursor, line_string_slices[0], true, idx, processor)
     }
-
-    Ok(())
 }
 
 fn process_polygon<P: GeomProcessor>(
@@ -223,7 +218,7 @@ fn process_polygon<P: GeomProcessor>(
             return Err(GeozeroError::GeometryFormat);
         }
         processor.linestring_begin(false, 1 + lineto.count() as usize, i)?;
-        let mut start_cursor = cursor.clone();
+        let mut start_cursor = *cursor;
         process_coord(cursor, &ring[1..3], 0, processor)?;
         for i in 0..lineto.count() as usize {
             process_coord(cursor, &ring[4 + i * 2..6 + i * 2], i + 1, processor)?;
@@ -237,9 +232,7 @@ fn process_polygon<P: GeomProcessor>(
         processor.linestring_end(false, i)?;
     }
 
-    processor.polygon_end(tagged, idx)?;
-
-    Ok(())
+    processor.polygon_end(tagged, idx)
 }
 
 fn process_polygons<P: GeomProcessor>(
@@ -251,12 +244,12 @@ fn process_polygons<P: GeomProcessor>(
     let mut polygon_slices: Vec<Vec<&[u32]>> = vec![];
     let mut geom: &[u32] = &geom.geometry;
 
-    while geom.len() > 0 {
+    while !geom.is_empty() {
         let lineto = CommandInteger(geom[3]);
         let slice_size = 4 + lineto.count() as usize * 2 + 1;
         let (slice, rest) = geom.split_at(slice_size);
         let positive_area = is_area_positive(
-            cursor.clone(),
+            *cursor,
             &slice[1..3],
             &slice[4..4 + lineto.count() as usize * 2],
         );
@@ -274,15 +267,13 @@ fn process_polygons<P: GeomProcessor>(
 
     if polygon_slices.len() > 1 {
         processor.multipolygon_begin(polygon_slices.len(), idx)?;
-        for i in 0..polygon_slices.len() {
-            process_polygon(cursor, &polygon_slices[i], false, i, processor)?;
+        for (i, polygon_slice) in polygon_slices.iter().enumerate() {
+            process_polygon(cursor, polygon_slice, false, i, processor)?;
         }
-        processor.multipolygon_end(idx)?;
+        processor.multipolygon_end(idx)
     } else {
-        process_polygon(cursor, &polygon_slices[0], true, idx, processor)?;
+        process_polygon(cursor, &polygon_slices[0], true, idx, processor)
     }
-
-    Ok(())
 }
 
 // using surveyor's formula
@@ -310,14 +301,17 @@ fn is_area_positive(mut cursor: [i32; 2], first: &[u32], rest: &[u32]) -> bool {
 mod test {
     use super::*;
     use crate::{ProcessToJson, ToJson};
+    use serde_json::json;
 
     #[test]
     fn layer() {
         // https://github.com/mapbox/vector-tile-spec/tree/master/2.1#45-example
-        let mut mvt_layer = tile::Layer::default();
-        mvt_layer.version = 2;
-        mvt_layer.name = String::from("points");
-        mvt_layer.extent = Some(4096);
+        let mut mvt_layer = tile::Layer {
+            version: 2,
+            name: String::from("points"),
+            extent: Some(4096),
+            ..Default::default()
+        };
 
         mvt_layer.keys.push(String::from("hello"));
         mvt_layer.keys.push(String::from("h"));
@@ -341,58 +335,60 @@ mod test {
         });
 
         {
-            let mut mvt_feature = tile::Feature::default();
-            mvt_feature.id = Some(1);
+            let mut mvt_feature = tile::Feature {
+                id: Some(1),
+                tags: [0, 0, 1, 0, 2, 1].to_vec(),
+                geometry: [9, 2410, 3080].to_vec(),
+                ..Default::default()
+            };
             mvt_feature.set_type(GeomType::Point);
-            mvt_feature.tags = [0, 0, 1, 0, 2, 1].to_vec();
-            mvt_feature.geometry = [9, 2410, 3080].to_vec();
             mvt_layer.features.push(mvt_feature);
         }
 
         {
-            let mut mvt_feature = tile::Feature::default();
-            mvt_feature.id = Some(2);
+            let mut mvt_feature = tile::Feature {
+                id: Some(2),
+                tags: [0, 2, 2, 3].to_vec(),
+                geometry: [9, 2410, 3080].to_vec(),
+                ..Default::default()
+            };
             mvt_feature.set_type(GeomType::Point);
-            mvt_feature.tags = [0, 2, 2, 3].to_vec();
-            mvt_feature.geometry = [9, 2410, 3080].to_vec();
             mvt_layer.features.push(mvt_feature);
         }
 
         let geojson = mvt_layer.to_json().unwrap();
 
         assert_eq!(
-            geojson.replace("\n", "").replace(" ", ""),
-            r#"{
-    "type": "FeatureCollection",
-    "name": "points",
-    "features": [
-        {
-            "type": "Feature",
-            "properties": {
-                "hello": "world",
-                "h": "world",
-                "count": 1.23
-            },
-            "geometry": {
-                "type": "Point",
-                "coordinates": [1205,1540]
-            }
-        },
-        {
-            "type": "Feature",
-            "properties": {
-                "hello": "again",
-                "count": 2
-            },
-            "geometry": {
-                "type": "Point",
-                "coordinates": [1205,1540]
-            }
-        }
-    ]
-}"#
-            .replace("\n", "")
-            .replace(" ", "")
+            serde_json::from_str::<serde_json::Value>(&geojson).unwrap(),
+            json!({
+                "type": "FeatureCollection",
+                "name": "points",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "hello": "world",
+                            "h": "world",
+                            "count": 1.23
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [1205,1540]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "hello": "again",
+                            "count": 2
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [1205,1540]
+                        }
+                    }
+                ]
+            })
         );
     }
 
@@ -404,7 +400,13 @@ mod test {
 
         let geojson = mvt_feature.to_json().unwrap();
 
-        assert_eq!(geojson, r#"{"type": "Point", "coordinates": [25,17]}"#);
+        assert_eq!(
+            serde_json::from_str::<serde_json::Value>(&geojson).unwrap(),
+            json!({
+                "type": "Point",
+                "coordinates": [25,17]
+            })
+        );
     }
 
     #[test]
@@ -416,8 +418,11 @@ mod test {
         let geojson = mvt_feature.to_json().unwrap();
 
         assert_eq!(
-            geojson,
-            r#"{"type": "MultiPoint", "coordinates": [[5,7],[3,2]]}"#
+            serde_json::from_str::<serde_json::Value>(&geojson).unwrap(),
+            json!({
+                "type": "MultiPoint",
+                "coordinates": [[5,7],[3,2]]
+            })
         );
     }
 
@@ -430,8 +435,11 @@ mod test {
         let geojson = mvt_feature.to_json().unwrap();
 
         assert_eq!(
-            geojson,
-            r#"{"type": "LineString", "coordinates": [[2,2],[2,10],[10,10]]}"#
+            serde_json::from_str::<serde_json::Value>(&geojson).unwrap(),
+            json!({
+                "type": "LineString",
+                "coordinates": [[2,2],[2,10],[10,10]]
+            })
         );
     }
 
@@ -444,8 +452,11 @@ mod test {
         let geojson = mvt_feature.to_json().unwrap();
 
         assert_eq!(
-            geojson,
-            r#"{"type": "MultiLineString", "coordinates": [[[2,2],[2,10],[10,10]],[[1,1],[3,5]]]}"#
+            serde_json::from_str::<serde_json::Value>(&geojson).unwrap(),
+            json!({
+                "type": "MultiLineString",
+                "coordinates": [[[2,2],[2,10],[10,10]],[[1,1],[3,5]]]
+            })
         );
     }
 
@@ -458,8 +469,11 @@ mod test {
         let geojson = mvt_feature.to_json().unwrap();
 
         assert_eq!(
-            geojson,
-            r#"{"type": "Polygon", "coordinates": [[[3,6],[8,12],[20,34],[3,6]]]}"#
+            serde_json::from_str::<serde_json::Value>(&geojson).unwrap(),
+            json!({
+                "type": "Polygon",
+                "coordinates": [[[3,6],[8,12],[20,34],[3,6]]]
+            })
         );
     }
 
@@ -476,8 +490,11 @@ mod test {
         let geojson = mvt_feature.to_json().unwrap();
 
         assert_eq!(
-            geojson,
-            r#"{"type": "MultiPolygon", "coordinates": [[[[0,0],[10,0],[10,10],[0,10],[0,0]]],[[[11,11],[20,11],[20,20],[11,20],[11,11]],[[13,13],[13,17],[17,17],[17,13],[13,13]]]]}"#
+            serde_json::from_str::<serde_json::Value>(&geojson).unwrap(),
+            json!({
+                "type": "MultiPolygon",
+                "coordinates": [[[[0,0],[10,0],[10,10],[0,10],[0,0]]],[[[11,11],[20,11],[20,20],[11,20],[11,11]],[[13,13],[13,17],[17,17],[17,13],[13,13]]]]
+            })
         );
     }
 }

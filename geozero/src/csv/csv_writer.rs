@@ -116,6 +116,7 @@ impl<W: Write> GeomProcessor for CsvWriter<'_, W> {
     fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
         self.wkt_writer.xy(x, y, idx)
     }
+
     fn coordinate(
         &mut self,
         x: f64,
@@ -128,14 +129,15 @@ impl<W: Write> GeomProcessor for CsvWriter<'_, W> {
     ) -> Result<()> {
         self.wkt_writer.coordinate(x, y, z, m, t, tm, idx)
     }
+
+    fn empty_point(&mut self, idx: usize) -> Result<()> {
+        self.wkt_writer.empty_point(self.offset_geom_idx(idx))
+    }
     fn point_begin(&mut self, idx: usize) -> Result<()> {
         self.wkt_writer.point_begin(self.offset_geom_idx(idx))
     }
     fn point_end(&mut self, idx: usize) -> Result<()> {
         self.wkt_writer.point_end(self.offset_geom_idx(idx))
-    }
-    fn empty_point(&mut self, idx: usize) -> Result<()> {
-        self.wkt_writer.empty_point(self.offset_geom_idx(idx))
     }
     fn multipoint_begin(&mut self, size: usize, idx: usize) -> Result<()> {
         self.wkt_writer
@@ -261,7 +263,7 @@ mod buffering_wkt_writer {
         }
 
         pub(crate) fn clear(&mut self) {
-            self.buffer.clear()
+            self.buffer.clear();
         }
 
         pub(crate) fn bytes(&self) -> &[u8] {
@@ -280,6 +282,7 @@ mod buffering_wkt_writer {
         fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
             self.wkt_writer().xy(x, y, idx)
         }
+
         fn coordinate(
             &mut self,
             x: f64,
@@ -292,14 +295,15 @@ mod buffering_wkt_writer {
         ) -> Result<()> {
             self.wkt_writer().coordinate(x, y, z, m, t, tm, idx)
         }
+
+        fn empty_point(&mut self, idx: usize) -> Result<()> {
+            self.wkt_writer().empty_point(idx)
+        }
         fn point_begin(&mut self, idx: usize) -> Result<()> {
             self.wkt_writer().point_begin(idx)
         }
         fn point_end(&mut self, idx: usize) -> Result<()> {
             self.wkt_writer().point_end(idx)
-        }
-        fn empty_point(&mut self, idx: usize) -> Result<()> {
-            self.wkt_writer().empty_point(idx)
         }
         fn multipoint_begin(&mut self, size: usize, idx: usize) -> Result<()> {
             self.wkt_writer().multipoint_begin(size, idx)
@@ -511,7 +515,7 @@ POINT(1 45),904 7th Av,05/22/2019 12:55:00 PM,F190051945,Car Fire
 "POLYGON((3 1,3 2,3 1))",Bar
 "#;
 
-        let actual_output = crate::geojson::GeoJson(&input_geojson).to_csv().unwrap();
+        let actual_output = crate::geojson::GeoJson(input_geojson).to_csv().unwrap();
 
         assert_eq!(expected_output, actual_output);
     }

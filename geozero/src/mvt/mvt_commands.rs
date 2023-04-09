@@ -44,14 +44,14 @@ impl ParameterInteger {
 }
 
 #[test]
-fn test_paremeters() {
+fn test_parameters() {
     assert_eq!(ParameterInteger(50).value(), 25);
     assert_eq!(ParameterInteger::from(25), 50);
 }
 
 #[test]
 fn test_sequence() {
-    type CommandSequence = std::vec::Vec<u32>;
+    type CommandSequence = Vec<u32>;
 
     let mut seq = CommandSequence::new();
     seq.push(CommandInteger::from(Command::MoveTo, 1));

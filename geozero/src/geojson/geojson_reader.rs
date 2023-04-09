@@ -58,11 +58,10 @@ pub fn read_geojson<R: Read, P: FeatureProcessor>(mut reader: R, processor: &mut
 }
 
 pub fn read_geojson_fc<R: Read, P: FeatureProcessor>(reader: R, processor: &mut P) -> Result<()> {
-    let mut idx = 0;
-    for feature in FeatureReader::from_reader(reader).features() {
+    for (idx, feature) in FeatureReader::from_reader(reader).features().enumerate() {
         process_geojson_feature(&feature?, idx, processor)?;
-        idx += 1;
     }
+
     Ok(())
 }
 
@@ -96,14 +95,11 @@ fn process_geojson<P: FeatureProcessor>(gj: &GeoGeoJson, processor: &mut P) -> R
                 }
                 processor.feature_end(idx as u64)?;
             }
-            processor.dataset_end()?;
+            processor.dataset_end()
         }
-        GeoGeoJson::Feature(ref feature) => process_geojson_feature(feature, 0, processor)?,
-        GeoGeoJson::Geometry(ref geometry) => {
-            process_geojson_geom_n(geometry, 0, processor)?;
-        }
+        GeoGeoJson::Feature(ref feature) => process_geojson_feature(feature, 0, processor),
+        GeoGeoJson::Geometry(ref geometry) => process_geojson_geom_n(geometry, 0, processor),
     }
-    Ok(())
 }
 
 /// Process top-level GeoJSON items
@@ -127,8 +123,7 @@ fn process_geojson_feature<P: FeatureProcessor>(
         }
         processor.feature_end(idx as u64)?;
     }
-    processor.dataset_end()?;
-    Ok(())
+    processor.dataset_end()
 }
 
 /// Process top-level GeoJSON items (geometry only)
@@ -165,32 +160,42 @@ fn process_geojson_geom_n<P: GeomProcessor>(
 ) -> Result<()> {
     match geom.value {
         Value::Point(ref geometry) => {
-            process_point(geometry, idx, processor)?;
+            processor.point_begin(idx)?;
+            process_coord(geometry, processor.multi_dim(), 0, processor)?;
+            processor.point_end(idx)
         }
         Value::MultiPoint(ref geometry) => {
-            process_multi_point(geometry, idx, processor)?;
+            processor.multipoint_begin(geometry.len(), idx)?;
+            let multi_dim = processor.multi_dim();
+            for (idxc, point_type) in geometry.iter().enumerate() {
+                process_coord(point_type, multi_dim, idxc, processor)?;
+            }
+            processor.multipoint_end(idx)
         }
-        Value::LineString(ref geometry) => {
-            process_linestring(geometry, true, idx, processor)?;
-        }
+        Value::LineString(ref geometry) => process_linestring(geometry, true, idx, processor),
         Value::MultiLineString(ref geometry) => {
-            process_multilinestring(geometry, idx, processor)?;
+            processor.multilinestring_begin(geometry.len(), idx)?;
+            for (idx2, linestring_type) in geometry.iter().enumerate() {
+                process_linestring(linestring_type, false, idx2, processor)?;
+            }
+            processor.multilinestring_end(idx)
         }
-        Value::Polygon(ref geometry) => {
-            process_polygon(geometry, true, idx, processor)?;
-        }
+        Value::Polygon(ref geometry) => process_polygon(geometry, true, idx, processor),
         Value::MultiPolygon(ref geometry) => {
-            process_multi_polygon(geometry, idx, processor)?;
+            processor.multipolygon_begin(geometry.len(), idx)?;
+            for (idx2, polygon_type) in geometry.iter().enumerate() {
+                process_polygon(polygon_type, false, idx2, processor)?;
+            }
+            processor.multipolygon_end(idx)
         }
         Value::GeometryCollection(ref collection) => {
             processor.geometrycollection_begin(collection.len(), idx)?;
-            for (idxg, geometry) in collection.iter().enumerate() {
-                process_geojson_geom_n(geometry, idxg, processor)?;
+            for (idx2, geometry) in collection.iter().enumerate() {
+                process_geojson_geom_n(geometry, idx2, processor)?;
             }
-            processor.geometrycollection_end(idx)?;
+            processor.geometrycollection_end(idx)
         }
     }
-    Ok(())
 }
 
 /// Process GeoJSON properties
@@ -201,19 +206,19 @@ fn process_properties<P: PropertyProcessor>(
     for (i, (key, value)) in properties.iter().enumerate() {
         // Could we provide a stable property index?
         match value {
-            JsonValue::String(v) => processor.property(i, &key, &ColumnValue::String(v))?,
+            JsonValue::String(v) => processor.property(i, key, &ColumnValue::String(v))?,
             JsonValue::Number(v) if v.is_f64() => {
-                processor.property(i, &key, &ColumnValue::Double(v.as_f64().unwrap()))?
+                processor.property(i, key, &ColumnValue::Double(v.as_f64().unwrap()))?
             }
             JsonValue::Number(v) if v.is_i64() => {
-                processor.property(i, &key, &ColumnValue::Long(v.as_i64().unwrap()))?
+                processor.property(i, key, &ColumnValue::Long(v.as_i64().unwrap()))?
             }
             JsonValue::Number(v) if v.is_u64() => {
-                processor.property(i, &key, &ColumnValue::ULong(v.as_u64().unwrap()))?
+                processor.property(i, key, &ColumnValue::ULong(v.as_u64().unwrap()))?
             }
-            JsonValue::Bool(v) => processor.property(i, &key, &ColumnValue::Bool(*v))?,
+            JsonValue::Bool(v) => processor.property(i, key, &ColumnValue::Bool(*v))?,
             // Null, Array(Vec<Value>), Object(Map<String, Value>)
-            _ => processor.property(i, &key, &ColumnValue::String(&value.to_string()))?,
+            _ => processor.property(i, key, &ColumnValue::String(&value.to_string()))?,
         };
     }
     Ok(())
@@ -234,7 +239,7 @@ fn process_coord<P: GeomProcessor>(
         processor.coordinate(
             point_type[0],
             point_type[1],
-            point_type.get(2).map(|v| *v),
+            point_type.get(2).copied(),
             None,
             None,
             None,
@@ -243,29 +248,6 @@ fn process_coord<P: GeomProcessor>(
     } else {
         processor.xy(point_type[0], point_type[1], idx)
     }
-}
-
-fn process_point<P: GeomProcessor>(
-    point_type: &PointType,
-    idx: usize,
-    processor: &mut P,
-) -> Result<()> {
-    processor.point_begin(idx)?;
-    process_coord(point_type, processor.multi_dim(), 0, processor)?;
-    processor.point_end(idx)
-}
-
-fn process_multi_point<P: GeomProcessor>(
-    multi_point_type: &[PointType],
-    idx: usize,
-    processor: &mut P,
-) -> Result<()> {
-    processor.multipoint_begin(multi_point_type.len(), idx)?;
-    let multi_dim = processor.multi_dim();
-    for (idxc, point_type) in multi_point_type.iter().enumerate() {
-        process_coord(point_type, multi_dim, idxc, processor)?
-    }
-    processor.multipoint_end(idx)
 }
 
 fn process_linestring<P: GeomProcessor>(
@@ -277,21 +259,9 @@ fn process_linestring<P: GeomProcessor>(
     processor.linestring_begin(tagged, linestring_type.len(), idx)?;
     let multi_dim = processor.multi_dim();
     for (idxc, point_type) in linestring_type.iter().enumerate() {
-        process_coord(point_type, multi_dim, idxc, processor)?
+        process_coord(point_type, multi_dim, idxc, processor)?;
     }
     processor.linestring_end(tagged, idx)
-}
-
-fn process_multilinestring<P: GeomProcessor>(
-    multilinestring_type: &[LineStringType],
-    idx: usize,
-    processor: &mut P,
-) -> Result<()> {
-    processor.multilinestring_begin(multilinestring_type.len(), idx)?;
-    for (idxc, linestring_type) in multilinestring_type.iter().enumerate() {
-        process_linestring(&linestring_type, false, idxc, processor)?
-    }
-    processor.multilinestring_end(idx)
 }
 
 fn process_polygon<P: GeomProcessor>(
@@ -301,22 +271,10 @@ fn process_polygon<P: GeomProcessor>(
     processor: &mut P,
 ) -> Result<()> {
     processor.polygon_begin(tagged, polygon_type.len(), idx)?;
-    for (idxl, linestring_type) in polygon_type.iter().enumerate() {
-        process_linestring(linestring_type, false, idxl, processor)?
+    for (idx2, linestring_type) in polygon_type.iter().enumerate() {
+        process_linestring(linestring_type, false, idx2, processor)?;
     }
     processor.polygon_end(tagged, idx)
-}
-
-fn process_multi_polygon<P: GeomProcessor>(
-    multi_polygon_type: &[PolygonType],
-    idx: usize,
-    processor: &mut P,
-) -> Result<()> {
-    processor.multipolygon_begin(multi_polygon_type.len(), idx)?;
-    for (idxp, polygon_type) in multi_polygon_type.iter().enumerate() {
-        process_polygon(&polygon_type, false, idxp, processor)?;
-    }
-    processor.multipolygon_end(idx)
 }
 
 #[cfg(test)]
@@ -329,7 +287,11 @@ mod test {
 
     #[test]
     fn line_string() -> Result<()> {
-        let geojson = r#"{"type": "LineString", "coordinates": [[1875038.447610231,-3269648.6879248763],[1874359.641504197,-3270196.812984864],[1874141.0428635243,-3270953.7840121365],[1874440.1778162003,-3271619.4315206874],[1876396.0598222911,-3274138.747656357],[1876442.0805243007,-3275052.60551469],[1874739.312657555,-3275457.333765534]]}"#;
+        let geojson = r#"{
+            "type": "LineString",
+            "coordinates": [
+                [1875038.447610231,-3269648.6879248763],[1874359.641504197,-3270196.812984864],[1874141.0428635243,-3270953.7840121365],[1874440.1778162003,-3271619.4315206874],[1876396.0598222911,-3274138.747656357],[1876442.0805243007,-3275052.60551469],[1874739.312657555,-3275457.333765534]
+            ]}"#;
         let mut wkt_data: Vec<u8> = Vec::new();
         assert!(
             read_geojson_geom(&mut geojson.as_bytes(), &mut WktWriter::new(&mut wkt_data)).is_ok()
@@ -363,7 +325,25 @@ mod test {
 
     #[test]
     fn feature_collection() -> Result<()> {
-        let geojson = r#"{"type": "FeatureCollection", "name": "countries", "features": [{"type": "Feature", "properties": {"id": "NZL", "name": "New Zealand"}, "geometry": {"type": "MultiPolygon", "coordinates": [[[[173.020375,-40.919052],[173.247234,-41.331999],[173.958405,-40.926701],[174.247587,-41.349155],[174.248517,-41.770008],[173.876447,-42.233184],[173.22274,-42.970038],[172.711246,-43.372288],[173.080113,-43.853344],[172.308584,-43.865694],[171.452925,-44.242519],[171.185138,-44.897104],[170.616697,-45.908929],[169.831422,-46.355775],[169.332331,-46.641235],[168.411354,-46.619945],[167.763745,-46.290197],[166.676886,-46.219917],[166.509144,-45.852705],[167.046424,-45.110941],[168.303763,-44.123973],[168.949409,-43.935819],[169.667815,-43.555326],[170.52492,-43.031688],[171.12509,-42.512754],[171.569714,-41.767424],[171.948709,-41.514417],[172.097227,-40.956104],[172.79858,-40.493962],[173.020375,-40.919052]]],[[[174.612009,-36.156397],[175.336616,-37.209098],[175.357596,-36.526194],[175.808887,-36.798942],[175.95849,-37.555382],[176.763195,-37.881253],[177.438813,-37.961248],[178.010354,-37.579825],[178.517094,-37.695373],[178.274731,-38.582813],[177.97046,-39.166343],[177.206993,-39.145776],[176.939981,-39.449736],[177.032946,-39.879943],[176.885824,-40.065978],[176.508017,-40.604808],[176.01244,-41.289624],[175.239567,-41.688308],[175.067898,-41.425895],[174.650973,-41.281821],[175.22763,-40.459236],[174.900157,-39.908933],[173.824047,-39.508854],[173.852262,-39.146602],[174.574802,-38.797683],[174.743474,-38.027808],[174.697017,-37.381129],[174.292028,-36.711092],[174.319004,-36.534824],[173.840997,-36.121981],[173.054171,-35.237125],[172.636005,-34.529107],[173.007042,-34.450662],[173.551298,-35.006183],[174.32939,-35.265496],[174.612009,-36.156397]]]]}}]}"#;
+        let geojson = r#"{
+            "type": "FeatureCollection",
+            "name": "countries",
+            "features": [{
+                "type": "Feature",
+                "properties": {
+                    "id": "NZL",
+                    "name": "New Zealand"
+                },
+                "geometry": {
+                    "type": "MultiPolygon",
+                    "coordinates": [[[
+                        [173.020375,-40.919052],[173.247234,-41.331999],[173.958405,-40.926701],[174.247587,-41.349155],[174.248517,-41.770008],[173.876447,-42.233184],[173.22274,-42.970038],[172.711246,-43.372288],[173.080113,-43.853344],[172.308584,-43.865694],[171.452925,-44.242519],[171.185138,-44.897104],[170.616697,-45.908929],[169.831422,-46.355775],[169.332331,-46.641235],[168.411354,-46.619945],[167.763745,-46.290197],[166.676886,-46.219917],[166.509144,-45.852705],[167.046424,-45.110941],[168.303763,-44.123973],[168.949409,-43.935819],[169.667815,-43.555326],[170.52492,-43.031688],[171.12509,-42.512754],[171.569714,-41.767424],[171.948709,-41.514417],[172.097227,-40.956104],[172.79858,-40.493962],[173.020375,-40.919052]
+                    ]],[[
+                        [174.612009,-36.156397],[175.336616,-37.209098],[175.357596,-36.526194],[175.808887,-36.798942],[175.95849,-37.555382],[176.763195,-37.881253],[177.438813,-37.961248],[178.010354,-37.579825],[178.517094,-37.695373],[178.274731,-38.582813],[177.97046,-39.166343],[177.206993,-39.145776],[176.939981,-39.449736],[177.032946,-39.879943],[176.885824,-40.065978],[176.508017,-40.604808],[176.01244,-41.289624],[175.239567,-41.688308],[175.067898,-41.425895],[174.650973,-41.281821],[175.22763,-40.459236],[174.900157,-39.908933],[173.824047,-39.508854],[173.852262,-39.146602],[174.574802,-38.797683],[174.743474,-38.027808],[174.697017,-37.381129],[174.292028,-36.711092],[174.319004,-36.534824],[173.840997,-36.121981],[173.054171,-35.237125],[172.636005,-34.529107],[173.007042,-34.450662],[173.551298,-35.006183],[174.32939,-35.265496],[174.612009,-36.156397]
+                    ]]]
+                }
+            }]
+        }"#;
         let mut wkt_data: Vec<u8> = Vec::new();
         assert!(read_geojson_fc(geojson.as_bytes(), &mut WktWriter::new(&mut wkt_data)).is_ok());
         let wkt = std::str::from_utf8(&wkt_data).unwrap();
@@ -373,9 +353,18 @@ mod test {
 
     #[test]
     fn properties() -> Result<()> {
-        let mut geojson = GeoJson(
-            r#"{"type": "Feature", "properties": {"id": 1, "name": "New Zealand"}, "geometry": {"type": "Point", "coordinates": [10,20]}}"#,
-        );
+        let geojson = r#"{
+                "type": "Feature",
+                "properties": {
+                    "id": 1,
+                    "name": "New Zealand"
+                },
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [10,20]
+                }
+            }"#;
+        let mut geojson = GeoJson(geojson);
         let mut out: Vec<u8> = Vec::new();
         assert!(geojson.process(&mut GeoJsonWriter::new(&mut out)).is_ok());
         assert_eq!(

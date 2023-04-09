@@ -1,4 +1,9 @@
-## 0.9.6 (UNRELEASED)
+## 0.9.7 (2023-01-27)
+
+* Derive FromSqlRow for Diesel support
+* Re-export prost::Message
+
+## 0.9.6 (2022-12-26)
 
 * GPX Read support
 * Diesel support for Ewkb type for PostGIS

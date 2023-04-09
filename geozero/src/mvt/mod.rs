@@ -2,17 +2,25 @@
 mod mvt_commands;
 pub(crate) mod mvt_reader;
 pub(crate) mod mvt_writer;
+
+mod tag_builder;
+pub use tag_builder::TagsBuilder;
+
+mod tile_value;
+pub use tile_value::TileValue;
+
 #[rustfmt::skip]
 mod vector_tile;
 
 pub use mvt_reader::*;
 pub use mvt_writer::*;
+pub use prost::Message;
 pub use vector_tile::*;
 
 pub(crate) mod conversion {
-    use super::mvt_writer::*;
     use crate::error::Result;
     use crate::mvt::vector_tile::tile;
+    use crate::mvt::MvtWriter;
     use crate::GeozeroGeometry;
 
     /// Convert to MVT geometry.
@@ -32,9 +40,9 @@ pub(crate) mod conversion {
 
 #[cfg(feature = "with-wkb")]
 mod wkb {
-    use super::mvt_writer::*;
     use crate::error::Result;
     use crate::mvt::vector_tile::tile;
+    use crate::mvt::MvtWriter;
     use crate::wkb::{FromWkb, WkbDialect};
     use std::io::Read;
 

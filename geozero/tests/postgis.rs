@@ -1,16 +1,29 @@
+mod pg {
+    pub fn get_db_string() -> String {
+        std::env::var("DATABASE_URL").unwrap()
+    }
+
+    #[cfg(feature = "with-postgis-sqlx")]
+    pub async fn get_pool() -> sqlx::Pool<sqlx::Postgres> {
+        sqlx::postgres::PgPoolOptions::new()
+            .max_connections(5)
+            .connect(&get_db_string())
+            .await
+            .unwrap()
+    }
+}
+
 #[cfg(feature = "with-postgis-postgres")]
 mod postgis_postgres {
+    use crate::pg::get_db_string;
     use geozero::wkb;
     use geozero::wkt::WktWriter;
-    use postgres::{Client, NoTls};
+    use geozero::ToWkt as _;
 
     #[test]
     #[ignore]
     fn blob_query() -> Result<(), postgres::error::Error> {
-        use geozero::ToWkt;
-
-        let mut client = Client::connect(&std::env::var("DATABASE_URL").unwrap(), NoTls)?;
-
+        let mut client = postgres::Client::connect(&get_db_string(), postgres::NoTls).unwrap();
         let row = client.query_one(
             "SELECT 'SRID=4326;POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))'::geometry::bytea",
             &[],
@@ -25,7 +38,7 @@ mod postgis_postgres {
     #[test]
     #[ignore]
     fn rust_geo_query() -> Result<(), postgres::error::Error> {
-        let mut client = Client::connect(&std::env::var("DATABASE_URL").unwrap(), NoTls)?;
+        let mut client = postgres::Client::connect(&get_db_string(), postgres::NoTls).unwrap();
 
         let row = client.query_one(
             "SELECT 'SRID=4326;POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))'::geometry",
@@ -39,7 +52,7 @@ mod postgis_postgres {
                 vec![(0.0, 0.0), (2.0, 0.0), (2.0, 2.0), (0.0, 2.0), (0.0, 0.0)].into()
             );
         } else {
-            assert!(false, "Conversion to geo_types::Geometry failed");
+            panic!("Conversion to geo_types::Geometry failed");
         }
 
         let row = client.query_one("SELECT NULL::geometry", &[])?;
@@ -63,9 +76,7 @@ mod postgis_postgres {
     #[ignore]
     #[cfg(feature = "with-geos")]
     fn geos_query() -> Result<(), postgres::error::Error> {
-        use geos::Geom;
-
-        let mut client = Client::connect(&std::env::var("DATABASE_URL").unwrap(), NoTls)?;
+        let mut client = postgres::Client::connect(&get_db_string(), postgres::NoTls).unwrap();
 
         let row = client.query_one(
             "SELECT 'SRID=4326;POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))'::geometry",
@@ -73,7 +84,10 @@ mod postgis_postgres {
         )?;
 
         let value: wkb::Decode<geos::Geometry> = row.get(0);
-        assert_eq!(value.geometry.unwrap().to_wkt().unwrap(), "POLYGON ((0.0000000000000000 0.0000000000000000, 2.0000000000000000 0.0000000000000000, 2.0000000000000000 2.0000000000000000, 0.0000000000000000 2.0000000000000000, 0.0000000000000000 0.0000000000000000))");
+        assert_eq!(
+            value.geometry.unwrap().to_wkt().unwrap(),
+            "POLYGON((0 0,2 0,2 2,0 2,0 0))"
+        );
 
         // Insert geometry
         let geom = geos::Geometry::new_from_wkt("POINT(1 3)").expect("Invalid geometry");
@@ -105,25 +119,22 @@ mod postgis_postgres {
             }
 
             fn accepts(ty: &Type) -> bool {
-                match ty.name() {
-                    "geography" | "geometry" => true,
-                    _ => false,
-                }
+                matches!(ty.name(), "geography" | "geometry")
             }
         }
 
         #[test]
         #[ignore]
         fn geometry_query() -> Result<(), postgres::error::Error> {
-            let mut client = Client::connect(&std::env::var("DATABASE_URL").unwrap(), NoTls)?;
+            let mut client = postgres::Client::connect(&get_db_string(), postgres::NoTls).unwrap();
 
             let row = client.query_one(
                 "SELECT 'SRID=4326;POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))'::geometry",
                 &[],
             )?;
 
-            let wktgeom: Wkt = row.get(0);
-            assert_eq!(&wktgeom.0, "POLYGON((0 0,2 0,2 2,0 2,0 0))");
+            let wkt_geom: Wkt = row.get(0);
+            assert_eq!(&wkt_geom.0, "POLYGON((0 0,2 0,2 2,0 2,0 0))");
             Ok(())
         }
     }
@@ -131,19 +142,15 @@ mod postgis_postgres {
 
 #[cfg(feature = "with-postgis-sqlx")]
 mod postgis_sqlx {
+    use super::PointZ;
+    use crate::pg;
     use geozero::wkb;
-    use sqlx::postgres::PgPoolOptions;
-    use std::env;
+    use geozero::ToWkt as _;
 
     #[tokio::test]
     #[ignore]
     async fn blob_query() -> Result<(), sqlx::Error> {
-        use geozero::ToWkt;
-
-        let pool = PgPoolOptions::new()
-            .max_connections(5)
-            .connect(&env::var("DATABASE_URL").unwrap())
-            .await?;
+        let pool = pg::get_pool().await;
 
         let row: (Vec<u8>,) = sqlx::query_as(
             "SELECT 'SRID=4326;POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))'::geometry::bytea",
@@ -160,12 +167,7 @@ mod postgis_sqlx {
     #[tokio::test]
     #[ignore]
     async fn point3d_query() -> Result<(), sqlx::Error> {
-        use super::PointZ;
-
-        let pool = PgPoolOptions::new()
-            .max_connections(5)
-            .connect(&env::var("DATABASE_URL").unwrap())
-            .await?;
+        let pool = pg::get_pool().await;
 
         let row: (PointZ,) = sqlx::query_as("SELECT 'POINT(1 2 3)'::geometry")
             .fetch_one(&pool)
@@ -187,10 +189,7 @@ mod postgis_sqlx {
     #[tokio::test]
     #[ignore]
     async fn rust_geo_query() -> Result<(), sqlx::Error> {
-        let pool = PgPoolOptions::new()
-            .max_connections(5)
-            .connect(&env::var("DATABASE_URL").unwrap())
-            .await?;
+        let pool = pg::get_pool().await;
 
         let row: (wkb::Decode<geo_types::Geometry<f64>>,) =
             sqlx::query_as("SELECT 'SRID=4326;POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))'::geometry")
@@ -204,7 +203,7 @@ mod postgis_sqlx {
                 vec![(0.0, 0.0), (2.0, 0.0), (2.0, 2.0), (0.0, 2.0), (0.0, 0.0)].into()
             );
         } else {
-            assert!(false, "Conversion to geo_types::Geometry failed");
+            panic!("Conversion to geo_types::Geometry failed");
         }
 
         let row: (wkb::Decode<geo_types::Geometry<f64>>,) = sqlx::query_as("SELECT NULL::geometry")
@@ -229,10 +228,7 @@ mod postgis_sqlx {
     #[ignore]
     async fn bulk_insert() -> Result<(), sqlx::Error> {
         // https://github.com/launchbadge/sqlx/blob/v0.5.13/FAQ.md#how-can-i-bind-an-array-to-a-values-clause-how-can-i-do-bulk-inserts
-        let pool = PgPoolOptions::new()
-            .max_connections(5)
-            .connect(&env::var("DATABASE_URL").unwrap())
-            .await?;
+        let pool = pg::get_pool().await;
 
         let geom: geo_types::Geometry<f64> = geo::Point::new(10.0, 20.0).into();
         let geoms = vec![wkb::Encode(geom.clone()), wkb::Encode(geom.clone())];
@@ -253,18 +249,11 @@ mod postgis_sqlx {
     // Requires DATABASE_URL at compile time
     #[cfg(feature = "dont-compile")]
     async fn rust_geo_macro_query() -> Result<(), sqlx::Error> {
-        use sqlx::types::time::OffsetDateTime;
-
-        let pool = PgPoolOptions::new()
-            .max_connections(3)
-            .connect(&env::var("DATABASE_URL").unwrap())
-            .await?;
+        let pool = pg::get_pool().await;
 
         let mut tx = pool.begin().await?;
 
-        let _ = sqlx::query!("DELETE FROM point2d",)
-            .execute(&mut tx)
-            .await?;
+        let _ = sqlx::query!("DELETE FROM point2d").execute(&mut tx).await?;
 
         let rec = sqlx::query!("SELECT count(*) as count FROM point2d")
             .fetch_one(&mut tx)
@@ -295,7 +284,7 @@ mod postgis_sqlx {
 
         struct PointRec {
             pub geom: wkb::Decode<geo_types::Geometry<f64>>,
-            pub datetimefield: Option<OffsetDateTime>,
+            pub datetimefield: Option<sqlx::types::time::OffsetDateTime>,
         }
         let rec = sqlx::query_as!(
             PointRec,
@@ -316,19 +305,17 @@ mod postgis_sqlx {
     #[ignore]
     #[cfg(feature = "with-geos")]
     async fn geos_query() -> Result<(), sqlx::Error> {
-        use geos::Geom;
-
-        let pool = PgPoolOptions::new()
-            .max_connections(5)
-            .connect(&env::var("DATABASE_URL").unwrap())
-            .await?;
+        let pool = pg::get_pool().await;
 
         let row: (wkb::Decode<geos::Geometry>,) =
             sqlx::query_as("SELECT 'SRID=4326;POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))'::geometry")
                 .fetch_one(&pool)
                 .await?;
         let value = row.0;
-        assert_eq!(value.geometry.unwrap().to_wkt().unwrap(), "POLYGON ((0.0000000000000000 0.0000000000000000, 2.0000000000000000 0.0000000000000000, 2.0000000000000000 2.0000000000000000, 0.0000000000000000 2.0000000000000000, 0.0000000000000000 0.0000000000000000))");
+        assert_eq!(
+            value.geometry.unwrap().to_wkt().unwrap(),
+            "POLYGON((0 0,2 0,2 2,0 2,0 0))"
+        );
 
         let row: (wkb::Decode<geos::Geometry>,) = sqlx::query_as("SELECT NULL::geometry")
             .fetch_one(&pool)
@@ -383,10 +370,7 @@ mod postgis_sqlx {
         #[tokio::test]
         #[ignore]
         async fn geometry_query() -> Result<(), sqlx::Error> {
-            let pool = PgPoolOptions::new()
-                .max_connections(5)
-                .connect(&env::var("DATABASE_URL").unwrap())
-                .await?;
+            let pool = pg::get_pool().await;
 
             let row: (Text,) =
                 sqlx::query_as("SELECT 'SRID=4326;POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))'::geometry")
@@ -442,7 +426,7 @@ impl GeozeroGeometry for PointZ {
     fn process_geom<P: GeomProcessor>(
         &self,
         processor: &mut P,
-    ) -> std::result::Result<(), geozero::error::GeozeroError> {
+    ) -> Result<(), geozero::error::GeozeroError> {
         processor.point_begin(0)?;
         processor.coordinate(self.x, self.y, Some(self.z), None, None, None, 0)?;
         processor.point_end(0)
