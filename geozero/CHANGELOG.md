@@ -1,3 +1,16 @@
+## 0.9.8 (2023-04-08)
+
+* Simplified MVT creation: added `TagsBuilder` and `TileValue` to support writing tags, using a new `dup-indexer` crate
+* Feature `with-tessellator` has now been fixed to actually work and use Lyon v1.0.1
+* Added `Default` trait to `GdalWriter`, `GeosWriter`, `MvtWriter`, `ProcessorSink`
+* `CoordDimensions::xy()`, `xyz()`, `xyzm()` and `xym()` are now `const fn`
+* Switched to 2021 edition
+* Matched breaking changes in arrow2 0.17 and lyon 1.0.1
+
+### Internal
+* CI now covers all testing including postgres testing
+* MVT tests and benchmarks framework
+
 ## 0.9.7 (2023-01-27)
 
 * Derive FromSqlRow for Diesel support
