@@ -14,9 +14,9 @@ categories = ["science::geo"]
 [dependencies]
 byteorder = "1.4.3"
 dbase = "0.3"
-geozero = { version = "0.9.8", path = "../geozero", default-features = false }
+geozero = { version = "0.9.8", default-features = false }
 thiserror = "1.0"
 
 [dev-dependencies]
 geo-types = { version = "0.7", default-features = false }
-geozero = { version = "0.9.8", path = "../geozero", default-features = true }
+geozero = { version = "0.9.8", default-features = true }
