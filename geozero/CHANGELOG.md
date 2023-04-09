@@ -1,4 +1,4 @@
-## 0.9.8 (2023-04-08)
+## 0.9.8 (2023-04-09)
 
 * Simplified MVT creation: added `TagsBuilder` and `TileValue` to support writing tags, using a new `dup-indexer` crate
 * Feature `with-tessellator` has now been fixed to actually work and use Lyon v1.0.1
