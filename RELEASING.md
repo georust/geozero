@@ -5,12 +5,10 @@ which causes build conflicts when doing major version updates.
 
 ## geozero
 
-* `cd geozero`
+* Make sure GitHub CI status is green.
 * Make sure local branch is up-to-date (`git pull --rebase`)
+* `cd geozero`
 * Check for compatible major updates with `cargo outdated`
-* `cargo test --all-features`
-* `export DATABASE_URL="postgresql://$USER@localhost/postgistest?sslmode=disable"` (see `tests/data/postgis.sql`)
-* `cargo test --all-features -- --ignored postgis --test-threads 1`
 * Bump version in `Cargo.toml`
 * `cargo publish` (possibly `cargo publish --no-verify`)
 * Set release date in `CHANGELOG.md`

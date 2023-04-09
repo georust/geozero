@@ -119,7 +119,7 @@ macro_rules! impl_scalar_property_reader {
                 if let $e(v) = v {
                     Ok(*v)
                 } else {
-                    Err(GeozeroError::ColumnType(stringify!($e).to_string(), format!("{:?}", v)))
+                    Err(GeozeroError::ColumnType(stringify!($e).to_string(), format!("{v:?}")))
                 }
             }
         }

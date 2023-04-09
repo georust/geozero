@@ -140,7 +140,7 @@ impl<'a, W: Write> WkbWriter<'a, W> {
         if self.endian == scroll::LE {
             flags |= 0b0000_0001;
         }
-        // println!("flags: {:#010b}", flags);
+        // println!("flags: {flags:#010b}");
         self.out.iowrite(flags)?;
 
         // srs_id
