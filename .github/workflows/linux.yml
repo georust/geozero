@@ -40,6 +40,16 @@ jobs:
           cargo test -p geozero --no-default-features
           cargo test --workspace --all-features
 
+      - name: Test Doc Build
+        shell: bash
+        # Make sure this list matches the members list in Cargo.toml
+        run: |
+          for package in geozero geozero-shp geozero-cli geozero-bench; do
+            (echo "----- Testing doc build for package $package ----" && cargo doc -p $package --all-features --no-deps)
+          done
+        env:
+          RUSTDOCFLAGS: "-D warnings"
+
       - name: Set up PostgreSQL with PostGIS
         uses: nyurik/action-setup-postgis@v1
         with:
