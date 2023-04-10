@@ -8,8 +8,8 @@ homepage = "https://github.com/georust/geozero"
 repository = "https://github.com/georust/geozero"
 readme = "../README.md"
 license = "MIT/Apache-2.0"
-keywords = ["geo", "geojson", "gdal", "geos", "postgis"]
-categories = ["Geospatial"]
+keywords = ["geo", "geojson", "gdal", "mvt", "postgis"]
+categories = ["science::geo", "parser-implementations", "api-bindings", "database", "rendering::data-formats"]
 
 [features]
 default = ["with-svg", "with-wkt", "with-geo", "with-geojson"]

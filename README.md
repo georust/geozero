@@ -1,5 +1,6 @@
 # GeoZero
 
+[![GitHub](https://img.shields.io/badge/github-georust/geozero-8da0cb?logo=github)](https://github.com/georust/geozero)
 [![CI build](https://github.com/georust/geozero/workflows/CI-Linux/badge.svg)](https://github.com/georust/geozero/actions)
 [![crates.io version](https://img.shields.io/crates/v/geozero.svg)](https://crates.io/crates/geozero)
 [![docs.rs docs](https://docs.rs/geozero/badge.svg)](https://docs.rs/geozero)
