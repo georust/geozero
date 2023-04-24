@@ -1,5 +1,5 @@
 use crate::mvt::tile_value::TileValue;
-use dup_indexer::DupIndexer;
+use dup_indexer::{DupIndexer, PtrRead};
 use std::hash::Hash;
 
 /// A builder for key-value pairs, where the key is a `String` or `&str`, and the value is a
@@ -22,13 +22,17 @@ pub struct TagsBuilder<K> {
     values: DupIndexer<TileValue>,
 }
 
-impl<K: Default + Eq + Hash> Default for TagsBuilder<K> {
+/// This is safe because all values are either simple bit-readable values or strings,
+/// both of which are safe for `PtrRead`.
+unsafe impl PtrRead for TileValue {}
+
+impl<K: Default + Eq + Hash + PtrRead> Default for TagsBuilder<K> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<K: Eq + Hash> TagsBuilder<K> {
+impl<K: Eq + Hash + PtrRead> TagsBuilder<K> {
     pub fn new() -> Self {
         Self {
             keys: DupIndexer::new(),
