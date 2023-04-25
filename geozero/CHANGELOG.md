@@ -1,3 +1,6 @@
+## 0.9.9 (2023-04-25)
+* For `with-mvt`, update `dup-indexer` crate to 0.3
+
 ## 0.9.8 (2023-04-09)
 
 * Simplified MVT creation: added `TagsBuilder` and `TileValue` to support writing tags, using a new `dup-indexer` crate
