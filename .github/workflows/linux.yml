@@ -26,11 +26,10 @@ jobs:
       - name: Install protoc
         uses: arduino/setup-protoc@v1
 
-      - name: Format, Check, Clippy
+      - name: Format, Clippy
         shell: bash
         run: |
           cargo fmt --all -- --check
-          cargo check --workspace --all-features --bins --examples --tests --benches
           cargo clippy --workspace --all-features --bins --examples --tests --benches -- -D warnings
 
       - name: Tests
