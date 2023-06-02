@@ -129,8 +129,8 @@ pub use crate::mvt::conversion::*;
 pub struct ProcessorSink;
 
 impl ProcessorSink {
-    pub fn new() -> ProcessorSink {
-        Self::default()
+    pub fn new() -> Self {
+        Self
     }
 }
 

@@ -19,8 +19,8 @@ impl geozero::GeomProcessor for PointIndex {
 
 #[test]
 fn create() -> Result<()> {
-    let mut f = File::open("tests/data/places.json")?;
-    let mut reader = GeoJsonReader(&mut f);
+    let f = File::open("tests/data/places.json")?;
+    let mut reader = GeoJsonReader(f);
     let mut points = PointIndex {
         pos: 0,
         index: KDBush::new(1249, DEFAULT_NODE_SIZE),

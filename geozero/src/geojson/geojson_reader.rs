@@ -41,9 +41,9 @@ impl GeozeroDatasource for GeoJson<'_> {
 }
 
 /// GeoJSON Reader.
-pub struct GeoJsonReader<'a, R: Read>(pub &'a mut R);
+pub struct GeoJsonReader<R: Read>(pub R);
 
-impl<'a, R: Read> GeozeroDatasource for GeoJsonReader<'a, R> {
+impl<R: Read> GeozeroDatasource for GeoJsonReader<R> {
     fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> Result<()> {
         read_geojson(&mut self.0, processor)
     }
