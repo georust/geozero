@@ -9,8 +9,8 @@ use std::io::Write;
 
 #[test]
 fn json_to_svg() -> Result<()> {
-    let mut f = File::open("tests/data/places.json")?;
-    let svg = GeoJsonReader(&mut f).to_svg().unwrap();
+    let f = File::open("tests/data/places.json")?;
+    let svg = GeoJsonReader(f).to_svg().unwrap();
     println!("{svg}");
     assert_eq!(
         &svg[svg.len() - 100..],

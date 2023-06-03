@@ -67,7 +67,7 @@ fn transform<P: FeatureProcessor>(args: Cli, processor: &mut P) -> Result<()> {
             GeozeroDatasource::process(&mut ds, processor)?;
         }
         Some("json") | Some("geojson") => {
-            let mut ds = GeoJsonReader(&mut filein);
+            let mut ds = GeoJsonReader(filein);
             GeozeroDatasource::process(&mut ds, processor)?;
         }
         Some("fgb") => {
