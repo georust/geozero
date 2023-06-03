@@ -37,8 +37,8 @@ bytes = { version = "1.4", optional = true }
 csv = { version = "1.2.1", optional = true }
 diesel = { version = "2.0.2", default-features = false, optional = true }
 dup-indexer = { version = "0.3", optional = true }
-gdal = { version = "0.14", default-features = false, optional = true }
-gdal-sys = { version = "0.8", optional = true }
+gdal = { version = "0.15", default-features = false, optional = true }
+gdal-sys = { version = "0.9", optional = true }
 geo-types = { version = "0.7.9", default-features = false, optional = true }
 geojson = { version = "0.24.0", default-features = false, optional = true }
 geos = { version = "8.1", optional = true }

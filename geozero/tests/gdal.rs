@@ -2,6 +2,7 @@ use gdal::vector::LayerAccess;
 use gdal::Dataset;
 use geozero::gdal::process_geom;
 use geozero::svg::SvgWriter;
+use geozero::ToSvg;
 use std::path::Path;
 
 #[test]
@@ -10,7 +11,10 @@ fn ogr_to_svg() -> Result<(), gdal::errors::GdalError> {
     let mut layer = dataset.layer(0)?;
     let mut out: Vec<u8> = Vec::new();
     for feature in layer.features() {
-        let geom = feature.geometry();
+        let geom = feature.geometry().unwrap();
+        let svg = geom.to_svg();
+        assert!(svg.is_ok());
+        // concatenate SVG geometries
         assert!(process_geom(geom, &mut SvgWriter::new(&mut out, true)).is_ok());
     }
     assert_eq!(

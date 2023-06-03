@@ -2,6 +2,7 @@
 
 * Remove lifetime from `GeoJsonReader`
 * Update gpx to 0.9
+* Update gdal to 0.15
 
 ## 0.9.9 (2023-04-25)
 
