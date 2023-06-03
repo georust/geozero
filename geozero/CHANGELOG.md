@@ -1,4 +1,10 @@
+## UNRELEASED
+
+* Remove lifetime from `GeoJsonReader`
+* Update gpx to 0.9
+
 ## 0.9.9 (2023-04-25)
+
 * For `with-mvt`, update `dup-indexer` crate to 0.3
 
 ## 0.9.8 (2023-04-09)
@@ -11,6 +17,7 @@
 * Matched breaking changes in arrow2 0.17 and lyon 1.0.1
 
 ### Internal
+
 * CI now covers all testing including postgres testing
 * MVT tests and benchmarks framework
 
