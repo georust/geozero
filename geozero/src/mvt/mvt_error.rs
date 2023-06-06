@@ -13,6 +13,6 @@ pub enum MvtError {
     UnsupportedKeyValueType(String),
     #[error("geometry format")]
     GeometryFormat,
-    #[error("Too few coordinates in line or ring")]
+    #[error("too few coordinates in line or ring")]
     TooFewCoordinates,
 }
