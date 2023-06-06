@@ -83,7 +83,7 @@ impl GeomProcessor for MvtWriter {
             let num_coords = match self.line_state {
                 LineState::Line(size) if size > 1 => size - 1,
                 LineState::Ring(size) if size > 2 => size - 2,
-                _ => return Err(GeozeroError::MvtError(MvtError::TooFewCoordinates)),
+                _ => return Err(MvtError::TooFewCoordinates)?,
             };
             self.feature
                 .geometry
