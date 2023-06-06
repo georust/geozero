@@ -2,15 +2,15 @@
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum MvtError {
+pub enum MvtError<'a> {
     #[error("invalid feature.tags length: {0}")]
     InvalidFeatureTagsLength(usize),
     #[error("invalid key index {0}")]
-    InvalidKeyIndex(u32),
+    InvalidKeyIndex(&'a u32),
     #[error("invalid value index {0}")]
-    InvalidValueIndex(u32),
+    InvalidValueIndex(&'a u32),
     #[error("unsupported value type for key {0}")]
-    UnsupportedKeyValueType(String),
+    UnsupportedKeyValueType(&'a String),
     #[error("geometry format")]
     GeometryFormat,
     #[error("too few coordinates in line or ring")]
