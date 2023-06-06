@@ -6,7 +6,7 @@ use crate::mvt::mvt_commands::{Command, CommandInteger, ParameterInteger};
 use crate::mvt::vector_tile::{tile, tile::GeomType};
 use crate::GeomProcessor;
 
-use super::MvtError;
+use super::mvt_error::MvtError;
 
 /// Generator for MVT geometry type.
 pub struct MvtWriter {
@@ -83,7 +83,7 @@ impl GeomProcessor for MvtWriter {
             let num_coords = match self.line_state {
                 LineState::Line(size) if size > 1 => size - 1,
                 LineState::Ring(size) if size > 2 => size - 2,
-                _ => return Err(MvtError::TooFewCoordinates),
+                _ => return Err(GeozeroError::MvtError(MvtError::TooFewCoordinates)),
             };
             self.feature
                 .geometry
