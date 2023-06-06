@@ -6,6 +6,8 @@ use crate::mvt::mvt_commands::{Command, CommandInteger, ParameterInteger};
 use crate::mvt::vector_tile::{tile, tile::GeomType};
 use crate::GeomProcessor;
 
+use super::MvtError;
+
 /// Generator for MVT geometry type.
 pub struct MvtWriter {
     pub(crate) feature: tile::Feature,
@@ -81,11 +83,7 @@ impl GeomProcessor for MvtWriter {
             let num_coords = match self.line_state {
                 LineState::Line(size) if size > 1 => size - 1,
                 LineState::Ring(size) if size > 2 => size - 2,
-                _ => {
-                    return Err(GeozeroError::Geometry(
-                        "Too few coordinates in line or ring".to_string(),
-                    ))
-                }
+                _ => return Err(MvtError::TooFewCoordinates),
             };
             self.feature
                 .geometry

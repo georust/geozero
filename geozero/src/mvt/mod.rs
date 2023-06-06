@@ -38,6 +38,9 @@ pub(crate) mod conversion {
     }
 }
 
+mod mvt_error;
+pub use mvt_error::MvtError;
+
 #[cfg(feature = "with-wkb")]
 mod wkb {
     use crate::error::Result;
