@@ -6,9 +6,9 @@ pub enum MvtError {
     #[error("invalid feature.tags length: {0}")]
     InvalidFeatureTagsLength(usize),
     #[error("invalid key index {0}")]
-    InvalidKeyIndex(usize),
+    InvalidKeyIndex(u32),
     #[error("invalid value index {0}")]
-    InvalidValueIndex(usize),
+    InvalidValueIndex(u32),
     #[error("unsupported value type for key {0}")]
     UnsupportedKeyValueType(String),
     #[error("geometry format")]
