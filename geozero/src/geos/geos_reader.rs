@@ -25,7 +25,9 @@ impl From<geos::Error> for GeozeroError {
             | geos::Error::GeosError(e)
             | geos::Error::NoConstructionFromNullPtr(e)
             | geos::Error::ConversionError(e)
-            | geos::Error::GenericError(e) => GeozeroError::Geometry(e),
+            | geos::Error::GenericError(e)
+            | geos::Error::NormalizeError(e)
+            | geos::Error::VoronoiError(e) => GeozeroError::Geometry(e),
             geos::Error::GeosFunctionError(_, _) => GeozeroError::GeometryFormat,
         }
     }
