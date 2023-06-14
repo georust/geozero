@@ -42,7 +42,7 @@ pub enum GeozeroError {
     IoError(#[from] std::io::Error),
     #[cfg(feature = "with-mvt")]
     #[error("MVT error")]
-    MvtError(#[from] MvtError),
+    MvtError(#[from] crate::mvt::mvt_error::MvtError),
 }
 
 pub type Result<T> = std::result::Result<T, GeozeroError>;
