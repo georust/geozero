@@ -1,7 +1,7 @@
 //! Encode geometries according to MVT spec
 //! <https://github.com/mapbox/vector-tile-spec/tree/master/2.1>
 
-use crate::error::{GeozeroError, Result};
+use crate::error::Result;
 use crate::mvt::mvt_commands::{Command, CommandInteger, ParameterInteger};
 use crate::mvt::vector_tile::{tile, tile::GeomType};
 use crate::GeomProcessor;
