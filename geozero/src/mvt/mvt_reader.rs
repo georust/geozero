@@ -44,12 +44,12 @@ fn process_properties(
         let key = layer
             .keys
             .get(*key_idx as usize)
-            .ok_or_else(|| MvtError::InvalidKeyIndex(*key_idx))?
+            .ok_or(MvtError::InvalidKeyIndex(*key_idx))?
             .clone();
         let value = layer
             .values
             .get(*value_idx as usize)
-            .ok_or_else(|| MvtError::InvalidValueIndex(*value_idx))?;
+            .ok_or(MvtError::InvalidValueIndex(*value_idx))?;
 
         if let Some(ref v) = value.string_value {
             processor.property(i, &key, &ColumnValue::String(v))?;
