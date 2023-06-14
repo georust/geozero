@@ -1,9 +1,6 @@
 //! Error and Result types.
 use thiserror::Error;
 
-#[cfg(feature = "with-mvt")]
-use crate::mvt::mvt_error::MvtError;
-
 #[derive(Error, Debug)]
 pub enum GeozeroError {
     // Geometry access errors
@@ -40,9 +37,8 @@ pub enum GeozeroError {
     // General
     #[error("I/O error")]
     IoError(#[from] std::io::Error),
-    #[cfg(feature = "with-mvt")]
     #[error("MVT error")]
-    MvtError(#[from] crate::mvt::mvt_error::MvtError),
+    MvtError(#[from] crate::mvt::MvtError),
 }
 
 pub type Result<T> = std::result::Result<T, GeozeroError>;
