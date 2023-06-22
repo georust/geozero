@@ -1,5 +1,5 @@
 use crate::error::{GeozeroError, Result};
-use crate::gdal_error::GdalError;
+use crate::gdal::gdal_error::GdalError;
 use crate::{CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcessor};
 
 use gdal::vector::Geometry;
