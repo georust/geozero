@@ -1,4 +1,4 @@
-//! MVT error type.
+//! GDAL error type.
 use gdal_sys::OGRwkbGeometryType;
 use thiserror::Error;
 
