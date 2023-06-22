@@ -1,9 +1,9 @@
 use crate::error::{GeozeroError, Result};
+use crate::gdal_error::GdalError;
 use crate::{CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcessor};
+
 use gdal::vector::Geometry;
 use gdal_sys::OGRwkbGeometryType;
-
-use super::GdalError;
 
 /// Generator for GDAL geometry type.
 pub struct GdalWriter {
