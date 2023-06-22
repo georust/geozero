@@ -37,6 +37,12 @@ pub enum GeozeroError {
     // General
     #[error("I/O error")]
     IoError(#[from] std::io::Error),
+    #[cfg(feature = "with-mvt")]
+    #[error("MVT error")]
+    MvtError(#[from] crate::mvt::MvtError),
+    #[cfg(feature = "with-gdal")]
+    #[error("GDAL error")]
+    GdalError(#[from] crate::gdal::GdalError),
 }
 
 pub type Result<T> = std::result::Result<T, GeozeroError>;

@@ -1,7 +1,9 @@
 //! GDAL conversions.
+mod gdal_error;
 pub(crate) mod gdal_reader;
 pub(crate) mod gdal_writer;
 
+pub use gdal_error::GdalError;
 pub use gdal_reader::*;
 pub use gdal_writer::*;
 

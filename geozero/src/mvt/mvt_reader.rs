@@ -1,8 +1,11 @@
-use crate::error::{GeozeroError, Result};
+use crate::error::Result;
 use crate::mvt::vector_tile::{tile, tile::GeomType};
 use crate::{ColumnValue, FeatureProcessor, GeomProcessor, GeozeroDatasource, GeozeroGeometry};
 
-use super::mvt_commands::{Command, CommandInteger, ParameterInteger};
+use super::{
+    mvt_commands::{Command, CommandInteger, ParameterInteger},
+    mvt_error::MvtError,
+};
 
 impl GeozeroDatasource for tile::Layer {
     fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> Result<()> {
@@ -35,19 +38,17 @@ fn process_properties(
     processor.properties_begin()?;
     for (i, pair) in feature.tags.chunks(2).enumerate() {
         let [key_idx, value_idx] = pair else {
-            return Err(GeozeroError::Feature(format!(
-                "invalid feature.tags length: {:?}",
-                feature.tags.len()
-            )));
+            return Err(MvtError::InvalidFeatureTagsLength(
+                feature.tags.len()))?
         };
         let key = layer
             .keys
             .get(*key_idx as usize)
-            .ok_or_else(|| GeozeroError::Feature(format!("invalid key index {key_idx}")))?;
+            .ok_or(MvtError::InvalidKeyIndex(*key_idx))?;
         let value = layer
             .values
             .get(*value_idx as usize)
-            .ok_or_else(|| GeozeroError::Feature(format!("invalid value index {value_idx}")))?;
+            .ok_or(MvtError::InvalidValueIndex(*value_idx))?;
 
         if let Some(ref v) = value.string_value {
             processor.property(i, key, &ColumnValue::String(v))?;
@@ -64,9 +65,7 @@ fn process_properties(
         } else if let Some(v) = value.bool_value {
             processor.property(i, key, &ColumnValue::Bool(v))?;
         } else {
-            return Err(GeozeroError::Property(format!(
-                "unsupported value type for key {key}",
-            )));
+            return Err(MvtError::UnsupportedKeyValueType(key.to_string()))?;
         }
     }
     processor.properties_end()
@@ -155,11 +154,11 @@ fn process_linestring<P: GeomProcessor>(
     processor: &mut P,
 ) -> Result<()> {
     if geom[0] != CommandInteger::from(Command::MoveTo, 1) {
-        return Err(GeozeroError::GeometryFormat);
+        return Err(MvtError::GeometryFormat)?;
     }
     let lineto = CommandInteger(geom[3]);
     if lineto.id() != Command::LineTo as u32 {
-        return Err(GeozeroError::GeometryFormat);
+        return Err(MvtError::GeometryFormat)?;
     }
     processor.linestring_begin(tagged, 1 + lineto.count() as usize, idx)?;
     process_coord(cursor, &geom[1..3], 0, processor)?;
@@ -208,14 +207,14 @@ fn process_polygon<P: GeomProcessor>(
 
     for (i, ring) in rings.iter().enumerate() {
         if ring[0] != CommandInteger::from(Command::MoveTo, 1) {
-            return Err(GeozeroError::GeometryFormat);
+            return Err(MvtError::GeometryFormat)?;
         }
         if *ring.last().unwrap() != CommandInteger::from(Command::ClosePath, 1) {
-            return Err(GeozeroError::GeometryFormat);
+            return Err(MvtError::GeometryFormat)?;
         }
         let lineto = CommandInteger(ring[3]);
         if lineto.id() != Command::LineTo as u32 {
-            return Err(GeozeroError::GeometryFormat);
+            return Err(MvtError::GeometryFormat)?;
         }
         processor.linestring_begin(false, 1 + lineto.count() as usize, i)?;
         let mut start_cursor = *cursor;
@@ -260,7 +259,7 @@ fn process_polygons<P: GeomProcessor>(
             // add interior ring to previous polygon
             last_slice.push(slice);
         } else {
-            return Err(GeozeroError::GeometryFormat);
+            return Err(MvtError::GeometryFormat)?;
         }
         geom = rest;
     }
