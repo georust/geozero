@@ -19,14 +19,17 @@ impl GeozeroGeometry for geos::Geometry<'_> {
 
 impl From<geos::Error> for GeozeroError {
     fn from(error: geos::Error) -> Self {
+        use geos::Error::*;
         match error {
-            geos::Error::InvalidGeometry(e)
-            | geos::Error::ImpossibleOperation(e)
-            | geos::Error::GeosError(e)
-            | geos::Error::NoConstructionFromNullPtr(e)
-            | geos::Error::ConversionError(e)
-            | geos::Error::GenericError(e) => GeozeroError::Geometry(e),
-            geos::Error::GeosFunctionError(_, _) => GeozeroError::GeometryFormat,
+            InvalidGeometry(e)
+            | ImpossibleOperation(e)
+            | GeosError(e)
+            | NoConstructionFromNullPtr(e)
+            | ConversionError(e)
+            | GenericError(e)
+            | VoronoiError(e)
+            | NormalizeError(e) => GeozeroError::Geometry(e),
+            GeosFunctionError(_, _) => GeozeroError::GeometryFormat,
         }
     }
 }
