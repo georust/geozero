@@ -44,29 +44,28 @@ fn process_properties(
         let key = layer
             .keys
             .get(*key_idx as usize)
-            .ok_or(MvtError::InvalidKeyIndex(*key_idx))?
-            .clone();
+            .ok_or(MvtError::InvalidKeyIndex(*key_idx))?;
         let value = layer
             .values
             .get(*value_idx as usize)
             .ok_or(MvtError::InvalidValueIndex(*value_idx))?;
 
         if let Some(ref v) = value.string_value {
-            processor.property(i, &key, &ColumnValue::String(v))?;
+            processor.property(i, key, &ColumnValue::String(v))?;
         } else if let Some(v) = value.float_value {
-            processor.property(i, &key, &ColumnValue::Float(v))?;
+            processor.property(i, key, &ColumnValue::Float(v))?;
         } else if let Some(v) = value.double_value {
-            processor.property(i, &key, &ColumnValue::Double(v))?;
+            processor.property(i, key, &ColumnValue::Double(v))?;
         } else if let Some(v) = value.int_value {
-            processor.property(i, &key, &ColumnValue::Long(v))?;
+            processor.property(i, key, &ColumnValue::Long(v))?;
         } else if let Some(v) = value.uint_value {
-            processor.property(i, &key, &ColumnValue::ULong(v))?;
+            processor.property(i, key, &ColumnValue::ULong(v))?;
         } else if let Some(v) = value.sint_value {
-            processor.property(i, &key, &ColumnValue::Long(v))?;
+            processor.property(i, key, &ColumnValue::Long(v))?;
         } else if let Some(v) = value.bool_value {
-            processor.property(i, &key, &ColumnValue::Bool(v))?;
+            processor.property(i, key, &ColumnValue::Bool(v))?;
         } else {
-            return Err(MvtError::UnsupportedKeyValueType(key))?;
+            return Err(MvtError::UnsupportedKeyValueType(key.to_string()))?;
         }
     }
     processor.properties_end()
