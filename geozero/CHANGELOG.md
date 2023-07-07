@@ -1,6 +1,8 @@
-## UNRELEASED
+## 0.10.0 (2023-07-07)
 
 * Remove lifetime from `GeoJsonReader`
+* Refactor MVT and GDAL errors (#148)
+* Update sqlx to 0.7
 * Update gpx to 0.9
 * Update gdal to 0.15
 
