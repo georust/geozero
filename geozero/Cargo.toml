@@ -55,8 +55,7 @@ wkt = { version = "0.10.0", optional = true }
 
 [dev-dependencies]
 diesel = { version = "2.0.2", default-features = false, features = ["postgres"] }
-flatgeobuf = { git = "https://github.com/pka/flatgeobuf", branch="geozero-0.10" }
-#flatgeobuf = "3.25.0"
+flatgeobuf = "3.26.0"
 geo = "0.25.0"
 hex = "0.4"
 kdbush = "0.2"
