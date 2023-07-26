@@ -111,7 +111,7 @@ required-features = ["with-geojson"]
 [[test]]
 name = "mvt"
 path = "tests/mvt.rs"
-required-features = ["with-mvt"]
+required-features = ["with-mvt", "with-geo", "with-geojson"]
 
 [[test]]
 name = "polylabel"
