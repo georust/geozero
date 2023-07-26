@@ -11,6 +11,13 @@ use super::mvt_error::MvtError;
 /// Generator for MVT geometry type.
 pub struct MvtWriter {
     pub(crate) feature: tile::Feature,
+    tile_size: Option<f64>,
+    // Tile extent
+    left: f64,
+    bottom: f64,
+    right: f64,
+    top: f64,
+    // Writer state
     last_x: i32,
     last_y: i32,
     line_state: LineState,
@@ -26,8 +33,15 @@ enum LineState {
 }
 
 impl MvtWriter {
-    pub fn new() -> MvtWriter {
-        Self::default()
+    pub fn new(tile_size: u16, left: f64, bottom: f64, right: f64, top: f64) -> MvtWriter {
+        MvtWriter {
+            tile_size: Some(tile_size as f64),
+            left,
+            bottom,
+            right,
+            top,
+            ..Default::default()
+        }
     }
 
     pub fn geometry(&self) -> &tile::Feature {
@@ -48,6 +62,11 @@ impl Default for MvtWriter {
     fn default() -> Self {
         Self {
             feature: tile::Feature::default(),
+            tile_size: None,
+            left: 0.0,
+            bottom: 0.0,
+            right: 0.0,
+            top: 0.0,
             last_x: 0,
             last_y: 0,
             line_state: LineState::None,
@@ -57,7 +76,7 @@ impl Default for MvtWriter {
 }
 
 impl GeomProcessor for MvtWriter {
-    fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
+    fn xy(&mut self, x_coord: f64, y_coord: f64, idx: usize) -> Result<()> {
         // Omit last coord of ring (emit ClosePath instead)
         let last_ring_coord = if let LineState::Ring(size) = self.line_state {
             idx == size - 1
@@ -66,8 +85,17 @@ impl GeomProcessor for MvtWriter {
         };
 
         if !last_ring_coord {
-            let x = x as i32;
-            let y = y as i32;
+            let x: i32;
+            let mut y: i32;
+            if let Some(tile_size) = self.tile_size {
+                x = ((x_coord - self.left) * tile_size / (self.right - self.left)) as i32;
+                y = ((y_coord - self.bottom) * tile_size / (self.top - self.bottom)) as i32;
+                y = (tile_size as i32).saturating_sub(y); // reverse_y only?
+            } else {
+                // unscaled
+                x = x_coord as i32;
+                y = y_coord as i32;
+            }
             self.feature
                 .geometry
                 .push(ParameterInteger::from(x.saturating_sub(self.last_x)));
@@ -377,9 +405,10 @@ mod test_mvt {
 #[cfg(feature = "with-geojson")]
 mod test {
     use super::*;
+    use crate::geojson::conversion::ToJson;
     use crate::geojson::GeoJson;
-    use crate::ToMvt;
-    use std::convert::TryFrom;
+    use crate::{GeozeroGeometry, ToMvt};
+    use serde_json::json;
 
     // https://github.com/mapbox/vector-tile-spec/tree/master/2.1#435-example-geometry-encodings
 
@@ -452,7 +481,6 @@ mod test {
             ]
         );
     }
-
     #[test]
     fn big_number_geom() {
         let geojson = r#"{
@@ -475,12 +503,28 @@ mod test {
 
     #[test]
     #[cfg(feature = "with-geo")]
-    fn geo_to_mvt() -> Result<()> {
-        use std::str::FromStr;
-        let geo =
-            geo_types::Geometry::try_from(wkt::Wkt::from_str("POINT (25 17)").unwrap()).unwrap();
+    fn geo_screen_coords_to_mvt() -> Result<()> {
+        let geo: geo_types::Geometry<f64> = geo_types::Point::new(25.0, 17.0).into();
         let mvt = geo.to_mvt()?;
         assert_eq!(mvt.geometry, [9, 50, 34]);
+        Ok(())
+    }
+
+    #[test]
+    #[cfg(feature = "with-geo")]
+    fn geo_to_mvt() -> Result<()> {
+        let geo: geo_types::Geometry<f64> = geo_types::Point::new(960000.0, 6002729.0).into();
+        let mut mvt = MvtWriter::new(256, 958826.08, 5987771.04, 978393.96, 6007338.92);
+        geo.process_geom(&mut mvt)?;
+        assert_eq!(mvt.geometry().geometry, [9, 30, 122]);
+        let geojson = mvt.geometry().to_json()?;
+        assert_eq!(
+            serde_json::from_str::<serde_json::Value>(&geojson).unwrap(),
+            json!({
+                "type": "Point",
+                "coordinates": [15,61]
+            }) // without reverse_y: [15,195]
+        );
         Ok(())
     }
 }

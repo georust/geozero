@@ -31,7 +31,7 @@ pub(crate) mod conversion {
 
     impl<T: GeozeroGeometry> ToMvt for T {
         fn to_mvt(&self) -> Result<tile::Feature> {
-            let mut mvt = MvtWriter::new();
+            let mut mvt = MvtWriter::default();
             self.process_geom(&mut mvt)?;
             Ok(mvt.feature)
         }
@@ -51,7 +51,7 @@ mod wkb {
 
     impl FromWkb for tile::Feature {
         fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> Result<Self> {
-            let mut mvt = MvtWriter::new();
+            let mut mvt = MvtWriter::default();
             crate::wkb::process_wkb_type_geom(rdr, &mut mvt, dialect)?;
             Ok(mvt.feature)
         }
