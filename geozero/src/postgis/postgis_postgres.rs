@@ -21,6 +21,20 @@ impl<T: FromWkb + Sized> FromSql<'_> for wkb::Decode<T> {
     }
 }
 
+impl FromSql<'_> for wkb::Ewkb {
+    fn from_sql(_ty: &Type, raw: &[u8]) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
+        Ok(wkb::Ewkb(raw.to_vec()))
+    }
+
+    fn from_sql_null(_ty: &Type) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
+        Ok(wkb::Ewkb(Vec::new()))
+    }
+
+    fn accepts(ty: &Type) -> bool {
+        matches!(ty.name(), "geography" | "geometry")
+    }
+}
+
 impl<T: GeozeroGeometry + Sized> ToSql for wkb::Encode<T> {
     fn to_sql(
         &self,

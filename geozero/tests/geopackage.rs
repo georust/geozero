@@ -36,6 +36,13 @@ async fn blob_query() -> Result<(), sqlx::Error> {
     let wkt = wkb::GpkgWkb(row.0).to_wkt().unwrap();
     assert_eq!(&wkt, "POINT(1.1 1.1)");
 
+    let row: (wkb::GpkgWkb,) = sqlx::query_as("SELECT geom FROM pt2d")
+        .fetch_one(&pool)
+        .await?;
+
+    let wkt = row.0.to_wkt().unwrap();
+    assert_eq!(&wkt, "POINT(1.1 1.1)");
+
     Ok(())
 }
 

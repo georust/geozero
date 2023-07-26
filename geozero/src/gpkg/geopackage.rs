@@ -28,6 +28,22 @@ impl<'de, T: FromWkb + Sized> Decode<'de, Sqlite> for wkb::Decode<T> {
     }
 }
 
+impl sqlx::Type<Sqlite> for wkb::GpkgWkb {
+    fn type_info() -> SqliteTypeInfo {
+        <Vec<u8> as sqlx::Type<Sqlite>>::type_info()
+    }
+}
+
+impl<'de> Decode<'de, Sqlite> for wkb::GpkgWkb {
+    fn decode(value: SqliteValueRef<'de>) -> Result<Self, BoxDynError> {
+        if value.is_null() {
+            return Ok(wkb::GpkgWkb(Vec::new()));
+        }
+        let blob = <&[u8] as Decode<Sqlite>>::decode(value)?;
+        Ok(wkb::GpkgWkb(blob.to_vec()))
+    }
+}
+
 impl<T: GeozeroGeometry + Sized> sqlx::Type<Sqlite> for wkb::Encode<T> {
     fn type_info() -> SqliteTypeInfo {
         <Vec<u8> as sqlx::Type<Sqlite>>::type_info()

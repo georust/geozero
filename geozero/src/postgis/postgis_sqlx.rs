@@ -33,6 +33,28 @@ impl<'de, T: FromWkb + Sized> Decode<'de, Postgres> for wkb::Decode<T> {
     }
 }
 
+impl sqlx::Type<Postgres> for wkb::Ewkb {
+    fn type_info() -> PgTypeInfo {
+        PgTypeInfo::with_name("geometry")
+    }
+}
+
+impl PgHasArrayType for wkb::Ewkb {
+    fn array_type_info() -> PgTypeInfo {
+        PgTypeInfo::with_name("_geometry")
+    }
+}
+
+impl<'de> Decode<'de, Postgres> for wkb::Ewkb {
+    fn decode(value: PgValueRef<'de>) -> Result<Self, BoxDynError> {
+        if value.is_null() {
+            return Ok(wkb::Ewkb(Vec::new()));
+        }
+        let blob = <&[u8] as Decode<Postgres>>::decode(value)?;
+        Ok(wkb::Ewkb(blob.to_vec()))
+    }
+}
+
 impl<T: GeozeroGeometry + Sized> sqlx::Type<Postgres> for wkb::Encode<T> {
     fn type_info() -> PgTypeInfo {
         PgTypeInfo::with_name("geometry")
