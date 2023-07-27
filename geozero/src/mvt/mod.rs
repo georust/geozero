@@ -26,11 +26,32 @@ pub(crate) mod conversion {
     /// Convert to MVT geometry.
     pub trait ToMvt {
         /// Convert to MVT geometry.
-        fn to_mvt(&self) -> Result<tile::Feature>;
+        fn to_mvt(
+            &self,
+            tile_size: u32,
+            left: f64,
+            bottom: f64,
+            right: f64,
+            top: f64,
+        ) -> Result<tile::Feature>;
+        /// Convert to MVT geometry with geometries in tile coordinate system.
+        fn to_mvt_unscaled(&self) -> Result<tile::Feature>;
     }
 
     impl<T: GeozeroGeometry> ToMvt for T {
-        fn to_mvt(&self) -> Result<tile::Feature> {
+        fn to_mvt(
+            &self,
+            tile_size: u32,
+            left: f64,
+            bottom: f64,
+            right: f64,
+            top: f64,
+        ) -> Result<tile::Feature> {
+            let mut mvt = MvtWriter::new(tile_size, left, bottom, right, top);
+            self.process_geom(&mut mvt)?;
+            Ok(mvt.feature)
+        }
+        fn to_mvt_unscaled(&self) -> Result<tile::Feature> {
             let mut mvt = MvtWriter::default();
             self.process_geom(&mut mvt)?;
             Ok(mvt.feature)
