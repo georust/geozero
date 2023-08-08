@@ -62,6 +62,19 @@ pub(crate) mod conversion {
         ) -> Result<Vec<u8>> {
             self.to_wkb_dialect(WkbDialect::Geopackage, dims, srid, envelope)
         }
+        /// Convert to Spatialite WKB.
+        fn to_spatialite_wkb(
+            &self,
+            dims: CoordDimensions,
+            srid: Option<i32>,
+            envelope: Vec<f64>,
+        ) -> Result<Vec<u8>> {
+            self.to_wkb_dialect(WkbDialect::Spatialite, dims, srid, envelope)
+        }
+        /// Convert to MySQL WKB.
+        fn to_mysql_wkb(&self, srid: Option<i32>) -> Result<Vec<u8>> {
+            self.to_wkb_dialect(WkbDialect::MySQL, CoordDimensions::default(), srid, Vec::new())
+        }
     }
 
     impl<T: GeozeroGeometry> ToWkb for T {
