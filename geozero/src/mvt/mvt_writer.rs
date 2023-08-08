@@ -9,14 +9,16 @@ use crate::GeomProcessor;
 use super::mvt_error::MvtError;
 
 /// Generator for MVT geometry type.
+#[derive(Default, Debug)]
 pub struct MvtWriter {
     pub(crate) feature: tile::Feature,
-    tile_size: Option<f64>,
-    // Tile extent
+    // Extent, 0 for unscaled
+    extent: i32,
+    // Scale geometry to bounds
     left: f64,
     bottom: f64,
-    right: f64,
-    top: f64,
+    x_multiplier: f64,
+    y_multiplier: f64,
     // Writer state
     last_x: i32,
     last_y: i32,
@@ -24,8 +26,9 @@ pub struct MvtWriter {
     is_multiline: bool,
 }
 
-#[derive(PartialEq)]
+#[derive(Default, Debug, PartialEq)]
 enum LineState {
+    #[default]
     None,
     // Issue LineTo command after first point
     Line(usize),
@@ -33,13 +36,14 @@ enum LineState {
 }
 
 impl MvtWriter {
-    pub fn new(tile_size: u32, left: f64, bottom: f64, right: f64, top: f64) -> MvtWriter {
+    pub fn new(extent: u32, left: f64, bottom: f64, right: f64, top: f64) -> MvtWriter {
+        assert_ne!(extent, 0);
         MvtWriter {
-            tile_size: Some(tile_size as f64),
+            extent: extent as i32,
             left,
             bottom,
-            right,
-            top,
+            x_multiplier: (extent as f64) / (right - left),
+            y_multiplier: (extent as f64) / (top - bottom),
             ..Default::default()
         }
     }
@@ -58,23 +62,6 @@ impl MvtWriter {
     }
 }
 
-impl Default for MvtWriter {
-    fn default() -> Self {
-        Self {
-            feature: tile::Feature::default(),
-            tile_size: None,
-            left: 0.0,
-            bottom: 0.0,
-            right: 0.0,
-            top: 0.0,
-            last_x: 0,
-            last_y: 0,
-            line_state: LineState::None,
-            is_multiline: false,
-        }
-    }
-}
-
 impl GeomProcessor for MvtWriter {
     fn xy(&mut self, x_coord: f64, y_coord: f64, idx: usize) -> Result<()> {
         // Omit last coord of ring (emit ClosePath instead)
@@ -85,17 +72,16 @@ impl GeomProcessor for MvtWriter {
         };
 
         if !last_ring_coord {
-            let x: i32;
-            let mut y: i32;
-            if let Some(tile_size) = self.tile_size {
-                x = ((x_coord - self.left) * tile_size / (self.right - self.left)) as i32;
-                y = ((y_coord - self.bottom) * tile_size / (self.top - self.bottom)) as i32;
-                y = (tile_size as i32).saturating_sub(y); // reverse_y only?
+            let (x, y) = if self.extent != 0 {
+                // scale to tile coordinate space
+                let x = ((x_coord - self.left) * self.x_multiplier) as i32;
+                let y = ((y_coord - self.bottom) * self.y_multiplier) as i32;
+                // Y is stored as reversed
+                (x, self.extent.saturating_sub(y))
             } else {
                 // unscaled
-                x = x_coord as i32;
-                y = y_coord as i32;
-            }
+                (x_coord as i32, y_coord as i32)
+            };
             self.feature
                 .geometry
                 .push(ParameterInteger::from(x.saturating_sub(self.last_x)));
@@ -415,21 +401,21 @@ mod test {
     #[test]
     fn point_geom() {
         let geojson = GeoJson(r#"{"type": "Point", "coordinates": [25, 17]}"#);
-        let mvt = geojson.to_mvt_raw().unwrap();
+        let mvt = geojson.to_mvt_unscaled().unwrap();
         assert_eq!(mvt.geometry, [9, 50, 34]);
     }
 
     #[test]
     fn multipoint_geom() {
         let geojson = GeoJson(r#"{"type": "MultiPoint", "coordinates": [[5, 7], [3, 2]]}"#);
-        let mvt = geojson.to_mvt_raw().unwrap();
+        let mvt = geojson.to_mvt_unscaled().unwrap();
         assert_eq!(mvt.geometry, [17, 10, 14, 3, 9]);
     }
 
     #[test]
     fn line_geom() {
         let geojson = GeoJson(r#"{"type": "LineString", "coordinates": [[2,2], [2,10], [10,10]]}"#);
-        let mvt = geojson.to_mvt_raw().unwrap();
+        let mvt = geojson.to_mvt_unscaled().unwrap();
         assert_eq!(mvt.geometry, [9, 4, 4, 18, 0, 16, 16, 0]);
     }
 
@@ -438,7 +424,7 @@ mod test {
         let geojson = GeoJson(
             r#"{"type": "MultiLineString", "coordinates": [[[2,2], [2,10], [10,10]],[[1,1],[3,5]]]}"#,
         );
-        let mvt = geojson.to_mvt_raw().unwrap();
+        let mvt = geojson.to_mvt_unscaled().unwrap();
         assert_eq!(
             mvt.geometry,
             [9, 4, 4, 18, 0, 16, 16, 0, 9, 17, 17, 10, 4, 8]
@@ -449,7 +435,7 @@ mod test {
     fn polygon_geom() {
         let geojson =
             GeoJson(r#"{"type": "Polygon", "coordinates": [[[3, 6], [8, 12], [20, 34], [3, 6]]]}"#);
-        let mvt = geojson.to_mvt_raw().unwrap();
+        let mvt = geojson.to_mvt_unscaled().unwrap();
         assert_eq!(mvt.geometry, [9, 6, 12, 18, 10, 12, 24, 44, 15]);
     }
 
@@ -472,7 +458,7 @@ mod test {
             ]
         }"#;
         let geojson = GeoJson(geojson);
-        let mvt = geojson.to_mvt_raw().unwrap();
+        let mvt = geojson.to_mvt_unscaled().unwrap();
         assert_eq!(
             mvt.geometry,
             [
@@ -485,7 +471,7 @@ mod test {
     #[cfg(feature = "with-geo")]
     fn geo_screen_coords_to_mvt() -> Result<()> {
         let geo: geo_types::Geometry<f64> = geo_types::Point::new(25.0, 17.0).into();
-        let mvt = geo.to_mvt_raw()?;
+        let mvt = geo.to_mvt_unscaled()?;
         assert_eq!(mvt.geometry, [9, 50, 34]);
         Ok(())
     }
