@@ -415,21 +415,21 @@ mod test {
     #[test]
     fn point_geom() {
         let geojson = GeoJson(r#"{"type": "Point", "coordinates": [25, 17]}"#);
-        let mvt = geojson.to_mvt_unscaled().unwrap();
+        let mvt = geojson.to_mvt_raw().unwrap();
         assert_eq!(mvt.geometry, [9, 50, 34]);
     }
 
     #[test]
     fn multipoint_geom() {
         let geojson = GeoJson(r#"{"type": "MultiPoint", "coordinates": [[5, 7], [3, 2]]}"#);
-        let mvt = geojson.to_mvt_unscaled().unwrap();
+        let mvt = geojson.to_mvt_raw().unwrap();
         assert_eq!(mvt.geometry, [17, 10, 14, 3, 9]);
     }
 
     #[test]
     fn line_geom() {
         let geojson = GeoJson(r#"{"type": "LineString", "coordinates": [[2,2], [2,10], [10,10]]}"#);
-        let mvt = geojson.to_mvt_unscaled().unwrap();
+        let mvt = geojson.to_mvt_raw().unwrap();
         assert_eq!(mvt.geometry, [9, 4, 4, 18, 0, 16, 16, 0]);
     }
 
@@ -438,7 +438,7 @@ mod test {
         let geojson = GeoJson(
             r#"{"type": "MultiLineString", "coordinates": [[[2,2], [2,10], [10,10]],[[1,1],[3,5]]]}"#,
         );
-        let mvt = geojson.to_mvt_unscaled().unwrap();
+        let mvt = geojson.to_mvt_raw().unwrap();
         assert_eq!(
             mvt.geometry,
             [9, 4, 4, 18, 0, 16, 16, 0, 9, 17, 17, 10, 4, 8]
@@ -449,7 +449,7 @@ mod test {
     fn polygon_geom() {
         let geojson =
             GeoJson(r#"{"type": "Polygon", "coordinates": [[[3, 6], [8, 12], [20, 34], [3, 6]]]}"#);
-        let mvt = geojson.to_mvt_unscaled().unwrap();
+        let mvt = geojson.to_mvt_raw().unwrap();
         assert_eq!(mvt.geometry, [9, 6, 12, 18, 10, 12, 24, 44, 15]);
     }
 
@@ -472,7 +472,7 @@ mod test {
             ]
         }"#;
         let geojson = GeoJson(geojson);
-        let mvt = geojson.to_mvt_unscaled().unwrap();
+        let mvt = geojson.to_mvt_raw().unwrap();
         assert_eq!(
             mvt.geometry,
             [
@@ -485,7 +485,7 @@ mod test {
     #[cfg(feature = "with-geo")]
     fn geo_screen_coords_to_mvt() -> Result<()> {
         let geo: geo_types::Geometry<f64> = geo_types::Point::new(25.0, 17.0).into();
-        let mvt = geo.to_mvt_unscaled()?;
+        let mvt = geo.to_mvt_raw()?;
         assert_eq!(mvt.geometry, [9, 50, 34]);
         Ok(())
     }

@@ -11,7 +11,7 @@ use std::sync::Mutex;
 #[test]
 fn geo_screen_coords_to_mvt() {
     let geo: geo_types::Geometry<f64> = geo_types::Point::new(25.0, 17.0).into();
-    let mvt = geo.to_mvt_unscaled().unwrap();
+    let mvt = geo.to_mvt_raw().unwrap();
     assert_eq!(mvt.geometry, [9, 50, 34]);
 }
 
