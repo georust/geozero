@@ -38,8 +38,9 @@ pub(crate) mod conversion {
             right: f64,
             top: f64,
         ) -> Result<tile::Feature>;
-        /// Convert to MVT geometry with geometries in tile coordinate space.
-        fn to_mvt_raw(&self) -> Result<tile::Feature>;
+
+        /// Convert to MVT geometry with geometries in unmodified tile coordinate space.
+        fn to_mvt_unscaled(&self) -> Result<tile::Feature>;
     }
 
     impl<T: GeozeroGeometry> ToMvt for T {
@@ -55,7 +56,8 @@ pub(crate) mod conversion {
             self.process_geom(&mut mvt)?;
             Ok(mvt.feature)
         }
-        fn to_mvt_raw(&self) -> Result<tile::Feature> {
+
+        fn to_mvt_unscaled(&self) -> Result<tile::Feature> {
             let mut mvt = MvtWriter::default();
             self.process_geom(&mut mvt)?;
             Ok(mvt.feature)
