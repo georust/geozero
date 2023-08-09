@@ -19,5 +19,5 @@ async-trait.workspace = true
 clap.workspace = true
 env_logger.workspace = true
 flatgeobuf.workspace = true
-geozero = { workspace = true, features = ["with-csv"] }
+geozero = { workspace = true, default-features = true, features = ["with-csv"] }
 tokio = { workspace = true, default-features = true, features = ["full"] }
