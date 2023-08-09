@@ -1,19 +1,23 @@
 [package]
 name = "geozero-cli"
 description = "Command line interface for geozero"
-version = "0.1.0"
-authors = ["Pirmin Kalberer <pka@sourcepole.ch>"]
-edition = "2021"
+readme = "README.md"
 default-run = "geozero"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
 
 [[bin]]
 name = "geozero"
 path = "src/main.rs"
 
 [dependencies]
-async-trait = "0.1"
-clap = { version = "4", features = ["derive"] }
-env_logger = "0.10.0"
-flatgeobuf = "3.26.0"
-geozero = { version = "0.10.0", features = ["with-csv"] }
-tokio = { version = "1.27.0", features = ["full"] }
+async-trait.workspace = true
+clap.workspace = true
+env_logger.workspace = true
+flatgeobuf.workspace = true
+geozero = { workspace = true, features = ["with-csv"] }
+tokio = { workspace = true, default-features = true, features = ["full"] }
