@@ -249,6 +249,7 @@ impl<W: Write> GeomProcessor for CsvWriter<'_, W> {
 // incorporated in the output of the CSV writer. Is there a better way?
 mod buffering_wkt_writer {
     use crate::error::Result;
+    use crate::wkt::WktDialect;
     use crate::{wkt::WktWriter, CoordDimensions, GeomProcessor};
 
     #[derive(Default)]
@@ -271,7 +272,7 @@ mod buffering_wkt_writer {
         }
 
         fn wkt_writer(&mut self) -> WktWriter<'_, Vec<u8>> {
-            WktWriter::new(&mut self.buffer)
+            WktWriter::new(&mut self.buffer, WktDialect::Wkt)
         }
     }
 

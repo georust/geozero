@@ -151,7 +151,7 @@ fn process_polygon<P: GeomProcessor>(
 #[cfg(feature = "with-wkt")]
 mod test {
     use super::*;
-    use crate::wkt::WktWriter;
+    use crate::wkt::{WktWriter, WktDialect};
     use crate::{CoordDimensions, ToWkt};
 
     #[test]
@@ -160,7 +160,7 @@ mod test {
         let geo = Geometry::from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_geom(&geo, &mut WktWriter::new(&mut wkt_data)).is_ok());
+        assert!(process_geom(&geo, &mut WktWriter::new(&mut wkt_data, WktDialect::Wkt)).is_ok());
 
         assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), wkt);
     }
@@ -184,13 +184,7 @@ mod test {
         let wkt = "LINESTRING(1 1 10,2 2 20)";
         let geo = Geometry::from_wkt(wkt).unwrap();
         assert_eq!(
-            geo.to_wkt_ndim(CoordDimensions {
-                z: true,
-                m: false,
-                t: false,
-                tm: false
-            })
-            .unwrap(),
+            geo.to_ewkt(None).unwrap(),
             wkt
         );
     }

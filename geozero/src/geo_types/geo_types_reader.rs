@@ -116,7 +116,7 @@ fn process_polygon<P: GeomProcessor>(
 #[cfg(feature = "with-wkt")]
 mod test {
     use super::*;
-    use crate::wkt::WktWriter;
+    use crate::wkt::{WktWriter, WktDialect};
     use crate::ToWkt;
     use std::convert::TryFrom;
     use std::str::FromStr;
@@ -127,7 +127,7 @@ mod test {
         let geo = Geometry::try_from(wkt::Wkt::from_str(wkt).unwrap()).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_geom(&geo, &mut WktWriter::new(&mut wkt_data)).is_ok());
+        assert!(process_geom(&geo, &mut WktWriter::new(&mut wkt_data, WktDialect::Wkt)).is_ok());
 
         assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), wkt);
     }

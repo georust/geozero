@@ -45,18 +45,21 @@ impl GeozeroGeometry for GpkgWkb {
 /// Process WKB geometry.
 pub fn process_wkb_geom<R: Read, P: GeomProcessor>(raw: &mut R, processor: &mut P) -> Result<()> {
     let info = read_wkb_header(raw)?;
+    processor.srid(info.srid)?;
     process_wkb_geom_n(raw, &info, read_wkb_header, 0, processor)
 }
 
 /// Process EWKB geometry.
 pub fn process_ewkb_geom<R: Read, P: GeomProcessor>(raw: &mut R, processor: &mut P) -> Result<()> {
     let info = read_ewkb_header(raw)?;
+    processor.srid(info.srid)?;
     process_wkb_geom_n(raw, &info, read_ewkb_header, 0, processor)
 }
 
 /// Process GPKG geometry.
 pub fn process_gpkg_geom<R: Read, P: GeomProcessor>(raw: &mut R, processor: &mut P) -> Result<()> {
     let info = read_gpkg_header(raw)?;
+    processor.srid(info.srid)?;
     process_wkb_geom_n(raw, &info, read_wkb_header, 0, processor)
 }
 
@@ -440,7 +443,7 @@ fn process_curvepolygon<R: Read, P: GeomProcessor>(
 #[cfg(feature = "with-wkt")]
 mod test {
     use super::*;
-    use crate::wkt::WktWriter;
+    use crate::wkt::{WktWriter, WktDialect};
     use crate::ToWkt;
 
     #[test]
@@ -459,13 +462,13 @@ mod test {
         // Process xy only
         let mut wkt_data: Vec<u8> = Vec::new();
         assert!(
-            process_ewkb_geom(&mut ewkb.as_slice(), &mut WktWriter::new(&mut wkt_data)).is_ok()
+            process_ewkb_geom(&mut ewkb.as_slice(), &mut WktWriter::new(&mut wkt_data, WktDialect::Wkt)).is_ok()
         );
         assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), "POINT(10 -20)");
 
         // Process all dimensions
         let mut wkt_data: Vec<u8> = Vec::new();
-        let mut writer = WktWriter::new(&mut wkt_data);
+        let mut writer = WktWriter::new(&mut wkt_data, WktDialect::Wkt);
         writer.dims.z = true;
         writer.dims.m = true;
         assert!(process_ewkb_geom(&mut ewkb.as_slice(), &mut writer).is_ok());
@@ -484,7 +487,7 @@ mod test {
         assert!(info.has_z);
 
         let mut wkt_data: Vec<u8> = Vec::new();
-        let mut writer = WktWriter::new(&mut wkt_data);
+        let mut writer = WktWriter::new(&mut wkt_data, WktDialect::Wkt);
         writer.dims.z = true;
         assert!(process_ewkb_geom(&mut ewkb.as_slice(), &mut writer).is_ok());
         assert_eq!(
@@ -595,7 +598,7 @@ mod test {
     fn ewkb_to_wkt(ewkb_str: &str, with_z: bool) -> String {
         let ewkb = hex::decode(ewkb_str).unwrap();
         let mut wkt_data: Vec<u8> = Vec::new();
-        let mut writer = WktWriter::new(&mut wkt_data);
+        let mut writer = WktWriter::new(&mut wkt_data, WktDialect::Wkt);
         writer.dims.z = with_z;
         assert_eq!(
             process_ewkb_geom(&mut ewkb.as_slice(), &mut writer).map_err(|e| e.to_string()),
@@ -615,7 +618,7 @@ mod test {
         assert_eq!(info.srid, Some(4326));
 
         let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_gpkg_geom(&mut wkb.as_slice(), &mut WktWriter::new(&mut wkt_data)).is_ok());
+        assert!(process_gpkg_geom(&mut wkb.as_slice(), &mut WktWriter::new(&mut wkt_data, WktDialect::Wkt)).is_ok());
         assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), "POINT(1.1 1.1)");
 
         // mln3dzm
@@ -627,7 +630,7 @@ mod test {
         assert_eq!(info.envelope, vec![10.0, 20.0, 10.0, 20.0]);
 
         let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_gpkg_geom(&mut wkb.as_slice(), &mut WktWriter::new(&mut wkt_data)).is_ok());
+        assert!(process_gpkg_geom(&mut wkb.as_slice(), &mut WktWriter::new(&mut wkt_data, WktDialect::Wkt)).is_ok());
         assert_eq!(
             std::str::from_utf8(&wkt_data).unwrap(),
             "MULTILINESTRING((20 10,10 20))"
@@ -640,7 +643,7 @@ mod test {
         assert_eq!(info.envelope, vec![1.0, 22.0, 3.0, 22.0]);
 
         let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_gpkg_geom(&mut wkb.as_slice(), &mut WktWriter::new(&mut wkt_data)).is_ok());
+        assert!(process_gpkg_geom(&mut wkb.as_slice(), &mut WktWriter::new(&mut wkt_data, WktDialect::Wkt)).is_ok());
         assert_eq!(
             std::str::from_utf8(&wkt_data).unwrap(),
             "GEOMETRYCOLLECTION(POINT(1 3),POLYGON((21 21,22 21,21 22,21 21)))"
