@@ -1,12 +1,36 @@
-use geozero::mvt::Message;
-use geozero::mvt::Tile;
+use geozero::mvt::{Message, Tile};
 use geozero::{
     ColumnValue, CoordDimensions, FeatureProcessor, GeomProcessor, GeozeroDatasource,
-    PropertyProcessor,
+    PropertyProcessor, ToJson, ToMvt,
 };
+use serde_json::json;
 use std::env;
 use std::fmt::Write;
 use std::sync::Mutex;
+
+#[test]
+fn geo_screen_coords_to_mvt() {
+    let geo: geo_types::Geometry<f64> = geo_types::Point::new(25.0, 17.0).into();
+    let mvt = geo.to_mvt_unscaled().unwrap();
+    assert_eq!(mvt.geometry, [9, 50, 34]);
+}
+
+#[test]
+fn geo_to_mvt() {
+    let geo: geo_types::Geometry<f64> = geo_types::Point::new(960000.0, 6002729.0).into();
+    let mvt = geo
+        .to_mvt(256, 958826.08, 5987771.04, 978393.96, 6007338.92)
+        .unwrap();
+    assert_eq!(mvt.geometry, [9, 30, 122]);
+    let geojson = mvt.to_json().unwrap();
+    assert_eq!(
+        serde_json::from_str::<serde_json::Value>(&geojson).unwrap(),
+        json!({
+            "type": "Point",
+            "coordinates": [15,61]
+        })
+    );
+}
 
 type GzResult = geozero::error::Result<()>;
 
