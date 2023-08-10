@@ -29,7 +29,7 @@ impl<'a, W: Write> WktWriter<'a, W> {
             self.first_header = false;
             match srid {
                 None | Some(0) => (),
-                Some(srid) => self.out.write_all(format!("SRID={srid};").as_bytes())?
+                Some(srid) => self.out.write_all(format!("SRID={srid};").as_bytes())?,
             }
         }
         Ok(())
@@ -76,7 +76,7 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
         self.srid = self.srid.or(srid);
         Ok(())
     }
-    
+
     fn coordinate(
         &mut self,
         x: f64,
@@ -201,7 +201,11 @@ impl<W: Write> FeatureProcessor for WktWriter<'_, W> {}
 
 #[cfg(test)]
 mod test {
-    use crate::{ToWkt, wkt::EwktString, wkb::{FromWkb, WkbDialect}};
+    use crate::{
+        wkb::{FromWkb, WkbDialect},
+        wkt::EwktString,
+        ToWkt,
+    };
 
     #[test]
     #[cfg(feature = "with-geo")]
@@ -216,7 +220,9 @@ mod test {
         let blob = hex::decode("01040000A0E6100000020000000101000080000000000000244000000000000034C0000000000000594001010000800000000000000000000000000000E0BF0000000000405940").unwrap();
         let mut cursor = std::io::Cursor::new(blob);
         assert_eq!(
-            EwktString::from_wkb(&mut cursor, WkbDialect::Ewkb).unwrap().0,
+            EwktString::from_wkb(&mut cursor, WkbDialect::Ewkb)
+                .unwrap()
+                .0,
             "SRID=4326;MULTIPOINT(10 -20 100,0 -0.5 101)"
         )
     }

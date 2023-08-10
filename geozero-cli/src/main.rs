@@ -4,7 +4,7 @@ use geozero::csv::{CsvReader, CsvWriter};
 use geozero::error::Result;
 use geozero::geojson::{GeoJsonReader, GeoJsonWriter};
 use geozero::svg::SvgWriter;
-use geozero::wkt::{WktReader, WktWriter, WktDialect};
+use geozero::wkt::{WktDialect, WktReader, WktWriter};
 use geozero::{FeatureProcessor, GeozeroDatasource};
 use std::ffi::OsStr;
 use std::fs::File;

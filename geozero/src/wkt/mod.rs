@@ -9,7 +9,7 @@ pub use wkt_writer::*;
 
 pub(crate) mod conversion {
     use crate::error::Result;
-    use crate::wkt::{WktWriter, WktDialect};
+    use crate::wkt::{WktDialect, WktWriter};
     use crate::{CoordDimensions, GeozeroGeometry};
 
     /// Convert to WKT.
@@ -21,7 +21,12 @@ pub(crate) mod conversion {
         /// Convert to WKT String with dimensions.
         fn to_wkt_ndim(&self, dims: CoordDimensions) -> Result<String>;
         /// Convert to WKT String with srid, dimensions and dialect.
-        fn to_wkt_dialect(&self, dialect: WktDialect, dims: CoordDimensions, srid: Option<i32>) -> Result<String>;
+        fn to_wkt_dialect(
+            &self,
+            dialect: WktDialect,
+            dims: CoordDimensions,
+            srid: Option<i32>,
+        ) -> Result<String>;
     }
 
     impl<T: GeozeroGeometry> ToWkt for T {
@@ -34,7 +39,12 @@ pub(crate) mod conversion {
         fn to_wkt_ndim(&self, dims: CoordDimensions) -> Result<String> {
             self.to_wkt_dialect(WktDialect::Wkt, dims, None)
         }
-        fn to_wkt_dialect(&self, dialect: WktDialect, dims: CoordDimensions, srid: Option<i32>) -> Result<String> {
+        fn to_wkt_dialect(
+            &self,
+            dialect: WktDialect,
+            dims: CoordDimensions,
+            srid: Option<i32>,
+        ) -> Result<String> {
             let mut out: Vec<u8> = Vec::new();
             let mut writer = WktWriter::new(&mut out, dialect);
             writer.dims = dims;
@@ -49,10 +59,10 @@ pub(crate) mod conversion {
 
 #[cfg(feature = "with-wkb")]
 mod wkb {
-    use crate::CoordDimensions;
     use crate::error::Result;
     use crate::wkb::{FromWkb, WkbDialect};
-    use crate::wkt::{WktDialect, WktString, EwktString, WktWriter};
+    use crate::wkt::{EwktString, WktDialect, WktString, WktWriter};
+    use crate::CoordDimensions;
     use std::io::Read;
 
     impl FromWkb for WktString {
@@ -89,5 +99,7 @@ pub enum WktDialect {
 }
 
 impl Default for WktDialect {
-    fn default() -> Self { WktDialect::Wkt }
+    fn default() -> Self {
+        WktDialect::Wkt
+    }
 }

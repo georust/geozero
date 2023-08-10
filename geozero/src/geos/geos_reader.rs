@@ -173,7 +173,7 @@ fn process_polygon<'a, P: GeomProcessor, G: Geom<'a>>(
 #[cfg(feature = "with-wkt")]
 mod test {
     use super::*;
-    use crate::wkt::{WktWriter, WktDialect};
+    use crate::wkt::{WktDialect, WktWriter};
 
     #[test]
     fn point_geom() {

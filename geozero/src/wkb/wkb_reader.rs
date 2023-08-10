@@ -443,7 +443,7 @@ fn process_curvepolygon<R: Read, P: GeomProcessor>(
 #[cfg(feature = "with-wkt")]
 mod test {
     use super::*;
-    use crate::wkt::{WktWriter, WktDialect};
+    use crate::wkt::{WktDialect, WktWriter};
     use crate::ToWkt;
 
     #[test]
@@ -461,9 +461,11 @@ mod test {
 
         // Process xy only
         let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(
-            process_ewkb_geom(&mut ewkb.as_slice(), &mut WktWriter::new(&mut wkt_data, WktDialect::Wkt)).is_ok()
-        );
+        assert!(process_ewkb_geom(
+            &mut ewkb.as_slice(),
+            &mut WktWriter::new(&mut wkt_data, WktDialect::Wkt)
+        )
+        .is_ok());
         assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), "POINT(10 -20)");
 
         // Process all dimensions
@@ -618,7 +620,11 @@ mod test {
         assert_eq!(info.srid, Some(4326));
 
         let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_gpkg_geom(&mut wkb.as_slice(), &mut WktWriter::new(&mut wkt_data, WktDialect::Wkt)).is_ok());
+        assert!(process_gpkg_geom(
+            &mut wkb.as_slice(),
+            &mut WktWriter::new(&mut wkt_data, WktDialect::Wkt)
+        )
+        .is_ok());
         assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), "POINT(1.1 1.1)");
 
         // mln3dzm
@@ -630,7 +636,11 @@ mod test {
         assert_eq!(info.envelope, vec![10.0, 20.0, 10.0, 20.0]);
 
         let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_gpkg_geom(&mut wkb.as_slice(), &mut WktWriter::new(&mut wkt_data, WktDialect::Wkt)).is_ok());
+        assert!(process_gpkg_geom(
+            &mut wkb.as_slice(),
+            &mut WktWriter::new(&mut wkt_data, WktDialect::Wkt)
+        )
+        .is_ok());
         assert_eq!(
             std::str::from_utf8(&wkt_data).unwrap(),
             "MULTILINESTRING((20 10,10 20))"
@@ -643,7 +653,11 @@ mod test {
         assert_eq!(info.envelope, vec![1.0, 22.0, 3.0, 22.0]);
 
         let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_gpkg_geom(&mut wkb.as_slice(), &mut WktWriter::new(&mut wkt_data, WktDialect::Wkt)).is_ok());
+        assert!(process_gpkg_geom(
+            &mut wkb.as_slice(),
+            &mut WktWriter::new(&mut wkt_data, WktDialect::Wkt)
+        )
+        .is_ok());
         assert_eq!(
             std::str::from_utf8(&wkt_data).unwrap(),
             "GEOMETRYCOLLECTION(POINT(1 3),POLYGON((21 21,22 21,21 22,21 21)))"
