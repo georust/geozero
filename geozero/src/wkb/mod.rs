@@ -69,7 +69,7 @@ pub(crate) mod conversion {
             srid: Option<i32>,
             envelope: Vec<f64>,
         ) -> Result<Vec<u8>> {
-            self.to_wkb_dialect(WkbDialect::Spatialite, dims, srid, envelope)
+            self.to_wkb_dialect(WkbDialect::SpatiaLite, dims, srid, envelope)
         }
         /// Convert to MySQL WKB.
         fn to_mysql_wkb(&self, srid: Option<i32>) -> Result<Vec<u8>> {

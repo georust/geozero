@@ -46,9 +46,9 @@ impl GeozeroGeometry for GpkgWkb {
 }
 
 /// GeoPackage WKB reader.
-pub struct SpatialiteWkb(pub Vec<u8>);
+pub struct SpatiaLiteWkb(pub Vec<u8>);
 
-impl GeozeroGeometry for SpatialiteWkb {
+impl GeozeroGeometry for SpatiaLiteWkb {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
         process_spatialite_geom(&mut self.0.as_slice(), processor)
     }
@@ -106,7 +106,7 @@ pub fn process_wkb_type_geom<R: Read, P: GeomProcessor>(
         WkbDialect::Wkb => process_wkb_geom(raw, processor),
         WkbDialect::Ewkb => process_ewkb_geom(raw, processor),
         WkbDialect::Geopackage => process_gpkg_geom(raw, processor),
-        WkbDialect::Spatialite => process_spatialite_geom(raw, processor),
+        WkbDialect::SpatiaLite => process_spatialite_geom(raw, processor),
         WkbDialect::MySQL => process_mysql_geom(raw, processor),
     }
 }

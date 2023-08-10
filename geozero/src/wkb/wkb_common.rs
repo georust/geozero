@@ -43,7 +43,7 @@ pub enum WkbDialect {
     Ewkb,
     Geopackage,
     MySQL,
-    Spatialite,
+    SpatiaLite,
 }
 
 /// WKB Types according to OGC 06-103r4 (<https://www.ogc.org/standards/sfa>)
