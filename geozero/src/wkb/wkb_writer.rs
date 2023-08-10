@@ -161,7 +161,7 @@ impl<'a, W: Write> WkbWriter<'a, W> {
     /// Spatialite WKB header according to https://www.gaia-gis.it/gaia-sins/BLOB-Geometry.html
     fn write_spatialite_header(&mut self, wkb_type: WKBGeometryType) -> Result<()> {
         if self.first_header {
-            self.out.iowrite(0 as u8)?;
+            self.out.iowrite::<u8>(0)?;
             let byte_order: WKBByteOrder = self.endian.into();
             self.out.iowrite(byte_order as u8)?;
             self.out.iowrite(self.srid.unwrap_or(0))?;
@@ -171,11 +171,11 @@ impl<'a, W: Write> WkbWriter<'a, W> {
                 self.out.iowrite_with(*val, self.endian)?;
             }
 
-            self.out.iowrite(0x7C as u8)?;
+            self.out.iowrite::<u8>(0x7C)?;
 
             self.first_header = false;
         } else {
-            self.out.iowrite(0x69 as u8)?;
+            self.out.iowrite::<u8>(0x69)?;
         }
 
         let mut type_id = wkb_type as u32;
@@ -213,7 +213,7 @@ impl<'a, W: Write> WkbWriter<'a, W> {
             WkbDialect::MySQL => Ok(()),
             WkbDialect::Spatialite => {
                 if self.nesting_level == 0 {
-                    self.out.iowrite(0xFE as u8)?;
+                    self.out.iowrite::<u8>(0xFE)?;
                 }
                 Ok(())
             }
