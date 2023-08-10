@@ -37,9 +37,9 @@ pub struct EwktString(pub String);
 pub struct EwktStr<'a>(pub &'a str);
 
 /// Wkt Reader.
-pub struct WktReader<'a, R: Read>(pub &'a mut R);
+pub struct WktReader<R: Read>(pub R);
 
-impl<'a, R: Read> GeozeroDatasource for WktReader<'a, R> {
+impl<'a, R: Read> GeozeroDatasource for WktReader<R> {
     fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> Result<()> {
         read_wkt(&mut self.0, processor)
     }
