@@ -1,7 +1,10 @@
 use crate::error::{GeozeroError, Result};
 use crate::wkb::{WKBGeometryType, WkbDialect};
 use crate::{GeomProcessor, GeozeroGeometry};
-use scroll::{IOread, Endian, ctx::{FromCtx, SizeWith}};
+use scroll::{
+    ctx::{FromCtx, SizeWith},
+    Endian, IOread,
+};
 use std::io::Read;
 
 #[cfg(feature = "with-postgis-diesel")]
@@ -79,7 +82,10 @@ pub fn process_gpkg_geom<R: Read, P: GeomProcessor>(raw: &mut R, processor: &mut
 }
 
 /// Process MySQL WKB geometry.
-pub fn process_spatialite_geom<R: Read, P: GeomProcessor>(raw: &mut R, processor: &mut P) -> Result<()> {
+pub fn process_spatialite_geom<R: Read, P: GeomProcessor>(
+    raw: &mut R,
+    processor: &mut P,
+) -> Result<()> {
     let info = read_spatialite_header(raw)?;
     process_wkb_geom_n(raw, &info, read_spatialite_nested_header, 0, processor)
 }
@@ -224,19 +230,27 @@ pub(crate) fn read_spatialite_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
     let flags = raw.ioread::<u8>()?;
     let endian = Endian::from(flags & 0b0000_0001 != 0);
     let is_tinypoint = flags & 0b1000_0000 != 0;
-    
+
     let srid = match raw.ioread_with::<i32>(endian)? {
         0 => None,
-        val => Some(val)
+        val => Some(val),
     };
-    
+
     let info = if is_tinypoint {
         let envelope = Vec::<f64>::new();
         let base_type = WKBGeometryType::Point;
         let type_id_dim = raw.ioread_with::<u8>(endian)?;
         let has_z = matches!(type_id_dim, 2 | 4);
         let has_m = matches!(type_id_dim, 3 | 4);
-        WkbInfo {endian, srid, envelope, base_type, has_z, has_m, is_compressed: false }
+        WkbInfo {
+            endian,
+            srid,
+            envelope,
+            base_type,
+            has_z,
+            has_m,
+            is_compressed: false,
+        }
     } else {
         let envelope = (0..4)
             .map(|_| raw.ioread_with::<f64>(endian))
@@ -251,13 +265,24 @@ pub(crate) fn read_spatialite_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
         let has_z = matches!(type_id_dim, 1 | 3);
         let has_m = matches!(type_id_dim, 2 | 3);
         let base_type = WKBGeometryType::from_u32(type_id % 1000);
-        WkbInfo { endian, srid, envelope, base_type, has_z, has_m, is_compressed }
+        WkbInfo {
+            endian,
+            srid,
+            envelope,
+            base_type,
+            has_z,
+            has_m,
+            is_compressed,
+        }
     };
-    
+
     Ok(info)
 }
 
-pub(crate) fn read_spatialite_nested_header<R: Read>(raw: &mut R, info: &WkbInfo) -> Result<WkbInfo> {
+pub(crate) fn read_spatialite_nested_header<R: Read>(
+    raw: &mut R,
+    info: &WkbInfo,
+) -> Result<WkbInfo> {
     let start = raw.ioread::<u8>()?;
     if start != 0x69 {
         return Err(GeozeroError::GeometryFormat);
@@ -276,11 +301,11 @@ pub(crate) fn read_spatialite_nested_header<R: Read>(raw: &mut R, info: &WkbInfo
     })
 }
 
-
 /// MySQL WKB header.
 pub(crate) fn read_mysql_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
     let valid_endian = scroll::LE;
-    let srid: i32 = raw.ioread_with::<u32>(valid_endian)?
+    let srid: i32 = raw
+        .ioread_with::<u32>(valid_endian)?
         .try_into()
         .map_err(|_| GeozeroError::GeometryFormat)?;
     let mut info = read_wkb_header(raw)?;
@@ -290,7 +315,6 @@ pub(crate) fn read_mysql_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
     info.srid = Some(srid);
     Ok(info)
 }
-
 
 pub(crate) fn process_wkb_geom_n<R: Read, P: GeomProcessor>(
     raw: &mut R,
@@ -438,14 +462,17 @@ fn process_compressed_coord<R: Read, P: GeomProcessor>(
     let coord = (
         prev_coord.0 + relative_coord.0,
         prev_coord.1 + relative_coord.1,
-        prev_coord.2.zip(relative_coord.2).map(|(a, b)| a + b ),
+        prev_coord.2.zip(relative_coord.2).map(|(a, b)| a + b),
         relative_coord.3,
     );
     emit_coord(coord, multi_dim, idx, processor)?;
     Ok(coord)
 }
 
-fn read_coord_as<R: Read, T: Into<f64> + FromCtx<Endian> + SizeWith<Endian>>(raw: &mut R, info: &WkbInfo) -> Result<(f64, f64, Option<f64>, Option<f64>)> {
+fn read_coord_as<R: Read, T: Into<f64> + FromCtx<Endian> + SizeWith<Endian>>(
+    raw: &mut R,
+    info: &WkbInfo,
+) -> Result<(f64, f64, Option<f64>, Option<f64>)> {
     let x: f64 = raw.ioread_with::<T>(info.endian)?.into();
     let y: f64 = raw.ioread_with::<T>(info.endian)?.into();
     let z: Option<f64> = if info.has_z {
@@ -650,7 +677,8 @@ mod test {
         let mut writer = WktWriter::new(&mut wkt_data);
         writer.dims.z = with_z;
         assert_eq!(
-            process_wkb_type_geom(&mut ewkb.as_slice(), &mut writer, dialect).map_err(|e| e.to_string()),
+            process_wkb_type_geom(&mut ewkb.as_slice(), &mut writer, dialect)
+                .map_err(|e| e.to_string()),
             Ok(())
         );
         std::str::from_utf8(&wkt_data).unwrap().to_string()
@@ -660,7 +688,11 @@ mod test {
     fn ewkb_geometries() {
         // SELECT 'POINT(10 -20)'::geometry
         assert_eq!(
-            &wkb_to_wkt(WkbDialect::Ewkb, "0101000000000000000000244000000000000034C0", false),
+            &wkb_to_wkt(
+                WkbDialect::Ewkb,
+                "0101000000000000000000244000000000000034C0",
+                false
+            ),
             "POINT(10 -20)"
         );
 
@@ -767,7 +799,10 @@ mod test {
 
         // Process xy only
         let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_spatialite_geom(&mut ewkb.as_slice(), &mut WktWriter::new(&mut wkt_data)).is_ok());
+        assert!(
+            process_spatialite_geom(&mut ewkb.as_slice(), &mut WktWriter::new(&mut wkt_data))
+                .is_ok()
+        );
         assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), "POINT(10 -20)");
 
         // Process all dimensions
@@ -776,10 +811,16 @@ mod test {
         writer.dims.z = true;
         writer.dims.m = true;
         assert!(process_spatialite_geom(&mut ewkb.as_slice(), &mut writer).is_ok());
-        assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), "POINT(10 -20 100 1)");
+        assert_eq!(
+            std::str::from_utf8(&wkt_data).unwrap(),
+            "POINT(10 -20 100 1)"
+        );
 
         // SELECT HEX(TinyPointEncode(ST_GeomFromText('POINTZM(10 -20 100 1)', 4326)));
-        let ewkb = hex::decode("0081E610000004000000000000244000000000000034C00000000000005940000000000000F03FFE").unwrap();
+        let ewkb = hex::decode(
+            "0081E610000004000000000000244000000000000034C00000000000005940000000000000F03FFE",
+        )
+        .unwrap();
         let info = read_spatialite_header(&mut ewkb.as_slice()).unwrap();
         assert_eq!(info.base_type, WKBGeometryType::Point);
         assert_eq!(info.srid, Some(4326));
@@ -787,9 +828,12 @@ mod test {
         assert!(info.has_m);
 
         let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_spatialite_geom(&mut ewkb.as_slice(), &mut WktWriter::new(&mut wkt_data)).is_ok());
+        assert!(
+            process_spatialite_geom(&mut ewkb.as_slice(), &mut WktWriter::new(&mut wkt_data))
+                .is_ok()
+        );
         assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), "POINT(10 -20)");
-        
+
         // SELECT HEX(CompressGeometry(ST_GeomFromText('LINESTRINGZM(0 0 0 0,10 0 2 20,10 10 1 -40,51 69 13 37)', 4326)));
         let ewkb = hex::decode("0001E610000000000000000000000000000000000000000000000080494000000000004051407CFA4D0F0004000000000000000000000000000000000000000000000000000000000000000000000000002041000000000000004000000000000034400000000000002041000080BF00000000000044C0000000000080494000000000004051400000000000002A400000000000804240FE").unwrap();
         let info = read_spatialite_header(&mut ewkb.as_slice()).unwrap();
@@ -797,14 +841,17 @@ mod test {
         assert_eq!(info.srid, Some(4326));
         assert!(info.has_z);
         assert!(info.has_m);
-        
+
         let mut wkt_data: Vec<u8> = Vec::new();
         let mut writer = WktWriter::new(&mut wkt_data);
         writer.dims.z = true;
         writer.dims.m = true;
         assert!(process_spatialite_geom(&mut ewkb.as_slice(), &mut writer).is_ok());
-        assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), "LINESTRING(0 0 0 0,10 0 2 20,10 10 1 -40,51 69 13 37)");
-        
+        assert_eq!(
+            std::str::from_utf8(&wkt_data).unwrap(),
+            "LINESTRING(0 0 0 0,10 0 2 20,10 10 1 -40,51 69 13 37)"
+        );
+
         // SELECT HEX(ST_GeomFromText('MULTILINESTRINGZM((20 10 5 1,10 20 30 40))'));
         let wkb = hex::decode("00010000000000000000000024400000000000002440000000000000344000000000000034407CBD0B00000100000069BA0B000002000000000000000000344000000000000024400000000000001440000000000000F03F000000000000244000000000000034400000000000003E400000000000004440FE").unwrap();
         let info = read_spatialite_header(&mut wkb.as_slice()).unwrap();
@@ -815,7 +862,10 @@ mod test {
         assert_eq!(info.envelope, vec![10.0, 10.0, 20.0, 20.0]);
 
         let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_spatialite_geom(&mut wkb.as_slice(), &mut WktWriter::new(&mut wkt_data)).is_ok());
+        assert!(
+            process_spatialite_geom(&mut wkb.as_slice(), &mut WktWriter::new(&mut wkt_data))
+                .is_ok()
+        );
         assert_eq!(
             std::str::from_utf8(&wkt_data).unwrap(),
             "MULTILINESTRING((20 10,10 20))"
@@ -828,7 +878,10 @@ mod test {
         assert_eq!(info.envelope, vec![1.0, 3.0, 22.0, 22.0]);
 
         let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_spatialite_geom(&mut wkb.as_slice(), &mut WktWriter::new(&mut wkt_data)).is_ok());
+        assert!(
+            process_spatialite_geom(&mut wkb.as_slice(), &mut WktWriter::new(&mut wkt_data))
+                .is_ok()
+        );
         assert_eq!(
             std::str::from_utf8(&wkt_data).unwrap(),
             "GEOMETRYCOLLECTION(POINT(1 3),POLYGON((21 21,22 21,21 22,21 21)))"
@@ -846,7 +899,9 @@ mod test {
         assert!(!info.has_m);
 
         let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_mysql_geom(&mut ewkb.as_slice(), &mut WktWriter::new(&mut wkt_data)).is_ok());
+        assert!(
+            process_mysql_geom(&mut ewkb.as_slice(), &mut WktWriter::new(&mut wkt_data)).is_ok()
+        );
         assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), "POINT(10 -20)");
 
         // SELECT HEX(ST_GeomFromText('MULTILINESTRING((20 10,10 20))', 0, 'axis-order=long-lat'));
@@ -857,8 +912,13 @@ mod test {
         assert!(!info.has_m);
 
         let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_mysql_geom(&mut wkb.as_slice(), &mut WktWriter::new(&mut wkt_data)).is_ok());
-        assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), "MULTILINESTRING((20 10,10 20))");
+        assert!(
+            process_mysql_geom(&mut wkb.as_slice(), &mut WktWriter::new(&mut wkt_data)).is_ok()
+        );
+        assert_eq!(
+            std::str::from_utf8(&wkt_data).unwrap(),
+            "MULTILINESTRING((20 10,10 20))"
+        );
 
         // SELECT HEX(ST_GeomFromText('GEOMETRYCOLLECTION(POINT(1 3),POLYGON((21 21,22 21,21 22,21 21)))', 0, 'axis-order=long-lat'));
         let wkb = hex::decode("000000000107000000020000000101000000000000000000F03F00000000000008400103000000010000000400000000000000000035400000000000003540000000000000364000000000000035400000000000003540000000000000364000000000000035400000000000003540").unwrap();
@@ -866,8 +926,13 @@ mod test {
         assert_eq!(info.base_type, WKBGeometryType::GeometryCollection);
 
         let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_mysql_geom(&mut wkb.as_slice(), &mut WktWriter::new(&mut wkt_data)).is_ok());
-        assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), "GEOMETRYCOLLECTION(POINT(1 3),POLYGON((21 21,22 21,21 22,21 21)))");
+        assert!(
+            process_mysql_geom(&mut wkb.as_slice(), &mut WktWriter::new(&mut wkt_data)).is_ok()
+        );
+        assert_eq!(
+            std::str::from_utf8(&wkt_data).unwrap(),
+            "GEOMETRYCOLLECTION(POINT(1 3),POLYGON((21 21,22 21,21 22,21 21)))"
+        );
     }
 
     #[test]

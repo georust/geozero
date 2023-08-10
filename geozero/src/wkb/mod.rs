@@ -73,7 +73,12 @@ pub(crate) mod conversion {
         }
         /// Convert to MySQL WKB.
         fn to_mysql_wkb(&self, srid: Option<i32>) -> Result<Vec<u8>> {
-            self.to_wkb_dialect(WkbDialect::MySQL, CoordDimensions::default(), srid, Vec::new())
+            self.to_wkb_dialect(
+                WkbDialect::MySQL,
+                CoordDimensions::default(),
+                srid,
+                Vec::new(),
+            )
         }
     }
 

@@ -1,4 +1,4 @@
-use crate::error::{Result, GeozeroError};
+use crate::error::{GeozeroError, Result};
 use crate::wkb::{WKBByteOrder, WKBGeometryType, WkbDialect};
 use crate::{CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcessor};
 use scroll::IOwrite;
@@ -165,19 +165,19 @@ impl<'a, W: Write> WkbWriter<'a, W> {
             let byte_order: WKBByteOrder = self.endian.into();
             self.out.iowrite(byte_order as u8)?;
             self.out.iowrite(self.srid.unwrap_or(0))?;
-    
+
             let envelope = Some(&self.envelope).filter(|e| !e.is_empty());
             for val in envelope.unwrap_or(&vec![0.0, 0.0, 0.0, 0.0]) {
                 self.out.iowrite_with(*val, self.endian)?;
             }
-    
+
             self.out.iowrite(0x7C as u8)?;
-            
+
             self.first_header = false;
         } else {
             self.out.iowrite(0x69 as u8)?;
         }
-        
+
         let mut type_id = wkb_type as u32;
         if self.dims.z {
             type_id += 1000;
@@ -195,13 +195,15 @@ impl<'a, W: Write> WkbWriter<'a, W> {
 
     /// MySQL WKB header according to https://dev.mysql.com/doc/refman/8.0/en/gis-data-formats.html
     fn write_mysql_header(&mut self) -> Result<()> {
-        let srid: u32 = self.srid.unwrap_or(0)
+        let srid: u32 = self
+            .srid
+            .unwrap_or(0)
             .try_into()
             .map_err(|_| GeozeroError::Srid(self.srid.unwrap()))?;
         self.out.iowrite_with(srid, self.endian)?;
         Ok(())
     }
-    
+
     /// Write header in selected format
     fn write_footer(&mut self) -> Result<()> {
         match self.dialect {
@@ -217,7 +219,6 @@ impl<'a, W: Write> WkbWriter<'a, W> {
             }
         }
     }
-
 }
 
 impl<W: Write> GeomProcessor for WkbWriter<'_, W> {
@@ -433,8 +434,13 @@ mod test {
     #[test]
     fn ewkb_geometries() {
         // SELECT 'POINT(10 -20)'::geometry
-        roundtrip(WkbDialect::Ewkb, "0101000000000000000000244000000000000034C0",
-        CoordDimensions::default(), None, Vec::new());
+        roundtrip(
+            WkbDialect::Ewkb,
+            "0101000000000000000000244000000000000034C0",
+            CoordDimensions::default(),
+            None,
+            Vec::new(),
+        );
 
         // SELECT 'SRID=4326;MULTIPOINT (10 -20 100, 0 -0.5 101)'::geometry
         roundtrip(WkbDialect::Ewkb, "01040000A0E6100000020000000101000080000000000000244000000000000034C0000000000000594001010000800000000000000000000000000000E0BF0000000000405940",
@@ -523,7 +529,7 @@ mod test {
         // SELECT HEX(ST_GeomFromText('MULTIPOINT(1 2,3 4)'));
         roundtrip(WkbDialect::Spatialite, "000100000000000000000000F03F0000000000000040000000000000084000000000000010407C04000000020000006901000000000000000000F03F0000000000000040690100000000000000000008400000000000001040FE",
         CoordDimensions::default(), None, vec![1.0, 2.0, 3.0, 4.0]);
-            
+
         // SELECT HEX(ST_GeomFromText('MULTILINESTRINGZM((20 10 5 1,10 20 30 40))'));
         roundtrip(WkbDialect::Spatialite, "00010000000000000000000024400000000000002440000000000000344000000000000034407CBD0B00000100000069BA0B000002000000000000000000344000000000000024400000000000001440000000000000F03F000000000000244000000000000034400000000000003E400000000000004440FE",
             CoordDimensions::xyzm(), None, vec![10.0, 10.0, 20.0, 20.0]);
@@ -536,13 +542,18 @@ mod test {
     #[test]
     fn mysql_geometries() {
         // SELECT HEX(ST_GeomFromText('POINT(10 -20)', 4326, 'axis-order=long-lat'));
-        roundtrip(WkbDialect::MySQL, "E61000000101000000000000000000244000000000000034C0",
-            CoordDimensions::default(), Some(4326), Vec::new());
+        roundtrip(
+            WkbDialect::MySQL,
+            "E61000000101000000000000000000244000000000000034C0",
+            CoordDimensions::default(),
+            Some(4326),
+            Vec::new(),
+        );
 
         // SELECT HEX(ST_GeomFromText('MULTIPOINT(1 2,3 4)', 0, 'axis-order=long-lat'));
         roundtrip(WkbDialect::MySQL, "000000000104000000020000000101000000000000000000F03F0000000000000040010100000000000000000008400000000000001040",
         CoordDimensions::default(), None, Vec::new());
-            
+
         // SELECT HEX(ST_GeomFromText('MULTILINESTRING((20 10,10 20))', 0, 'axis-order=long-lat'));
         roundtrip(WkbDialect::MySQL, "000000000105000000010000000102000000020000000000000000003440000000000000244000000000000024400000000000003440",
             CoordDimensions::default(), None, Vec::new());
@@ -597,9 +608,7 @@ mod test {
         );
 
         let geom: geo_types::Geometry<f64> = geo_types::Point::new(10.0, -20.0).into();
-        let wkb = geom
-            .to_mysql_wkb(Some(4326))
-            .unwrap();
+        let wkb = geom.to_mysql_wkb(Some(4326)).unwrap();
         assert_eq!(
             &wkb,
             &hex::decode("E61000000101000000000000000000244000000000000034C0").unwrap()
