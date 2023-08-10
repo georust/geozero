@@ -465,7 +465,7 @@ fn process_compressed_coord<R: Read, P: GeomProcessor>(
     } else {
         let (x, y) = (
             prev_coord.0 + relative_coord.0,
-            prev_coord.1 + relative_coord.1
+            prev_coord.1 + relative_coord.1,
         );
         processor.xy(x, y, idx)?;
         Ok((x, y, None, None))
