@@ -1,22 +1,22 @@
 [package]
 name = "geozero-shp"
 version = "0.4.0"
-authors = ["Pirmin Kalberer <pka@sourcepole.ch>"]
-edition = "2021"
 description = "Shapefile reader with GeoZero API."
-homepage = "https://github.com/georust/geozero"
-repository = "https://github.com/georust/geozero"
 readme = "README.md"
-license = "MIT/Apache-2.0"
 keywords = ["geo", "shapefile"]
 categories = ["science::geo"]
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
 
 [dependencies]
-byteorder = "1.4.3"
-dbase = "0.3"
-geozero = { version = "0.9.9", default-features = false }
-thiserror = "1.0"
+byteorder.workspace = true
+dbase.workspace = true
+geozero.workspace = true
+thiserror.workspace = true
 
 [dev-dependencies]
-geo-types = { version = "0.7", default-features = false }
-geozero = { version = "0.9.9", default-features = true }
+geo-types.workspace = true
+geozero = { workspace = true, default-features = true }

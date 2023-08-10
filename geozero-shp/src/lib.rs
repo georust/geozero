@@ -5,15 +5,16 @@ pub mod reader;
 mod shp_reader;
 mod shx_reader;
 
-use thiserror::Error;
+pub use crate::header::ShapeType;
+pub use crate::property_processor::*;
+pub use crate::reader::Reader;
+pub use crate::shp_reader::NO_DATA;
 
-pub use header::ShapeType;
-pub use property_processor::*;
-pub use reader::Reader;
-pub use shp_reader::NO_DATA;
+// Re-export GeoZero to help avoid version conflicts
+pub use geozero;
 
 /// All Errors that can happen when using this library
-#[derive(Error, Debug)]
+#[derive(thiserror::Error, Debug)]
 pub enum Error {
     /// Wrapper around standard io::Error that might occur when reading/writing
     #[error("I/O error")]
@@ -40,17 +41,11 @@ pub enum Error {
     #[error("Invalid shape record size")]
     InvalidShapeRecordSize,
     #[error("Dbase Error")]
-    DbaseError(dbase::Error),
+    DbaseError(#[from] dbase::Error),
     #[error("Dbf missing")]
     MissingDbf,
     #[error("Index file missing")]
     MissingIndexFile,
     #[error("Geozero error")]
     GeozeroError(#[from] geozero::error::GeozeroError),
-}
-
-impl From<dbase::Error> for Error {
-    fn from(e: dbase::Error) -> Error {
-        Error::DbaseError(e)
-    }
 }

@@ -3,6 +3,60 @@
 members = ["geozero", "geozero-shp", "geozero-cli", "geozero-bench"]
 default-members = ["geozero", "geozero-shp", "geozero-cli"]
 
+[workspace.package]
+# This version should match the version in [workspace.dependencies] below
+version = "0.10.1"
+authors = ["Pirmin Kalberer <pka@sourcepole.ch>", "Yuri Astrakhan <YuriAstrakhan@gmail.com>"]
+edition = "2021"
+homepage = "https://github.com/georust/geozero"
+repository = "https://github.com/georust/geozero"
+readme = "README.md"
+license = "MIT OR Apache-2.0"
+
+[workspace.dependencies]
+# This should point to the last published version
+# This is a major hack, due to some code (like geozero tests!) relying on flatgeobuf crate,
+# which in turn relies on geozero itself.
+geozero = { version = "0.10.0", default-features = false }
+
+arrow2 = { version = "0.17", features = ["io_ipc"] }
+async-trait = "0.1"
+byteorder = { version = "1.4.3", default-features = false }
+bytes = "1.4"
+clap = { version = "4.3", features = ["derive"] }
+criterion = "0.5.1"
+csv = "1.2.2"
+dbase = "0.4"
+diesel = { version = "2.1.0", default-features = false }
+dup-indexer = "0.3"
+env_logger = "0.10.0"
+flatgeobuf = "3.26.1"
+futures-util = "0.3.28"
+gdal = { version = "0.15", default-features = false }
+gdal-sys = "0.9"
+geo = "0.26.0"
+geo-types = { version = "0.7.11", default-features = false }
+geojson = { version = "0.24.1", default-features = false }
+geos = "8.3"
+gpx = { version = "0.9", default-features = false }
+hex = "0.4"
+kdbush = "0.2"
+log = "0.4.19"
+lyon = "1.0.1"
+polylabel = "2.5"
+postgis = "0.9.0"
+postgres = "0.19"
+postgres-types = "0.2"
+prost = "0.11.9"
+prost-build = "0.11.9"
+scroll = "0.11"
+seek_bufread = "1.2"
+serde_json = "1.0.104"
+sqlx = { version = "0.7", default-features = false }
+thiserror = "1.0"
+tokio = { version = "1.30.0", default-features = false }
+wkt = "0.10.3"
+
 [patch.crates-io]
-geozero = { path = "geozero" }
+geozero = { path = "./geozero" }
 #flatgeobuf = { path = "../../gis/flatgeobuf/src/rust" }
