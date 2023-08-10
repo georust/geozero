@@ -68,7 +68,7 @@ mod wkb {
     impl FromWkb for WktString {
         fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> Result<Self> {
             let mut out: Vec<u8> = Vec::new();
-            let mut writer = WktWriter::with_dialect(&mut out, WktDialect::Wkt);
+            let mut writer = WktWriter::new(&mut out);
             crate::wkb::process_wkb_type_geom(rdr, &mut writer, dialect)?;
             let wkt = String::from_utf8(out).map_err(|_| {
                 crate::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())
