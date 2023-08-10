@@ -428,20 +428,6 @@ pub(crate) fn process_wkb_geom_n<R: Read, P: GeomProcessor>(
     }
 }
 
-fn emit_coord<P: GeomProcessor>(
-    coord: (f64, f64, Option<f64>, Option<f64>),
-    multi_dim: bool,
-    idx: usize,
-    processor: &mut P,
-) -> Result<()> {
-    let (x, y, z, m) = coord;
-    if multi_dim {
-        processor.coordinate(x, y, z, m, None, None, idx)
-    } else {
-        processor.xy(x, y, idx)
-    }
-}
-
 fn process_coord<R: Read, P: GeomProcessor>(
     raw: &mut R,
     info: &WkbInfo,
@@ -449,9 +435,13 @@ fn process_coord<R: Read, P: GeomProcessor>(
     idx: usize,
     processor: &mut P,
 ) -> Result<(f64, f64, Option<f64>, Option<f64>)> {
-    let coord = read_coord_as::<R, f64>(raw, info)?;
-    emit_coord(coord, multi_dim, idx, processor)?;
-    Ok(coord)
+    let (x, y, z, m) = read_coord_as::<R, f64>(raw, info)?;
+    if multi_dim {
+        processor.coordinate(x, y, z, m, None, None, idx)?;
+    } else {
+        processor.xy(x, y, idx)?;
+    }
+    Ok((x, y, z, m))
 }
 
 fn process_compressed_coord<R: Read, P: GeomProcessor>(
@@ -463,14 +453,23 @@ fn process_compressed_coord<R: Read, P: GeomProcessor>(
     processor: &mut P,
 ) -> Result<(f64, f64, Option<f64>, Option<f64>)> {
     let relative_coord = read_coord_as::<R, f32>(raw, info)?;
-    let coord = (
-        prev_coord.0 + relative_coord.0,
-        prev_coord.1 + relative_coord.1,
-        prev_coord.2.zip(relative_coord.2).map(|(a, b)| a + b),
-        relative_coord.3,
-    );
-    emit_coord(coord, multi_dim, idx, processor)?;
-    Ok(coord)
+    if multi_dim {
+        let (x, y, z, m) = (
+            prev_coord.0 + relative_coord.0,
+            prev_coord.1 + relative_coord.1,
+            prev_coord.2.zip(relative_coord.2).map(|(a, b)| a + b),
+            relative_coord.3,
+        );
+        processor.coordinate(x, y, z, m, None, None, idx)?;
+        Ok((x, y, z, m))
+    } else {
+        let (x, y) = (
+            prev_coord.0 + relative_coord.0,
+            prev_coord.1 + relative_coord.1
+        );
+        processor.xy(x, y, idx)?;
+        Ok((x, y, None, None))
+    }
 }
 
 fn read_coord_as<R: Read, T: Into<f64> + FromCtx<Endian> + SizeWith<Endian>>(
