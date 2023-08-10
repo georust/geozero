@@ -160,7 +160,7 @@ mod test {
         let geo = Geometry::from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
-        assert!(process_geom(&geo, &mut WktWriter::new(&mut wkt_data, WktDialect::Wkt)).is_ok());
+        assert!(process_geom(&geo, &mut WktWriter::new(&mut wkt_data)).is_ok());
 
         assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), wkt);
     }

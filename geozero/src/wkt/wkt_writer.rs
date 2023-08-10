@@ -14,7 +14,16 @@ pub struct WktWriter<'a, W: Write> {
 }
 
 impl<'a, W: Write> WktWriter<'a, W> {
-    pub fn new(out: &'a mut W, dialect: WktDialect) -> WktWriter<'a, W> {
+    pub fn new(out: &'a mut W) -> WktWriter<'a, W> {
+        WktWriter {
+            dims: CoordDimensions::default(),
+            srid: None,
+            dialect: WktDialect::Wkt,
+            first_header: true,
+            out,
+        }
+    }
+    pub fn with_dialect(out: &'a mut W, dialect: WktDialect) -> WktWriter<'a, W> {
         WktWriter {
             dims: CoordDimensions::default(),
             srid: None,

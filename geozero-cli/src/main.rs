@@ -4,7 +4,7 @@ use geozero::csv::{CsvReader, CsvWriter};
 use geozero::error::Result;
 use geozero::geojson::{GeoJsonReader, GeoJsonWriter};
 use geozero::svg::SvgWriter;
-use geozero::wkt::{WktDialect, WktReader, WktWriter};
+use geozero::wkt::{WktReader, WktWriter};
 use geozero::{FeatureProcessor, GeozeroDatasource};
 use std::ffi::OsStr;
 use std::fs::File;
@@ -87,7 +87,7 @@ fn process(args: Cli) -> Result<()> {
     let mut fout = BufWriter::new(File::create(&args.dest)?);
     match args.dest.extension().and_then(OsStr::to_str) {
         Some("csv") => transform(args, &mut CsvWriter::new(&mut fout)),
-        Some("wkt") => transform(args, &mut WktWriter::new(&mut fout, WktDialect::Wkt)),
+        Some("wkt") => transform(args, &mut WktWriter::new(&mut fout)),
         Some("json") | Some("geojson") => transform(args, &mut GeoJsonWriter::new(&mut fout)),
         Some("fgb") => {
             let mut fgb = FgbWriter::create("fgb", GeometryType::Unknown)?;

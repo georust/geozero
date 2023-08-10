@@ -101,7 +101,6 @@ mod postgis_postgres {
 
     mod register_type {
         use super::*;
-        use geozero::wkt::WktDialect;
         use postgres_types::{FromSql, Type};
 
         struct Wkt(String);
@@ -113,7 +112,7 @@ mod postgis_postgres {
             ) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
                 let mut rdr = std::io::Cursor::new(raw);
                 let mut wkt_data: Vec<u8> = Vec::new();
-                let mut writer = WktWriter::new(&mut wkt_data, WktDialect::Wkt);
+                let mut writer = WktWriter::new(&mut wkt_data);
                 wkb::process_ewkb_geom(&mut rdr, &mut writer)?;
                 let wkt = Wkt(std::str::from_utf8(&wkt_data)?.to_string());
                 Ok(wkt)
@@ -368,7 +367,7 @@ mod postgis_sqlx {
                 }
                 let mut blob = <&[u8] as Decode<Postgres>>::decode(value)?;
                 let mut data: Vec<u8> = Vec::new();
-                let mut writer = WktWriter::new(&mut data, geozero::wkt::WktDialect::Wkt);
+                let mut writer = WktWriter::new(&mut data);
                 wkb::process_ewkb_geom(&mut blob, &mut writer)
                     .map_err(|e| sqlx::Error::Decode(e.to_string().into()))?;
                 let text = Text(std::str::from_utf8(&data).unwrap().to_string());
