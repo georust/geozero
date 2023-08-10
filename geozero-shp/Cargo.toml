@@ -12,7 +12,7 @@ repository.workspace = true
 license.workspace = true
 
 [dependencies]
-byteorder.workspace = true  # TODO: check if defaults are needed
+byteorder.workspace = true
 dbase.workspace = true
 geozero.workspace = true
 thiserror.workspace = true

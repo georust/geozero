@@ -12,7 +12,7 @@ pub struct Extent {
 
 mod fgb {
     use super::*;
-    use flatgeobuf::*;
+    use flatgeobuf::{FallibleStreamingIterator, FgbReader, HttpFgbReader};
     use std::fs::File;
     // seek_bufread::BufReader is much faster for bbox queries,
     // because seek resets buffer of std::io::BufReader

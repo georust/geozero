@@ -4,6 +4,7 @@ members = ["geozero", "geozero-shp", "geozero-cli", "geozero-bench"]
 default-members = ["geozero", "geozero-shp", "geozero-cli"]
 
 [workspace.package]
+# This version should match the version in [workspace.dependencies] below
 version = "0.10.1"
 authors = ["Pirmin Kalberer <pka@sourcepole.ch>", "Yuri Astrakhan <YuriAstrakhan@gmail.com>"]
 edition = "2021"
@@ -13,7 +14,9 @@ readme = "README.md"
 license = "MIT OR Apache-2.0"
 
 [workspace.dependencies]
-# This should match the version above
+# This should point to the last published version
+# This is a major hack, due to some code (like geozero tests!) relying on flatgeobuf crate,
+# which in turn relies on geozero itself.
 geozero = { version = "0.10.0", default-features = false }
 
 arrow2 = { version = "0.17", features = ["io_ipc"] }
@@ -55,5 +58,5 @@ tokio = { version = "1.30.0", default-features = false }
 wkt = "0.10.3"
 
 [patch.crates-io]
-geozero = { path = "geozero" }
+geozero = { path = "./geozero" }
 #flatgeobuf = { path = "../../gis/flatgeobuf/src/rust" }

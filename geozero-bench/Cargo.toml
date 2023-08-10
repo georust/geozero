@@ -2,6 +2,7 @@
 name = "geozero-bench"
 description = "GeoZero benchmarks"
 readme = "README.md"
+publish = false
 version.workspace = true
 authors.workspace = true
 edition.workspace = true

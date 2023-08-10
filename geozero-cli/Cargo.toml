@@ -1,6 +1,6 @@
 [package]
 name = "geozero-cli"
-description = "Command line interface for geozero"
+description = "Command line interface for GeoZero"
 readme = "README.md"
 default-run = "geozero"
 version.workspace = true

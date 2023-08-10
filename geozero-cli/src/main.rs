@@ -1,17 +1,17 @@
 use clap::Parser;
-use flatgeobuf::*;
+use flatgeobuf::{FgbReader, FgbWriter, GeometryType, HttpFgbReader};
 use geozero::csv::{CsvReader, CsvWriter};
 use geozero::error::Result;
 use geozero::geojson::{GeoJsonReader, GeoJsonWriter};
 use geozero::svg::SvgWriter;
 use geozero::wkt::{WktReader, WktWriter};
 use geozero::{FeatureProcessor, GeozeroDatasource};
-use std::env;
 use std::ffi::OsStr;
 use std::fs::File;
 use std::io::{BufReader, BufWriter};
 use std::num::ParseFloatError;
 use std::path::{Path, PathBuf};
+use std::process::exit;
 
 #[derive(Parser)]
 #[command(about, version)]
@@ -64,11 +64,10 @@ fn transform<P: FeatureProcessor>(args: Cli, processor: &mut P) -> Result<()> {
                 .csv_geometry_column
                 .expect("must specify --csv-geometry-column=<column name> when parsing CSV");
             let mut ds = CsvReader::new(&geometry_column_name, &mut filein);
-            GeozeroDatasource::process(&mut ds, processor)?;
+            GeozeroDatasource::process(&mut ds, processor)
         }
         Some("json") | Some("geojson") => {
-            let mut ds = GeoJsonReader(filein);
-            GeozeroDatasource::process(&mut ds, processor)?;
+            GeozeroDatasource::process(&mut GeoJsonReader(filein), processor)
         }
         Some("fgb") => {
             let ds = FgbReader::open(&mut filein)?;
@@ -77,45 +76,31 @@ fn transform<P: FeatureProcessor>(args: Cli, processor: &mut P) -> Result<()> {
             } else {
                 ds.select_all()?
             };
-            ds.process_features(processor)?;
+            ds.process_features(processor)
         }
-        Some("wkt") => {
-            let mut ds = WktReader(&mut filein);
-            GeozeroDatasource::process(&mut ds, processor)?;
-        }
+        Some("wkt") => GeozeroDatasource::process(&mut WktReader(&mut filein), processor),
         _ => panic!("Unknown input file extension"),
-    };
-    Ok(())
+    }
 }
 
 fn process(args: Cli) -> Result<()> {
     let mut fout = BufWriter::new(File::create(&args.dest)?);
     match args.dest.extension().and_then(OsStr::to_str) {
-        Some("csv") => {
-            let mut processor = CsvWriter::new(&mut fout);
-            transform(args, &mut processor)?;
-        }
+        Some("csv") => transform(args, &mut CsvWriter::new(&mut fout)),
+        Some("wkt") => transform(args, &mut WktWriter::new(&mut fout)),
+        Some("json") | Some("geojson") => transform(args, &mut GeoJsonWriter::new(&mut fout)),
         Some("fgb") => {
             let mut fgb = FgbWriter::create("fgb", GeometryType::Unknown)?;
             transform(args, &mut fgb)?;
-            fgb.write(&mut fout)?;
-        }
-        Some("json") | Some("geojson") => {
-            let mut processor = GeoJsonWriter::new(&mut fout);
-            transform(args, &mut processor)?;
+            fgb.write(&mut fout)
         }
         Some("svg") => {
             let mut processor = SvgWriter::new(&mut fout, true);
             set_dimensions(&mut processor, args.extent);
-            transform(args, &mut processor)?;
-        }
-        Some("wkt") => {
-            let mut processor = WktWriter::new(&mut fout);
-            transform(args, &mut processor)?;
+            transform(args, &mut processor)
         }
         _ => panic!("Unknown output file extension"),
     }
-    Ok(())
 }
 
 #[tokio::main]
@@ -132,16 +117,15 @@ async fn process_url(args: Cli) -> Result<()> {
     match args.dest.extension().and_then(OsStr::to_str) {
         Some("json") | Some("geojson") => {
             let mut processor = GeoJsonWriter::new(&mut fout);
-            ds.process_features(&mut processor).await?;
+            ds.process_features(&mut processor).await
         }
         Some("svg") => {
             let mut processor = SvgWriter::new(&mut fout, true);
             set_dimensions(&mut processor, args.extent);
-            ds.process_features(&mut processor).await?;
+            ds.process_features(&mut processor).await
         }
         _ => panic!("Unknown output format"),
     }
-    Ok(())
 }
 
 fn set_dimensions(processor: &mut SvgWriter<BufWriter<File>>, extent: Option<Extent>) {
@@ -154,19 +138,18 @@ fn set_dimensions(processor: &mut SvgWriter<BufWriter<File>>, extent: Option<Ext
 }
 
 fn main() {
+    let env = env_logger::Env::default().filter_or(env_logger::DEFAULT_FILTER_ENV, "info");
+    env_logger::Builder::from_env(env).init();
+
     let args = Cli::parse();
 
-    if env::var("RUST_LOG").is_err() {
-        env::set_var("RUST_LOG", "info");
-    }
-    env_logger::init();
-
     let result = if args.input.starts_with("http") {
-        process_url(args).map_err(|e| e.to_string())
+        process_url(args)
     } else {
-        process(args).map_err(|e| e.to_string())
+        process(args)
     };
     if let Err(msg) = result {
         println!("Processing failed: {msg}");
+        exit(1)
     }
 }
