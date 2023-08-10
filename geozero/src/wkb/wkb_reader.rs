@@ -127,7 +127,8 @@ pub(crate) struct WkbInfo {
 /// OGC WKB header.
 pub(crate) fn read_wkb_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
     let byte_order = raw.ioread::<u8>()?;
-    let endian = Endian::from(byte_order != 0);
+    let is_little_endian = byte_order != 0;
+    let endian = Endian::from(is_little_endian);
     let type_id = raw.ioread_with::<u32>(endian)?;
     let base_type = WKBGeometryType::from_u32(type_id % 1000);
     let type_id_dim = type_id / 1000;
@@ -153,7 +154,8 @@ pub(crate) fn read_wkb_nested_header<R: Read>(raw: &mut R, _info: &WkbInfo) -> R
 /// EWKB header according to https://git.osgeo.org/gitea/postgis/postgis/src/branch/master/doc/ZMSgeoms.txt
 fn read_ewkb_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
     let byte_order = raw.ioread::<u8>()?;
-    let endian = Endian::from(byte_order != 0);
+    let is_little_endian = byte_order != 0;
+    let endian = Endian::from(is_little_endian);
 
     let type_id = raw.ioread_with::<u32>(endian)?;
     let base_type = WKBGeometryType::from_u32(type_id & 0xFF);
@@ -200,7 +202,8 @@ fn read_gpkg_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
         4 => 8,
         _ => Err(GeozeroError::GeometryFormat)?,
     };
-    let endian = Endian::from(flags & 0b0000_0001 != 0);
+    let is_little_endian = flags & 0b0000_0001 != 0;
+    let endian = Endian::from(is_little_endian);
     let srid = raw.ioread_with::<i32>(endian)?;
     let envelope: std::result::Result<Vec<f64>, _> = (0..env_len)
         .map(|_| raw.ioread_with::<f64>(endian))
@@ -228,7 +231,8 @@ pub(crate) fn read_spatialite_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
         return Err(GeozeroError::GeometryFormat);
     }
     let flags = raw.ioread::<u8>()?;
-    let endian = Endian::from(flags & 0b0000_0001 != 0);
+    let is_little_endian = flags & 0b0000_0001 != 0;
+    let endian = Endian::from(is_little_endian);
     let is_tinypoint = flags & 0b1000_0000 != 0;
 
     let srid = match raw.ioread_with::<i32>(endian)? {
