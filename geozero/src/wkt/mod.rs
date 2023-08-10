@@ -92,14 +92,9 @@ mod wkb {
 }
 
 /// WKB dialect.
-#[derive(PartialEq, Debug, Clone, Copy)]
+#[derive(Default, PartialEq, Debug, Clone, Copy)]
 pub enum WktDialect {
+    #[default]
     Wkt,
     Ewkt,
-}
-
-impl Default for WktDialect {
-    fn default() -> Self {
-        WktDialect::Wkt
-    }
 }
