@@ -151,8 +151,8 @@ fn process_polygon<P: GeomProcessor>(
 #[cfg(feature = "with-wkt")]
 mod test {
     use super::*;
-    use crate::wkt::{WktDialect, WktWriter};
-    use crate::{CoordDimensions, ToWkt};
+    use crate::wkt::WktWriter;
+    use crate::ToWkt;
 
     #[test]
     fn point() {
