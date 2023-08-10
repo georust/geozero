@@ -183,7 +183,16 @@ mod test {
     fn line_3d() {
         let wkt = "LINESTRING(1 1 10,2 2 20)";
         let geo = Geometry::from_wkt(wkt).unwrap();
-        assert_eq!(geo.to_ewkt(None).unwrap(), wkt);
+        assert_eq!(
+            geo.to_wkt_ndim(CoordDimensions {
+                z: true,
+                m: false,
+                t: false,
+                tm: false
+            })
+            .unwrap(),
+            wkt
+        );
     }
 
     #[test]
