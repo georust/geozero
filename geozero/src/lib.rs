@@ -29,7 +29,7 @@
 //! | MVT       | [mvt::tile::Feature]                                                 | XY         | [mvt::tile::Layer]                                                   | [ToMvt]             | [MvtWriter](mvt::MvtWriter)             |
 //! | SVG       | -                                                                    | XY         | -                                                                    | [ToSvg]             | [SvgWriter](svg::SvgWriter)             |
 //! | WKB       | [Wkb](wkb::Wkb), [Ewkb](wkb::Ewkb), [GpkgWkb](wkb::GpkgWkb)          | XYZM       | -                                                                    | [ToWkb]             | [WkbWriter](wkb::WkbWriter)             |
-//! | WKT       | [wkt::WktStr], [wkt::WktString]                                      | XYZM       | [wkt::WktReader], [wkt::WktStr], [wkt::WktString]                    | [ToWkt]             | [WktWriter](wkt::WktWriter)             |
+//! | WKT       | [wkt::WktStr], [wkt::WktString], [wkt::EwktStr], [wkt::EwktString]   | XYZM       | [wkt::WktReader], [wkt::WktStr], [wkt::WktString]                    | [ToWkt]             | [WktWriter](wkt::WktWriter)             |
 
 #![warn(clippy::uninlined_format_args)]
 #![allow(
