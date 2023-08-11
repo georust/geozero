@@ -6,8 +6,8 @@ use super::WktDialect;
 
 /// WKT Writer.
 pub struct WktWriter<'a, W: Write> {
-    pub dims: CoordDimensions,
-    pub srid: Option<i32>,
+    dims: CoordDimensions,
+    srid: Option<i32>,
     dialect: WktDialect,
     first_header: bool,
     out: &'a mut W,
@@ -15,18 +15,22 @@ pub struct WktWriter<'a, W: Write> {
 
 impl<'a, W: Write> WktWriter<'a, W> {
     pub fn new(out: &'a mut W) -> WktWriter<'a, W> {
-        WktWriter {
-            dims: CoordDimensions::default(),
-            srid: None,
-            dialect: WktDialect::Wkt,
-            first_header: true,
-            out,
-        }
+        Self::with_opts(out, WktDialect::Wkt, CoordDimensions::default(), None)
     }
-    pub fn with_dialect(out: &'a mut W, dialect: WktDialect) -> WktWriter<'a, W> {
+
+    pub fn with_dims(out: &'a mut W, dims: CoordDimensions) -> WktWriter<'a, W> {
+        Self::with_opts(out, WktDialect::Wkt, dims, None)
+    }
+
+    pub fn with_opts(
+        out: &'a mut W,
+        dialect: WktDialect,
+        dims: CoordDimensions,
+        srid: Option<i32>,
+    ) -> WktWriter<'a, W> {
         WktWriter {
-            dims: CoordDimensions::default(),
-            srid: None,
+            dims,
+            srid,
             dialect,
             first_header: true,
             out,
@@ -75,14 +79,14 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
         self.dims
     }
 
-    fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
-        self.comma(idx)?;
-        self.out.write_all(format!("{x} {y}").as_bytes())?;
+    fn srid(&mut self, srid: Option<i32>) -> Result<()> {
+        self.srid = self.srid.or(srid);
         Ok(())
     }
 
-    fn srid(&mut self, srid: Option<i32>) -> Result<()> {
-        self.srid = self.srid.or(srid);
+    fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
+        self.comma(idx)?;
+        self.out.write_all(format!("{x} {y}").as_bytes())?;
         Ok(())
     }
 
