@@ -1,10 +1,8 @@
 use crate::error::{GeozeroError, Result};
 use crate::wkb::{WKBGeometryType, WkbDialect};
 use crate::{GeomProcessor, GeozeroGeometry};
-use scroll::{
-    ctx::{FromCtx, SizeWith},
-    Endian, IOread,
-};
+use scroll::ctx::{FromCtx, SizeWith};
+use scroll::{Endian, IOread};
 use std::io::Read;
 
 #[cfg(feature = "with-postgis-diesel")]
@@ -130,16 +128,13 @@ pub(crate) fn read_wkb_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
     let is_little_endian = byte_order != 0;
     let endian = Endian::from(is_little_endian);
     let type_id = raw.ioread_with::<u32>(endian)?;
-    let base_type = WKBGeometryType::from_u32(type_id % 1000);
     let type_id_dim = type_id / 1000;
-    let has_z = type_id_dim == 1 || type_id_dim == 3;
-    let has_m = type_id_dim == 2 || type_id_dim == 3;
 
     let info = WkbInfo {
         endian,
-        base_type,
-        has_z,
-        has_m,
+        base_type: WKBGeometryType::from_u32(type_id % 1000),
+        has_z: matches!(type_id_dim, 1 | 3),
+        has_m: matches!(type_id_dim, 2 | 3),
         srid: None,
         is_compressed: false,
         envelope: Vec::new(),
@@ -156,12 +151,7 @@ fn read_ewkb_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
     let byte_order = raw.ioread::<u8>()?;
     let is_little_endian = byte_order != 0;
     let endian = Endian::from(is_little_endian);
-
     let type_id = raw.ioread_with::<u32>(endian)?;
-    let base_type = WKBGeometryType::from_u32(type_id & 0xFF);
-    let has_z = type_id & 0x8000_0000 == 0x8000_0000;
-    let has_m = type_id & 0x4000_0000 == 0x4000_0000;
-
     let srid = if type_id & 0x2000_0000 == 0x2000_0000 {
         Some(raw.ioread_with::<i32>(endian)?)
     } else {
@@ -170,9 +160,9 @@ fn read_ewkb_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
 
     let info = WkbInfo {
         endian,
-        base_type,
-        has_z,
-        has_m,
+        base_type: WKBGeometryType::from_u32(type_id & 0xFF),
+        has_z: type_id & 0x8000_0000 == 0x8000_0000,
+        has_m: type_id & 0x4000_0000 == 0x4000_0000,
         srid,
         is_compressed: false,
         envelope: Vec::new(),
@@ -233,26 +223,22 @@ pub(crate) fn read_spatialite_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
     let flags = raw.ioread::<u8>()?;
     let is_little_endian = flags & 0b0000_0001 != 0;
     let endian = Endian::from(is_little_endian);
-    let is_tinypoint = flags & 0b1000_0000 != 0;
+    let is_tiny_point = flags & 0b1000_0000 != 0;
 
     let srid = match raw.ioread_with::<i32>(endian)? {
         0 => None,
         val => Some(val),
     };
 
-    let info = if is_tinypoint {
-        let envelope = Vec::<f64>::new();
-        let base_type = WKBGeometryType::Point;
+    let info = if is_tiny_point {
         let type_id_dim = raw.ioread_with::<u8>(endian)?;
-        let has_z = matches!(type_id_dim, 2 | 4);
-        let has_m = matches!(type_id_dim, 3 | 4);
         WkbInfo {
             endian,
             srid,
-            envelope,
-            base_type,
-            has_z,
-            has_m,
+            envelope: Vec::<f64>::new(),
+            base_type: WKBGeometryType::Point,
+            has_z: matches!(type_id_dim, 2 | 4),
+            has_m: matches!(type_id_dim, 3 | 4),
             is_compressed: false,
         }
     } else {
@@ -264,19 +250,15 @@ pub(crate) fn read_spatialite_header<R: Read>(raw: &mut R) -> Result<WkbInfo> {
             return Err(GeozeroError::GeometryFormat);
         }
         let type_id = raw.ioread_with::<u32>(endian)?;
-        let is_compressed = type_id > 1000000;
         let type_id_dim = (type_id % 1000000) / 1000;
-        let has_z = matches!(type_id_dim, 1 | 3);
-        let has_m = matches!(type_id_dim, 2 | 3);
-        let base_type = WKBGeometryType::from_u32(type_id % 1000);
         WkbInfo {
             endian,
             srid,
             envelope,
-            base_type,
-            has_z,
-            has_m,
-            is_compressed,
+            base_type: WKBGeometryType::from_u32(type_id % 1000),
+            has_z: matches!(type_id_dim, 1 | 3),
+            has_m: matches!(type_id_dim, 2 | 3),
+            is_compressed: type_id > 1000000,
         }
     };
 
@@ -292,11 +274,9 @@ pub(crate) fn read_spatialite_nested_header<R: Read>(
         return Err(GeozeroError::GeometryFormat);
     }
     let type_id = raw.ioread_with::<u32>(info.endian)?;
-    let base_type = WKBGeometryType::from_u32(type_id % 1000);
-    let is_compressed = type_id > 1000000;
     Ok(WkbInfo {
-        base_type,
-        is_compressed,
+        base_type: WKBGeometryType::from_u32(type_id % 1000),
+        is_compressed: type_id > 1000000,
         endian: info.endian,
         srid: info.srid,
         envelope: Vec::new(),
