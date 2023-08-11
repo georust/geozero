@@ -206,15 +206,15 @@ impl<'a, W: Write> WkbWriter<'a, W> {
 
     /// Write header in selected format
     fn write_footer(&mut self) -> Result<()> {
-    match self.dialect {
-        WkbDialect::SpatiaLite => {
-            if self.nesting_level == 0 {
-                self.out.iowrite::<u8>(0xFE)?;
+        match self.dialect {
+            WkbDialect::SpatiaLite => {
+                if self.nesting_level == 0 {
+                    self.out.iowrite::<u8>(0xFE)?;
+                }
             }
+            WkbDialect::Wkb | WkbDialect::Ewkb | WkbDialect::Geopackage | WkbDialect::MySQL => {}
         }
-        WkbDialect::Wkb | WkbDialect::Ewkb | WkbDialect::Geopackage | WkbDialect::MySQL => {},
-    }
-    Ok(())
+        Ok(())
     }
 }
 

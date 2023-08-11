@@ -454,10 +454,10 @@ fn process_compressed_coord<R: Read, P: GeomProcessor>(
 ) -> Result<(f64, f64, Option<f64>, Option<f64>)> {
     let relative_coord = read_coord_as::<R, f32>(raw, info)?;
     if multi_dim {
-    let x = prev_coord.0 + relative_coord.0;
-    let y = prev_coord.1 + relative_coord.1;
-    let z = prev_coord.2.zip(relative_coord.2).map(|(a, b)| a + b);
-    let m = relative_coord.3;
+        let x = prev_coord.0 + relative_coord.0;
+        let y = prev_coord.1 + relative_coord.1;
+        let z = prev_coord.2.zip(relative_coord.2).map(|(a, b)| a + b);
+        let m = relative_coord.3;
         processor.coordinate(x, y, z, m, None, None, idx)?;
         Ok((x, y, z, m))
     } else {
