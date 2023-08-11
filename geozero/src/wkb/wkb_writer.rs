@@ -206,18 +206,15 @@ impl<'a, W: Write> WkbWriter<'a, W> {
 
     /// Write header in selected format
     fn write_footer(&mut self) -> Result<()> {
-        match self.dialect {
-            WkbDialect::Wkb => Ok(()),
-            WkbDialect::Ewkb => Ok(()),
-            WkbDialect::Geopackage => Ok(()),
-            WkbDialect::MySQL => Ok(()),
-            WkbDialect::SpatiaLite => {
-                if self.nesting_level == 0 {
-                    self.out.iowrite::<u8>(0xFE)?;
-                }
-                Ok(())
+    match self.dialect {
+        WkbDialect::SpatiaLite => {
+            if self.nesting_level == 0 {
+                self.out.iowrite::<u8>(0xFE)?;
             }
         }
+        WkbDialect::Wkb | WkbDialect::Ewkb | WkbDialect::Geopackage | WkbDialect::MySQL => {},
+    }
+    Ok(())
     }
 }
 
@@ -272,8 +269,7 @@ impl<W: Write> GeomProcessor for WkbWriter<'_, W> {
     fn multipoint_end(&mut self, _idx: usize) -> Result<()> {
         self.nesting_level -= 1;
         self.geom_state = GeomState::Normal;
-        self.write_footer()?;
-        Ok(())
+        self.write_footer()
     }
     fn linestring_begin(&mut self, _tagged: bool, size: usize, _idx: usize) -> Result<()> {
         if self.geom_state != GeomState::RingGeom {
@@ -293,8 +289,7 @@ impl<W: Write> GeomProcessor for WkbWriter<'_, W> {
     }
     fn multilinestring_end(&mut self, _idx: usize) -> Result<()> {
         self.nesting_level -= 1;
-        self.write_footer()?;
-        Ok(())
+        self.write_footer()
     }
     fn polygon_begin(&mut self, _tagged: bool, size: usize, _idx: usize) -> Result<()> {
         self.write_header(WKBGeometryType::Polygon)?;
@@ -304,8 +299,7 @@ impl<W: Write> GeomProcessor for WkbWriter<'_, W> {
     }
     fn polygon_end(&mut self, _tagged: bool, _idx: usize) -> Result<()> {
         self.geom_state = GeomState::Normal;
-        self.write_footer()?;
-        Ok(())
+        self.write_footer()
     }
     fn multipolygon_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
         self.nesting_level += 1;
@@ -325,8 +319,7 @@ impl<W: Write> GeomProcessor for WkbWriter<'_, W> {
     }
     fn geometrycollection_end(&mut self, _idx: usize) -> Result<()> {
         self.nesting_level -= 1;
-        self.write_footer()?;
-        Ok(())
+        self.write_footer()
     }
     fn circularstring_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
         self.write_header(WKBGeometryType::CircularString)?;
@@ -360,8 +353,7 @@ impl<W: Write> GeomProcessor for WkbWriter<'_, W> {
     }
     fn multicurve_end(&mut self, _idx: usize) -> Result<()> {
         self.nesting_level -= 1;
-        self.write_footer()?;
-        Ok(())
+        self.write_footer()
     }
     fn multisurface_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
         self.nesting_level += 1;
@@ -371,8 +363,7 @@ impl<W: Write> GeomProcessor for WkbWriter<'_, W> {
     }
     fn multisurface_end(&mut self, _idx: usize) -> Result<()> {
         self.nesting_level -= 1;
-        self.write_footer()?;
-        Ok(())
+        self.write_footer()
     }
     fn triangle_begin(&mut self, _tagged: bool, size: usize, _idx: usize) -> Result<()> {
         self.write_header(WKBGeometryType::Triangle)?;
@@ -382,8 +373,7 @@ impl<W: Write> GeomProcessor for WkbWriter<'_, W> {
     }
     fn triangle_end(&mut self, _tagged: bool, _idx: usize) -> Result<()> {
         self.geom_state = GeomState::Normal;
-        self.write_footer()?;
-        Ok(())
+        self.write_footer()
     }
     fn polyhedralsurface_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
         self.write_header(WKBGeometryType::PolyhedralSurface)?;
