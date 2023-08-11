@@ -1,73 +1,75 @@
 [package]
 name = "geozero"
-version = "0.10.1"
-authors = ["Pirmin Kalberer <pka@sourcepole.ch>"]
-edition = "2021"
 description = "Zero-Copy reading and writing of geospatial data in WKT/WKB, GeoJSON, MVT, GDAL, and other formats."
-homepage = "https://github.com/georust/geozero"
-repository = "https://github.com/georust/geozero"
-readme = "../README.md"
-license = "MIT/Apache-2.0"
 keywords = ["geo", "geojson", "gdal", "mvt", "postgis"]
 categories = ["science::geo", "parser-implementations", "api-bindings", "database", "rendering::data-formats"]
+readme = "../README.md"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
 
 [features]
 default = ["with-svg", "with-wkt", "with-geo", "with-geojson"]
-with-arrow = ["arrow2"]
-with-csv = ["csv", "with-wkt"]
-with-gdal = ["gdal", "gdal-sys"]
-with-geo = ["geo-types"]
-with-geojson = ["geojson"]
-with-geos = ["geos"]
-with-gpkg = ["with-wkb", "sqlx/sqlite"]
-with-gpx = ["gpx"]
-with-mvt = ["prost", "prost-build", "dup-indexer"]
-with-postgis-diesel = ["with-wkb", "diesel", "byteorder"]
-with-postgis-postgres = ["with-wkb", "postgres-types", "bytes"]
-with-postgis-sqlx = ["with-wkb", "sqlx/postgres"]
+with-arrow = ["dep:arrow2"]
+with-csv = ["dep:csv", "with-wkt"]
+with-gdal = ["dep:gdal", "dep:gdal-sys"]
+with-geo = ["dep:geo-types"]
+with-geojson = ["dep:geojson"]
+with-geos = ["dep:geos"]
+with-gpkg = ["with-wkb", "dep:sqlx", "sqlx?/sqlite"]
+with-gpx = ["dep:gpx"]
+with-mvt = ["dep:prost", "dep:prost-build", "dep:dup-indexer"]
+with-postgis-diesel = ["with-wkb", "dep:diesel", "dep:byteorder"]
+with-postgis-postgres = ["with-wkb", "dep:postgres-types", "dep:bytes"]
+with-postgis-sqlx = ["with-wkb", "dep:sqlx", "sqlx?/postgres"]
 with-svg = []
-with-tessellator = ["lyon"]
-with-wkb = ["scroll", "with-wkt"]
-with-wkt = ["wkt"]
+with-tessellator = ["dep:lyon"]
+with-wkb = ["dep:scroll", "with-wkt"]
+with-wkt = ["dep:wkt"]
 
 [dependencies]
-arrow2 = { version = "0.17", optional = true, features = ["io_ipc"] }
-byteorder = { version = "1.4.3", default-features = false, optional = true }
-bytes = { version = "1.4", optional = true }
-csv = { version = "1.2.1", optional = true }
-diesel = { version = "2.0.2", default-features = false, optional = true }
-dup-indexer = { version = "0.3", optional = true }
-gdal = { version = "0.15", default-features = false, optional = true }
-gdal-sys = { version = "0.9", optional = true }
-geo-types = { version = "0.7.9", default-features = false, optional = true }
-geojson = { version = "0.24.0", default-features = false, optional = true }
-geos = { version = "8.1", optional = true }
-gpx = { version = "0.9", default-features = false, optional = true }
-log = "0.4.17"
-lyon = { version = "1.0.1", optional = true }
-postgres-types = { version = "0.2", optional = true }
-prost = { version = "0.11.0", optional = true }
-scroll = { version = "0.11", optional = true }
-serde_json = "1.0.79"
-sqlx = { version = "0.7", default-features = false, optional = true }
-thiserror = "1.0"
-wkt = { version = "0.10.0", optional = true }
+log.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+
+# Optional dependencies
+arrow2 = { workspace = true, optional = true }
+byteorder = { workspace = true, optional = true }
+bytes = { workspace = true, optional = true }
+csv = { workspace = true, optional = true }
+diesel = { workspace = true, optional = true }
+dup-indexer = { workspace = true, optional = true }
+gdal = { workspace = true, optional = true }
+gdal-sys = { workspace = true, optional = true }
+geo-types = { workspace = true, optional = true }
+geojson = { workspace = true, optional = true }
+geos = { workspace = true, optional = true }
+gpx = { workspace = true, optional = true }
+lyon = { workspace = true, optional = true }
+postgres-types = { workspace = true, optional = true }
+prost = { workspace = true, optional = true }
+scroll = { workspace = true, optional = true }
+sqlx = { workspace = true, optional = true }
+wkt = { workspace = true, optional = true }
 
 [dev-dependencies]
-diesel = { version = "2.0.2", default-features = false, features = ["postgres"] }
-flatgeobuf = "3.26.0"
-geo = "0.25.0"
-hex = "0.4"
-kdbush = "0.2"
-polylabel = "2.4"
-postgres = "0.19"
-seek_bufread = "1.2"
-sqlx = { version = "0.7", default-features = false, features = ["runtime-tokio-native-tls", "macros", "time", "postgres", "sqlite"] }
-tokio = { version = "1.27.0", default-features = false, features = ["macros"] }
-wkt = "0.10.0"
+diesel = { workspace = true, features = ["postgres"] }
+flatgeobuf.workspace = true
+geo.workspace = true
+hex.workspace = true
+kdbush.workspace = true
+polylabel.workspace = true
+postgres.workspace = true
+seek_bufread.workspace = true
+sqlx = { workspace = true, features = ["runtime-tokio-native-tls", "macros", "time", "postgres", "sqlite"] }
+tokio = { workspace = true, features = ["macros"] }
+wkt.workspace = true
 
 [build-dependencies]
-prost-build = { version = "0.11", optional = true }
+prost-build = { workspace = true, optional = true }
 
 [package.metadata.docs.rs]
 all-features = true
@@ -111,7 +113,7 @@ required-features = ["with-geojson"]
 [[test]]
 name = "mvt"
 path = "tests/mvt.rs"
-required-features = ["with-mvt"]
+required-features = ["with-mvt", "with-geo", "with-geojson"]
 
 [[test]]
 name = "polylabel"

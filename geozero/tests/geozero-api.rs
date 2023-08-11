@@ -1,4 +1,4 @@
-use flatgeobuf::{FallibleStreamingIterator, FeatureProperties, FgbReader, GeometryType};
+use flatgeobuf::{FallibleStreamingIterator as _, FeatureProperties as _, FgbReader, GeometryType};
 use geozero::error::Result;
 use geozero::{ColumnValue, CoordDimensions, GeomProcessor, PropertyProcessor};
 use seek_bufread::BufReader;
