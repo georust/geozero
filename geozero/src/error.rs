@@ -32,7 +32,7 @@ pub enum GeozeroError {
     // GeometryProcessor
     #[error("accessing requested coordinate")]
     Coord,
-    #[error("expected a valid srid value but found `{0}`")]
+    #[error("invalid SRID value `{0}`")]
     Srid(i32),
     #[error("processing geometry `{0}`")]
     Geometry(String),
