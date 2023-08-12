@@ -2,18 +2,50 @@ use crate::error::Result;
 use crate::{CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcessor};
 use std::io::Write;
 
+use super::WktDialect;
+
 /// WKT Writer.
 pub struct WktWriter<'a, W: Write> {
-    pub dims: CoordDimensions,
+    dims: CoordDimensions,
+    srid: Option<i32>,
+    dialect: WktDialect,
+    first_header: bool,
     out: &'a mut W,
 }
 
 impl<'a, W: Write> WktWriter<'a, W> {
     pub fn new(out: &'a mut W) -> WktWriter<'a, W> {
+        Self::with_opts(out, WktDialect::Wkt, CoordDimensions::default(), None)
+    }
+
+    pub fn with_dims(out: &'a mut W, dims: CoordDimensions) -> WktWriter<'a, W> {
+        Self::with_opts(out, WktDialect::Wkt, dims, None)
+    }
+
+    pub fn with_opts(
+        out: &'a mut W,
+        dialect: WktDialect,
+        dims: CoordDimensions,
+        srid: Option<i32>,
+    ) -> WktWriter<'a, W> {
         WktWriter {
-            dims: CoordDimensions::default(),
+            dims,
+            srid,
+            dialect,
+            first_header: true,
             out,
         }
+    }
+
+    fn header(&mut self, srid: Option<i32>) -> Result<()> {
+        if self.first_header && self.dialect == WktDialect::Ewkt {
+            self.first_header = false;
+            match srid {
+                None | Some(0) => (),
+                Some(srid) => self.out.write_all(format!("SRID={srid};").as_bytes())?,
+            }
+        }
+        Ok(())
     }
     fn comma(&mut self, idx: usize) -> Result<()> {
         if idx > 0 {
@@ -22,6 +54,7 @@ impl<'a, W: Write> WktWriter<'a, W> {
         Ok(())
     }
     fn geom_begin(&mut self, idx: usize, tag: &[u8]) -> Result<()> {
+        self.header(self.srid)?;
         self.comma(idx)?;
         self.out.write_all(tag)?;
         Ok(())
@@ -44,6 +77,11 @@ impl<'a, W: Write> WktWriter<'a, W> {
 impl<W: Write> GeomProcessor for WktWriter<'_, W> {
     fn dimensions(&self) -> CoordDimensions {
         self.dims
+    }
+
+    fn srid(&mut self, srid: Option<i32>) -> Result<()> {
+        self.srid = self.srid.or(srid);
+        Ok(())
     }
 
     fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
@@ -176,6 +214,10 @@ impl<W: Write> FeatureProcessor for WktWriter<'_, W> {}
 
 #[cfg(test)]
 mod test {
+    #[cfg(feature = "with-wkb")]
+    use crate::wkb::{FromWkb, WkbDialect};
+    #[cfg(feature = "with-wkb")]
+    use crate::wkt::EwktString;
     use crate::ToWkt;
 
     #[test]
@@ -183,5 +225,15 @@ mod test {
     fn to_wkt() {
         let geom: geo_types::Geometry<f64> = geo_types::Point::new(10.0, 20.0).into();
         assert_eq!(&geom.to_wkt().unwrap(), "POINT(10 20)");
+        assert_eq!(&geom.to_ewkt(Some(4326)).unwrap(), "SRID=4326;POINT(10 20)");
+    }
+
+    #[test]
+    #[cfg(feature = "with-wkb")]
+    fn from_wkb() {
+        let blob = hex::decode("01040000A0E6100000020000000101000080000000000000244000000000000034C0000000000000594001010000800000000000000000000000000000E0BF0000000000405940").unwrap();
+        let mut cursor = std::io::Cursor::new(blob);
+        let ewkt = EwktString::from_wkb(&mut cursor, WkbDialect::Ewkb).unwrap();
+        assert_eq!(ewkt.0, "SRID=4326;MULTIPOINT(10 -20 100,0 -0.5 101)")
     }
 }

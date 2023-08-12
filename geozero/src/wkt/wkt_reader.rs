@@ -30,6 +30,12 @@ impl GeozeroDatasource for WktStr<'_> {
     }
 }
 
+/// WKT String.
+#[derive(Debug)]
+pub struct EwktString(pub String);
+
+pub struct EwktStr<'a>(pub &'a str);
+
 /// Wkt Reader.
 pub struct WktReader<'a, R: Read>(pub &'a mut R);
 
