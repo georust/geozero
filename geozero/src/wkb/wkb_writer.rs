@@ -6,16 +6,16 @@ use std::io::Write;
 
 /// WKB writer.
 pub struct WkbWriter<W: Write> {
-    pub dims: CoordDimensions,
-    pub srid: Option<i32>,
+    dims: CoordDimensions,
+    srid: Option<i32>,
     /// Geometry envelope (GPKG)
-    pub envelope: Vec<f64>,
+    envelope: Vec<f64>,
     /// Envelope dimensions (GPKG)
-    pub envelope_dims: CoordDimensions,
+    envelope_dims: CoordDimensions,
     /// ExtendedGeoPackageBinary
-    pub extended_gpkg: bool,
+    extended_gpkg: bool,
     /// Empty geometry flag (GPKG)
-    pub empty: bool,
+    empty: bool,
     endian: scroll::Endian,
     dialect: WkbDialect,
     first_header: bool,
@@ -33,13 +33,62 @@ enum GeomState {
 
 impl<W: Write> WkbWriter<W> {
     pub fn new(out: W, dialect: WkbDialect) -> Self {
-        Self {
-            dims: CoordDimensions::default(),
-            srid: None,
-            envelope: Vec::new(),
-            envelope_dims: CoordDimensions::default(),
-            extended_gpkg: false,
-            empty: false,
+        let srid = None;
+        let envelope = Vec::new();
+        let envelope_dims = CoordDimensions::default();
+        let extended_gpkg = false;
+        let empty = false;
+        Self::with_extended_opts(
+            out,
+            dialect,
+            CoordDimensions::default(),
+            srid,
+            envelope,
+            envelope_dims,
+            extended_gpkg,
+            empty,
+        )
+    }
+
+    pub fn with_opts(
+        out: W,
+        dialect: WkbDialect,
+        dims: CoordDimensions,
+        srid: Option<i32>,
+        envelope: Vec<f64>,
+    ) -> Self {
+        let envelope_dims = CoordDimensions::default();
+        let extended_gpkg = false;
+        let empty = false;
+        Self::with_extended_opts(
+            out,
+            dialect,
+            dims,
+            srid,
+            envelope,
+            envelope_dims,
+            extended_gpkg,
+            empty,
+        )
+    }
+
+    pub fn with_extended_opts(
+        out: W,
+        dialect: WkbDialect,
+        dims: CoordDimensions,
+        srid: Option<i32>,
+        envelope: Vec<f64>,
+        envelope_dims: CoordDimensions,
+        extended_gpkg: bool,
+        empty: bool,
+    ) -> Self {
+        WkbWriter {
+            dims,
+            srid,
+            envelope,
+            envelope_dims,
+            extended_gpkg,
+            empty,
             endian: scroll::LE,
             dialect,
             first_header: true,
