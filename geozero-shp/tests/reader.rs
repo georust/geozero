@@ -1,7 +1,7 @@
 use dbase::FieldValue;
 use geozero::geojson::GeoJsonWriter;
 use geozero::wkt::WktWriter;
-use geozero::{FeatureProperties, ProcessorSink};
+use geozero::{CoordDimensions, FeatureProperties, ProcessorSink};
 use std::fs::File;
 use std::io::BufReader;
 use std::str::from_utf8;
@@ -178,8 +178,7 @@ fn point() -> Result<(), geozero_shp::Error> {
 fn pointzm() -> Result<(), geozero_shp::Error> {
     let reader = geozero_shp::Reader::from_path("./tests/data/pointm.shp")?;
     let mut wkt_data: Vec<u8> = Vec::new();
-    let mut writer = WktWriter::new(&mut wkt_data);
-    writer.dims.m = true;
+    let mut writer = WktWriter::with_dims(&mut wkt_data, CoordDimensions::xym());
     reader.iter_geometries(&mut writer).next();
     assert_eq!(
         from_utf8(&wkt_data).unwrap(),
@@ -188,8 +187,7 @@ fn pointzm() -> Result<(), geozero_shp::Error> {
 
     let reader = geozero_shp::Reader::from_path("./tests/data/pointz.shp")?;
     let mut wkt_data: Vec<u8> = Vec::new();
-    let mut writer = WktWriter::new(&mut wkt_data);
-    writer.dims.z = true;
+    let mut writer = WktWriter::with_dims(&mut wkt_data, CoordDimensions::xyz());
     reader.iter_geometries(&mut writer).next();
     assert_eq!(
         from_utf8(&wkt_data).unwrap(),
@@ -213,8 +211,7 @@ fn multipoint() -> Result<(), geozero_shp::Error> {
 fn multipointzm() -> Result<(), geozero_shp::Error> {
     let reader = geozero_shp::Reader::from_path("./tests/data/multipointz.shp")?;
     let mut wkt_data: Vec<u8> = Vec::new();
-    let mut writer = WktWriter::new(&mut wkt_data);
-    writer.dims.z = true;
+    let mut writer = WktWriter::with_dims(&mut wkt_data, CoordDimensions::xyz());
     reader.iter_geometries(&mut writer).next();
     assert_eq!(
         from_utf8(&wkt_data).unwrap(),
@@ -241,9 +238,7 @@ fn line() -> Result<(), geozero_shp::Error> {
 fn linezm() -> Result<(), geozero_shp::Error> {
     let reader = geozero_shp::Reader::from_path("./tests/data/linez.shp")?;
     let mut wkt_data: Vec<u8> = Vec::new();
-    let mut writer = WktWriter::new(&mut wkt_data);
-    writer.dims.z = true;
-    writer.dims.m = true;
+    let mut writer = WktWriter::with_dims(&mut wkt_data, CoordDimensions::xyzm());
     reader.iter_geometries(&mut writer).next();
     assert_eq!(
         from_utf8(&wkt_data).unwrap(),
@@ -252,8 +247,7 @@ fn linezm() -> Result<(), geozero_shp::Error> {
 
     let reader = geozero_shp::Reader::from_path("./tests/data/linez.shp")?;
     let mut wkt_data: Vec<u8> = Vec::new();
-    let mut writer = WktWriter::new(&mut wkt_data);
-    writer.dims.z = true; // return XYZ only
+    let mut writer = WktWriter::with_dims(&mut wkt_data, CoordDimensions::xyz());
     reader.iter_geometries(&mut writer).next();
     assert_eq!(
         from_utf8(&wkt_data).unwrap(),
@@ -272,8 +266,7 @@ fn linezm() -> Result<(), geozero_shp::Error> {
 
     let reader = geozero_shp::Reader::from_path("./tests/data/linem.shp")?;
     let mut wkt_data: Vec<u8> = Vec::new();
-    let mut writer = WktWriter::new(&mut wkt_data);
-    writer.dims.m = true;
+    let mut writer = WktWriter::with_dims(&mut wkt_data, CoordDimensions::xym());
     reader.iter_geometries(&mut writer).next();
     assert_eq!(
         from_utf8(&wkt_data).unwrap(),
@@ -326,9 +319,7 @@ fn polygon() -> Result<(), geozero_shp::Error> {
 fn polygonzm() -> Result<(), geozero_shp::Error> {
     let reader = geozero_shp::Reader::from_path("./tests/data/polygonz.shp")?;
     let mut wkt_data: Vec<u8> = Vec::new();
-    let mut writer = WktWriter::new(&mut wkt_data);
-    writer.dims.z = true;
-    writer.dims.m = true;
+    let mut writer = WktWriter::with_dims(&mut wkt_data, CoordDimensions::xyzm());
     reader.iter_geometries(&mut writer).next();
     assert_eq!(
         from_utf8(&wkt_data).unwrap(),
@@ -337,8 +328,7 @@ fn polygonzm() -> Result<(), geozero_shp::Error> {
 
     let reader = geozero_shp::Reader::from_path("./tests/data/polygonm.shp")?;
     let mut wkt_data: Vec<u8> = Vec::new();
-    let mut writer = WktWriter::new(&mut wkt_data);
-    writer.dims.m = true;
+    let mut writer = WktWriter::with_dims(&mut wkt_data, CoordDimensions::xym());
     reader.iter_geometries(&mut writer).next();
     assert_eq!(
         from_utf8(&wkt_data).unwrap(),

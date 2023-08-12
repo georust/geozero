@@ -64,18 +64,21 @@ impl GeozeroGeometry for MySQLWkb {
 /// Process WKB geometry.
 pub fn process_wkb_geom<R: Read, P: GeomProcessor>(raw: &mut R, processor: &mut P) -> Result<()> {
     let info = read_wkb_header(raw)?;
+    processor.srid(info.srid)?;
     process_wkb_geom_n(raw, &info, read_wkb_nested_header, 0, processor)
 }
 
 /// Process EWKB geometry.
 pub fn process_ewkb_geom<R: Read, P: GeomProcessor>(raw: &mut R, processor: &mut P) -> Result<()> {
     let info = read_ewkb_header(raw)?;
+    processor.srid(info.srid)?;
     process_wkb_geom_n(raw, &info, read_ewkb_nested_header, 0, processor)
 }
 
 /// Process GPKG geometry.
 pub fn process_gpkg_geom<R: Read, P: GeomProcessor>(raw: &mut R, processor: &mut P) -> Result<()> {
     let info = read_gpkg_header(raw)?;
+    processor.srid(info.srid)?;
     process_wkb_geom_n(raw, &info, read_wkb_nested_header, 0, processor)
 }
 
@@ -85,12 +88,14 @@ pub fn process_spatialite_geom<R: Read, P: GeomProcessor>(
     processor: &mut P,
 ) -> Result<()> {
     let info = read_spatialite_header(raw)?;
+    processor.srid(info.srid)?;
     process_wkb_geom_n(raw, &info, read_spatialite_nested_header, 0, processor)
 }
 
 /// Process MySQL WKB geometry.
 pub fn process_mysql_geom<R: Read, P: GeomProcessor>(raw: &mut R, processor: &mut P) -> Result<()> {
     let info = read_mysql_header(raw)?;
+    processor.srid(info.srid)?;
     process_wkb_geom_n(raw, &info, read_wkb_nested_header, 0, processor)
 }
 
@@ -598,7 +603,7 @@ fn process_curvepolygon<R: Read, P: GeomProcessor>(
 mod test {
     use super::*;
     use crate::wkt::WktWriter;
-    use crate::ToWkt;
+    use crate::{CoordDimensions, ToWkt};
 
     #[test]
     fn ewkb_format() {
@@ -622,9 +627,7 @@ mod test {
 
         // Process all dimensions
         let mut wkt_data: Vec<u8> = Vec::new();
-        let mut writer = WktWriter::new(&mut wkt_data);
-        writer.dims.z = true;
-        writer.dims.m = true;
+        let mut writer = WktWriter::with_dims(&mut wkt_data, CoordDimensions::xyzm());
         assert!(process_ewkb_geom(&mut ewkb.as_slice(), &mut writer).is_ok());
         assert_eq!(
             std::str::from_utf8(&wkt_data).unwrap(),
@@ -641,8 +644,7 @@ mod test {
         assert!(info.has_z);
 
         let mut wkt_data: Vec<u8> = Vec::new();
-        let mut writer = WktWriter::new(&mut wkt_data);
-        writer.dims.z = true;
+        let mut writer = WktWriter::with_dims(&mut wkt_data, CoordDimensions::xyz());
         assert!(process_ewkb_geom(&mut ewkb.as_slice(), &mut writer).is_ok());
         assert_eq!(
             std::str::from_utf8(&wkt_data).unwrap(),
@@ -752,8 +754,12 @@ mod test {
     fn ewkb_to_wkt(ewkb_str: &str, with_z: bool) -> String {
         let ewkb = hex::decode(ewkb_str).unwrap();
         let mut wkt_data: Vec<u8> = Vec::new();
-        let mut writer = WktWriter::new(&mut wkt_data);
-        writer.dims.z = with_z;
+        let dims = if with_z {
+            CoordDimensions::xyz()
+        } else {
+            CoordDimensions::xy()
+        };
+        let mut writer = WktWriter::with_dims(&mut wkt_data, dims);
         assert_eq!(
             process_wkb_type_geom(&mut ewkb.as_slice(), &mut writer, WkbDialect::Ewkb)
                 .map_err(|e| e.to_string()),
