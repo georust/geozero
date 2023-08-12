@@ -152,7 +152,7 @@ fn process_polygon<P: GeomProcessor>(
 mod test {
     use super::*;
     use crate::wkt::WktWriter;
-    use crate::ToWkt;
+    use crate::{CoordDimensions, ToWkt};
 
     #[test]
     fn point() {
