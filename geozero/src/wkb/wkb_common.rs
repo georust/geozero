@@ -37,11 +37,13 @@ pub trait FromWkb {
 }
 
 /// WKB dialect.
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone, Copy)]
 pub enum WkbDialect {
     Wkb,
     Ewkb,
     Geopackage,
+    MySQL,
+    SpatiaLite,
 }
 
 /// WKB Types according to OGC 06-103r4 (<https://www.ogc.org/standards/sfa>)
@@ -197,4 +199,13 @@ impl WKBGeometryType {
 pub(crate) enum WKBByteOrder {
     Xdr = 0, // Big Endian
     Ndr = 1, // Little Endian
+}
+
+impl From<scroll::Endian> for WKBByteOrder {
+    fn from(endian: scroll::Endian) -> Self {
+        match endian {
+            scroll::BE => WKBByteOrder::Xdr,
+            scroll::LE => WKBByteOrder::Ndr,
+        }
+    }
 }

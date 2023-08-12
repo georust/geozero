@@ -1,5 +1,5 @@
 use crate::error::Result;
-use crate::wkb::wkb_reader::{process_wkb_geom_n, read_wkb_header};
+use crate::wkb::wkb_reader::{process_wkb_geom_n, read_wkb_header, read_wkb_nested_header};
 use crate::{GeomProcessor, GeozeroGeometry};
 use arrow2::array::BinaryArray;
 use arrow2::types::Offset;
@@ -26,7 +26,7 @@ pub fn process_geoarrow_wkb_geom<T: Offset>(
     for i in 0..array_len {
         let raw = &mut array.value(i);
         let info = read_wkb_header(raw)?;
-        process_wkb_geom_n(raw, &info, read_wkb_header, i, processor)?;
+        process_wkb_geom_n(raw, &info, read_wkb_nested_header, i, processor)?;
     }
 
     processor.geometrycollection_end(array_len - 1)
