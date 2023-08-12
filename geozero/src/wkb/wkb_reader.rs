@@ -788,9 +788,7 @@ mod test {
 
         // Process all dimensions
         let mut wkt_data: Vec<u8> = Vec::new();
-        let mut writer = WktWriter::new(&mut wkt_data);
-        writer.dims.z = true;
-        writer.dims.m = true;
+        let mut writer = WktWriter::with_dims(&mut wkt_data, CoordDimensions::xyzm());
         assert!(process_spatialite_geom(&mut ewkb.as_slice(), &mut writer).is_ok());
         assert_eq!(
             std::str::from_utf8(&wkt_data).unwrap(),
@@ -824,9 +822,7 @@ mod test {
         assert!(info.has_m);
 
         let mut wkt_data: Vec<u8> = Vec::new();
-        let mut writer = WktWriter::new(&mut wkt_data);
-        writer.dims.z = true;
-        writer.dims.m = true;
+        let mut writer = WktWriter::with_dims(&mut wkt_data, CoordDimensions::xyzm());
         assert!(process_spatialite_geom(&mut ewkb.as_slice(), &mut writer).is_ok());
         assert_eq!(
             std::str::from_utf8(&wkt_data).unwrap(),
