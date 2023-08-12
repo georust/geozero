@@ -210,11 +210,11 @@ impl<W: Write> FeatureProcessor for WktWriter<'_, W> {}
 
 #[cfg(test)]
 mod test {
-    use crate::{
-        wkb::{FromWkb, WkbDialect},
-        wkt::EwktString,
-        ToWkt,
-    };
+    #[cfg(feature = "with-wkb")]
+    use crate::wkb::{FromWkb, WkbDialect};
+    #[cfg(feature = "with-wkb")]
+    use crate::wkt::EwktString;
+    use crate::ToWkt;
 
     #[test]
     #[cfg(feature = "with-geo")]
@@ -225,14 +225,13 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "with-wkb")]
     fn from_wkb() {
         let blob = hex::decode("01040000A0E6100000020000000101000080000000000000244000000000000034C0000000000000594001010000800000000000000000000000000000E0BF0000000000405940").unwrap();
         let mut cursor = std::io::Cursor::new(blob);
         assert_eq!(
-            EwktString::from_wkb(&mut cursor, WkbDialect::Ewkb)
-                .unwrap()
-                .0,
-            "SRID=4326;MULTIPOINT(10 -20 100,0 -0.5 101)"
+            EwktString::from_wkb(&mut cursor, WkbDialect::Ewkb).unwrap(),
+            EwktString("SRID=4326;MULTIPOINT(10 -20 100,0 -0.5 101)".to_string())
         )
     }
 }
