@@ -342,6 +342,13 @@ mod test {
         }
 
         #[test]
+        fn empty_line_roundtrip() {
+            let wkt = WktStr("LINESTRING EMPTY");
+            let actual = wkt.to_wkt().unwrap();
+            assert_eq!("LINESTRING EMPTY", &actual);
+        }
+
+        #[test]
         fn empty_multi_line_string() {
             let wkt = WktStr("MULTILINESTRING EMPTY");
             let actual = wkt.to_geo().unwrap();
@@ -350,11 +357,37 @@ mod test {
         }
 
         #[test]
+        fn empty_multi_line_roundtrip() {
+            let wkt = WktStr("MULTILINESTRING EMPTY");
+            let actual = wkt.to_wkt().unwrap();
+            assert_eq!("MULTILINESTRING EMPTY", &actual);
+        }
+
+        #[test]
+        fn multi_line_string_with_empty_one() {
+            let wkt = WktStr("MULTILINESTRING ((10 10, 20 20, 10 40), EMPTY)");
+            let actual = wkt.to_geo().unwrap();
+            // type one line at a time.
+            let expected: geo_types::Geometry<f64> = geo_types::MultiLineString(vec![
+                line_string![(x: 10.0, y: 10.0), (x: 20.0, y: 20.0), (x: 10.0, y: 40.0)],
+                line_string![],
+            ]).into();
+            assert_eq!(expected, actual);
+        }
+    
+        #[test]
         fn empty_polygon() {
             let wkt = WktStr("POLYGON EMPTY");
             let actual = wkt.to_geo().unwrap();
             let expected: geo_types::Geometry<f64> = polygon![].into();
             assert_eq!(expected, actual);
+        }
+
+        #[test]
+        fn empty_polygon_roundtrip() {
+            let wkt = WktStr("POLYGON EMPTY");
+            let actual = wkt.to_wkt().unwrap();
+            assert_eq!("POLYGON EMPTY", &actual);
         }
 
         #[test]
@@ -366,6 +399,13 @@ mod test {
         }
 
         #[test]
+        fn empty_multi_polygon_roundtrip() {
+            let wkt = WktStr("MULTIPOLYGON EMPTY");
+            let actual = wkt.to_wkt().unwrap();
+            assert_eq!("MULTIPOLYGON EMPTY", &actual);
+        }
+
+        #[test]
         fn empty_geometry_collection() {
             let wkt = WktStr("GEOMETRYCOLLECTION EMPTY");
             let actual = wkt.to_geo().unwrap();
@@ -373,6 +413,13 @@ mod test {
             let expected =
                 geo_types::Geometry::GeometryCollection(geo_types::GeometryCollection(vec![]));
             assert_eq!(expected, actual);
+        }
+
+        #[test]
+        fn empty_geometry_collection_roundtrip() {
+            let wkt = WktStr("GEOMETRYCOLLECTION EMPTY");
+            let actual = wkt.to_wkt().unwrap();
+            assert_eq!("GEOMETRYCOLLECTION EMPTY", &actual);
         }
     }
 }
