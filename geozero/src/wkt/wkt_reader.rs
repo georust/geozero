@@ -371,10 +371,11 @@ mod test {
             let expected: geo_types::Geometry<f64> = geo_types::MultiLineString(vec![
                 line_string![(x: 10.0, y: 10.0), (x: 20.0, y: 20.0), (x: 10.0, y: 40.0)],
                 line_string![],
-            ]).into();
+            ])
+            .into();
             assert_eq!(expected, actual);
         }
-    
+
         #[test]
         fn empty_polygon() {
             let wkt = WktStr("POLYGON EMPTY");
