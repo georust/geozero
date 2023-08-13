@@ -270,7 +270,7 @@ mod buffering_wkt_writer {
             &self.buffer
         }
 
-        fn wkt_writer(&mut self) -> WktWriter<'_, Vec<u8>> {
+        fn wkt_writer(&mut self) -> WktWriter<&mut Vec<u8>> {
             WktWriter::new(&mut self.buffer)
         }
     }

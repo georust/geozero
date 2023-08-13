@@ -6,32 +6,32 @@ use std::vec;
 use super::WktDialect;
 
 /// WKT Writer.
-pub struct WktWriter<'a, W: Write> {
+pub struct WktWriter<W: Write> {
     dims: CoordDimensions,
     srid: Option<i32>,
     dialect: WktDialect,
     first_header: bool,
     /// Stack of in-progress geometry sizes
     geometry_sizes: Vec<usize>,
-    out: &'a mut W,
+    out: W,
 }
 
-impl<'a, W: Write> WktWriter<'a, W> {
-    pub fn new(out: &'a mut W) -> WktWriter<'a, W> {
+impl<W: Write> WktWriter<W> {
+    pub fn new(out: W) -> Self {
         Self::with_opts(out, WktDialect::Wkt, CoordDimensions::default(), None)
     }
 
-    pub fn with_dims(out: &'a mut W, dims: CoordDimensions) -> WktWriter<'a, W> {
+    pub fn with_dims(out: W, dims: CoordDimensions) -> Self {
         Self::with_opts(out, WktDialect::Wkt, dims, None)
     }
 
     pub fn with_opts(
-        out: &'a mut W,
+        out: W,
         dialect: WktDialect,
         dims: CoordDimensions,
         srid: Option<i32>,
-    ) -> WktWriter<'a, W> {
-        WktWriter {
+    ) -> Self {
+        Self {
             dims,
             srid,
             dialect,
@@ -83,7 +83,7 @@ impl<'a, W: Write> WktWriter<'a, W> {
     }
 }
 
-impl<W: Write> GeomProcessor for WktWriter<'_, W> {
+impl<W: Write> GeomProcessor for WktWriter<W> {
     fn dimensions(&self) -> CoordDimensions {
         self.dims
     }
@@ -216,9 +216,9 @@ impl<W: Write> GeomProcessor for WktWriter<'_, W> {
     }
 }
 
-impl<W: Write> PropertyProcessor for WktWriter<'_, W> {}
+impl<W: Write> PropertyProcessor for WktWriter<W> {}
 
-impl<W: Write> FeatureProcessor for WktWriter<'_, W> {}
+impl<W: Write> FeatureProcessor for WktWriter<W> {}
 
 #[cfg(test)]
 mod test {
