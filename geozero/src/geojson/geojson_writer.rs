@@ -98,6 +98,12 @@ impl<W: Write> GeomProcessor for GeoJsonWriter<'_, W> {
         self.out.write_all(b"]")?;
         Ok(())
     }
+    fn empty_point(&mut self, idx: usize) -> Result<()> {
+        self.comma(idx)?;
+        self.out
+            .write_all(br#"{"type": "Point", "coordinates": []}"#)?;
+        Ok(())
+    }
     fn point_begin(&mut self, idx: usize) -> Result<()> {
         self.comma(idx)?;
         self.out
