@@ -76,6 +76,8 @@ impl<'a, W: Write> WktWriter<'a, W> {
             if geometry_size > 0 {
                 self.out.write_all(b")")?;
             }
+        } else {
+            debug_assert!(false, "ended geometry that didn't start");
         }
         Ok(())
     }
