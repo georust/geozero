@@ -237,6 +237,7 @@ mod test {
     use super::*;
     use crate::geojson::read_geojson;
     use crate::ToJson;
+    use crate::wkt::WktStr;
 
     #[test]
     fn geometries() -> Result<()> {
@@ -426,6 +427,12 @@ mod test {
             &geom.to_json().unwrap(),
             r#"{"type": "Point", "coordinates": [10,20]}"#
         );
+
+        let geom = WktStr("POINT EMPTY");
+        assert_eq!(
+            &geom.to_json().unwrap(),
+            r#"{"type": "Point", "coordinates": []}"#
+        )
     }
 
     fn assert_json_eq(a: &[u8], b: &str) {
