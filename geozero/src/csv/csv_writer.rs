@@ -1,6 +1,6 @@
 use crate::error::Result;
+use crate::wkt::WktWriter;
 use crate::{ColumnValue, CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcessor};
-use buffering_wkt_writer::BufferingWktWriter;
 
 use std::io::Write;
 
@@ -9,27 +9,26 @@ pub struct CsvWriter<'w, W: Write> {
     headers: Vec<String>,
     has_written_first_record: bool,
     current_row_props: Vec<String>,
-    wkt_writer: BufferingWktWriter,
+    wkt_writer: WktWriter<Vec<u8>>,
 }
 
 impl<'w, W: Write> CsvWriter<'w, W> {
     pub fn new(out: &'w mut W) -> Self {
-        let wkt_writer = BufferingWktWriter::new();
+        Self::with_dims(out, CoordDimensions::default())
+    }
+
+    pub fn with_dims(out: &'w mut W, dims: CoordDimensions) -> Self {
         Self {
             csv: csv::Writer::from_writer(out),
             headers: vec!["geometry".to_string()],
             has_written_first_record: false,
             current_row_props: vec![],
-            wkt_writer,
+            wkt_writer: WktWriter::with_dims(vec![], dims),
         }
     }
 
-    pub fn set_dims(&mut self, dims: CoordDimensions) {
-        self.wkt_writer.dims = dims;
-    }
-
     fn has_started_writing_geometry_in_this_row(&self) -> bool {
-        !self.wkt_writer.bytes().is_empty()
+        !self.wkt_writer.out.is_empty()
     }
 
     fn offset_geom_idx(&self, input_idx: usize) -> usize {
@@ -62,9 +61,9 @@ impl<W: Write> FeatureProcessor for CsvWriter<'_, W> {
             self.csv.write_record(self.headers.clone())?;
         }
 
-        let geom = self.wkt_writer.bytes();
+        let geom = &self.wkt_writer.out;
         self.csv.write_field(geom)?;
-        self.wkt_writer.clear();
+        self.wkt_writer.out.clear();
 
         for field in &self.current_row_props {
             self.csv.write_field(field)?;
@@ -242,153 +241,6 @@ impl<W: Write> GeomProcessor for CsvWriter<'_, W> {
     }
     fn tin_end(&mut self, idx: usize) -> Result<()> {
         self.wkt_writer.tin_end(self.offset_geom_idx(idx))
-    }
-}
-
-// Writing Wkt is delegated to the WktWriter, and it's output buffered to Vec, to be eventually
-// incorporated in the output of the CSV writer. Is there a better way?
-mod buffering_wkt_writer {
-    use crate::error::Result;
-    use crate::{wkt::WktWriter, CoordDimensions, GeomProcessor};
-
-    #[derive(Default)]
-    pub(crate) struct BufferingWktWriter {
-        buffer: Vec<u8>,
-        pub(crate) dims: CoordDimensions,
-    }
-
-    impl BufferingWktWriter {
-        pub(crate) fn new() -> Self {
-            Self::default()
-        }
-
-        pub(crate) fn clear(&mut self) {
-            self.buffer.clear();
-        }
-
-        pub(crate) fn bytes(&self) -> &[u8] {
-            &self.buffer
-        }
-
-        fn wkt_writer(&mut self) -> WktWriter<'_, Vec<u8>> {
-            WktWriter::new(&mut self.buffer)
-        }
-    }
-
-    impl GeomProcessor for BufferingWktWriter {
-        fn dimensions(&self) -> CoordDimensions {
-            self.dims
-        }
-        fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
-            self.wkt_writer().xy(x, y, idx)
-        }
-
-        fn coordinate(
-            &mut self,
-            x: f64,
-            y: f64,
-            z: Option<f64>,
-            m: Option<f64>,
-            t: Option<f64>,
-            tm: Option<u64>,
-            idx: usize,
-        ) -> Result<()> {
-            self.wkt_writer().coordinate(x, y, z, m, t, tm, idx)
-        }
-
-        fn empty_point(&mut self, idx: usize) -> Result<()> {
-            self.wkt_writer().empty_point(idx)
-        }
-        fn point_begin(&mut self, idx: usize) -> Result<()> {
-            self.wkt_writer().point_begin(idx)
-        }
-        fn point_end(&mut self, idx: usize) -> Result<()> {
-            self.wkt_writer().point_end(idx)
-        }
-        fn multipoint_begin(&mut self, size: usize, idx: usize) -> Result<()> {
-            self.wkt_writer().multipoint_begin(size, idx)
-        }
-        fn multipoint_end(&mut self, idx: usize) -> Result<()> {
-            self.wkt_writer().multipoint_end(idx)
-        }
-        fn linestring_begin(&mut self, tagged: bool, size: usize, idx: usize) -> Result<()> {
-            self.wkt_writer().linestring_begin(tagged, size, idx)
-        }
-        fn linestring_end(&mut self, tagged: bool, idx: usize) -> Result<()> {
-            self.wkt_writer().linestring_end(tagged, idx)
-        }
-        fn multilinestring_begin(&mut self, size: usize, idx: usize) -> Result<()> {
-            self.wkt_writer().multilinestring_begin(size, idx)
-        }
-        fn multilinestring_end(&mut self, idx: usize) -> Result<()> {
-            self.wkt_writer().multilinestring_end(idx)
-        }
-        fn polygon_begin(&mut self, tagged: bool, size: usize, idx: usize) -> Result<()> {
-            self.wkt_writer().polygon_begin(tagged, size, idx)
-        }
-        fn polygon_end(&mut self, tagged: bool, idx: usize) -> Result<()> {
-            self.wkt_writer().polygon_end(tagged, idx)
-        }
-        fn multipolygon_begin(&mut self, size: usize, idx: usize) -> Result<()> {
-            self.wkt_writer().multipolygon_begin(size, idx)
-        }
-        fn multipolygon_end(&mut self, idx: usize) -> Result<()> {
-            self.wkt_writer().multipolygon_end(idx)
-        }
-        fn geometrycollection_begin(&mut self, size: usize, idx: usize) -> Result<()> {
-            self.wkt_writer().geometrycollection_begin(size, idx)
-        }
-        fn geometrycollection_end(&mut self, idx: usize) -> Result<()> {
-            self.wkt_writer().geometrycollection_end(idx)
-        }
-        fn circularstring_begin(&mut self, size: usize, idx: usize) -> Result<()> {
-            self.wkt_writer().circularstring_begin(size, idx)
-        }
-        fn circularstring_end(&mut self, idx: usize) -> Result<()> {
-            self.wkt_writer().circularstring_end(idx)
-        }
-        fn compoundcurve_begin(&mut self, size: usize, idx: usize) -> Result<()> {
-            self.wkt_writer().compoundcurve_begin(size, idx)
-        }
-        fn compoundcurve_end(&mut self, idx: usize) -> Result<()> {
-            self.wkt_writer().compoundcurve_end(idx)
-        }
-        fn curvepolygon_begin(&mut self, size: usize, idx: usize) -> Result<()> {
-            self.wkt_writer().curvepolygon_begin(size, idx)
-        }
-        fn curvepolygon_end(&mut self, idx: usize) -> Result<()> {
-            self.wkt_writer().curvepolygon_end(idx)
-        }
-        fn multicurve_begin(&mut self, size: usize, idx: usize) -> Result<()> {
-            self.wkt_writer().multicurve_begin(size, idx)
-        }
-        fn multicurve_end(&mut self, idx: usize) -> Result<()> {
-            self.wkt_writer().multicurve_end(idx)
-        }
-        fn multisurface_begin(&mut self, size: usize, idx: usize) -> Result<()> {
-            self.wkt_writer().multisurface_begin(size, idx)
-        }
-        fn multisurface_end(&mut self, idx: usize) -> Result<()> {
-            self.wkt_writer().multisurface_end(idx)
-        }
-        fn triangle_begin(&mut self, tagged: bool, size: usize, idx: usize) -> Result<()> {
-            self.wkt_writer().triangle_begin(tagged, size, idx)
-        }
-        fn triangle_end(&mut self, tagged: bool, idx: usize) -> Result<()> {
-            self.wkt_writer().triangle_end(tagged, idx)
-        }
-        fn polyhedralsurface_begin(&mut self, size: usize, idx: usize) -> Result<()> {
-            self.wkt_writer().polyhedralsurface_begin(size, idx)
-        }
-        fn polyhedralsurface_end(&mut self, idx: usize) -> Result<()> {
-            self.wkt_writer().polyhedralsurface_end(idx)
-        }
-        fn tin_begin(&mut self, size: usize, idx: usize) -> Result<()> {
-            self.wkt_writer().tin_begin(size, idx)
-        }
-        fn tin_end(&mut self, idx: usize) -> Result<()> {
-            self.wkt_writer().tin_end(idx)
-        }
     }
 }
 
