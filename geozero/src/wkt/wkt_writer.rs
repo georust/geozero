@@ -13,7 +13,7 @@ pub struct WktWriter<W: Write> {
     first_header: bool,
     /// Stack of in-progress geometry sizes
     geometry_sizes: Vec<usize>,
-    out: W,
+    pub(crate) out: W,
 }
 
 impl<W: Write> WktWriter<W> {
