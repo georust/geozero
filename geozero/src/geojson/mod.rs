@@ -1,9 +1,11 @@
 //! GeoJSON conversions.
 pub(crate) mod geojson_reader;
 pub(crate) mod geojson_writer;
+pub(crate) mod line_delimited_geojson_reader;
 
 pub use geojson_reader::*;
 pub use geojson_writer::*;
+pub use line_delimited_geojson_reader::*;
 
 pub(crate) mod conversion {
     use crate::error::Result;

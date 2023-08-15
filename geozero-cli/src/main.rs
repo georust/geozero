@@ -2,7 +2,7 @@ use clap::Parser;
 use flatgeobuf::{FgbReader, FgbWriter, GeometryType, HttpFgbReader};
 use geozero::csv::{CsvReader, CsvWriter};
 use geozero::error::Result;
-use geozero::geojson::{GeoJsonReader, GeoJsonWriter};
+use geozero::geojson::{GeoJsonReader, GeoJsonWriter, LineDelimitedGeoJsonReader};
 use geozero::svg::SvgWriter;
 use geozero::wkt::{WktReader, WktWriter};
 use geozero::{FeatureProcessor, GeozeroDatasource};
@@ -68,6 +68,9 @@ fn transform<P: FeatureProcessor>(args: Cli, processor: &mut P) -> Result<()> {
         }
         Some("json") | Some("geojson") => {
             GeozeroDatasource::process(&mut GeoJsonReader(filein), processor)
+        }
+        Some("jsonl") | Some("geojsonl") => {
+            GeozeroDatasource::process(&mut LineDelimitedGeoJsonReader::new(filein), processor)
         }
         Some("fgb") => {
             let ds = FgbReader::open(&mut filein)?;
