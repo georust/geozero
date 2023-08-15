@@ -65,7 +65,10 @@ impl<W: Write> WktWriter<W> {
         }
         self.geometry_sizes.push(size);
         if size == 0 {
-            self.out.write_all(b" EMPTY")?;
+            if tagged {
+                self.out.write_all(b" ")?;
+            };
+            self.out.write_all(b"EMPTY")?;
         } else {
             self.out.write_all(b"(")?;
         }
