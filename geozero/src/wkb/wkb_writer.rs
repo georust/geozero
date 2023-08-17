@@ -65,6 +65,8 @@ impl<W: Write> WkbWriter<W> {
         )
     }
 
+    #[doc(hidden)]
+    // Temporary constructor. To be replaced with builder pattern.
     #[allow(clippy::too_many_arguments)]
     pub fn with_extended_opts(
         out: W,
