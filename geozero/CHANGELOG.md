@@ -1,3 +1,7 @@
+## Unreleased
+
+* Breaking: remove `set_dims` from CSVWriter. Instead use `CsvWriter::with_dims` constructor.
+
 ## 0.10.0 (2023-07-07)
 
 * Remove lifetime from `GeoJsonReader`
