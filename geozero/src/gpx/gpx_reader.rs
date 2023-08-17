@@ -1,22 +1,24 @@
 use crate::error::GeozeroError;
 use std::io;
 
-/// GPX reader
-pub struct GpxReader<'a, R: io::Read>(pub &'a mut R);
+/// GPX geometry collection
 pub struct Gpx<'a>(pub &'a str);
 
-impl<'a, R: io::Read> crate::GeozeroDatasource for GpxReader<'a, R> {
+impl<'a> crate::GeozeroGeometry for Gpx<'a> {
+    fn process_geom<P: crate::GeomProcessor>(&self, processor: &mut P) -> crate::error::Result<()> {
+        read_gpx(&mut self.0.as_bytes(), processor)
+    }
+}
+
+/// GPX reader
+pub struct GpxReader<R: io::Read>(pub R);
+
+impl<R: io::Read> crate::GeozeroDatasource for GpxReader<R> {
     fn process<P: crate::FeatureProcessor>(
         &mut self,
         processor: &mut P,
     ) -> crate::error::Result<()> {
         read_gpx(&mut self.0, processor)
-    }
-}
-
-impl<'a> crate::GeozeroGeometry for Gpx<'a> {
-    fn process_geom<P: crate::GeomProcessor>(&self, processor: &mut P) -> crate::error::Result<()> {
-        read_gpx(&mut self.0.as_bytes(), processor)
     }
 }
 
