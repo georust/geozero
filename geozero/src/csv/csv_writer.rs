@@ -4,20 +4,20 @@ use crate::{ColumnValue, CoordDimensions, FeatureProcessor, GeomProcessor, Prope
 
 use std::io::Write;
 
-pub struct CsvWriter<'w, W: Write> {
-    csv: csv::Writer<&'w mut W>,
+pub struct CsvWriter<W: Write> {
+    csv: csv::Writer<W>,
     headers: Vec<String>,
     has_written_first_record: bool,
     current_row_props: Vec<String>,
     wkt_writer: WktWriter<Vec<u8>>,
 }
 
-impl<'w, W: Write> CsvWriter<'w, W> {
-    pub fn new(out: &'w mut W) -> Self {
+impl<W: Write> CsvWriter<W> {
+    pub fn new(out: W) -> Self {
         Self::with_dims(out, CoordDimensions::default())
     }
 
-    pub fn with_dims(out: &'w mut W, dims: CoordDimensions) -> Self {
+    pub fn with_dims(out: W, dims: CoordDimensions) -> Self {
         Self {
             csv: csv::Writer::from_writer(out),
             headers: vec!["geometry".to_string()],
@@ -41,7 +41,7 @@ impl<'w, W: Write> CsvWriter<'w, W> {
     }
 }
 
-impl<W: Write> FeatureProcessor for CsvWriter<'_, W> {
+impl<W: Write> FeatureProcessor for CsvWriter<W> {
     fn dataset_begin(&mut self, _name: Option<&str>) -> Result<()> {
         debug_assert_eq!(self.headers, &["geometry"]);
         Ok(())
@@ -89,7 +89,7 @@ impl<W: Write> FeatureProcessor for CsvWriter<'_, W> {
     }
 }
 
-impl<W: Write> PropertyProcessor for CsvWriter<'_, W> {
+impl<W: Write> PropertyProcessor for CsvWriter<W> {
     fn property(&mut self, i: usize, colname: &str, colval: &ColumnValue) -> Result<bool> {
         // TODO: support mis-ordered properties?
         if self.has_written_first_record {
@@ -108,7 +108,7 @@ impl<W: Write> PropertyProcessor for CsvWriter<'_, W> {
     }
 }
 
-impl<W: Write> GeomProcessor for CsvWriter<'_, W> {
+impl<W: Write> GeomProcessor for CsvWriter<W> {
     fn dimensions(&self) -> CoordDimensions {
         self.wkt_writer.dimensions()
     }

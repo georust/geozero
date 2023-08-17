@@ -128,7 +128,7 @@ async fn process_url(args: Cli) -> Result<()> {
     }
 }
 
-fn set_dimensions(processor: &mut SvgWriter<BufWriter<File>>, extent: Option<Extent>) {
+fn set_dimensions(processor: &mut SvgWriter<&mut BufWriter<File>>, extent: Option<Extent>) {
     if let Some(extent) = extent {
         processor.set_dimensions(extent.minx, extent.miny, extent.maxx, extent.maxy, 800, 600);
     } else {

@@ -5,7 +5,7 @@ use scroll::IOwrite;
 use std::io::Write;
 
 /// WKB writer.
-pub struct WkbWriter<'a, W: Write> {
+pub struct WkbWriter<W: Write> {
     pub dims: CoordDimensions,
     pub srid: Option<i32>,
     /// Geometry envelope (GPKG)
@@ -21,7 +21,7 @@ pub struct WkbWriter<'a, W: Write> {
     first_header: bool,
     geom_state: GeomState,
     nesting_level: u32,
-    out: &'a mut W,
+    out: W,
 }
 
 #[derive(PartialEq, Debug)]
@@ -31,9 +31,9 @@ enum GeomState {
     MultiPointGeom,
 }
 
-impl<'a, W: Write> WkbWriter<'a, W> {
-    pub fn new(out: &'a mut W, dialect: WkbDialect) -> WkbWriter<'a, W> {
-        WkbWriter {
+impl<W: Write> WkbWriter<W> {
+    pub fn new(out: W, dialect: WkbDialect) -> Self {
+        Self {
             dims: CoordDimensions::default(),
             srid: None,
             envelope: Vec::new(),
@@ -217,7 +217,7 @@ impl<'a, W: Write> WkbWriter<'a, W> {
     }
 }
 
-impl<W: Write> GeomProcessor for WkbWriter<'_, W> {
+impl<W: Write> GeomProcessor for WkbWriter<W> {
     fn dimensions(&self) -> CoordDimensions {
         self.dims
     }
@@ -392,9 +392,9 @@ impl<W: Write> GeomProcessor for WkbWriter<'_, W> {
     }
 }
 
-impl<W: Write> PropertyProcessor for WkbWriter<'_, W> {}
+impl<W: Write> PropertyProcessor for WkbWriter<W> {}
 
-impl<W: Write> FeatureProcessor for WkbWriter<'_, W> {}
+impl<W: Write> FeatureProcessor for WkbWriter<W> {}
 
 #[cfg(test)]
 mod test {
