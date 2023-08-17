@@ -26,8 +26,7 @@ pub(crate) mod conversion {
             self.to_gdal_ndim(CoordDimensions::default())
         }
         fn to_gdal_ndim(&self, dims: CoordDimensions) -> Result<Geometry> {
-            let mut gdal = GdalWriter::new();
-            gdal.dims = dims;
+            let mut gdal = GdalWriter::with_dims(dims);
             self.process_geom(&mut gdal)?;
             Ok(gdal.geom)
         }

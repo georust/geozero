@@ -7,7 +7,7 @@ use gdal_sys::OGRwkbGeometryType;
 
 /// Generator for GDAL geometry type.
 pub struct GdalWriter {
-    pub dims: CoordDimensions,
+    dims: CoordDimensions,
     pub(crate) geom: Geometry,
     // current line/ring of geom (non-owned)
     line: Geometry,
@@ -16,6 +16,12 @@ pub struct GdalWriter {
 impl GdalWriter {
     pub fn new() -> Self {
         Self::default()
+    }
+    pub fn with_dims(dims: CoordDimensions) -> Self {
+        GdalWriter {
+            dims,
+            ..Default::default()
+        }
     }
     pub fn geometry(&self) -> &Geometry {
         &self.geom

@@ -5,16 +5,19 @@ use std::io::Write;
 
 /// GeoJSON writer.
 pub struct GeoJsonWriter<W: Write> {
-    pub dims: CoordDimensions,
+    dims: CoordDimensions,
     out: W,
 }
 
 impl<W: Write> GeoJsonWriter<W> {
     pub fn new(out: W) -> Self {
-        Self {
+        GeoJsonWriter {
             dims: CoordDimensions::default(),
             out,
         }
+    }
+    pub fn with_dims(out: W, dims: CoordDimensions) -> Self {
+        GeoJsonWriter { dims, out }
     }
     fn comma(&mut self, idx: usize) -> Result<()> {
         if idx > 0 {
