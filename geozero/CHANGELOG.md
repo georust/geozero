@@ -1,6 +1,13 @@
 ## Unreleased
 
 * Breaking: remove `set_dims` from CSVWriter. Instead use `CsvWriter::with_dims` constructor.
+* Breaking: remove lifetime from format readers.
+* Format writers can now own their input, previously only mutable borrows were allowed.
+  * `CsvWriter`
+  * `GeoJsonWriter`
+  * `WkbWriter`
+  * `WktWriter`
+  * `SVGWriter`
 
 ## 0.10.0 (2023-07-07)
 

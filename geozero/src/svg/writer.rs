@@ -3,15 +3,15 @@ use crate::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 use std::io::Write;
 
 /// SVG writer.
-pub struct SvgWriter<'a, W: Write> {
-    out: &'a mut W,
+pub struct SvgWriter<W: Write> {
+    out: W,
     invert_y: bool,
     view_box: Option<(f64, f64, f64, f64)>,
     size: Option<(u32, u32)>,
 }
 
-impl<'a, W: Write> SvgWriter<'a, W> {
-    pub fn new(out: &'a mut W, invert_y: bool) -> SvgWriter<'a, W> {
+impl<W: Write> SvgWriter<W> {
+    pub fn new(out: W, invert_y: bool) -> Self {
         SvgWriter {
             out,
             invert_y,
@@ -37,7 +37,7 @@ impl<'a, W: Write> SvgWriter<'a, W> {
     }
 }
 
-impl<W: Write> FeatureProcessor for SvgWriter<'_, W> {
+impl<W: Write> FeatureProcessor for SvgWriter<W> {
     fn dataset_begin(&mut self, name: Option<&str>) -> Result<()> {
         self.out.write_all(
             br#"<?xml version="1.0"?>
@@ -76,7 +76,7 @@ impl<W: Write> FeatureProcessor for SvgWriter<'_, W> {
     }
 }
 
-impl<W: Write> GeomProcessor for SvgWriter<'_, W> {
+impl<W: Write> GeomProcessor for SvgWriter<W> {
     fn xy(&mut self, x: f64, y: f64, _idx: usize) -> Result<()> {
         let y = if self.invert_y { -y } else { y };
         self.out.write_all(format!("{x} {y} ").as_bytes())?;
@@ -124,7 +124,7 @@ impl<W: Write> GeomProcessor for SvgWriter<'_, W> {
     }
 }
 
-impl<W: Write> PropertyProcessor for SvgWriter<'_, W> {}
+impl<W: Write> PropertyProcessor for SvgWriter<W> {}
 
 #[cfg(test)]
 #[cfg(feature = "with-geojson")]
