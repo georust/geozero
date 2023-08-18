@@ -20,7 +20,7 @@ impl GdalWriter {
     pub fn with_dims(dims: CoordDimensions) -> Self {
         GdalWriter {
             dims,
-            ..Default::default()
+            ..Self::default()
         }
     }
     pub fn geometry(&self) -> &Geometry {
