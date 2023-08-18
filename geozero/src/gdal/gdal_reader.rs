@@ -233,9 +233,9 @@ fn process_compoundcurve<P: GeomProcessor>(
 fn process_curve<P: GeomProcessor>(geo: &Geometry, idx: usize, processor: &mut P) -> Result<()> {
     let ty: OGRwkbGeometryType::Type = type2d(geo.geometry_type());
     match ty {
-        OGRwkbGeometryType::wkbLineString => process_linestring(&geo, false, idx, processor),
-        OGRwkbGeometryType::wkbCircularString => process_circularstring(&geo, idx, processor),
-        OGRwkbGeometryType::wkbCompoundCurve => process_compoundcurve(&geo, idx, processor),
+        OGRwkbGeometryType::wkbLineString => process_linestring(geo, false, idx, processor),
+        OGRwkbGeometryType::wkbCircularString => process_circularstring(geo, idx, processor),
+        OGRwkbGeometryType::wkbCompoundCurve => process_compoundcurve(geo, idx, processor),
         _ => Err(GeozeroError::GeometryFormat),
     }
 }
