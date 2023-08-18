@@ -6,16 +6,19 @@ use std::io::Write;
 
 /// WKB writer.
 pub struct WkbWriter<W: Write> {
-    pub dims: CoordDimensions,
-    pub srid: Option<i32>,
+    /// Coordinate dimensions to write
+    dims: CoordDimensions,
+    /// Coordinate dimensions which should be read
+    read_dims: CoordDimensions,
+    srid: Option<i32>,
     /// Geometry envelope (GPKG)
-    pub envelope: Vec<f64>,
+    envelope: Vec<f64>,
     /// Envelope dimensions (GPKG)
-    pub envelope_dims: CoordDimensions,
+    envelope_dims: CoordDimensions,
     /// ExtendedGeoPackageBinary
-    pub extended_gpkg: bool,
+    extended_gpkg: bool,
     /// Empty geometry flag (GPKG)
-    pub empty: bool,
+    empty: bool,
     endian: scroll::Endian,
     dialect: WkbDialect,
     first_header: bool,
@@ -33,13 +36,57 @@ enum GeomState {
 
 impl<W: Write> WkbWriter<W> {
     pub fn new(out: W, dialect: WkbDialect) -> Self {
-        Self {
-            dims: CoordDimensions::default(),
-            srid: None,
-            envelope: Vec::new(),
-            envelope_dims: CoordDimensions::default(),
-            extended_gpkg: false,
-            empty: false,
+        let srid = None;
+        let envelope = Vec::new();
+        Self::with_opts(out, dialect, CoordDimensions::default(), srid, envelope)
+    }
+
+    pub fn with_opts(
+        out: W,
+        dialect: WkbDialect,
+        dims: CoordDimensions,
+        srid: Option<i32>,
+        envelope: Vec<f64>,
+    ) -> Self {
+        let read_dims = dims;
+        let envelope_dims = CoordDimensions::default();
+        let extended_gpkg = false;
+        let empty = false;
+        Self::with_extended_opts(
+            out,
+            dialect,
+            dims,
+            read_dims,
+            srid,
+            envelope,
+            envelope_dims,
+            extended_gpkg,
+            empty,
+        )
+    }
+
+    #[doc(hidden)]
+    // Temporary constructor. To be replaced with builder pattern.
+    #[allow(clippy::too_many_arguments)]
+    pub fn with_extended_opts(
+        out: W,
+        dialect: WkbDialect,
+        dims: CoordDimensions,
+        read_dims: CoordDimensions,
+        srid: Option<i32>,
+        envelope: Vec<f64>,
+        envelope_dims: CoordDimensions,
+        extended_gpkg: bool,
+        empty: bool,
+    ) -> Self {
+        WkbWriter {
+            dims,
+            read_dims,
+            srid,
+            envelope,
+            envelope_dims,
+            extended_gpkg,
+            empty,
             endian: scroll::LE,
             dialect,
             first_header: true,
@@ -219,15 +266,10 @@ impl<W: Write> WkbWriter<W> {
 
 impl<W: Write> GeomProcessor for WkbWriter<W> {
     fn dimensions(&self) -> CoordDimensions {
-        self.dims
+        self.read_dims
     }
-    fn xy(&mut self, x: f64, y: f64, _idx: usize) -> Result<()> {
-        if self.geom_state == GeomState::MultiPointGeom {
-            self.write_header(WKBGeometryType::Point)?;
-        }
-        self.out.iowrite_with(x, self.endian)?;
-        self.out.iowrite_with(y, self.endian)?;
-        Ok(())
+    fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
+        self.coordinate(x, y, None, None, None, None, idx)
     }
     fn coordinate(
         &mut self,
@@ -244,10 +286,12 @@ impl<W: Write> GeomProcessor for WkbWriter<W> {
         }
         self.out.iowrite_with(x, self.endian)?;
         self.out.iowrite_with(y, self.endian)?;
-        if let Some(z) = z {
+        if self.dims.z {
+            let z = z.unwrap_or(0.0);
             self.out.iowrite_with(z, self.endian)?;
         }
-        if let Some(m) = m {
+        if self.dims.m {
+            let m = m.unwrap_or(0.0);
             self.out.iowrite_with(m, self.endian)?;
         }
         Ok(())
@@ -416,13 +460,38 @@ mod test {
     ) {
         let wkb_in = hex::decode(ewkb_str).unwrap();
         let mut wkb_out: Vec<u8> = Vec::new();
-        let mut writer = WkbWriter::new(&mut wkb_out, dialect);
-        writer.dims = dims;
-        writer.srid = srid;
-        writer.envelope = envelope;
+        let mut writer = WkbWriter::with_opts(&mut wkb_out, dialect, dims, srid, envelope);
         assert!(process_wkb_type_geom(&mut wkb_in.as_slice(), &mut writer, dialect).is_ok());
 
         assert_eq!(hex::encode(wkb_in), hex::encode(wkb_out));
+    }
+
+    fn with_ext_opts(
+        dialect: WkbDialect,
+        dims: CoordDimensions,
+        read_dims: CoordDimensions,
+        srid: Option<i32>,
+        envelope: Vec<f64>,
+        ewkb_str: &str,
+    ) -> String {
+        let wkb_in = hex::decode(ewkb_str).unwrap();
+        let mut wkb_out: Vec<u8> = Vec::new();
+        let envelope_dims = CoordDimensions::default();
+        let extended_gpkg = false;
+        let empty = false;
+        let mut writer = WkbWriter::with_extended_opts(
+            &mut wkb_out,
+            dialect,
+            dims,
+            read_dims,
+            srid,
+            envelope,
+            envelope_dims,
+            extended_gpkg,
+            empty,
+        );
+        assert!(process_wkb_type_geom(&mut wkb_in.as_slice(), &mut writer, dialect).is_ok());
+        hex::encode(wkb_out)
     }
 
     #[test]
@@ -497,6 +566,22 @@ mod test {
         // SELECT 'TRIANGLE((0 0,0 9,9 0,0 0))'::geometry
         roundtrip(Ewkb, DIM_XY, None, Vec::new(),
                   "0111000000010000000400000000000000000000000000000000000000000000000000000000000000000022400000000000002240000000000000000000000000000000000000000000000000");
+    }
+
+    #[test]
+    fn ewkb_flatten_geometry() {
+        // SELECT 'SRID=4326;LINESTRING (10 -20 100, 0 -0.5 101)'::geometry
+        let wkbin = "01020000A0E610000002000000000000000000244000000000000034C000000000000059400000000000000000000000000000E0BF0000000000405940";
+
+        // Read XY and write XYZ
+        let out = with_ext_opts(Ewkb, DIM_XYZ, DIM_XY, Some(4326), Vec::new(), wkbin);
+        // SELECT 'SRID=4326;LINESTRING (10 -20 0, 0 -0.5 0)'::geometry
+        assert_eq!(out, "01020000a0e610000002000000000000000000244000000000000034c000000000000000000000000000000000000000000000e0bf0000000000000000");
+
+        // Read XYZ and write XY
+        let out = with_ext_opts(Ewkb, DIM_XY, DIM_XYZ, Some(4326), Vec::new(), wkbin);
+        // SELECT 'SRID=4326;LINESTRING (10 -20, 0 -0.5)'::geometry
+        assert_eq!(out, "0102000020e610000002000000000000000000244000000000000034c00000000000000000000000000000e0bf");
     }
 
     #[test]

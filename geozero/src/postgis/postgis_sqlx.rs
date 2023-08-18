@@ -70,9 +70,13 @@ impl<T: GeozeroGeometry + Sized> PgHasArrayType for wkb::Encode<T> {
 impl<T: GeozeroGeometry + Sized> Encode<'_, Postgres> for wkb::Encode<T> {
     fn encode_by_ref(&self, buf: &mut PgArgumentBuffer) -> IsNull {
         let mut wkb_out: Vec<u8> = Vec::new();
-        let mut writer = wkb::WkbWriter::new(&mut wkb_out, wkb::WkbDialect::Ewkb);
-        writer.dims = self.0.dims();
-        writer.srid = self.0.srid();
+        let mut writer = wkb::WkbWriter::with_opts(
+            &mut wkb_out,
+            wkb::WkbDialect::Ewkb,
+            self.0.dims(),
+            self.0.srid(),
+            Vec::new(),
+        );
         self.0
             .process_geom(&mut writer)
             .expect("Failed to encode Geometry");
@@ -143,10 +147,13 @@ macro_rules! impl_sqlx_postgis_encode {
             ) -> sqlx::encode::IsNull {
                 use $crate::GeozeroGeometry;
                 let mut wkb_out: Vec<u8> = Vec::new();
-                let mut writer =
-                    $crate::wkb::WkbWriter::new(&mut wkb_out, $crate::wkb::WkbDialect::Ewkb);
-                writer.dims = self.dims();
-                writer.srid = self.srid();
+                let mut writer = $crate::wkb::WkbWriter::with_opts(
+                    &mut wkb_out,
+                    $crate::wkb::WkbDialect::Ewkb,
+                    self.dims(),
+                    self.srid(),
+                    Vec::new(),
+                );
                 self.process_geom(&mut writer)
                     .expect("Failed to encode Geometry");
                 buf.extend(&wkb_out); // Is there a way to write directly into PgArgumentBuffer?

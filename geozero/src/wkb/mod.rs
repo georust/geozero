@@ -91,10 +91,7 @@ pub(crate) mod conversion {
             envelope: Vec<f64>,
         ) -> Result<Vec<u8>> {
             let mut wkb: Vec<u8> = Vec::new();
-            let mut writer = WkbWriter::new(&mut wkb, dialect);
-            writer.dims = dims;
-            writer.srid = srid;
-            writer.envelope = envelope;
+            let mut writer = WkbWriter::with_opts(&mut wkb, dialect, dims, srid, envelope);
             self.process_geom(&mut writer)?;
             Ok(wkb)
         }
