@@ -323,6 +323,13 @@ mod test {
         }
 
         #[test]
+        fn empty_multipoint_roundtrip() {
+            let wkt = WktStr("MULTIPOINT EMPTY");
+            let actual = wkt.to_wkt().unwrap();
+            assert_eq!("MULTIPOINT EMPTY", &actual);
+        }
+
+        #[test]
         fn geometry_collection_with_empty_point() {
             let str = "GEOMETRYCOLLECTION(POINT(40 10),LINESTRING(10 10,20 20,10 40),POINT EMPTY)";
             let wkt = WktStr(str);
