@@ -255,7 +255,7 @@ fn process_curvepolygon<P: GeomProcessor>(
 }
 
 #[cfg(test)]
-#[cfg(feature = "with-wkt")]
+#[cfg(all(feature = "with-wkt", feature = "with-wkb"))]
 mod test {
     use super::*;
     use crate::wkt::WktWriter;
