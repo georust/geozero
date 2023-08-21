@@ -111,11 +111,7 @@ pub fn process_csv_geom(
         .position(|f| f == geometry_column)
         .ok_or(GeozeroError::ColumnNotFound)?;
 
-    // REVIEW: We don't know the size of the geometry collection, so we lie and say it's 0.
-    // Alternatively we'd have to re-traverse the file an extra time just to count or hold
-    // the entire thing in memory, both seem undesirable if the current behavior's only downside
-    // is that it doesn't pre-allocate the geometry collection Vec.
-    processor.geometrycollection_begin(0, 0)?;
+    let mut collection_started = false;
 
     for (record_idx, record) in reader.into_records().enumerate() {
         let record = record?;
@@ -124,6 +120,18 @@ pub fn process_csv_geom(
             .ok_or(GeozeroError::ColumnNotFound)?;
         let wkt = wkt::Wkt::from_str(geometry_field)
             .map_err(|e| GeozeroError::Geometry(e.to_string()))?;
+
+        // We don't know how many lines are in the file, so we dont' know the size of the geometry collection,
+        // but at this point we *do* know that it's non-zero. Currently there aren't any other significant
+        // distinctions for knowing collection size.
+        //
+        // If we wanted to get this more exactly, we'd have to take multiple passes on the file or
+        // hold the whole thing in memory, which doesn't seem worth it.
+        if !collection_started {
+            collection_started = true;
+            processor.geometrycollection_begin(1, 0)?;
+        }
+
         crate::wkt::wkt_reader::process_wkt_geom_n(&wkt.item, record_idx, processor).map_err(
             |e| {
                 // +2 to start at line 1 and to account for the header row
@@ -134,6 +142,10 @@ pub fn process_csv_geom(
         )?;
     }
 
+    if !collection_started {
+        // If collection hasn't been started at this point, it's empty.
+        processor.geometrycollection_begin(0, 0)?;
+    }
     processor.geometrycollection_end(0)
 }
 
@@ -406,5 +418,36 @@ mod tests {
         // ensure the json is parsable. Note it's not parsable back as geojson due to the
         // missing geometry. Some formats, like FGB, will tolerate this null geometry.
         serde_json::from_str::<serde_json::Value>(&json).unwrap();
+    }
+
+    #[test]
+    fn non_empty_geometry_collection() {
+        use crate::ToWkt;
+
+        let input = r#"address,type,datetime,report location,incident number
+904 7th Av,Car Fire,05/22/2019 12:55:00 PM,POINT (-122.329051 47.6069),F190051945
+9610 53rd Av S,Aid Response,05/22/2019 12:55:00 PM,POINT (-122.266529 47.515984),F190051946
+"#;
+        let csv = CsvReader::new("report location", input.as_bytes());
+
+        let actual = csv.to_wkt().unwrap();
+
+        let expected =
+            "GEOMETRYCOLLECTION(POINT(-122.329051 47.6069),POINT(-122.266529 47.515984))";
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn empty_geometry_collection() {
+        use crate::ToWkt;
+
+        let input = r#"address,type,datetime,report location,incident number
+"#;
+        let csv = CsvReader::new("report location", input.as_bytes());
+
+        let actual = csv.to_wkt().unwrap();
+
+        let expected = "GEOMETRYCOLLECTION EMPTY";
+        assert_eq!(expected, actual);
     }
 }
