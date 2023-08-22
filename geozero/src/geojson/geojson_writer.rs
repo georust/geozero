@@ -101,6 +101,12 @@ impl<W: Write> GeomProcessor for GeoJsonWriter<W> {
         self.out.write_all(b"]")?;
         Ok(())
     }
+    fn empty_point(&mut self, idx: usize) -> Result<()> {
+        self.comma(idx)?;
+        self.out
+            .write_all(br#"{"type": "Point", "coordinates": []}"#)?;
+        Ok(())
+    }
     fn point_begin(&mut self, idx: usize) -> Result<()> {
         self.comma(idx)?;
         self.out
@@ -233,6 +239,7 @@ impl<W: Write> PropertyProcessor for GeoJsonWriter<W> {
 mod test {
     use super::*;
     use crate::geojson::read_geojson;
+    use crate::wkt::WktStr;
     use crate::ToJson;
 
     #[test]
@@ -423,6 +430,12 @@ mod test {
             &geom.to_json().unwrap(),
             r#"{"type": "Point", "coordinates": [10,20]}"#
         );
+
+        let geom = WktStr("POINT EMPTY");
+        assert_eq!(
+            &geom.to_json().unwrap(),
+            r#"{"type": "Point", "coordinates": []}"#
+        )
     }
 
     fn assert_json_eq(a: &[u8], b: &str) {
