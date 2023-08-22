@@ -62,32 +62,61 @@ fn process_geom_n<P: GeomProcessor>(geo: &Geometry, idx: usize, processor: &mut 
             }
             processor.geometrycollection_end(idx)
         }
+        OGRwkbGeometryType::wkbCircularString => process_circularstring(geo, idx, processor),
+        OGRwkbGeometryType::wkbCompoundCurve => process_compoundcurve(geo, idx, processor),
+        OGRwkbGeometryType::wkbCurvePolygon => process_curvepolygon(geo, idx, processor),
+        OGRwkbGeometryType::wkbTriangle => process_triangle(geo, true, idx, processor),
+        OGRwkbGeometryType::wkbMultiCurve => {
+            let n_curves = geo.geometry_count();
+            processor.multicurve_begin(n_curves, idx)?;
+            for i in 0..n_curves {
+                let geom = unsafe { geo.get_unowned_geometry(i) };
+                process_curve(&geom, i, processor)?;
+            }
+            processor.multicurve_end(idx)
+        }
+        OGRwkbGeometryType::wkbPolyhedralSurface => {
+            let n_polys = geo.geometry_count();
+            processor.polyhedralsurface_begin(n_polys, idx)?;
+            for i in 0..n_polys {
+                let g = unsafe { geo.get_unowned_geometry(i) };
+                process_polygon(&g, false, i, processor)?;
+            }
+            processor.polyhedralsurface_end(idx)
+        }
+        OGRwkbGeometryType::wkbTIN => {
+            let n_triangles = geo.geometry_count();
+            processor.tin_begin(n_triangles, idx)?;
+            for i in 0..n_triangles {
+                let g = unsafe { geo.get_unowned_geometry(i) };
+                process_triangle(&g, false, i, processor)?;
+            }
+            processor.tin_end(idx)
+        }
+        OGRwkbGeometryType::wkbMultiSurface => {
+            let n_polys = geo.geometry_count();
+            processor.multisurface_begin(n_polys, idx)?;
+            for i in 0..n_polys {
+                let g = unsafe { geo.get_unowned_geometry(i) };
+                let ty: OGRwkbGeometryType::Type = type2d(g.geometry_type());
+                match ty {
+                    OGRwkbGeometryType::wkbCurvePolygon => {
+                        process_curvepolygon(&g, i, processor)?;
+                    }
+                    OGRwkbGeometryType::wkbPolygon => {
+                        process_polygon(&g, false, i, processor)?;
+                    }
+                    _ => return Err(GeozeroError::GeometryFormat),
+                }
+            }
+            processor.multisurface_end(idx)
+        }
         _ => Err(GeozeroError::GeometryFormat),
     }
 }
 
 fn type2d(wkb_type: OGRwkbGeometryType::Type) -> OGRwkbGeometryType::Type {
-    match wkb_type {
-        OGRwkbGeometryType::wkbPoint | OGRwkbGeometryType::wkbPoint25D => {
-            OGRwkbGeometryType::wkbPoint
-        }
-        OGRwkbGeometryType::wkbMultiPoint | OGRwkbGeometryType::wkbMultiPoint25D => {
-            OGRwkbGeometryType::wkbMultiPoint
-        }
-        OGRwkbGeometryType::wkbLineString | OGRwkbGeometryType::wkbLineString25D => {
-            OGRwkbGeometryType::wkbLineString
-        }
-        OGRwkbGeometryType::wkbMultiLineString | OGRwkbGeometryType::wkbMultiLineString25D => {
-            OGRwkbGeometryType::wkbMultiLineString
-        }
-        OGRwkbGeometryType::wkbPolygon | OGRwkbGeometryType::wkbPolygon25D => {
-            OGRwkbGeometryType::wkbPolygon
-        }
-        OGRwkbGeometryType::wkbMultiPolygon | OGRwkbGeometryType::wkbMultiPolygon25D => {
-            OGRwkbGeometryType::wkbMultiPolygon
-        }
-        other => other,
-    }
+    unsafe { gdal_sys::OGR_GT_Flatten(wkb_type) }
 }
 
 fn process_point<P: GeomProcessor>(geo: &Geometry, idx: usize, processor: &mut P) -> Result<()> {
@@ -135,6 +164,25 @@ fn process_linestring<P: GeomProcessor>(
     processor.linestring_end(tagged, idx)
 }
 
+fn process_circularstring<P: GeomProcessor>(
+    geo: &Geometry,
+    idx: usize,
+    processor: &mut P,
+) -> Result<()> {
+    let length = unsafe { gdal_sys::OGR_G_GetPointCount(geo.c_geometry()) } as usize;
+    processor.circularstring_begin(length, idx)?;
+    let multi = processor.dimensions().z;
+    for i in 0..length {
+        let (x, y, z) = geo.get_point(i as i32);
+        if multi {
+            processor.coordinate(x, y, Some(z), None, None, None, i)?;
+        } else {
+            processor.xy(x, y, i)?;
+        }
+    }
+    processor.circularstring_end(idx)
+}
+
 fn process_polygon<P: GeomProcessor>(
     geo: &Geometry,
     tagged: bool,
@@ -147,12 +195,71 @@ fn process_polygon<P: GeomProcessor>(
     processor.polygon_end(tagged, idx)
 }
 
+fn process_triangle<P: GeomProcessor>(
+    geo: &Geometry,
+    tagged: bool,
+    idx: usize,
+    processor: &mut P,
+) -> Result<()> {
+    let ring_count = geo.geometry_count();
+    processor.triangle_begin(tagged, ring_count, idx)?;
+    process_linestring_seq(geo, processor, ring_count)?;
+    processor.triangle_end(tagged, idx)
+}
+
+fn process_compoundcurve<P: GeomProcessor>(
+    geo: &Geometry,
+    idx: usize,
+    processor: &mut P,
+) -> Result<()> {
+    let curve_count = geo.geometry_count();
+    processor.compoundcurve_begin(curve_count, idx)?;
+    for i in 0..curve_count {
+        let geom = unsafe { geo.get_unowned_geometry(i) };
+        let ty: OGRwkbGeometryType::Type = type2d(geom.geometry_type());
+        match ty {
+            OGRwkbGeometryType::wkbLineString => {
+                process_linestring(&geom, false, i, processor)?;
+            }
+            OGRwkbGeometryType::wkbCircularString => {
+                process_circularstring(&geom, i, processor)?;
+            }
+            _ => return Err(GeozeroError::GeometryFormat),
+        }
+    }
+    processor.compoundcurve_end(idx)
+}
+
+fn process_curve<P: GeomProcessor>(geo: &Geometry, idx: usize, processor: &mut P) -> Result<()> {
+    let ty: OGRwkbGeometryType::Type = type2d(geo.geometry_type());
+    match ty {
+        OGRwkbGeometryType::wkbLineString => process_linestring(geo, false, idx, processor),
+        OGRwkbGeometryType::wkbCircularString => process_circularstring(geo, idx, processor),
+        OGRwkbGeometryType::wkbCompoundCurve => process_compoundcurve(geo, idx, processor),
+        _ => Err(GeozeroError::GeometryFormat),
+    }
+}
+
+fn process_curvepolygon<P: GeomProcessor>(
+    geo: &Geometry,
+    idx: usize,
+    processor: &mut P,
+) -> Result<()> {
+    let ring_count = geo.geometry_count();
+    processor.curvepolygon_begin(ring_count, idx)?;
+    for i in 0..ring_count {
+        let geom = unsafe { geo.get_unowned_geometry(i) };
+        process_curve(&geom, i, processor)?;
+    }
+    processor.curvepolygon_end(idx)
+}
+
 #[cfg(test)]
-#[cfg(feature = "with-wkt")]
+#[cfg(all(feature = "with-wkt", feature = "with-wkb"))]
 mod test {
     use super::*;
     use crate::wkt::WktWriter;
-    use crate::{CoordDimensions, ToWkt};
+    use crate::{CoordDimensions, ToWkb, ToWkt};
 
     #[test]
     fn point() {
@@ -221,5 +328,71 @@ mod test {
         let wkt = "GEOMETRYCOLLECTION(POINT(1 1),LINESTRING(1 1,2 2))";
         let geo = Geometry::from_wkt(wkt).unwrap();
         assert_eq!(geo.to_wkt().unwrap(), wkt);
+    }
+
+    #[test]
+    fn circularstring() {
+        // SELECT 'CIRCULARSTRING(0 0,1 1,2 0)'::geometry
+        let wkb = hex::decode("01080000000300000000000000000000000000000000000000000000000000F03F000000000000F03F00000000000000400000000000000000").unwrap();
+        let geo = Geometry::from_wkb(&wkb).unwrap();
+        assert_eq!(geo.to_ewkb(CoordDimensions::default(), None).unwrap(), wkb);
+    }
+
+    #[test]
+    fn compoundcurve() {
+        // SELECT 'COMPOUNDCURVE (CIRCULARSTRING (0 0,1 1,2 0),(2 0,3 0))'::geometry
+        let wkb = hex::decode("01090000000200000001080000000300000000000000000000000000000000000000000000000000F03F000000000000F03F000000000000004000000000000000000102000000020000000000000000000040000000000000000000000000000008400000000000000000").unwrap();
+        let geo = Geometry::from_wkb(&wkb).unwrap();
+        assert_eq!(geo.to_ewkb(CoordDimensions::default(), None).unwrap(), wkb);
+    }
+
+    #[test]
+    fn curvepolygon() {
+        // SELECT 'CURVEPOLYGON(COMPOUNDCURVE(CIRCULARSTRING(0 0,1 1,2 0),(2 0,3 0,3 -1,0 -1,0 0)))'::geometry
+        let wkb = hex::decode("010A0000000100000001090000000200000001080000000300000000000000000000000000000000000000000000000000F03F000000000000F03F0000000000000040000000000000000001020000000500000000000000000000400000000000000000000000000000084000000000000000000000000000000840000000000000F0BF0000000000000000000000000000F0BF00000000000000000000000000000000").unwrap();
+        let geo = Geometry::from_wkb(&wkb).unwrap();
+        assert_eq!(geo.to_ewkb(CoordDimensions::default(), None).unwrap(), wkb);
+    }
+
+    #[test]
+    fn multicurve() {
+        // SELECT 'MULTICURVE((0 0, 5 5),CIRCULARSTRING(4 0, 4 4, 8 4))'::geometry
+        let wkb = hex::decode("010B000000020000000102000000020000000000000000000000000000000000000000000000000014400000000000001440010800000003000000000000000000104000000000000000000000000000001040000000000000104000000000000020400000000000001040").unwrap();
+        let geo = Geometry::from_wkb(&wkb).unwrap();
+        assert_eq!(geo.to_ewkb(CoordDimensions::default(), None).unwrap(), wkb);
+    }
+
+    #[test]
+    fn multisurface() {
+        // SELECT 'MULTISURFACE (CURVEPOLYGON (COMPOUNDCURVE (CIRCULARSTRING (0 0,1 1,2 0),(2 0,3 0,3 -1,0 -1,0 0))))'::geometry
+        let wkb = hex::decode("010C00000001000000010A0000000100000001090000000200000001080000000300000000000000000000000000000000000000000000000000F03F000000000000F03F0000000000000040000000000000000001020000000500000000000000000000400000000000000000000000000000084000000000000000000000000000000840000000000000F0BF0000000000000000000000000000F0BF00000000000000000000000000000000").unwrap();
+        let geo = Geometry::from_wkb(&wkb).unwrap();
+        assert_eq!(geo.to_ewkb(CoordDimensions::default(), None).unwrap(), wkb);
+    }
+
+    #[test]
+    fn polyhedralsurface() {
+        // SELECT 'POLYHEDRALSURFACE(((0 0 0,0 0 1,0 1 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0)),((0 0 0,1 0 0,1 0 1,0 0 1,0 0 0)),((1 1 0,1 1 1,1 0 1,1 0 0,1 1 0)),((0 1 0,0 1 1,1 1 1,1 1 0,0 1 0)),((0 0 1,1 0 1,1 1 1,0 1 1,0 0 1)))'::geometry
+        let wkb = hex::decode("010F000080060000000103000080010000000500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000F03F0000000000000000000000000000F03F000000000000F03F0000000000000000000000000000F03F0000000000000000000000000000000000000000000000000000000000000000010300008001000000050000000000000000000000000000000000000000000000000000000000000000000000000000000000F03F0000000000000000000000000000F03F000000000000F03F0000000000000000000000000000F03F0000000000000000000000000000000000000000000000000000000000000000000000000000000001030000800100000005000000000000000000000000000000000000000000000000000000000000000000F03F00000000000000000000000000000000000000000000F03F0000000000000000000000000000F03F00000000000000000000000000000000000000000000F03F00000000000000000000000000000000000000000000000001030000800100000005000000000000000000F03F000000000000F03F0000000000000000000000000000F03F000000000000F03F000000000000F03F000000000000F03F0000000000000000000000000000F03F000000000000F03F00000000000000000000000000000000000000000000F03F000000000000F03F0000000000000000010300008001000000050000000000000000000000000000000000F03F00000000000000000000000000000000000000000000F03F000000000000F03F000000000000F03F000000000000F03F000000000000F03F000000000000F03F000000000000F03F00000000000000000000000000000000000000000000F03F00000000000000000103000080010000000500000000000000000000000000000000000000000000000000F03F000000000000F03F0000000000000000000000000000F03F000000000000F03F000000000000F03F000000000000F03F0000000000000000000000000000F03F000000000000F03F00000000000000000000000000000000000000000000F03F").unwrap();
+        let geo = Geometry::from_wkb(&wkb).unwrap();
+        dbg!(&geo);
+        assert_eq!(geo.to_ewkb(CoordDimensions::xyz(), None).unwrap(), wkb);
+    }
+
+    #[test]
+    fn tin() {
+        // SELECT 'TIN(((0 0 0,0 0 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,0 0 0)))'::geometry
+        let wkb = hex::decode("0110000080020000000111000080010000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000F03F0000000000000000000000000000F03F0000000000000000000000000000000000000000000000000000000000000000011100008001000000040000000000000000000000000000000000000000000000000000000000000000000000000000000000F03F0000000000000000000000000000F03F000000000000F03F0000000000000000000000000000000000000000000000000000000000000000").unwrap();
+        let geo = Geometry::from_wkb(&wkb).unwrap();
+        dbg!(&geo);
+        assert_eq!(geo.to_ewkb(CoordDimensions::xyz(), None).unwrap(), wkb);
+    }
+
+    #[test]
+    fn triangle() {
+        // SELECT 'TRIANGLE((0 0,0 9,9 0,0 0))'::geometry
+        let wkb = hex::decode("0111000000010000000400000000000000000000000000000000000000000000000000000000000000000022400000000000002240000000000000000000000000000000000000000000000000").unwrap();
+        let geo = Geometry::from_wkb(&wkb).unwrap();
+        assert_eq!(geo.to_ewkb(CoordDimensions::default(), None).unwrap(), wkb);
     }
 }
