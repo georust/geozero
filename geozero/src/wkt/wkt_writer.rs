@@ -98,7 +98,11 @@ impl<W: Write> GeomProcessor for WktWriter<W> {
 
     fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
         self.comma(idx)?;
-        self.out.write_all(format!("{x} {y}").as_bytes())?;
+        if f64::is_nan(x) && f64::is_nan(y) {
+            self.out.write_all(b"EMPTY")?;
+        } else {
+            self.out.write_all(format!("{x} {y}").as_bytes())?;
+        }
         Ok(())
     }
 
@@ -113,12 +117,20 @@ impl<W: Write> GeomProcessor for WktWriter<W> {
         idx: usize,
     ) -> Result<()> {
         self.comma(idx)?;
-        self.out.write_all(format!("{x} {y}").as_bytes())?;
-        if let Some(z) = z {
-            self.out.write_all(format!(" {z}").as_bytes())?;
-        }
-        if let Some(m) = m {
-            self.out.write_all(format!(" {m}").as_bytes())?;
+        if f64::is_nan(x)
+            && f64::is_nan(y)
+            && z.map(f64::is_nan).unwrap_or(true)
+            && m.map(f64::is_nan).unwrap_or(true)
+        {
+            self.out.write_all(b"EMPTY")?;
+        } else {
+            self.out.write_all(format!("{x} {y}").as_bytes())?;
+            if let Some(z) = z {
+                self.out.write_all(format!(" {z}").as_bytes())?;
+            }
+            if let Some(m) = m {
+                self.out.write_all(format!(" {m}").as_bytes())?;
+            }
         }
         Ok(())
     }

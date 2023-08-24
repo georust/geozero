@@ -314,9 +314,18 @@ pub(crate) fn process_wkb_geom_n<R: Read, P: GeomProcessor>(
 ) -> Result<()> {
     match info.base_type {
         WKBGeometryType::Point => {
-            processor.point_begin(idx)?;
-            process_coord(raw, info, processor.multi_dim(), 0, processor)?;
-            processor.point_end(idx)
+            let coords = read_coord_as::<R, f64>(raw, info)?;
+            if f64::is_nan(coords.0)
+                && f64::is_nan(coords.1)
+                && coords.2.map(f64::is_nan).unwrap_or(true)
+                && coords.3.map(f64::is_nan).unwrap_or(true)
+            {
+                processor.empty_point(idx)
+            } else {
+                processor.point_begin(idx)?;
+                emit_coord(coords, processor.multi_dim(), 0, processor)?;
+                processor.point_end(idx)
+            }
         }
         WKBGeometryType::MultiPoint => {
             let n_pts = raw.ioread_with::<u32>(info.endian)? as usize;
@@ -413,6 +422,21 @@ pub(crate) fn process_wkb_geom_n<R: Read, P: GeomProcessor>(
     }
 }
 
+fn emit_coord<P: GeomProcessor>(
+    coords: (f64, f64, Option<f64>, Option<f64>),
+    multi_dim: bool,
+    idx: usize,
+    processor: &mut P,
+) -> Result<(f64, f64, Option<f64>, Option<f64>)> {
+    let (x, y, z, m) = coords;
+    if multi_dim {
+        processor.coordinate(x, y, z, m, None, None, idx)?;
+    } else {
+        processor.xy(x, y, idx)?;
+    }
+    Ok((x, y, z, m))
+}
+
 fn process_coord<R: Read, P: GeomProcessor>(
     raw: &mut R,
     info: &WkbInfo,
@@ -420,13 +444,8 @@ fn process_coord<R: Read, P: GeomProcessor>(
     idx: usize,
     processor: &mut P,
 ) -> Result<(f64, f64, Option<f64>, Option<f64>)> {
-    let (x, y, z, m) = read_coord_as::<R, f64>(raw, info)?;
-    if multi_dim {
-        processor.coordinate(x, y, z, m, None, None, idx)?;
-    } else {
-        processor.xy(x, y, idx)?;
-    }
-    Ok((x, y, z, m))
+    let coords = read_coord_as::<R, f64>(raw, info)?;
+    emit_coord(coords, multi_dim, idx, processor)
 }
 
 fn process_compressed_coord<R: Read, P: GeomProcessor>(
@@ -654,6 +673,21 @@ mod test {
 
     #[test]
     fn ewkb_geometries() {
+        // SELECT 'POINT EMPTY'::geometry
+        assert_eq!(
+            &ewkb_to_wkt("0101000000000000000000f87f000000000000f87f", false),
+            "POINT EMPTY"
+        );
+
+        // SELECT 'POINTZ EMPTY'::geometry
+        assert_eq!(
+            &ewkb_to_wkt(
+                "0101000080000000000000f87f000000000000f87f000000000000f87f",
+                false
+            ),
+            "POINT EMPTY"
+        );
+
         // SELECT 'POINT(10 -20)'::geometry
         assert_eq!(
             &ewkb_to_wkt("0101000000000000000000244000000000000034C0", false),
@@ -665,6 +699,12 @@ mod test {
             &ewkb_to_wkt("01040000A0E6100000020000000101000080000000000000244000000000000034C0000000000000594001010000800000000000000000000000000000E0BF0000000000405940", true),
             "MULTIPOINT(10 -20 100,0 -0.5 101)"
             //OGR: MULTIPOINT ((10 -20 100),(0 -0.5 101))
+        );
+
+        // SELECT 'MULTIPOINT(1 2, EMPTY, 3 4)'::geometry
+        assert_eq!(
+            &ewkb_to_wkt("0104000000030000000101000000000000000000f03f00000000000000400101000000000000000000f87f000000000000f87f010100000000000000000008400000000000001040", true),
+            "MULTIPOINT(1 2,EMPTY,3 4)"
         );
 
         // SELECT 'SRID=4326;LINESTRING (10 -20 100, 0 -0.5 101)'::geometry
