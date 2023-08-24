@@ -10,30 +10,32 @@ use std::io::{BufRead, BufReader, Read};
 use geojson::{Feature, GeoJson as GeoGeoJson, Geometry};
 
 /// Line Delimited GeoJSON Reader: One feature per line.
-pub struct LineDelimitedGeoJsonReader<R: Read>(pub(crate) R);
-impl<R: Read> LineDelimitedGeoJsonReader<R> {
+///
+/// See <https://jsonlines.org>
+pub struct GeoJsonLineReader<R: Read>(pub(crate) R);
+impl<R: Read> GeoJsonLineReader<R> {
     pub fn new(read: R) -> Self {
         Self(read)
     }
 }
 
-impl<R: Read + Clone> GeozeroGeometry for LineDelimitedGeoJsonReader<R> {
+impl<R: Read + Clone> GeozeroGeometry for GeoJsonLineReader<R> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()>
     where
         Self: Sized,
     {
-        read_line_delimited_geojson_geometries(&mut self.0.clone(), processor)
+        read_geojson_line_geometries(&mut self.0.clone(), processor)
     }
 }
 
-impl<R: Read> GeozeroDatasource for LineDelimitedGeoJsonReader<R> {
+impl<R: Read> GeozeroDatasource for GeoJsonLineReader<R> {
     fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> Result<()> {
-        read_line_delimited_geojson(&mut self.0, processor)
+        read_geojson_lines(&mut self.0, processor)
     }
 }
 
 /// Read and process line delimited GeoJSON (one Geometry per line).
-pub fn read_line_delimited_geojson_geometries(
+pub fn read_geojson_line_geometries(
     reader: impl Read,
     processor: &mut impl GeomProcessor,
 ) -> Result<()> {
@@ -78,10 +80,7 @@ pub fn read_line_delimited_geojson_geometries(
 }
 
 /// Read and process line delimited GeoJSON (one object per line).
-pub fn read_line_delimited_geojson(
-    reader: impl Read,
-    processor: &mut impl FeatureProcessor,
-) -> Result<()> {
+pub fn read_geojson_lines(reader: impl Read, processor: &mut impl FeatureProcessor) -> Result<()> {
     let buf_reader = BufReader::new(reader);
 
     processor.dataset_begin(None)?;
@@ -138,7 +137,7 @@ mod tests {
 { "type": "Point", "coordinates": [2.1, 2.2] }
 { "type": "Point", "coordinates": [3.1, 3.2] }
 "#;
-        let reader = LineDelimitedGeoJsonReader(input.as_bytes());
+        let reader = GeoJsonLineReader(input.as_bytes());
         let wkt = reader.to_wkt().unwrap();
         let expected = "GEOMETRYCOLLECTION(POINT(1.1 1.2),POINT(2.1 2.2),POINT(3.1 3.2))";
         assert_eq!(wkt, expected);
@@ -150,7 +149,7 @@ mod tests {
 { "type": "Feature", "geometry": { "type": "Point", "coordinates": [2.1, 2.2] }, "properties": { "name": "second" } }
 { "type": "Feature", "geometry": { "type": "Point", "coordinates": [3.1, 3.3] }, "properties": { "name": "third" } }
 "#;
-        let mut reader = LineDelimitedGeoJsonReader(input.as_bytes());
+        let mut reader = GeoJsonLineReader(input.as_bytes());
         let json_string = reader.to_json().unwrap();
         let json: serde_json::Value = serde_json::from_str(&json_string)
             .unwrap_or_else(|err| panic!("invalid json: `{json_string}`: {err}"));
@@ -170,7 +169,7 @@ mod tests {
 ooops this is malformed json { "type": "Feature", "geometry": { "type": "Point", "coordinates": [2.1, 2.2] }, "properties": { "name": "second" } }
 { "type": "Feature", "geometry": { "type": "Point", "coordinates": [3.1, 3.3] }, "properties": { "name": "third" } }
 "#;
-        let mut reader = LineDelimitedGeoJsonReader(input.as_bytes());
+        let mut reader = GeoJsonLineReader(input.as_bytes());
         _ = reader.to_json().unwrap_err();
     }
     #[test]
@@ -183,7 +182,7 @@ ooops this is malformed json { "type": "Feature", "geometry": { "type": "Point",
             }, "
             properties": { "name": "first" }
         }"#;
-        let mut reader = LineDelimitedGeoJsonReader(input.as_bytes());
+        let mut reader = GeoJsonLineReader(input.as_bytes());
         _ = reader.to_json().unwrap_err();
     }
 }
