@@ -1,13 +1,23 @@
-## Unreleased
+## 0.11.0 (Unreleased)
 
-* Breaking: remove `set_dims` from CSVWriter. Instead use `CsvWriter::with_dims` constructor.
-* Breaking: remove lifetime from format readers.
-* Format writers can now own their input, previously only mutable borrows were allowed.
+* Add support for raw WKB DB queries
+* Fix MVT large geometry processing (#151)
+* Breaking: Implement screen coord translation for MVT writer (#150)
+* Add Ewkt dialect (#155)
+* Add support for Spatialite and MySQL WKB dialects (#153)
+* Breaking: remove `set_dims` from CSVWriter. Instead use `CsvWriter::with_dims` constructor
+* Format writers can now own their input, previously only mutable borrows were allowed
   * `CsvWriter`
   * `GeoJsonWriter`
   * `WkbWriter`
   * `WktWriter`
   * `SVGWriter`
+* Remove lifetime param from WktReader and GpxReader
+* Breaking: Replace pub fields of writers with constructors (#163, #158)
+* Add GDAL read support for more types (#165)
+* Fix invalid geometry collection output for CSV's (#167)
+* Fix empty geometry handling for WKT, WKB, GeoJSON and CSV
+* Add reader for line delimited geojson (.geojsonl) (#168)
 
 ## 0.10.0 (2023-07-07)
 
