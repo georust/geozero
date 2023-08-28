@@ -1,4 +1,4 @@
-## 0.11.0 (Unreleased)
+## 0.11.0 (2023-08-28)
 
 * Add support for raw WKB DB queries
 * Fix MVT large geometry processing (#151)
