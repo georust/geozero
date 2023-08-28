@@ -17,7 +17,7 @@ license = "MIT OR Apache-2.0"
 # This should point to the last published version
 # This is a major hack, due to some code (like geozero tests!) relying on flatgeobuf crate,
 # which in turn relies on geozero itself.
-geozero = { version = "0.10.0", default-features = false }
+geozero = { version = "0.11.0", default-features = false }
 
 arrow2 = { version = "0.17", features = ["io_ipc"] }
 async-trait = "0.1"
@@ -30,7 +30,7 @@ dbase = "0.4"
 diesel = { version = "2.1.0", default-features = false }
 dup-indexer = "0.3"
 env_logger = "0.10.0"
-flatgeobuf = "3.26.1"
+flatgeobuf = { git = "https://github.com/pka/flatgeobuf", branch="geozero-0.11" }
 futures-util = "0.3.28"
 gdal = { version = "0.16", default-features = false }
 gdal-sys = "0.9"
