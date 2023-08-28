@@ -18,6 +18,7 @@
 * Fix invalid geometry collection output for CSV's (#167)
 * Fix empty geometry handling for WKT, WKB, GeoJSON and CSV
 * Add reader for line delimited geojson (.geojsonl) (#168)
+* Update gdal to 0.16
 
 ## 0.10.0 (2023-07-07)
 
