@@ -153,7 +153,7 @@ fn process_geojson_geom<P: GeomProcessor>(gj: &GeoGeoJson, processor: &mut P) ->
 }
 
 /// Process GeoJSON geometries
-fn process_geojson_geom_n<P: GeomProcessor>(
+pub(crate) fn process_geojson_geom_n<P: GeomProcessor>(
     geom: &Geometry,
     idx: usize,
     processor: &mut P,
@@ -199,7 +199,7 @@ fn process_geojson_geom_n<P: GeomProcessor>(
 }
 
 /// Process GeoJSON properties
-fn process_properties<P: PropertyProcessor>(
+pub(crate) fn process_properties<P: PropertyProcessor>(
     properties: &Map<String, JsonValue>,
     processor: &mut P,
 ) -> Result<()> {
