@@ -30,7 +30,7 @@ dbase = "0.4"
 diesel = { version = "2.1.0", default-features = false }
 dup-indexer = "0.3"
 env_logger = "0.10.0"
-flatgeobuf = { git = "https://github.com/pka/flatgeobuf", branch="geozero-0.11" }
+flatgeobuf = "3.27.0"
 futures-util = "0.3.28"
 gdal = { version = "0.16", default-features = false }
 gdal-sys = "0.9"
