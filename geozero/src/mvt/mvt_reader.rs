@@ -38,8 +38,7 @@ fn process_properties(
     processor.properties_begin()?;
     for (i, pair) in feature.tags.chunks(2).enumerate() {
         let [key_idx, value_idx] = pair else {
-            return Err(MvtError::InvalidFeatureTagsLength(
-                feature.tags.len()))?
+            return Err(MvtError::InvalidFeatureTagsLength(feature.tags.len()))?;
         };
         let key = layer
             .keys

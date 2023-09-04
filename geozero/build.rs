@@ -11,13 +11,7 @@ fn compile_protos() -> Result<(), Box<dyn std::error::Error>> {
     // override the build location, in order to check in the changes to proto files
     env::set_var("OUT_DIR", "src/mvt");
 
-    // The current working directory can vary depending on how the project is being
-    // built or released so we build an absolute path to the proto file
-    let path = Path::new("src/mvt/vector_tile.proto");
-    if path.exists() && cfg!(feature = "with-mvt") && env::var("DOCS_RS").is_err() {
-        // avoid rerunning build if the file has not changed
-        println!("cargo:rerun-if-changed=src/mvt/vector_tile.proto");
-
+    if !Path::new("src/mvt/vector_tile.rs").exists() {
         prost_build::compile_protos(&["src/mvt/vector_tile.proto"], &["src/mvt/"])?;
         // read file contents to string
         let mut file = OpenOptions::new()
@@ -30,7 +24,7 @@ fn compile_protos() -> Result<(), Box<dyn std::error::Error>> {
             .write(true)
             .truncate(true)
             .open("src/mvt/vector_tile.rs")?;
-        file.write_all("// This file was automatically generated through the build.rs script, and should not be edited.\n\n".as_bytes())?;
+        file.write_all("// This file was automatically generated through the build.rs script, and should not be edited.\n// Remove this file to force a rebuild.\n\n".as_bytes())?;
         file.write_all(buffer.as_bytes())?;
     }
 
