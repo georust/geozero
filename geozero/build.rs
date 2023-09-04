@@ -24,7 +24,7 @@ fn compile_protos() -> Result<(), Box<dyn std::error::Error>> {
             .write(true)
             .truncate(true)
             .open("src/mvt/vector_tile.rs")?;
-        file.write_all("// This file was automatically generated through the build.rs script, and should not be edited.\n\n".as_bytes())?;
+        file.write_all("// This file was automatically generated through the build.rs script, and should not be edited.\n// Remove this file to force a rebuild.\n\n".as_bytes())?;
         file.write_all(buffer.as_bytes())?;
     }
 

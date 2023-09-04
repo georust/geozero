@@ -1,4 +1,5 @@
 // This file was automatically generated through the build.rs script, and should not be edited.
+// Remove this file to force a rebuild.
 
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
