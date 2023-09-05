@@ -11,11 +11,11 @@ use crate::postgis::diesel::sql_types::{Geography, Geometry};
 use diesel::{deserialize::FromSqlRow, expression::AsExpression};
 
 /// WKB reader.
-pub struct Wkb(pub Vec<u8>);
+pub struct Wkb<B: AsRef<[u8]>>(pub B);
 
-impl GeozeroGeometry for Wkb {
+impl<B: AsRef<[u8]>> GeozeroGeometry for Wkb<B> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
-        process_wkb_geom(&mut self.0.as_slice(), processor)
+        process_wkb_geom(&mut self.0.as_ref(), processor)
     }
 }
 
