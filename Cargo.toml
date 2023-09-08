@@ -2,6 +2,7 @@
 # Make sure this list matches the "Test Doc Build" section in .github/workflows/ci.yml
 members = ["geozero", "geozero-shp", "geozero-cli", "geozero-bench"]
 default-members = ["geozero", "geozero-shp", "geozero-cli"]
+resolver = "2"
 
 [workspace.package]
 # This version should match the version in [workspace.dependencies] below
