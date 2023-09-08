@@ -28,7 +28,6 @@ clap = { version = "4.3", features = ["derive"] }
 criterion = "0.5.1"
 csv = "1.2.2"
 dbase = "0.4"
-diesel = { version = "2.1.0", default-features = false }
 dup-indexer = "0.3"
 env_logger = "0.10.0"
 flatgeobuf = "3.27.0"

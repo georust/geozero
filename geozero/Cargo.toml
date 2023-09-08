@@ -40,7 +40,7 @@ arrow2 = { workspace = true, optional = true }
 byteorder = { workspace = true, optional = true }
 bytes = { workspace = true, optional = true }
 csv = { workspace = true, optional = true }
-diesel = { workspace = true, optional = true }
+diesel = { version = "2.1.0", default-features = false, features = ["postgres"], optional = true}
 dup-indexer = { workspace = true, optional = true }
 gdal = { workspace = true, optional = true }
 gdal-sys = { workspace = true, optional = true }
@@ -56,7 +56,6 @@ sqlx = { workspace = true, optional = true }
 wkt = { workspace = true, optional = true }
 
 [dev-dependencies]
-diesel = { workspace = true, features = ["postgres"] }
 flatgeobuf.workspace = true
 geo.workspace = true
 hex.workspace = true
