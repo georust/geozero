@@ -40,7 +40,7 @@ arrow2 = { workspace = true, optional = true }
 byteorder = { workspace = true, optional = true }
 bytes = { workspace = true, optional = true }
 csv = { workspace = true, optional = true }
-diesel = { version = "2.1.0", default-features = false, features = ["postgres"], optional = true}
+diesel = { workspace = true, optional = true }
 dup-indexer = { workspace = true, optional = true }
 gdal = { workspace = true, optional = true }
 gdal-sys = { workspace = true, optional = true }
