@@ -56,7 +56,6 @@ sqlx = { workspace = true, optional = true }
 wkt = { workspace = true, optional = true }
 
 [dev-dependencies]
-diesel = { workspace = true, features = ["postgres"] }
 flatgeobuf.workspace = true
 geo.workspace = true
 hex.workspace = true

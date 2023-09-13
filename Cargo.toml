@@ -2,6 +2,7 @@
 # Make sure this list matches the "Test Doc Build" section in .github/workflows/ci.yml
 members = ["geozero", "geozero-shp", "geozero-cli", "geozero-bench"]
 default-members = ["geozero", "geozero-shp", "geozero-cli"]
+resolver = "2"
 
 [workspace.package]
 # This version should match the version in [workspace.dependencies] below
@@ -27,7 +28,7 @@ clap = { version = "4.3", features = ["derive"] }
 criterion = "0.5.1"
 csv = "1.2.2"
 dbase = "0.4"
-diesel = { version = "2.1.0", default-features = false }
+diesel = { version = "2.1.0", default-features = false, features = ["postgres"] }
 dup-indexer = "0.3"
 env_logger = "0.10.0"
 flatgeobuf = "3.27.0"
