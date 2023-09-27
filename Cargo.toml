@@ -62,3 +62,4 @@ wkt = "0.10.3"
 [patch.crates-io]
 geozero = { path = "./geozero" }
 #flatgeobuf = { path = "../../gis/flatgeobuf/src/rust" }
+flatgeobuf = { git = "https://github.com/michaelkirk/flatgeobuf", branch = "mkirk/result" }
