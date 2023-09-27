@@ -50,7 +50,10 @@ fn svg_writer<W: Write>(header: &Header, width: u32, height: u32, out: W) -> Svg
 #[test]
 fn fgb_to_svg() -> Result<()> {
     let mut filein = BufReader::new(File::open("tests/data/countries.fgb")?);
-    let mut fgb = FgbReader::open(&mut filein)?.select_bbox(8.8, 47.2, 9.5, 55.3)?;
+    let mut fgb = FgbReader::open(&mut filein)
+        .unwrap()
+        .select_bbox(8.8, 47.2, 9.5, 55.3)
+        .unwrap();
     let mut svg_data: Vec<u8> = Vec::new();
     let mut svg = svg_writer(&fgb.header(), 800, 400, &mut svg_data);
     fgb.process_features(&mut svg)?;

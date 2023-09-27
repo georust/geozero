@@ -16,7 +16,10 @@ impl GeomProcessor for VertexCounter {
 #[test]
 fn vertex_counter() -> Result<()> {
     let mut filein = BufReader::new(File::open("tests/data/countries.fgb")?);
-    let mut fgb = FgbReader::open(&mut filein)?.select_bbox(8.8, 47.2, 9.5, 55.3)?;
+    let mut fgb = FgbReader::open(&mut filein)
+        .unwrap()
+        .select_bbox(8.8, 47.2, 9.5, 55.3)
+        .unwrap();
     let feature = fgb.next()?.unwrap();
     let geometry = feature.geometry().unwrap();
 
@@ -63,7 +66,7 @@ fn max_height_finder() -> Result<()> {
     let mut filein = BufReader::new(File::open(
         "tests/data/geoz_lod1_gebaeude_max_3d_extract.fgb",
     )?);
-    let mut fgb = FgbReader::open(&mut filein)?.select_all()?;
+    let mut fgb = FgbReader::open(&mut filein).unwrap().select_all().unwrap();
     let mut max_finder = MaxHeightFinder(0.0);
     while let Some(feature) = fgb.next()? {
         let geometry = feature.geometry().unwrap();
@@ -85,7 +88,7 @@ impl PropertyProcessor for FeatureFinder {
 #[test]
 fn feature_finder() -> Result<()> {
     let mut filein = BufReader::new(File::open("tests/data/countries.fgb")?);
-    let mut fgb = FgbReader::open(&mut filein)?.select_all()?;
+    let mut fgb = FgbReader::open(&mut filein).unwrap().select_all().unwrap();
 
     let mut finder = FeatureFinder {};
     while let Some(feature) = fgb.next()? {

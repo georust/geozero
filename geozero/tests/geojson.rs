@@ -9,7 +9,10 @@ use std::io::BufWriter;
 #[test]
 fn fgb_to_geojson() -> Result<()> {
     let mut filein = BufReader::new(File::open("tests/data/countries.fgb")?);
-    let mut fgb = FgbReader::open(&mut filein)?.select_bbox(8.8, 47.2, 9.5, 55.3)?;
+    let mut fgb = FgbReader::open(&mut filein)
+        .unwrap()
+        .select_bbox(8.8, 47.2, 9.5, 55.3)
+        .unwrap();
     let json = fgb.to_json()?;
     assert_eq!(
         &json[0..215],
@@ -26,9 +29,11 @@ fn fgb_to_geojson() -> Result<()> {
 async fn http_fbg_to_json() -> Result<()> {
     let url = "https://flatgeobuf.org/test/data/countries.fgb";
     let mut fgb = HttpFgbReader::open(url)
-        .await?
+        .await
+        .unwrap()
         .select_bbox(8.8, 47.2, 9.5, 55.3)
-        .await?;
+        .await
+        .unwrap();
 
     let mut fout = BufWriter::new(File::create("countries.json")?);
     let mut json = GeoJsonWriter::new(&mut fout);
