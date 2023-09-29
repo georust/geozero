@@ -999,7 +999,7 @@ mod test {
     #[test]
     fn scroll_error() {
         let err = read_ewkb_header(&mut std::io::Cursor::new(b"")).unwrap_err();
-        assert_eq!(err.to_string(), "I/O error");
+        assert_eq!(err.to_string(), "I/O error `failed to fill whole buffer`");
     }
 
     #[test]
