@@ -31,6 +31,7 @@
 //! | WKB       | [Wkb](wkb::Wkb), [Ewkb](wkb::Ewkb), [GpkgWkb](wkb::GpkgWkb), [SpatiaLiteWkb](wkb::SpatiaLiteWkb), [MySQL](wkb::MySQLWkb) | XYZM       | -                                                                                    | [ToWkb]             | [WkbWriter](wkb::WkbWriter)             |
 //! | WKT       | [wkt::WktStr], [wkt::WktString], [wkt::EwktStr], [wkt::EwktString]                                                       | XYZM       | [wkt::WktReader], [wkt::WktStr], [wkt::WktString], [wkt::EwktStr], [wkt::EwktString] | [ToWkt]             | [WktWriter](wkt::WktWriter)             |
 
+#![forbid(unsafe_code)]
 #![warn(clippy::uninlined_format_args)]
 #![allow(
     clippy::cast_possible_truncation,

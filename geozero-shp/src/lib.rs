@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 mod header;
 mod point_z;
 mod property_processor;
