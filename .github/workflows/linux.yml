@@ -74,4 +74,4 @@ jobs:
         run: |
           rustup toolchain install nightly
           export RUSTFLAGS='-D warnings'
-          cargo +nightly check -Z unstable-options -Z check-cfg=features,names,values,output --workspace --all-features
+          cargo +nightly check -Z unstable-options -Z check-cfg --workspace --all-features
