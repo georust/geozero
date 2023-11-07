@@ -37,13 +37,13 @@ pub enum GeozeroError {
     #[error("processing geometry `{0}`")]
     Geometry(String),
     // General
-    #[error("I/O error")]
+    #[error("I/O error `{0}`")]
     IoError(#[from] std::io::Error),
     #[cfg(feature = "with-mvt")]
-    #[error("MVT error")]
+    #[error("MVT error `{0}`")]
     MvtError(#[from] crate::mvt::MvtError),
     #[cfg(feature = "with-gdal")]
-    #[error("GDAL error")]
+    #[error("GDAL error `{0}`")]
     GdalError(#[from] crate::gdal::GdalError),
 }
 
