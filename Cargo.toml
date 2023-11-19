@@ -31,7 +31,7 @@ dbase = "0.4"
 diesel = { version = "2.1.0", default-features = false, features = ["postgres"] }
 dup-indexer = "0.3"
 env_logger = "0.10.0"
-flatgeobuf = "3.27.0"
+flatgeobuf = "4.0.0"
 futures-util = "0.3.28"
 gdal = { version = "0.16", default-features = false }
 gdal-sys = "0.9"

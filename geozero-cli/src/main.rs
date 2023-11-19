@@ -1,7 +1,7 @@
 use clap::Parser;
 use flatgeobuf::{FgbReader, FgbWriter, GeometryType, HttpFgbReader};
 use geozero::csv::{CsvReader, CsvWriter};
-use geozero::error::Result;
+use geozero::error::{GeozeroError, Result};
 use geozero::geojson::{GeoJsonLineReader, GeoJsonReader, GeoJsonWriter};
 use geozero::svg::SvgWriter;
 use geozero::wkt::{WktReader, WktWriter};
@@ -61,12 +61,15 @@ async fn transform<P: FeatureProcessor>(args: Cli, processor: &mut P) -> Result<
         if path_in.extension().and_then(OsStr::to_str) != Some("fgb") {
             panic!("Remote acccess is only supported for .fgb input")
         }
-        let ds = HttpFgbReader::open(&args.input).await?;
+        let ds = HttpFgbReader::open(&args.input)
+            .await
+            .map_err(fgb_to_geozero_err)?;
         let mut ds = if let Some(bbox) = &args.extent {
             ds.select_bbox(bbox.minx, bbox.miny, bbox.maxx, bbox.maxy)
-                .await?
+                .await
+                .map_err(fgb_to_geozero_err)?
         } else {
-            ds.select_all().await?
+            ds.select_all().await.map_err(fgb_to_geozero_err)?
         };
         ds.process_features(processor).await
     } else {
@@ -86,11 +89,12 @@ async fn transform<P: FeatureProcessor>(args: Cli, processor: &mut P) -> Result<
                 GeozeroDatasource::process(&mut GeoJsonLineReader::new(filein), processor)
             }
             Some("fgb") => {
-                let ds = FgbReader::open(&mut filein)?;
+                let ds = FgbReader::open(&mut filein).map_err(fgb_to_geozero_err)?;
                 let mut ds = if let Some(bbox) = &args.extent {
-                    ds.select_bbox(bbox.minx, bbox.miny, bbox.maxx, bbox.maxy)?
+                    ds.select_bbox(bbox.minx, bbox.miny, bbox.maxx, bbox.maxy)
+                        .map_err(fgb_to_geozero_err)?
                 } else {
-                    ds.select_all()?
+                    ds.select_all().map_err(fgb_to_geozero_err)?
                 };
                 ds.process_features(processor)
             }
@@ -109,9 +113,10 @@ async fn process(args: Cli) -> Result<()> {
             transform(args, &mut GeoJsonWriter::new(&mut fout)).await?
         }
         Some("fgb") => {
-            let mut fgb = FgbWriter::create("fgb", GeometryType::Unknown)?;
+            let mut fgb =
+                FgbWriter::create("fgb", GeometryType::Unknown).map_err(fgb_to_geozero_err)?;
             transform(args, &mut fgb).await?;
-            fgb.write(&mut fout)?;
+            fgb.write(&mut fout).map_err(fgb_to_geozero_err)?;
         }
         Some("svg") => {
             let mut processor = SvgWriter::new(&mut fout, true);
@@ -128,6 +133,25 @@ fn set_dimensions(processor: &mut SvgWriter<&mut BufWriter<File>>, extent: Optio
     } else {
         // TODO: get image size as opts and full extent from data
         processor.set_dimensions(-180.0, -90.0, 180.0, 90.0, 800, 600);
+    }
+}
+
+fn fgb_to_geozero_err(fgb_err: flatgeobuf::Error) -> GeozeroError {
+    match fgb_err {
+        flatgeobuf::Error::MissingMagicBytes => {
+            GeozeroError::Dataset("Malformed FGB - missing Magic Bytes".to_string())
+        }
+        flatgeobuf::Error::NoIndex => GeozeroError::Dataset(
+            "No Index: Index operations are not supported for this FGB".to_string(),
+        ),
+        flatgeobuf::Error::HttpClient(e) => GeozeroError::HttpError(e.to_string()),
+        flatgeobuf::Error::IllegalHeaderSize(size) => {
+            GeozeroError::Dataset(format!("Malformed FGB - Illegal header size: {size}"))
+        }
+        flatgeobuf::Error::InvalidFlatbuffer(e) => {
+            GeozeroError::Dataset(format!("Invalid Flatbuffer: {e}"))
+        }
+        flatgeobuf::Error::IO(io) => GeozeroError::IoError(io),
     }
 }
 

@@ -1,13 +1,15 @@
 use flatgeobuf::{FallibleStreamingIterator as _, FeatureProperties as _, FgbReader, GeometryType};
-use geozero::error::Result;
+use geozero::error::Result as GeozeroResult;
 use geozero::{ColumnValue, CoordDimensions, GeomProcessor, PropertyProcessor};
 use seek_bufread::BufReader;
 use std::fs::File;
 
 struct VertexCounter(u64);
 
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+
 impl GeomProcessor for VertexCounter {
-    fn xy(&mut self, _x: f64, _y: f64, _idx: usize) -> Result<()> {
+    fn xy(&mut self, _x: f64, _y: f64, _idx: usize) -> GeozeroResult<()> {
         self.0 += 1;
         Ok(())
     }
@@ -47,7 +49,7 @@ impl GeomProcessor for MaxHeightFinder {
         _t: Option<f64>,
         _tm: Option<u64>,
         _idx: usize,
-    ) -> Result<()> {
+    ) -> GeozeroResult<()> {
         if let Some(z) = z {
             if z > self.0 {
                 self.0 = z
@@ -77,7 +79,7 @@ fn max_height_finder() -> Result<()> {
 struct FeatureFinder;
 
 impl PropertyProcessor for FeatureFinder {
-    fn property(&mut self, i: usize, _name: &str, v: &ColumnValue) -> Result<bool> {
+    fn property(&mut self, i: usize, _name: &str, v: &ColumnValue) -> GeozeroResult<bool> {
         Ok(i == 0 && v == &ColumnValue::String("DNK"))
     }
 }

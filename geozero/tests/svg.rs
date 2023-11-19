@@ -1,11 +1,11 @@
 use flatgeobuf::{FgbReader, Header};
-use geozero::error::Result;
 use geozero::geojson::GeoJsonReader;
 use geozero::svg::SvgWriter;
 use geozero::ProcessToSvg;
 use seek_bufread::BufReader;
 use std::fs::File;
 use std::io::Write;
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[test]
 fn json_to_svg() -> Result<()> {

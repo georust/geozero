@@ -1,6 +1,6 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use geozero::error::Result;
 use geozero::ToGeo;
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Extent {
