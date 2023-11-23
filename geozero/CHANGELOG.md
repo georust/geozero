@@ -5,7 +5,7 @@
 * Breaking: Implement screen coord translation for MVT writer (#150)
 * Add Ewkt dialect (#155)
 * Add support for Spatialite and MySQL WKB dialects (#153)
-* Breaking: remove `set_dims` from CSVWriter. Instead use `CsvWriter::with_dims` constructor
+* Breaking: remove `set_dims` from CSVWriter. Instead, use `CsvWriter::with_dims` constructor
 * Format writers can now own their input, previously only mutable borrows were allowed
   * `CsvWriter`
   * `GeoJsonWriter`

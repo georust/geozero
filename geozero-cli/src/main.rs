@@ -59,7 +59,7 @@ async fn transform<P: FeatureProcessor>(args: Cli, processor: &mut P) -> Result<
     let path_in = Path::new(&args.input);
     if path_in.starts_with("http:") || path_in.starts_with("https:") {
         if path_in.extension().and_then(OsStr::to_str) != Some("fgb") {
-            panic!("Remote acccess is only supported for .fgb input")
+            panic!("Remote access is only supported for .fgb input")
         }
         let ds = HttpFgbReader::open(&args.input).await?;
         let mut ds = if let Some(bbox) = &args.extent {
