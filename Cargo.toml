@@ -29,7 +29,7 @@ criterion = "0.5.1"
 csv = "1.2.2"
 dbase = "0.4"
 diesel = { version = "2.1.0", default-features = false, features = ["postgres"] }
-dup-indexer = "0.3"
+dup-indexer = "0.4"
 env_logger = "0.10.0"
 flatgeobuf = "3.27.0"
 futures-util = "0.3.28"

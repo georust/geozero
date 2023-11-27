@@ -1,4 +1,5 @@
 use crate::mvt::tile::Value;
+use crate::ColumnValue;
 use std::hash::Hash;
 
 /// A wrapper for the MVT value types.
@@ -68,6 +69,38 @@ impl TryFrom<Value> for TileValue {
             Self::Bool(b)
         } else {
             Err(())?
+        })
+    }
+}
+
+impl TryFrom<&ColumnValue<'_>> for TileValue {
+    type Error = ();
+
+    fn try_from(v: &ColumnValue) -> Result<Self, Self::Error> {
+        // string_value - ColumnValue::String
+        // float_value - ColumnValue::Float
+        // double_value - ColumnValue::Double
+        // int_value - ColumnValue::Long
+        // uint_value - ColumnValue::ULong
+        // sint_value - ColumnValue::Long
+        // bool_value - ColumnValue::Bool
+
+        Ok(match v {
+            ColumnValue::Byte(v) => TileValue::Sint(*v as i64),
+            ColumnValue::UByte(v) => TileValue::Uint(*v as u64),
+            ColumnValue::Bool(v) => TileValue::Bool(*v),
+            ColumnValue::Short(v) => TileValue::Sint(*v as i64),
+            ColumnValue::UShort(v) => TileValue::Uint(*v as u64),
+            ColumnValue::Int(v) => TileValue::Sint(*v as i64),
+            ColumnValue::UInt(v) => TileValue::Uint(*v as u64),
+            ColumnValue::Long(v) => TileValue::Sint(*v),
+            ColumnValue::ULong(v) => TileValue::Uint(*v),
+            ColumnValue::Float(v) => TileValue::Float(*v),
+            ColumnValue::Double(v) => TileValue::Double(*v),
+            ColumnValue::String(v) => TileValue::Str(v.to_string()),
+            ColumnValue::Json(v) => TileValue::Str(v.to_string()),
+            ColumnValue::DateTime(v) => TileValue::Str(v.to_string()),
+            ColumnValue::Binary(_) => Err(())?,
         })
     }
 }
