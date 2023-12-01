@@ -1,12 +1,12 @@
 use flatgeobuf::{FallibleStreamingIterator, FeatureProperties, FgbReader};
 use geo::contains::Contains;
 use geo::Geometry;
-use geozero::error::Result;
 use geozero::ToGeo;
 use polylabel::polylabel;
 use seek_bufread::BufReader;
 use std::fs::File;
 
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 #[test]
 fn country_labels() -> Result<()> {
     let mut file = BufReader::new(File::open("tests/data/countries.fgb")?);
