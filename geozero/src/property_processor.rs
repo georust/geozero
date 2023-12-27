@@ -18,7 +18,9 @@ pub enum ColumnValue<'a> {
     Float(f32),
     Double(f64),
     String(&'a str),
+    /// A JSON-formatted string
     Json(&'a str),
+    /// A datetime stored as an ISO8601-formatted string
     DateTime(&'a str),
     Binary(&'a [u8]),
 }
@@ -42,6 +44,10 @@ pub enum ColumnValue<'a> {
 #[allow(unused_variables)]
 pub trait PropertyProcessor {
     /// Process property value. Abort processing, if return value is true.
+    ///
+    /// - `idx` is the positional index of the column??? The row of the dataset? Unknown
+    /// - `name` is the name of the column
+    /// - `value` is the value of this field
     fn property(&mut self, idx: usize, name: &str, value: &ColumnValue) -> Result<bool> {
         Ok(true)
     }
