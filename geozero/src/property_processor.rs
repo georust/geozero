@@ -48,6 +48,14 @@ pub trait PropertyProcessor {
     /// - `idx` is the positional index of the column??? The row of the dataset? Unknown
     /// - `name` is the name of the column
     /// - `value` is the value of this field
+    ///
+    /// ## Notes:
+    ///
+    /// - It is not guaranteed that `name` is consistent across rows for the same `idx`, nor is it
+    ///   guaranteed that the set of names in each row is the same. Some input formats, like
+    ///   GeoJSON, are schema-less and properties may change in every row.
+    /// - It is not guaranteed that the data type of `name` is consistent across rows. For a given
+    ///   `name`, it may be numeric in one row and string in the next.
     fn property(&mut self, idx: usize, name: &str, value: &ColumnValue) -> Result<bool> {
         Ok(true)
     }
