@@ -14,6 +14,7 @@
 //! Available implementations:
 //! * [geozero-shp](https://docs.rs/geozero-shp)
 //! * [flatgeobuf](https://docs.rs/flatgeobuf)
+//! * [geoarrow](https://docs.rs/geoarrow)
 //!
 //! ## Format conversion overview
 //!
@@ -22,7 +23,6 @@
 //! | CSV       | [csv::Csv], [csv::CsvString]                                                                                             | XY         | -                                                                                    | [ProcessToCsv]      | [CsvWriter](csv::CsvWriter)             |
 //! | GDAL      | `gdal::vector::Geometry`                                                                                                 | XYZ        | -                                                                                    | [ToGdal]            | [GdalWriter](gdal::GdalWriter)          |
 //! | geo-types | `geo_types::Geometry<f64>`                                                                                               | XY         | -                                                                                    | [ToGeo]             | [GeoWriter](geo_types::GeoWriter)       |
-//! | GeoArrow  | `arrow2::array::BinaryArray`                                                                                             | XY         | -                                                                                    | -                   | -                                       |
 //! | GeoJSON   | [GeoJson](geojson::GeoJson), [GeoJsonString](geojson::GeoJsonString)                                                     | XYZ        | [GeoJsonReader](geojson::GeoJsonReader), [GeoJson](geojson::GeoJson)                 | [ToJson]            | [GeoJsonWriter](geojson::GeoJsonWriter) |
 //! | GEOS      | `geos::Geometry`                                                                                                         | XYZ        | -                                                                                    | [ToGeos]            | [GeosWriter](geos::GeosWriter)          |
 //! | GPX       |                                                                                                                          | XY         | [GpxReader](gpx::GpxReader)                                                          |                     |                                         |
@@ -59,9 +59,6 @@ pub use feature_processor::*;
 pub use geometry_processor::*;
 pub use multiplex::*;
 pub use property_processor::*;
-
-#[cfg(feature = "with-arrow")]
-pub mod arrow;
 
 #[cfg(feature = "with-csv")]
 pub mod csv;
