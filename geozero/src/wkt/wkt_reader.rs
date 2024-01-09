@@ -7,34 +7,34 @@ use wkt::Geometry;
 
 /// WKT String.
 #[derive(Debug)]
-pub struct WktString(pub String);
+pub struct WktString<B: AsRef<[u8]>>(pub B);
 
 impl GeozeroGeometry for WktString {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
-        read_wkt(&mut self.0.as_bytes(), processor)
+        read_wkt(&mut self.0.as_ref(), processor)
     }
 }
 
 /// WKT String slice.
-pub struct WktStr<'a>(pub &'a str);
+pub struct WktStr<B: AsRef<[u8]>>(pub B);
 
 impl GeozeroGeometry for WktStr<'_> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
-        read_wkt(&mut self.0.as_bytes(), processor)
+        read_wkt(&mut self.0.as_ref(), processor)
     }
 }
 
 impl GeozeroDatasource for WktStr<'_> {
     fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> Result<()> {
-        read_wkt(&mut self.0.as_bytes(), processor)
+        read_wkt(&mut self.0.as_ref(), processor)
     }
 }
 
 /// WKT String.
 #[derive(Debug)]
-pub struct EwktString(pub String);
+pub struct EwktString<B: AsRef<[u8]>>(pub B);
 
-pub struct EwktStr<'a>(pub &'a str);
+pub struct EwktStr<B: AsRef<[u8]>>(pub B);
 
 /// Wkt Reader.
 pub struct WktReader<R: Read>(pub R);

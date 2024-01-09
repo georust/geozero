@@ -26,38 +26,38 @@ impl<B: AsRef<[u8]>> GeozeroGeometry for Wkb<B> {
 )]
 #[cfg_attr(feature = "with-postgis-diesel", diesel(sql_type = Geometry))]
 #[cfg_attr(feature = "with-postgis-diesel", diesel(sql_type = Geography))]
-pub struct Ewkb(pub Vec<u8>);
+pub struct Ewkb<B: AsRef<[u8]>>(pub B);
 
-impl GeozeroGeometry for Ewkb {
+impl<B: AsRef<[u8]>> GeozeroGeometry for Ewkb<B> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
-        process_ewkb_geom(&mut self.0.as_slice(), processor)
+        process_ewkb_geom(&mut self.0.as_ref(), processor)
     }
 }
 
 /// GeoPackage WKB reader.
-pub struct GpkgWkb(pub Vec<u8>);
+pub struct GpkgWkb<B: AsRef<[u8]>>(pub B);
 
-impl GeozeroGeometry for GpkgWkb {
+impl<B: AsRef<[u8]>> GeozeroGeometry for GpkgWkb<B> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
-        process_gpkg_geom(&mut self.0.as_slice(), processor)
+        process_gpkg_geom(&mut self.0.as_ref(), processor)
     }
 }
 
 /// GeoPackage WKB reader.
-pub struct SpatiaLiteWkb(pub Vec<u8>);
+pub struct SpatiaLiteWkb<B: AsRef<[u8]>>(pub B);
 
 impl GeozeroGeometry for SpatiaLiteWkb {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
-        process_spatialite_geom(&mut self.0.as_slice(), processor)
+        process_spatialite_geom(&mut self.0.as_ref(), processor)
     }
 }
 
-/// GeoPackage WKB reader.
-pub struct MySQLWkb(pub Vec<u8>);
+/// MySQL WKB reader.
+pub struct MySQLWkb<B: AsRef<[u8]>>(pub B);
 
 impl GeozeroGeometry for MySQLWkb {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
-        process_mysql_geom(&mut self.0.as_slice(), processor)
+        process_mysql_geom(&mut self.0.as_ref(), processor)
     }
 }
 
