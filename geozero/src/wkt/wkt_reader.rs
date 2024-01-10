@@ -9,7 +9,7 @@ use wkt::Geometry;
 #[derive(Debug)]
 pub struct WktString<B: AsRef<[u8]>>(pub B);
 
-impl GeozeroGeometry for WktString {
+impl<B: AsRef<[u8]>> GeozeroGeometry for WktString<B> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
         read_wkt(&mut self.0.as_ref(), processor)
     }
@@ -18,13 +18,13 @@ impl GeozeroGeometry for WktString {
 /// WKT String slice.
 pub struct WktStr<B: AsRef<[u8]>>(pub B);
 
-impl GeozeroGeometry for WktStr<'_> {
+impl<B: AsRef<[u8]>> GeozeroGeometry for WktStr<B> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
         read_wkt(&mut self.0.as_ref(), processor)
     }
 }
 
-impl GeozeroDatasource for WktStr<'_> {
+impl<B: AsRef<[u8]>> GeozeroDatasource for WktStr<B> {
     fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> Result<()> {
         read_wkt(&mut self.0.as_ref(), processor)
     }
