@@ -1,3 +1,11 @@
+## 0.12.0 - (release date TBD)
+
+* Added feature `with-gdal-bindgen` to build gdal support with the `bindgen` feature. This is useful when building against a recent gdal, for which the project hasn't yet pre-built bindings.
+* Breaking: update flatgeobuf to 4.0.0
+* Update errors to include more detail
+* Update Wkb to allow non-owned buffers
+* Fix `with-mvt` feature no longer requires `protoc` runtime dependency
+
 ## 0.11.0 (2023-08-28)
 
 * Add support for raw WKB DB queries
