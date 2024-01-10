@@ -66,7 +66,7 @@ mod wkb {
     use crate::CoordDimensions;
     use std::io::Read;
 
-    impl FromWkb for WktString {
+    impl FromWkb for WktString<String> {
         fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> Result<Self> {
             let mut out: Vec<u8> = Vec::new();
             let mut writer = WktWriter::new(&mut out);
@@ -78,7 +78,7 @@ mod wkb {
         }
     }
 
-    impl FromWkb for EwktString {
+    impl FromWkb for EwktString<String> {
         fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> Result<Self> {
             let mut out: Vec<u8> = Vec::new();
             let mut writer =

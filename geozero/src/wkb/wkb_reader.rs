@@ -46,7 +46,7 @@ impl<B: AsRef<[u8]>> GeozeroGeometry for GpkgWkb<B> {
 /// GeoPackage WKB reader.
 pub struct SpatiaLiteWkb<B: AsRef<[u8]>>(pub B);
 
-impl GeozeroGeometry for SpatiaLiteWkb {
+impl<B: AsRef<[u8]>> GeozeroGeometry for SpatiaLiteWkb<B> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
         process_spatialite_geom(&mut self.0.as_ref(), processor)
     }
@@ -55,7 +55,7 @@ impl GeozeroGeometry for SpatiaLiteWkb {
 /// MySQL WKB reader.
 pub struct MySQLWkb<B: AsRef<[u8]>>(pub B);
 
-impl GeozeroGeometry for MySQLWkb {
+impl<B: AsRef<[u8]>> GeozeroGeometry for MySQLWkb<B> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
         process_mysql_geom(&mut self.0.as_ref(), processor)
     }
