@@ -5,36 +5,54 @@ use std::io::Read;
 use wkt::types::{Coord, LineString, Polygon};
 use wkt::Geometry;
 
-/// WKT String.
+/// A wrapper around a WKT String or String slice.
 #[derive(Debug)]
-pub struct WktString<B: AsRef<[u8]>>(pub B);
+pub struct Wkt<B: AsRef<[u8]>>(pub B);
 
-impl<B: AsRef<[u8]>> GeozeroGeometry for WktString<B> {
+impl<B: AsRef<[u8]>> GeozeroGeometry for Wkt<B> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
         read_wkt(&mut self.0.as_ref(), processor)
+    }
+}
+
+/// WKT String.
+#[deprecated(since = "0.12.0", note = "Please use `Wkt` instead.")]
+#[derive(Debug)]
+pub struct WktString(pub String);
+
+impl GeozeroGeometry for WktString {
+    fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
+        read_wkt(&mut self.0.as_bytes(), processor)
     }
 }
 
 /// WKT String slice.
-pub struct WktStr<B: AsRef<[u8]>>(pub B);
+#[deprecated(since = "0.12.0", note = "Please use `Wkt` instead.")]
+pub struct WktStr<'a>(pub &'a str);
 
-impl<B: AsRef<[u8]>> GeozeroGeometry for WktStr<B> {
+impl GeozeroGeometry for WktStr<'_> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
         read_wkt(&mut self.0.as_ref(), processor)
     }
 }
 
-impl<B: AsRef<[u8]>> GeozeroDatasource for WktStr<B> {
+impl GeozeroDatasource for WktStr<'_> {
     fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> Result<()> {
         read_wkt(&mut self.0.as_ref(), processor)
     }
 }
 
-/// WKT String.
 #[derive(Debug)]
-pub struct EwktString<B: AsRef<[u8]>>(pub B);
+pub struct Ewkt<B: AsRef<[u8]>>(pub B);
 
-pub struct EwktStr<B: AsRef<[u8]>>(pub B);
+/// EWKT String.
+#[deprecated(since = "0.12.0", note = "Please use `Ewkt` instead.")]
+#[derive(Debug)]
+pub struct EwktString(pub String);
+
+/// EWKT string slice.
+#[deprecated(since = "0.12.0", note = "Please use `Ewkt` instead.")]
+pub struct EwktStr<'a>(pub &'a str);
 
 /// Wkt Reader.
 pub struct WktReader<R: Read>(pub R);
