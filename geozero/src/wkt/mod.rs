@@ -62,6 +62,7 @@ pub(crate) mod conversion {
 mod wkb {
     use crate::error::Result;
     use crate::wkb::{FromWkb, WkbDialect};
+    #[allow(deprecated)]
     use crate::wkt::{Ewkt, EwktString, Wkt, WktDialect, WktString, WktWriter};
     use crate::CoordDimensions;
     use std::io::Read;
@@ -91,6 +92,7 @@ mod wkb {
         }
     }
 
+    #[allow(deprecated)]
     impl FromWkb for WktString {
         fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> Result<Self> {
             let mut out: Vec<u8> = Vec::new();
@@ -99,10 +101,12 @@ mod wkb {
             let wkt = String::from_utf8(out).map_err(|_| {
                 crate::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())
             })?;
+            #[allow(deprecated)]
             Ok(WktString(wkt))
         }
     }
 
+    #[allow(deprecated)]
     impl FromWkb for EwktString {
         fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> Result<Self> {
             let mut out: Vec<u8> = Vec::new();
@@ -112,6 +116,7 @@ mod wkb {
             let wkt = String::from_utf8(out).map_err(|_| {
                 crate::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())
             })?;
+            #[allow(deprecated)]
             Ok(EwktString(wkt))
         }
     }

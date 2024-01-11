@@ -20,8 +20,10 @@ impl<B: AsRef<[u8]>> GeozeroGeometry for Wkt<B> {
 #[derive(Debug)]
 pub struct WktString(pub String);
 
+#[allow(deprecated)]
 impl GeozeroGeometry for WktString {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
+        #[allow(deprecated)]
         read_wkt(&mut self.0.as_bytes(), processor)
     }
 }
@@ -30,14 +32,18 @@ impl GeozeroGeometry for WktString {
 #[deprecated(since = "0.12.0", note = "Please use `Wkt` instead.")]
 pub struct WktStr<'a>(pub &'a str);
 
+#[allow(deprecated)]
 impl GeozeroGeometry for WktStr<'_> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
+        #[allow(deprecated)]
         read_wkt(&mut self.0.as_bytes(), processor)
     }
 }
 
+#[allow(deprecated)]
 impl GeozeroDatasource for WktStr<'_> {
     fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> Result<()> {
+        #[allow(deprecated)]
         read_wkt(&mut self.0.as_bytes(), processor)
     }
 }
