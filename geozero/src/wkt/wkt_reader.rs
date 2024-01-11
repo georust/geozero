@@ -32,16 +32,17 @@ pub struct WktStr<'a>(pub &'a str);
 
 impl GeozeroGeometry for WktStr<'_> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
-        read_wkt(&mut self.0.as_ref(), processor)
+        read_wkt(&mut self.0.as_bytes(), processor)
     }
 }
 
 impl GeozeroDatasource for WktStr<'_> {
     fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> Result<()> {
-        read_wkt(&mut self.0.as_ref(), processor)
+        read_wkt(&mut self.0.as_bytes(), processor)
     }
 }
 
+/// A wrapper around an EWKT String or String slice.
 #[derive(Debug)]
 pub struct Ewkt<B: AsRef<[u8]>>(pub B);
 
