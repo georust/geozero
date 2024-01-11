@@ -6,7 +6,6 @@ mod shp_reader;
 mod shx_reader;
 
 pub use crate::header::ShapeType;
-pub use crate::property_processor::*;
 pub use crate::reader::Reader;
 pub use crate::shp_reader::NO_DATA;
 
