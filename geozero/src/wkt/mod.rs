@@ -74,7 +74,7 @@ mod wkb {
             let wkt = String::from_utf8(out).map_err(|_| {
                 crate::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())
             })?;
-            Ok(WktString(wkt))
+            Ok(Wkt(wkt))
         }
     }
 
@@ -87,7 +87,7 @@ mod wkb {
             let wkt = String::from_utf8(out).map_err(|_| {
                 crate::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())
             })?;
-            Ok(EwktString(wkt))
+            Ok(Ewkt(wkt))
         }
     }
 
