@@ -115,7 +115,7 @@ pub mod sqlx {}
 /// #[diesel(table_name = geometries)]
 /// pub struct Geom {
 ///     pub name: String,
-///     pub geom: Option<Ewkb>,
+///     pub geom: Option<Ewkb<Vec<u8>>>,
 /// }
 ///
 /// pub fn establish_connection() -> PgConnection {
