@@ -11,7 +11,7 @@ use crate::postgis::diesel::sql_types::{Geography, Geometry};
 use diesel::{deserialize::FromSqlRow, expression::AsExpression};
 
 /// WKB reader.
-pub struct Wkb<B: AsRef<[u8]> = Vec<u8>>(pub B);
+pub struct Wkb<B: AsRef<[u8]>>(pub B);
 
 impl<B: AsRef<[u8]>> GeozeroGeometry for Wkb<B> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
@@ -26,7 +26,7 @@ impl<B: AsRef<[u8]>> GeozeroGeometry for Wkb<B> {
 )]
 #[cfg_attr(feature = "with-postgis-diesel", diesel(sql_type = Geometry))]
 #[cfg_attr(feature = "with-postgis-diesel", diesel(sql_type = Geography))]
-pub struct Ewkb<B: AsRef<[u8]> = Vec<u8>>(pub B);
+pub struct Ewkb<B: AsRef<[u8]>>(pub B);
 
 impl<B: AsRef<[u8]>> GeozeroGeometry for Ewkb<B> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
@@ -35,7 +35,7 @@ impl<B: AsRef<[u8]>> GeozeroGeometry for Ewkb<B> {
 }
 
 /// GeoPackage WKB reader.
-pub struct GpkgWkb<B: AsRef<[u8]> = Vec<u8>>(pub B);
+pub struct GpkgWkb<B: AsRef<[u8]>>(pub B);
 
 impl<B: AsRef<[u8]>> GeozeroGeometry for GpkgWkb<B> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
@@ -44,7 +44,7 @@ impl<B: AsRef<[u8]>> GeozeroGeometry for GpkgWkb<B> {
 }
 
 /// GeoPackage WKB reader.
-pub struct SpatiaLiteWkb<B: AsRef<[u8]> = Vec<u8>>(pub B);
+pub struct SpatiaLiteWkb<B: AsRef<[u8]>>(pub B);
 
 impl<B: AsRef<[u8]>> GeozeroGeometry for SpatiaLiteWkb<B> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
@@ -53,7 +53,7 @@ impl<B: AsRef<[u8]>> GeozeroGeometry for SpatiaLiteWkb<B> {
 }
 
 /// MySQL WKB reader.
-pub struct MySQLWkb<B: AsRef<[u8]> = Vec<u8>>(pub B);
+pub struct MySQLWkb<B: AsRef<[u8]>>(pub B);
 
 impl<B: AsRef<[u8]>> GeozeroGeometry for MySQLWkb<B> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
