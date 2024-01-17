@@ -191,7 +191,7 @@ mod test {
 
     #[test]
     fn point() {
-        let wkt = WktStr("POINT(1.0 2.0)");
+        let wkt = Wkt("POINT(1.0 2.0)");
         let actual = wkt.to_geo().unwrap();
 
         let expected: geo_types::Geometry<f64> = point!(x: 1.0, y: 2.0).into();
@@ -202,11 +202,11 @@ mod test {
     #[test]
     fn multi_point() {
         // Both of these are failing
-        let wkt_1 = WktStr("MULTIPOINT ((10 40), (40 30), (20 20), (30 10))");
+        let wkt_1 = Wkt("MULTIPOINT ((10 40), (40 30), (20 20), (30 10))");
         let actual_1 = wkt_1.to_geo().unwrap();
 
         // alternative spelling
-        let wkt_2 = WktStr("MULTIPOINT (10 40, 40 30, 20 20, 30 10)");
+        let wkt_2 = Wkt("MULTIPOINT (10 40, 40 30, 20 20, 30 10)");
         let actual_2 = wkt_2.to_geo().unwrap();
 
         let expected: geo_types::Geometry<f64> = geo_types::MultiPoint(vec![
@@ -223,7 +223,7 @@ mod test {
 
     #[test]
     fn line_string() {
-        let wkt = WktStr("LINESTRING (30 10, 10 30, 40 40)");
+        let wkt = Wkt("LINESTRING (30 10, 10 30, 40 40)");
         let actual = wkt.to_geo().unwrap();
 
         let expected: geo_types::Geometry<f64> =
@@ -233,7 +233,7 @@ mod test {
 
     #[test]
     fn multi_line_string() {
-        let wkt = WktStr("MULTILINESTRING ((10 10, 20 20, 10 40), (40 40, 30 30, 40 20, 30 10))");
+        let wkt = Wkt("MULTILINESTRING ((10 10, 20 20, 10 40), (40 40, 30 30, 40 20, 30 10))");
         let actual = wkt.to_geo().unwrap();
         // type one line at a time.
         let expected: geo_types::Geometry<f64> = geo_types::MultiLineString(vec![
@@ -245,7 +245,7 @@ mod test {
 
     #[test]
     fn polygon() {
-        let wkt = WktStr("POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))");
+        let wkt = Wkt("POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))");
         let actual = wkt.to_geo().unwrap();
 
         let expected: geo_types::Geometry<f64> = polygon![(x: 30.0, y: 10.0), (x: 40.0, y: 40.0), (x: 20.0, y: 40.0), (x: 10.0, y: 20.0), (x: 30.0, y: 10.0)].into();
@@ -255,7 +255,7 @@ mod test {
     #[test]
     fn polygon_with_hole() {
         let wkt =
-            WktStr("POLYGON ((35 10, 45 45, 15 40, 10 20, 35 10), (20 30, 35 35, 30 20, 20 30))");
+            Wkt("POLYGON ((35 10, 45 45, 15 40, 10 20, 35 10), (20 30, 35 35, 30 20, 20 30))");
         let actual = wkt.to_geo().unwrap();
 
         let expected: geo_types::Geometry<f64> = polygon!(
@@ -268,10 +268,8 @@ mod test {
 
     #[test]
     fn multi_polygon() {
-        let wkt = WktStr(
-            "MULTIPOLYGON (((30 20, 45 40, 10 40, 30 20)),
-            ((15 5, 40 10, 10 20, 5 10, 15 5)))",
-        );
+        let wkt = Wkt("MULTIPOLYGON (((30 20, 45 40, 10 40, 30 20)),
+            ((15 5, 40 10, 10 20, 5 10, 15 5)))");
         let actual = wkt.to_geo().unwrap();
 
         let expected: geo_types::Geometry<f64> = geo_types::MultiPolygon(vec![
@@ -283,11 +281,9 @@ mod test {
 
     #[test]
     fn multi_polygon_with_holes() {
-        let wkt = WktStr(
-            "MULTIPOLYGON (((40 40, 20 45, 45 30, 40 40)),
+        let wkt = Wkt("MULTIPOLYGON (((40 40, 20 45, 45 30, 40 40)),
                          ((35 10, 45 45, 15 40, 10 20, 35 10),
-                         (20 30, 35 35, 30 20, 20 30)))",
-        );
+                         (20 30, 35 35, 30 20, 20 30)))");
         let actual = wkt.to_geo().unwrap();
 
         let expected: geo_types::Geometry<f64> = geo_types::MultiPolygon(vec![
@@ -304,11 +300,9 @@ mod test {
 
     #[test]
     fn geometry_collection() {
-        let wkt = WktStr(
-            "GEOMETRYCOLLECTION (POINT (40 10),
+        let wkt = Wkt("GEOMETRYCOLLECTION (POINT (40 10),
                         LINESTRING (10 10, 20 20, 10 40),
-                        POLYGON ((40 40, 20 45, 45 30, 40 40)))",
-        );
+                        POLYGON ((40 40, 20 45, 45 30, 40 40)))");
 
         let actual = wkt.to_geo().unwrap();
         let expected: geo_types::Geometry<f64> = geo_types::Geometry::GeometryCollection(geo_types::GeometryCollection(vec![
@@ -322,7 +316,7 @@ mod test {
     #[test]
     fn geometry_collection_roundtrip() {
         let str = "GEOMETRYCOLLECTION(POINT(40 10),LINESTRING(10 10,20 20,10 40),POLYGON((40 40,20 45,45 30,40 40)))";
-        let wkt = WktStr(str);
+        let wkt = Wkt(str);
 
         use crate::wkt::conversion::ToWkt;
         let round_tripped = wkt.to_wkt().unwrap();
@@ -335,21 +329,21 @@ mod test {
 
         #[test]
         fn empty_point() {
-            let wkt = WktStr("POINT EMPTY");
+            let wkt = Wkt("POINT EMPTY");
             let actual = wkt.to_geo().unwrap_err();
             assert!(matches!(actual, GeozeroError::Geometry(_)));
         }
 
         #[test]
         fn empty_point_roundtrip() {
-            let wkt = WktStr("POINT EMPTY");
+            let wkt = Wkt("POINT EMPTY");
             let actual = wkt.to_wkt().unwrap();
             assert_eq!("POINT EMPTY", &actual);
         }
 
         #[test]
         fn empty_multipoint_roundtrip() {
-            let wkt = WktStr("MULTIPOINT EMPTY");
+            let wkt = Wkt("MULTIPOINT EMPTY");
             let actual = wkt.to_wkt().unwrap();
             assert_eq!("MULTIPOINT EMPTY", &actual);
         }
@@ -357,7 +351,7 @@ mod test {
         #[test]
         fn geometry_collection_with_empty_point() {
             let str = "GEOMETRYCOLLECTION(POINT(40 10),LINESTRING(10 10,20 20,10 40),POINT EMPTY)";
-            let wkt = WktStr(str);
+            let wkt = Wkt(str);
 
             use crate::wkt::conversion::ToWkt;
             let round_tripped = wkt.to_wkt().unwrap();
@@ -367,7 +361,7 @@ mod test {
 
         #[test]
         fn empty_line_string() {
-            let wkt = WktStr("LINESTRING EMPTY");
+            let wkt = Wkt("LINESTRING EMPTY");
             let actual = wkt.to_geo().unwrap();
             let expected: geo_types::Geometry<f64> = line_string![].into();
             assert_eq!(expected, actual);
@@ -375,14 +369,14 @@ mod test {
 
         #[test]
         fn empty_line_roundtrip() {
-            let wkt = WktStr("LINESTRING EMPTY");
+            let wkt = Wkt("LINESTRING EMPTY");
             let actual = wkt.to_wkt().unwrap();
             assert_eq!("LINESTRING EMPTY", &actual);
         }
 
         #[test]
         fn empty_multi_line_string() {
-            let wkt = WktStr("MULTILINESTRING EMPTY");
+            let wkt = Wkt("MULTILINESTRING EMPTY");
             let actual = wkt.to_geo().unwrap();
             let expected: geo_types::Geometry<f64> = geo_types::MultiLineString(vec![]).into();
             assert_eq!(expected, actual);
@@ -390,14 +384,14 @@ mod test {
 
         #[test]
         fn empty_multi_line_roundtrip() {
-            let wkt = WktStr("MULTILINESTRING EMPTY");
+            let wkt = Wkt("MULTILINESTRING EMPTY");
             let actual = wkt.to_wkt().unwrap();
             assert_eq!("MULTILINESTRING EMPTY", &actual);
         }
 
         #[test]
         fn multi_line_string_with_empty_one() {
-            let wkt = WktStr("MULTILINESTRING ((10 10, 20 20, 10 40), EMPTY)");
+            let wkt = Wkt("MULTILINESTRING ((10 10, 20 20, 10 40), EMPTY)");
             let actual = wkt.to_geo().unwrap();
             // type one line at a time.
             let expected: geo_types::Geometry<f64> = geo_types::MultiLineString(vec![
@@ -410,7 +404,7 @@ mod test {
 
         #[test]
         fn empty_polygon() {
-            let wkt = WktStr("POLYGON EMPTY");
+            let wkt = Wkt("POLYGON EMPTY");
             let actual = wkt.to_geo().unwrap();
             let expected: geo_types::Geometry<f64> = polygon![].into();
             assert_eq!(expected, actual);
@@ -418,14 +412,14 @@ mod test {
 
         #[test]
         fn empty_polygon_roundtrip() {
-            let wkt = WktStr("POLYGON EMPTY");
+            let wkt = Wkt("POLYGON EMPTY");
             let actual = wkt.to_wkt().unwrap();
             assert_eq!("POLYGON EMPTY", &actual);
         }
 
         #[test]
         fn empty_multi_polygon() {
-            let wkt = WktStr("MULTIPOLYGON EMPTY");
+            let wkt = Wkt("MULTIPOLYGON EMPTY");
             let actual = wkt.to_geo().unwrap();
             let expected: geo_types::Geometry<f64> = geo_types::MultiPolygon(vec![]).into();
             assert_eq!(expected, actual);
@@ -433,14 +427,14 @@ mod test {
 
         #[test]
         fn empty_multi_polygon_roundtrip() {
-            let wkt = WktStr("MULTIPOLYGON EMPTY");
+            let wkt = Wkt("MULTIPOLYGON EMPTY");
             let actual = wkt.to_wkt().unwrap();
             assert_eq!("MULTIPOLYGON EMPTY", &actual);
         }
 
         #[test]
         fn empty_geometry_collection() {
-            let wkt = WktStr("GEOMETRYCOLLECTION EMPTY");
+            let wkt = Wkt("GEOMETRYCOLLECTION EMPTY");
             let actual = wkt.to_geo().unwrap();
 
             let expected =
@@ -450,7 +444,7 @@ mod test {
 
         #[test]
         fn empty_geometry_collection_roundtrip() {
-            let wkt = WktStr("GEOMETRYCOLLECTION EMPTY");
+            let wkt = Wkt("GEOMETRYCOLLECTION EMPTY");
             let actual = wkt.to_wkt().unwrap();
             assert_eq!("GEOMETRYCOLLECTION EMPTY", &actual);
         }
