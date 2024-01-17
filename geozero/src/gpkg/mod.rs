@@ -28,5 +28,3 @@
 //! ```
 
 mod geopackage;
-
-pub use geopackage::*;
