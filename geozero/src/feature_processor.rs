@@ -27,7 +27,7 @@ pub trait FeatureProcessor: GeomProcessor + PropertyProcessor {
     }
     /// Begin of feature processing
     ///
-    /// - `idx` refers to the positional row index in the dataset. For the `n`th row, `idx` will be
+    /// - `idx`: the positional row index in the dataset. For the `n`th row, `idx` will be
     ///   `n`.
     /// - `feature_begin` will be called before both `properties_begin` and `geometry_begin`.
     fn feature_begin(&mut self, idx: u64) -> Result<()> {
@@ -35,7 +35,7 @@ pub trait FeatureProcessor: GeomProcessor + PropertyProcessor {
     }
     /// End of feature processing
     ///
-    /// - `idx` refers to the positional row index in the dataset. For the `n`th row, `idx` will be
+    /// - `idx`: the positional row index in the dataset. For the `n`th row, `idx` will be
     ///   `n`.
     /// - `feature_end` will be called after both `properties_end` and `geometry_end`.
     fn feature_end(&mut self, idx: u64) -> Result<()> {

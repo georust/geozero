@@ -136,10 +136,11 @@ pub trait GeomProcessor {
     ///
     /// ## Following events
     ///
-    /// - [`point_begin`][`Self::point_begin()`] for each contained point (NOTE: seems expected but seems not implemented)
     /// - `size` calls to [`xy()`][`Self::xy()`] or [`coordinate()`][`Self::coordinate()`] for each point.
-    /// - [`point_end`][`Self::point_end()`] for each contained point
     /// - [`multipoint_end`][Self::multipoint_end()] to end this MultiPoint
+    ///
+    /// As of v0.12, `point_begin` and `point_end` are **not** called for each point in a
+    /// MultiPoint. See also discussion in [#184](https://github.com/georust/geozero/issues/184).
     fn multipoint_begin(&mut self, size: usize, idx: usize) -> Result<()> {
         Ok(())
     }
