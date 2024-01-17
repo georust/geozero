@@ -161,7 +161,7 @@ pub trait GeomProcessor {
     /// - `size`: the number of coordinates in this LineString
     /// - `idx`: the positional index of this LineString. This will be 0 for a tagged LineString
     ///   except in the case of a GeometryCollection. This can be non-zero for an untagged
-    ///   LineString for MultiLineStrings or Polygons with multiple interiors
+    ///   LineString for MultiLineStrings or Polygons with multiple interiors.
     ///
     /// ## Following events
     ///
