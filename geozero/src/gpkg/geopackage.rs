@@ -28,13 +28,13 @@ impl<'de, T: FromWkb + Sized> Decode<'de, Sqlite> for wkb::Decode<T> {
     }
 }
 
-impl sqlx::Type<Sqlite> for wkb::GpkgWkb {
+impl<B: AsRef<[u8]>> sqlx::Type<Sqlite> for wkb::GpkgWkb<B> {
     fn type_info() -> SqliteTypeInfo {
         <Vec<u8> as sqlx::Type<Sqlite>>::type_info()
     }
 }
 
-impl<'de> Decode<'de, Sqlite> for wkb::GpkgWkb {
+impl<'de> Decode<'de, Sqlite> for wkb::GpkgWkb<Vec<u8>> {
     fn decode(value: SqliteValueRef<'de>) -> Result<Self, BoxDynError> {
         if value.is_null() {
             return Ok(wkb::GpkgWkb(Vec::new()));

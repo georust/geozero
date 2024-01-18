@@ -19,27 +19,27 @@ pub mod sql_types {
     pub struct Geography;
 }
 
-impl ToSql<Geometry, Pg> for Ewkb {
+impl<B: AsRef<[u8]> + std::fmt::Debug> ToSql<Geometry, Pg> for Ewkb<B> {
     fn to_sql(&self, out: &mut Output<Pg>) -> serialize::Result {
-        out.write_all(&self.0)?;
+        out.write_all(self.0.as_ref())?;
         Ok(IsNull::No)
     }
 }
 
-impl ToSql<Geography, Pg> for Ewkb {
+impl<B: AsRef<[u8]> + std::fmt::Debug> ToSql<Geography, Pg> for Ewkb<B> {
     fn to_sql(&self, out: &mut Output<Pg>) -> serialize::Result {
-        out.write_all(&self.0)?;
+        out.write_all(self.0.as_ref())?;
         Ok(IsNull::No)
     }
 }
 
-impl FromSql<Geometry, Pg> for Ewkb {
+impl FromSql<Geometry, Pg> for Ewkb<Vec<u8>> {
     fn from_sql(bytes: pg::PgValue) -> deserialize::Result<Self> {
         Ok(Self(bytes.as_bytes().to_vec()))
     }
 }
 
-impl FromSql<Geography, Pg> for Ewkb {
+impl FromSql<Geography, Pg> for Ewkb<Vec<u8>> {
     fn from_sql(bytes: pg::PgValue) -> deserialize::Result<Self> {
         Ok(Self(bytes.as_bytes().to_vec()))
     }
