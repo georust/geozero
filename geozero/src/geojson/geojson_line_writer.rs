@@ -187,13 +187,12 @@ mod tests {
     use super::*;
     use crate::geojson::read_geojson_lines;
 
-    #[ignore = "fails because no newlines are written. feature_end is never called."]
     #[test]
     fn good_geometries() {
         let input = r#"{ "type": "Point", "coordinates": [1.1, 1.2] }
-    { "type": "Point", "coordinates": [2.1, 2.2] }
-    { "type": "Point", "coordinates": [3.1, 3.2] }
-    "#;
+{ "type": "Point", "coordinates": [2.1, 2.2] }
+{ "type": "Point", "coordinates": [3.1, 3.2] }
+"#;
         let mut out: Vec<u8> = Vec::new();
         assert!(
             read_geojson_lines(input.as_bytes(), &mut GeoJsonLineWriter::new(&mut out)).is_ok()
@@ -217,7 +216,8 @@ mod tests {
     fn assert_json_lines_eq(a: &[u8], b: &str) {
         let a = std::str::from_utf8(a).unwrap();
         a.lines().zip(b.lines()).for_each(|(a_line, b_line)| {
-            dbg!(a);
+            println!("a: {}", a_line);
+            println!("b: {}", b_line);
 
             let a_val: serde_json::Value = serde_json::from_str(a_line).unwrap();
             let b_val: serde_json::Value = serde_json::from_str(b_line).unwrap();
