@@ -45,17 +45,24 @@ impl<W: Write> GeoJsonLineWriter<W> {
         }
         Ok(())
     }
+
+    /// Manually add a comma to the writer.
+    fn comma(&mut self) -> Result<()> {
+        self.line_writer.out.write_all(b",")?;
+        Ok(())
+    }
 }
 
 impl<W: Write> FeatureProcessor for GeoJsonLineWriter<W> {
     fn feature_begin(&mut self, _idx: u64) -> Result<()> {
         self.begin_context();
+        // We always pass `0` for `idx` because we want to avoid a preceding comma on this line.
         self.line_writer.feature_begin(0)?;
         Ok(())
     }
 
-    fn feature_end(&mut self, _idx: u64) -> Result<()> {
-        self.line_writer.feature_end(0)?;
+    fn feature_end(&mut self, idx: u64) -> Result<()> {
+        self.line_writer.feature_end(idx)?;
         self.end_context()?;
         Ok(())
     }
@@ -99,15 +106,32 @@ impl<W: Write> GeomProcessor for GeoJsonLineWriter<W> {
         self.line_writer.coordinate(x, y, z, m, t, tm, idx)
     }
 
+    // Whenever the idx is > 0, the underlying GeoJsonWriter will automatically add a comma prefix.
+    // _Almost always_ we don't want the prefixed comma because each feature or geometry will be on
+    // a new line. _However_ we need to distinguish between geometries that are _part of a feature_
+    // and which need a preceding comma, and those that are standalone and don't need a preceding
+    // comma.
+    //
+    // When `self.open_contexts > 0` it means that we are inside a top-level feature and when `idx
+    // > 0` it means that this is not the first geometry in this feature. In that case we manually
+    // add a comma. Then we always pass `0` for `idx` to the underlying GeoJsonWriter.
     fn empty_point(&mut self, idx: usize) -> Result<()> {
+        if self.open_contexts > 0 && idx > 0 {
+            self.comma()?;
+        }
+
         self.begin_context();
-        self.line_writer.empty_point(idx)?;
+        self.line_writer.empty_point(0)?;
         self.end_context()
     }
 
     fn point_begin(&mut self, idx: usize) -> Result<()> {
+        if self.open_contexts > 0 && idx > 0 {
+            self.comma()?;
+        }
+
         self.begin_context();
-        self.line_writer.point_begin(idx)
+        self.line_writer.point_begin(0)
     }
 
     fn point_end(&mut self, idx: usize) -> Result<()> {
@@ -116,8 +140,12 @@ impl<W: Write> GeomProcessor for GeoJsonLineWriter<W> {
     }
 
     fn multipoint_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        if self.open_contexts > 0 && idx > 0 {
+            self.comma()?;
+        }
+
         self.begin_context();
-        self.line_writer.multipoint_begin(size, idx)
+        self.line_writer.multipoint_begin(size, 0)
     }
 
     fn multipoint_end(&mut self, idx: usize) -> Result<()> {
@@ -126,8 +154,12 @@ impl<W: Write> GeomProcessor for GeoJsonLineWriter<W> {
     }
 
     fn linestring_begin(&mut self, tagged: bool, size: usize, idx: usize) -> Result<()> {
+        if self.open_contexts > 0 && idx > 0 {
+            self.comma()?;
+        }
+
         self.begin_context();
-        self.line_writer.linestring_begin(tagged, size, idx)
+        self.line_writer.linestring_begin(tagged, size, 0)
     }
 
     fn linestring_end(&mut self, tagged: bool, idx: usize) -> Result<()> {
@@ -136,8 +168,12 @@ impl<W: Write> GeomProcessor for GeoJsonLineWriter<W> {
     }
 
     fn multilinestring_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        if self.open_contexts > 0 && idx > 0 {
+            self.comma()?;
+        }
+
         self.begin_context();
-        self.line_writer.multilinestring_begin(size, idx)
+        self.line_writer.multilinestring_begin(size, 0)
     }
 
     fn multilinestring_end(&mut self, idx: usize) -> Result<()> {
@@ -146,8 +182,12 @@ impl<W: Write> GeomProcessor for GeoJsonLineWriter<W> {
     }
 
     fn polygon_begin(&mut self, tagged: bool, size: usize, idx: usize) -> Result<()> {
+        if self.open_contexts > 0 && idx > 0 {
+            self.comma()?;
+        }
+
         self.begin_context();
-        self.line_writer.polygon_begin(tagged, size, idx)
+        self.line_writer.polygon_begin(tagged, size, 0)
     }
 
     fn polygon_end(&mut self, tagged: bool, idx: usize) -> Result<()> {
@@ -156,8 +196,12 @@ impl<W: Write> GeomProcessor for GeoJsonLineWriter<W> {
     }
 
     fn multipolygon_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        if self.open_contexts > 0 && idx > 0 {
+            self.comma()?;
+        }
+
         self.begin_context();
-        self.line_writer.multipolygon_begin(size, idx)
+        self.line_writer.multipolygon_begin(size, 0)
     }
 
     fn multipolygon_end(&mut self, idx: usize) -> Result<()> {
@@ -166,8 +210,12 @@ impl<W: Write> GeomProcessor for GeoJsonLineWriter<W> {
     }
 
     fn geometrycollection_begin(&mut self, size: usize, idx: usize) -> Result<()> {
+        if self.open_contexts > 0 && idx > 0 {
+            self.comma()?;
+        }
+
         self.begin_context();
-        self.line_writer.geometrycollection_begin(size, idx)
+        self.line_writer.geometrycollection_begin(size, 0)
     }
 
     fn geometrycollection_end(&mut self, idx: usize) -> Result<()> {
@@ -216,9 +264,6 @@ mod tests {
     fn assert_json_lines_eq(a: &[u8], b: &str) {
         let a = std::str::from_utf8(a).unwrap();
         a.lines().zip(b.lines()).for_each(|(a_line, b_line)| {
-            println!("a: {}", a_line);
-            println!("b: {}", b_line);
-
             let a_val: serde_json::Value = serde_json::from_str(a_line).unwrap();
             let b_val: serde_json::Value = serde_json::from_str(b_line).unwrap();
             assert_eq!(a_val, b_val);
