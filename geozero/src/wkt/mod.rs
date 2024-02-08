@@ -62,10 +62,37 @@ pub(crate) mod conversion {
 mod wkb {
     use crate::error::Result;
     use crate::wkb::{FromWkb, WkbDialect};
-    use crate::wkt::{EwktString, WktDialect, WktString, WktWriter};
+    #[allow(deprecated)]
+    use crate::wkt::{Ewkt, EwktString, Wkt, WktDialect, WktString, WktWriter};
     use crate::CoordDimensions;
     use std::io::Read;
 
+    impl FromWkb for Wkt<String> {
+        fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> Result<Self> {
+            let mut out: Vec<u8> = Vec::new();
+            let mut writer = WktWriter::new(&mut out);
+            crate::wkb::process_wkb_type_geom(rdr, &mut writer, dialect)?;
+            let wkt = String::from_utf8(out).map_err(|_| {
+                crate::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())
+            })?;
+            Ok(Wkt(wkt))
+        }
+    }
+
+    impl FromWkb for Ewkt<String> {
+        fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> Result<Self> {
+            let mut out: Vec<u8> = Vec::new();
+            let mut writer =
+                WktWriter::with_opts(&mut out, WktDialect::Ewkt, CoordDimensions::xyzm(), None);
+            crate::wkb::process_wkb_type_geom(rdr, &mut writer, dialect)?;
+            let wkt = String::from_utf8(out).map_err(|_| {
+                crate::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())
+            })?;
+            Ok(Ewkt(wkt))
+        }
+    }
+
+    #[allow(deprecated)]
     impl FromWkb for WktString {
         fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> Result<Self> {
             let mut out: Vec<u8> = Vec::new();
@@ -74,10 +101,12 @@ mod wkb {
             let wkt = String::from_utf8(out).map_err(|_| {
                 crate::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())
             })?;
+            #[allow(deprecated)]
             Ok(WktString(wkt))
         }
     }
 
+    #[allow(deprecated)]
     impl FromWkb for EwktString {
         fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> Result<Self> {
             let mut out: Vec<u8> = Vec::new();
@@ -87,6 +116,7 @@ mod wkb {
             let wkt = String::from_utf8(out).map_err(|_| {
                 crate::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())
             })?;
+            #[allow(deprecated)]
             Ok(EwktString(wkt))
         }
     }

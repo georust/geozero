@@ -33,19 +33,19 @@ impl<'de, T: FromWkb + Sized> Decode<'de, Postgres> for wkb::Decode<T> {
     }
 }
 
-impl sqlx::Type<Postgres> for wkb::Ewkb {
+impl<B: AsRef<[u8]>> sqlx::Type<Postgres> for wkb::Ewkb<B> {
     fn type_info() -> PgTypeInfo {
         PgTypeInfo::with_name("geometry")
     }
 }
 
-impl PgHasArrayType for wkb::Ewkb {
+impl<B: AsRef<[u8]>> PgHasArrayType for wkb::Ewkb<B> {
     fn array_type_info() -> PgTypeInfo {
         PgTypeInfo::with_name("_geometry")
     }
 }
 
-impl<'de> Decode<'de, Postgres> for wkb::Ewkb {
+impl<'de> Decode<'de, Postgres> for wkb::Ewkb<Vec<u8>> {
     fn decode(value: PgValueRef<'de>) -> Result<Self, BoxDynError> {
         if value.is_null() {
             return Ok(wkb::Ewkb(Vec::new()));
