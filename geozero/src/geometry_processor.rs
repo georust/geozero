@@ -251,7 +251,10 @@ pub trait GeomProcessor {
     /// ## Parameters
     ///
     /// - `size`: the number of geometries in this GeometryCollection.
-    /// - `idx`: the positional index of this GeometryCollection. Unsure when this is non-zero?? Nested geometry collections?
+    /// - `idx`: the positional index of this GeometryCollection. This can be greater than 0 for
+    ///   nested geometry collections but also when using `GeometryProcessor` to process a
+    ///   `Feature` whose geometry is a `GeometryCollection`. For an example of this see [this
+    ///   comment](https://github.com/georust/geozero/pull/183#discussion_r1454319662).
     ///
     /// ## Following events
     ///
