@@ -103,6 +103,9 @@ pub trait GeomProcessor {
     }
 
     /// Process empty coordinates, like WKT's `POINT EMPTY`
+    ///
+    /// - `idx` is the positional index inside this geometry. `idx` will usually be 0 except in the
+    ///   case of a MultiPoint or GeometryCollection.
     fn empty_point(&mut self, idx: usize) -> Result<()> {
         Err(GeozeroError::Geometry(
             "The input was an empty Point, but the output doesn't support empty Points".to_string(),
@@ -123,21 +126,47 @@ pub trait GeomProcessor {
 
     /// Begin of MultiPoint processing
     ///
-    /// Next: size * xy/coordinate
+    /// Next: `size` calls to [`xy()`][`Self::xy()`] or [`coordinate()`][`Self::coordinate()`]
+    ///
+    /// ## Parameters
+    ///
+    /// - `size`: the number of Points in this MultiPoint
+    /// - `idx`: the positional index of this MultiPoint. This will be 0 except in the case of a
+    ///   GeometryCollection.
+    ///
+    /// ## Following events
+    ///
+    /// - `size` calls to [`xy()`][`Self::xy()`] or [`coordinate()`][`Self::coordinate()`] for each point.
+    /// - [`multipoint_end`][Self::multipoint_end()] to end this MultiPoint
+    ///
+    /// As of v0.12, `point_begin` and `point_end` are **not** called for each point in a
+    /// MultiPoint. See also discussion in [#184](https://github.com/georust/geozero/issues/184).
     fn multipoint_begin(&mut self, size: usize, idx: usize) -> Result<()> {
         Ok(())
     }
 
     /// End of MultiPoint processing
+    ///
+    /// - `idx`: the positional index of this MultiPoint. This will be 0 except in the case of a
+    ///   GeometryCollection.
     fn multipoint_end(&mut self, idx: usize) -> Result<()> {
         Ok(())
     }
 
     /// Begin of `LineString` processing
     ///
-    /// An untagged `LineString` is either a Polygon ring or part of a `MultiLineString`
+    /// ## Parameters
     ///
-    /// Next: size * xy/coordinate
+    /// - `tagged`: if `false`, this `LineString` is either a Polygon ring or part of a `MultiLineString`
+    /// - `size`: the number of coordinates in this LineString
+    /// - `idx`: the positional index of this LineString. This will be 0 for a tagged LineString
+    ///   except in the case of a GeometryCollection. This can be non-zero for an untagged
+    ///   LineString for MultiLineStrings or Polygons with multiple interiors.
+    ///
+    /// ## Following events
+    ///
+    /// - `size` calls to [`xy()`][`Self::xy()`] or [`coordinate()`][`Self::coordinate()`] for each coordinate.
+    /// - [`linestring_end`][Self::linestring_end()] to end this LineString
     fn linestring_begin(&mut self, tagged: bool, size: usize, idx: usize) -> Result<()> {
         Ok(())
     }
@@ -150,6 +179,14 @@ pub trait GeomProcessor {
     /// Begin of `MultiLineString` processing
     ///
     /// Next: size * LineString (untagged)
+    ///
+    /// ## Following events
+    ///
+    /// - `size` calls to:
+    ///     - [`linestring_begin`][Self::linestring_begin] (with `tagged` set to `false`).
+    ///     - one or more calls to [`xy()`][`Self::xy()`] or [`coordinate()`][`Self::coordinate()`] for each coordinate in the LineString.
+    ///     - [`linestring_end`][Self::linestring_end]
+    /// - [`multilinestring_end`][Self::multilinestring_end()] to end this MultiLineString
     fn multilinestring_begin(&mut self, size: usize, idx: usize) -> Result<()> {
         Ok(())
     }
@@ -159,11 +196,23 @@ pub trait GeomProcessor {
         Ok(())
     }
 
-    /// Begin of Polygon processing
+    /// Begin of `Polygon` processing
     ///
-    /// An untagged Polygon is part of a `MultiPolygon`
+    /// ## Parameters
     ///
-    /// Next: size * LineString (untagged) = rings
+    /// - `tagged`: if `false`, this `Polygon` is part of a `MultiPolygon`.
+    /// - `size`: the number of rings in this Polygon, _including_ the exterior ring.
+    /// - `idx`: the positional index of this Polygon. This will be 0 for a tagged Polygon
+    ///   except in the case of a GeometryCollection. This can be non-zero for an untagged
+    ///   Polygon for a MultiPolygon with multiple interiors
+    ///
+    /// ## Following events
+    ///
+    /// - `size` calls to:
+    ///     - [`linestring_begin`][Self::linestring_begin] (with `tagged` set to `false`).
+    ///     - one or more calls to [`xy()`][`Self::xy()`] or [`coordinate()`][`Self::coordinate()`] for each coordinate in the ring.
+    ///     - [`linestring_end`][Self::linestring_end]
+    /// - [`polygon_end`][Self::polygon_end()] to end this Polygon
     fn polygon_begin(&mut self, tagged: bool, size: usize, idx: usize) -> Result<()> {
         Ok(())
     }
@@ -175,7 +224,19 @@ pub trait GeomProcessor {
 
     /// Begin of `MultiPolygon` processing
     ///
-    /// Next: size * Polygon (untagged)
+    /// ## Parameters
+    ///
+    /// - `size`: the number of Polygons in this MultiPolygon.
+    /// - `idx`: the positional index of this MultiPolygon. This will be 0 except in the case of a
+    ///   GeometryCollection.
+    ///
+    /// ## Following events
+    ///
+    /// - `size` calls to:
+    ///     - [`polygon_begin`][Self::polygon_begin] (with `tagged` set to `false`).
+    ///     - See [`polygon_begin`][Self::polygon_begin] for its internal calls.
+    ///     - [`polygon_end`][Self::polygon_end]
+    /// - [`multipolygon_end`][Self::multipolygon_end()] to end this MultiPolygon
     fn multipolygon_begin(&mut self, size: usize, idx: usize) -> Result<()> {
         Ok(())
     }
@@ -186,6 +247,19 @@ pub trait GeomProcessor {
     }
 
     /// Begin of `GeometryCollection` processing
+    ///
+    /// ## Parameters
+    ///
+    /// - `size`: the number of geometries in this GeometryCollection.
+    /// - `idx`: the positional index of this GeometryCollection. This can be greater than 0 for
+    ///   nested geometry collections but also when using `GeometryProcessor` to process a
+    ///   `Feature` whose geometry is a `GeometryCollection`. For an example of this see [this
+    ///   comment](https://github.com/georust/geozero/pull/183#discussion_r1454319662).
+    ///
+    /// ## Following events
+    ///
+    /// - `size` calls to one of the internal geometry `begin` and `end` methods, called in pairs.
+    /// - [`geometrycollection_end`][Self::geometrycollection_end()] to end this GeometryCollection
     fn geometrycollection_begin(&mut self, size: usize, idx: usize) -> Result<()> {
         Ok(())
     }

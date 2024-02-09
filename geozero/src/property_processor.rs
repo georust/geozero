@@ -18,7 +18,9 @@ pub enum ColumnValue<'a> {
     Float(f32),
     Double(f64),
     String(&'a str),
+    /// A JSON-formatted string
     Json(&'a str),
+    /// A datetime stored as an ISO8601-formatted string
     DateTime(&'a str),
     Binary(&'a [u8]),
 }
@@ -42,6 +44,19 @@ pub enum ColumnValue<'a> {
 #[allow(unused_variables)]
 pub trait PropertyProcessor {
     /// Process property value. Abort processing, if return value is true.
+    ///
+    /// - `idx`: the positional index of the property.
+    /// - `name` is the name of the column
+    /// - `value` is the value of this field
+    ///
+    /// ## Notes:
+    ///
+    /// - It is not guaranteed that `idx` is consistent across rows, nor is it
+    ///   guaranteed that the set of names in each row is the same. Some input formats, like
+    ///   GeoJSON, are schema-less and properties may change in every row. For this reason, it is
+    ///   suggested to use the `name` parameter for matching across rows.
+    /// - It is not guaranteed that the data type of `name` is consistent across rows. For a given
+    ///   `name`, it may be numeric in one row and string in the next.
     fn property(&mut self, idx: usize, name: &str, value: &ColumnValue) -> Result<bool> {
         Ok(true)
     }
