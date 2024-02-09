@@ -161,7 +161,7 @@ mod postgis_sqlx {
         let wkt = wkb::Ewkb(row.0).to_wkt().expect("to_wkt failed");
         assert_eq!(&wkt, "POLYGON((0 0,2 0,2 2,0 2,0 0))");
 
-        let row: (wkb::Ewkb,) =
+        let row: (wkb::Ewkb<Vec<u8>>,) =
             sqlx::query_as("SELECT 'SRID=4326;POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))'::geometry")
                 .fetch_one(&pool)
                 .await?;

@@ -239,7 +239,7 @@ impl<W: Write> PropertyProcessor for GeoJsonWriter<W> {
 mod test {
     use super::*;
     use crate::geojson::read_geojson;
-    use crate::wkt::WktStr;
+    use crate::wkt::Wkt;
     use crate::ToJson;
 
     #[test]
@@ -431,7 +431,7 @@ mod test {
             r#"{"type": "Point", "coordinates": [10,20]}"#
         );
 
-        let geom = WktStr("POINT EMPTY");
+        let geom = Wkt("POINT EMPTY");
         assert_eq!(
             &geom.to_json().unwrap(),
             r#"{"type": "Point", "coordinates": []}"#
