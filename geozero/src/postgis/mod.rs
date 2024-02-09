@@ -44,10 +44,7 @@ mod postgis_sqlx;
 /// # Ok(())
 /// # }
 ///```
-#[cfg(feature = "with-postgis-postgres")]
-pub mod postgres {
-    pub use super::postgis_postgres::*;
-}
+pub mod postgres {}
 
 /// PostGIS geometry type encoding/decoding for SQLx.
 ///
@@ -89,9 +86,7 @@ pub mod postgres {
 /// # }
 /// ```
 #[cfg(feature = "with-postgis-sqlx")]
-pub mod sqlx {
-    pub use super::postgis_sqlx::*;
-}
+pub mod sqlx {}
 
 /// Postgis geometry type encoding for Diesel.
 ///
@@ -120,7 +115,7 @@ pub mod sqlx {
 /// #[diesel(table_name = geometries)]
 /// pub struct Geom {
 ///     pub name: String,
-///     pub geom: Option<Ewkb>,
+///     pub geom: Option<Ewkb<Vec<u8>>>,
 /// }
 ///
 /// pub fn establish_connection() -> PgConnection {
