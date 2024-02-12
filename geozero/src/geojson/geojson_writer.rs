@@ -6,7 +6,7 @@ use std::io::Write;
 /// GeoJSON writer.
 pub struct GeoJsonWriter<W: Write> {
     dims: CoordDimensions,
-    out: W,
+    pub(crate) out: W,
 }
 
 impl<W: Write> GeoJsonWriter<W> {

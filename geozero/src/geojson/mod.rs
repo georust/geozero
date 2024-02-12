@@ -1,9 +1,11 @@
 //! GeoJSON conversions.
 pub(crate) mod geojson_line_reader;
+pub(crate) mod geojson_line_writer;
 pub(crate) mod geojson_reader;
 pub(crate) mod geojson_writer;
 
 pub use geojson_line_reader::*;
+pub use geojson_line_writer::*;
 pub use geojson_reader::*;
 pub use geojson_writer::*;
 
