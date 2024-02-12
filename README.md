@@ -29,7 +29,6 @@ Supported dimensions: X, Y, Z, M, T
   - GeoPackage geometries for [SQLx](https://github.com/launchbadge/sqlx)
 * [WKT](https://github.com/georust/wkt) Reader + Writer
 * CSV Reader + Writer
-* GeoArrow WKB reader
 * SVG Writer
 * [geo-types](https://github.com/georust/geo) Reader + Writer
 * MVT (Mapbox Vector Tiles) Reader + Writer
@@ -44,6 +43,12 @@ Supported dimensions: X, Y, Z, M, T
 [![docs.rs docs](https://docs.rs/flatgeobuf/badge.svg)](https://docs.rs/flatgeobuf)
 
 * FlatGeobuf Reader
+
+[geoarrow](https://github.com/geoarrow/geoarrow-rs) [![crates.io version](https://img.shields.io/crates/v/geoarrow.svg)](https://crates.io/crates/geoarrow)
+[![docs.rs docs](https://docs.rs/geoarrow/badge.svg)](https://docs.rs/geoarrow)
+
+* GeoArrow Reader and Writer
+* GeoParquet Reader and Writer
 
 ## Applications
 
@@ -157,7 +162,7 @@ let _ = sqlx::query(
 .await?;
 ```
 
-Using compile-time verification requires [type overrides](https://docs.rs/sqlx/latest/sqlx/macro.query.html#force-a-differentcustom-type): 
+Using compile-time verification requires [type overrides](https://docs.rs/sqlx/latest/sqlx/macro.query.html#force-a-differentcustom-type):
 ```rust,ignore
 let _ = sqlx::query!(
     "INSERT INTO point2d (datetimefield, geom) VALUES(now(), $1::geometry)",

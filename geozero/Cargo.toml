@@ -13,7 +13,6 @@ license.workspace = true
 
 [features]
 default = ["with-svg", "with-wkt", "with-geo", "with-geojson"]
-with-arrow = ["dep:arrow2"]
 with-csv = ["dep:csv", "with-wkt"]
 with-gdal = ["dep:gdal"]
 with-gdal-bindgen = ["with-gdal", "gdal?/bindgen"]
@@ -37,7 +36,6 @@ serde_json.workspace = true
 thiserror.workspace = true
 
 # Optional dependencies
-arrow2 = { workspace = true, optional = true }
 byteorder = { workspace = true, optional = true }
 bytes = { workspace = true, optional = true }
 csv = { workspace = true, optional = true }

@@ -20,7 +20,6 @@ license = "MIT OR Apache-2.0"
 # which in turn relies on geozero itself.
 geozero = { version = "0.11.0", default-features = false }
 
-arrow2 = { version = "0.17", features = ["io_ipc"] }
 async-trait = "0.1"
 byteorder = { version = "1.4.3", default-features = false }
 bytes = "1.4"
