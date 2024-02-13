@@ -1,3 +1,20 @@
+## 0.12.0 - (2024-02-13)
+
+* Remove Arrow mod, point to the updated and expanded geozero integration in the `geoarrow` crate (#186)
+  * There are two different Rust arrow implementations, `arrow` and `arrow2`. geozero's existing integration used `arrow2`, which is [now defunct](https://github.com/jorgecarleitao/arrow2?tab=readme-ov-file#this-crate-is-unmaintained). The `geoarrow` crate uses the maintained `arrow` crate.
+  * The GeoArrow spec is much broader than what was implemented here in geozero. In particular, GeoArrow defines both "[serialized](https://github.com/geoarrow/geoarrow/blob/v0.1.0/format.md#serialized-encodings)" and "[native](https://github.com/geoarrow/geoarrow/blob/v0.1.0/format.md#native-encoding)" encodings. The existing geozero code supported only a tiny fraction of that: read-only from the WKB serialized encoding. The current `geoarrow` crate supports read-write from/to a GeoArrow WKB array but _also_ to/from all the native encodings.
+  * The `geoarrow` crate also includes reading and writing to GeoParquet.
+* Add GeoJsonLineReader to top-level documentation (#192)
+* Add GeoJsonLineWriter (#193)
+* Breaking: Make WKB and WKT generic over `AsRef<[u8]>` (#188)
+* Improved trait documentation (#183)
+* Added feature `with-gdal-bindgen` to build gdal support with the `bindgen` feature. This is useful when building against a recent gdal, for which the project hasn't yet pre-built bindings. (#190)
+* Breaking: update flatgeobuf to 4.0.0
+* Update errors to include more detail
+* Update Wkb to allow non-owned buffers
+* Fix `with-mvt` feature no longer requires `protoc` runtime dependency
+* Configure for merge queue #194
+
 ## 0.11.0 (2023-08-28)
 
 * Add support for raw WKB DB queries
@@ -189,7 +206,7 @@
 
 * Add geo-types writer
 * Impl FeatureProcessor for GeoJSON reader
-* Change Reader::open to Read + Seek trait 
+* Change Reader::open to Read + Seek trait
 
 ## 0.2.0 (2020-04-20)
 
