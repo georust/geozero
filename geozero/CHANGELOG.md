@@ -1,4 +1,4 @@
-## 0.12.0 - (release date TBD)
+## 0.12.0 - (2024-02-13)
 
 * Remove Arrow mod, point to the updated and expanded geozero integration in the `geoarrow` crate (#186)
   * There are two different Rust arrow implementations, `arrow` and `arrow2`. geozero's existing integration used `arrow2`, which is [now defunct](https://github.com/jorgecarleitao/arrow2?tab=readme-ov-file#this-crate-is-unmaintained). The `geoarrow` crate uses the maintained `arrow` crate.
