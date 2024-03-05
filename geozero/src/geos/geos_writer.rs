@@ -5,6 +5,7 @@ use geos::{CoordDimensions, CoordSeq, GResult, Geometry as GGeometry};
 /// Generator for GEOS geometry type.
 pub struct GeosWriter<'a> {
     pub(crate) geom: GGeometry<'a>,
+    srid: Option<i32>,
     // CoordSeq for Points, Lines and Rings
     cs: Vec<CoordSeq<'a>>,
     // Polygons or MultiPolygons
@@ -29,6 +30,7 @@ impl<'a> Default for GeosWriter<'a> {
     fn default() -> Self {
         GeosWriter {
             geom: GGeometry::create_empty_point().unwrap(),
+            srid: None,
             cs: Vec::new(),
             polys: Vec::new(),
         }
@@ -36,6 +38,10 @@ impl<'a> Default for GeosWriter<'a> {
 }
 
 impl GeomProcessor for GeosWriter<'_> {
+    fn srid(&mut self, srid: Option<i32>) -> Result<()> {
+        self.srid = srid;
+        Ok(())
+    }
     fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
         if self.cs.is_empty() {
             return Err(GeozeroError::Geometry("CoordSeq missing".to_string()));
@@ -57,6 +63,9 @@ impl GeomProcessor for GeosWriter<'_> {
             .pop()
             .ok_or_else(|| GeozeroError::Geometry("CoordSeq missing".to_string()))?;
         self.geom = GGeometry::create_point(cs)?;
+        if let Some(srid) = self.srid {
+            self.geom.set_srid(srid as usize);
+        }
         Ok(())
     }
     fn multipoint_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
@@ -79,6 +88,9 @@ impl GeomProcessor for GeosWriter<'_> {
             })
             .collect::<GResult<Vec<GGeometry>>>()?;
         self.geom = GGeometry::create_multipoint(ggpts)?;
+        if let Some(srid) = self.srid {
+            self.geom.set_srid(srid as usize);
+        }
         Ok(())
     }
     fn linestring_begin(&mut self, tagged: bool, size: usize, _idx: usize) -> Result<()> {
@@ -94,6 +106,9 @@ impl GeomProcessor for GeosWriter<'_> {
                 .pop()
                 .ok_or_else(|| GeozeroError::Geometry("CoordSeq missing".to_string()))?;
             self.geom = GGeometry::create_line_string(cs)?;
+            if let Some(srid) = self.srid {
+                self.geom.set_srid(srid as usize);
+            }
         }
         Ok(())
     }
@@ -108,6 +123,9 @@ impl GeomProcessor for GeosWriter<'_> {
             .map(GGeometry::create_line_string)
             .collect::<GResult<Vec<GGeometry>>>()?;
         self.geom = GGeometry::create_multiline_string(gglines)?;
+        if let Some(srid) = self.srid {
+            self.geom.set_srid(srid as usize);
+        }
         Ok(())
     }
     fn polygon_begin(&mut self, _tagged: bool, size: usize, _idx: usize) -> Result<()> {
@@ -129,6 +147,9 @@ impl GeomProcessor for GeosWriter<'_> {
         let gpoly = GGeometry::create_polygon(exterior_ring, interiors)?;
         if tagged {
             self.geom = gpoly;
+            if let Some(srid) = self.srid {
+                self.geom.set_srid(srid as usize);
+            }
         } else {
             self.polys.push(gpoly);
         }
@@ -140,6 +161,9 @@ impl GeomProcessor for GeosWriter<'_> {
     }
     fn multipolygon_end(&mut self, _idx: usize) -> Result<()> {
         self.geom = GGeometry::create_multipolygon(std::mem::take(&mut self.polys))?;
+        if let Some(srid) = self.srid {
+            self.geom.set_srid(srid as usize);
+        }
         Ok(())
     }
 }
