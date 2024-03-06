@@ -101,12 +101,17 @@ fn process_coord_seq<P: GeomProcessor>(
 ) -> Result<()> {
     let multi = processor.dimensions().z;
     let n_coords = cs.size()?;
+    let cs_dims = cs.dimensions()?;
     for i in 0..n_coords {
         if multi {
             processor.coordinate(
                 cs.get_x(i)?,
                 cs.get_y(i)?,
-                Some(cs.get_z(i)?),
+                if matches!(cs_dims, geos::CoordDimensions::ThreeD) {
+                    Some(cs.get_z(i)?)
+                } else {
+                    None
+                },
                 None,
                 None,
                 None,
