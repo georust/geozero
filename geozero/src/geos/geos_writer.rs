@@ -176,8 +176,7 @@ impl FeatureProcessor for GeosWriter<'_> {}
 mod test {
     use super::*;
     use crate::geojson::{read_geojson, GeoJson};
-    use crate::wkb::WkbDialect;
-    use crate::{GeozeroGeometry, ToGeos, ToWkb};
+    use crate::{GeozeroGeometry, ToGeos};
     use geos::Geom;
     use std::convert::TryFrom;
 
@@ -278,13 +277,17 @@ mod test {
     #[test]
     #[cfg(feature = "with-wkb")]
     fn point_geom_with_srid() {
+        use crate::wkb::FromWkb;
+        use crate::wkb::WkbDialect;
+        use crate::ToWkb;
+
         let wkt = "POINT(1 1)";
         let mut ggeom = GGeometry::new_from_wkt(wkt).unwrap();
         ggeom.set_srid(4326);
 
         let mut ewkb = ggeom.to_ewkb(ggeom.dims(), ggeom.srid()).unwrap();
 
-        let ggeom = geos::Geometry::from_wkb(&mut ewkb, WkbDialect::Ewkb).unwrap();
-        assert_eq!(geos.geometry().srid(), Some(4326));
+        let new_ggeom = geos::Geometry::from_wkb(&mut ewkb.as_slice(), WkbDialect::Ewkb).unwrap();
+        assert_eq!(new_ggeom.srid(), Some(4326));
     }
 }
