@@ -285,7 +285,7 @@ mod test {
         let mut ggeom = GGeometry::new_from_wkt(wkt).unwrap();
         ggeom.set_srid(4326);
 
-        let mut ewkb = ggeom.to_ewkb(ggeom.dims(), ggeom.srid()).unwrap();
+        let ewkb = ggeom.to_ewkb(ggeom.dims(), ggeom.srid()).unwrap();
 
         let new_ggeom = geos::Geometry::from_wkb(&mut ewkb.as_slice(), WkbDialect::Ewkb).unwrap();
         assert_eq!(new_ggeom.srid(), Some(4326));
