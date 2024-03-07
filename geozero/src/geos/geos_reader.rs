@@ -101,12 +101,17 @@ fn process_coord_seq<P: GeomProcessor>(
 ) -> Result<()> {
     let multi = processor.dimensions().z;
     let n_coords = cs.size()?;
+    let cs_dims = cs.dimensions()?;
     for i in 0..n_coords {
         if multi {
             processor.coordinate(
                 cs.get_x(i)?,
                 cs.get_y(i)?,
-                Some(cs.get_z(i)?),
+                if cs_dims == geos::CoordDimensions::ThreeD {
+                    Some(cs.get_z(i)?)
+                } else {
+                    None
+                },
                 None,
                 None,
                 None,
@@ -277,5 +282,17 @@ mod test {
         assert!(process_geom(&ggeom, &mut WktWriter::new(&mut wkt_data)).is_ok());
 
         assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), wkt);
+    }
+
+    #[test]
+    fn geos_to_ewkt() {
+        use crate::GeozeroGeometry;
+        use crate::ToWkt;
+
+        let wkt = "POINT(1 1)";
+        let mut ggeom = geos::Geometry::new_from_wkt(wkt).unwrap();
+        ggeom.set_srid(4326);
+
+        assert_eq!(ggeom.to_ewkt(ggeom.srid()).unwrap(), "SRID=4326;POINT(1 1)");
     }
 }
