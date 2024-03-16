@@ -108,7 +108,7 @@ Full source code: [polylabel.rs](./geozero/tests/polylabel.rs)
 
 ## PostGIS usage examples
 
-Select and insert geo-types geometries with rust-postgres:
+Select and insert geo-types geometries with rust-postgres. Requires the `with-postgis-postgres` feature:
 ```rust,ignore
 let mut client = Client::connect(&std::env::var("DATABASE_URL").unwrap(), NoTls)?;
 
@@ -133,7 +133,7 @@ let _ = client.execute(
 );
 ```
 
-Select and insert geo-types geometries with SQLx:
+Select and insert geo-types geometries with SQLx. Requires the `with-postgis-sqlx` feature:
 ```rust,ignore
 let pool = PgPoolOptions::new()
     .max_connections(5)
