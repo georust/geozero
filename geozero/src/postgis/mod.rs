@@ -10,7 +10,7 @@ mod postgis_postgres;
 #[cfg(feature = "with-postgis-sqlx")]
 mod postgis_sqlx;
 
-/// PostGIS geometry type encoding/decoding for rust-postgres.
+/// PostGIS geometry type encoding/decoding for rust-postgres. Requires the `with-postgis-postgres` feature.
 ///
 /// # PostGIS usage example with rust-postgres
 ///
@@ -46,7 +46,7 @@ mod postgis_sqlx;
 ///```
 pub mod postgres {}
 
-/// PostGIS geometry type encoding/decoding for SQLx.
+/// PostGIS geometry type encoding/decoding for SQLx. Requires the `with-postgis-sqlx` feature.
 ///
 /// # PostGIS usage example with SQLx
 ///
@@ -88,7 +88,7 @@ pub mod postgres {}
 #[cfg(feature = "with-postgis-sqlx")]
 pub mod sqlx {}
 
-/// Postgis geometry type encoding for Diesel.
+/// Postgis geometry type encoding for Diesel. Requires the `with-postgis-diesel` feature.
 ///
 /// # PostGIS usage example with Diesel
 ///
