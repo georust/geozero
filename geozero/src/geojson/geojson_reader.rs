@@ -217,7 +217,9 @@ pub(crate) fn process_properties<P: PropertyProcessor>(
                 processor.property(i, key, &ColumnValue::ULong(v.as_u64().unwrap()))?
             }
             JsonValue::Bool(v) => processor.property(i, key, &ColumnValue::Bool(*v))?,
-            // Null, Array(Vec<Value>), Object(Map<String, Value>)
+            // For null values omit the property
+            JsonValue::Null => false,
+            // Array(Vec<Value>), Object(Map<String, Value>)
             _ => processor.property(i, key, &ColumnValue::String(&value.to_string()))?,
         };
     }
