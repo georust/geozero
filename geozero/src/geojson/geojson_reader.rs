@@ -1,4 +1,4 @@
-use crate::error::Result;
+use crate::error::{GeozeroError, Result};
 use crate::{
     ColumnValue, FeatureProcessor, GeomProcessor, GeozeroDatasource, GeozeroGeometry,
     PropertyProcessor,
@@ -217,7 +217,17 @@ pub(crate) fn process_properties<P: PropertyProcessor>(
                 processor.property(i, key, &ColumnValue::ULong(v.as_u64().unwrap()))?
             }
             JsonValue::Bool(v) => processor.property(i, key, &ColumnValue::Bool(*v))?,
-            // Null, Array(Vec<Value>), Object(Map<String, Value>)
+            JsonValue::Array(v) => {
+                let json_string =
+                    serde_json::to_string(v).map_err(|_err| GeozeroError::Property(key.clone()))?;
+                processor.property(i, key, &ColumnValue::Json(&json_string))?
+            }
+            JsonValue::Object(v) => {
+                let json_string =
+                    serde_json::to_string(v).map_err(|_err| GeozeroError::Property(key.clone()))?;
+                processor.property(i, key, &ColumnValue::Json(&json_string))?
+            }
+            // Null
             _ => processor.property(i, key, &ColumnValue::String(&value.to_string()))?,
         };
     }
