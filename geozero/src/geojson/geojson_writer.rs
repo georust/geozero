@@ -445,7 +445,7 @@ mod test {
     }
 
     #[test]
-    fn nested_property() {
+    fn nested_object_property() {
         let geojson = r#"{
   "type": "FeatureCollection",
   "features": [
@@ -458,6 +458,31 @@ mod test {
           "a": 1,
           "b": true
         }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-80, 40]
+      }
+    }
+  ]
+}
+        "#;
+        let mut out: Vec<u8> = Vec::new();
+        assert!(read_geojson(geojson.as_bytes(), &mut GeoJsonWriter::new(&mut out)).is_ok());
+        assert_json_eq(&out, geojson);
+    }
+
+    #[test]
+    fn nested_array_property() {
+        let geojson = r#"{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "NZL",
+        "name": "New Zealand",
+        "nested": [1, 2, 3, 4]
       },
       "geometry": {
         "type": "Point",
