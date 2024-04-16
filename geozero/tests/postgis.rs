@@ -239,7 +239,7 @@ mod postgis_sqlx {
         let pool = pg::get_pool().await;
 
         let geom: geo_types::Geometry<f64> = geo::Point::new(10.0, 20.0).into();
-        let geoms = vec![wkb::Encode(geom.clone()), wkb::Encode(geom.clone())];
+        let geoms = [wkb::Encode(geom.clone()), wkb::Encode(geom.clone())];
         let inserted = sqlx::query(
             "INSERT INTO point2d (datetimefield, geom)
                SELECT now(), ST_SetSRID(g,4326) FROM UNNEST($1::geometry[]) as g",
