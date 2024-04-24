@@ -45,7 +45,7 @@ impl<W: Write> WktWriter<W> {
         if self.first_header && self.dialect == WktDialect::Ewkt {
             self.first_header = false;
             match srid {
-                None | Some(0) => (),
+                None => (),
                 Some(srid) => self.out.write_all(format!("SRID={srid};").as_bytes())?,
             }
         }
