@@ -208,6 +208,12 @@ fn write_str_prop<W: Write>(mut out: W, colname: &str, v: &str) -> Result<()> {
     Ok(())
 }
 
+fn write_json_prop<W: Write>(mut out: W, colname: &str, v: &str) -> Result<()> {
+    let colname = colname.replace('\"', "\\\"");
+    out.write_all(format!(r#""{colname}": {v}"#).as_bytes())?;
+    Ok(())
+}
+
 impl<W: Write> PropertyProcessor for GeoJsonWriter<W> {
     fn property(&mut self, i: usize, colname: &str, colval: &ColumnValue) -> Result<bool> {
         if i > 0 {
@@ -228,7 +234,7 @@ impl<W: Write> PropertyProcessor for GeoJsonWriter<W> {
             ColumnValue::String(v) | ColumnValue::DateTime(v) => {
                 write_str_prop(&mut self.out, colname, v)?;
             }
-            ColumnValue::Json(_v) => (),
+            ColumnValue::Json(v) => write_json_prop(&mut self.out, colname, v)?,
             ColumnValue::Binary(_v) => (),
         };
         Ok(false)
@@ -436,6 +442,59 @@ mod test {
             &geom.to_json().unwrap(),
             r#"{"type": "Point", "coordinates": []}"#
         )
+    }
+
+    #[test]
+    fn nested_object_property() {
+        let geojson = r#"{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "NZL",
+        "name": "New Zealand",
+        "nested": {
+          "a": 1,
+          "b": true
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-80, 40]
+      }
+    }
+  ]
+}
+        "#;
+        let mut out: Vec<u8> = Vec::new();
+        assert!(read_geojson(geojson.as_bytes(), &mut GeoJsonWriter::new(&mut out)).is_ok());
+        assert_json_eq(&out, geojson);
+    }
+
+    #[test]
+    fn nested_array_property() {
+        let geojson = r#"{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "NZL",
+        "name": "New Zealand",
+        "nested": [1, 2, 3, 4]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-80, 40]
+      }
+    }
+  ]
+}
+        "#;
+        let mut out: Vec<u8> = Vec::new();
+        assert!(read_geojson(geojson.as_bytes(), &mut GeoJsonWriter::new(&mut out)).is_ok());
+        assert_json_eq(&out, geojson);
     }
 
     fn assert_json_eq(a: &[u8], b: &str) {

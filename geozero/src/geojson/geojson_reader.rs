@@ -1,4 +1,4 @@
-use crate::error::Result;
+use crate::error::{GeozeroError, Result};
 use crate::{
     ColumnValue, FeatureProcessor, GeomProcessor, GeozeroDatasource, GeozeroGeometry,
     PropertyProcessor,
@@ -207,20 +207,30 @@ pub(crate) fn process_properties<P: PropertyProcessor>(
         // Could we provide a stable property index?
         match value {
             JsonValue::String(v) => processor.property(i, key, &ColumnValue::String(v))?,
-            JsonValue::Number(v) if v.is_f64() => {
-                processor.property(i, key, &ColumnValue::Double(v.as_f64().unwrap()))?
-            }
-            JsonValue::Number(v) if v.is_i64() => {
-                processor.property(i, key, &ColumnValue::Long(v.as_i64().unwrap()))?
-            }
-            JsonValue::Number(v) if v.is_u64() => {
-                processor.property(i, key, &ColumnValue::ULong(v.as_u64().unwrap()))?
+            JsonValue::Number(v) => {
+                if v.is_f64() {
+                    processor.property(i, key, &ColumnValue::Double(v.as_f64().unwrap()))?
+                } else if v.is_i64() {
+                    processor.property(i, key, &ColumnValue::Long(v.as_i64().unwrap()))?
+                } else if v.is_u64() {
+                    processor.property(i, key, &ColumnValue::ULong(v.as_u64().unwrap()))?
+                } else {
+                    unreachable!()
+                }
             }
             JsonValue::Bool(v) => processor.property(i, key, &ColumnValue::Bool(*v))?,
+            JsonValue::Array(v) => {
+                let json_string =
+                    serde_json::to_string(v).map_err(|_err| GeozeroError::Property(key.clone()))?;
+                processor.property(i, key, &ColumnValue::Json(&json_string))?
+            }
+            JsonValue::Object(v) => {
+                let json_string =
+                    serde_json::to_string(v).map_err(|_err| GeozeroError::Property(key.clone()))?;
+                processor.property(i, key, &ColumnValue::Json(&json_string))?
+            }
             // For null values omit the property
             JsonValue::Null => false,
-            // Array(Vec<Value>), Object(Map<String, Value>)
-            _ => processor.property(i, key, &ColumnValue::String(&value.to_string()))?,
         };
     }
     Ok(())
