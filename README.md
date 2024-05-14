@@ -21,18 +21,18 @@ Supported dimensions: X, Y, Z, M, T
 
 ## Available implementations
 
-* GeoJSON Reader + Writer
-* [GEOS](https://github.com/georust/geos) Reader + Writer
-* [GDAL](https://github.com/georust/gdal) geometry Reader + Writer
-* WKB Reader + Writer supporting
-  - PostGIS geometries for [rust-postgres](https://github.com/sfackler/rust-postgres), [SQLx](https://github.com/launchbadge/sqlx) and [Diesel](https://github.com/diesel-rs/diesel).
-  - GeoPackage geometries for [SQLx](https://github.com/launchbadge/sqlx)
-* [WKT](https://github.com/georust/wkt) Reader + Writer
-* CSV Reader + Writer
-* SVG Writer
-* [geo-types](https://github.com/georust/geo) Reader + Writer
-* MVT (Mapbox Vector Tiles) Reader + Writer
-* GPX Reader
+| Format  | Read | Write | Notes |
+|---------|------|-------|-------|
+| GeoJSON | ✅ | ✅ | |
+| [GEOS](https://github.com/georust/geos) | ✅ | ✅ | |
+| [GDAL](https://github.com/georust/gdal) | ✅ | ✅ | |
+| WKB | ✅ | ✅ | Supports PostGIS geometries for [rust-postgres](https://github.com/sfackler/rust-postgres), [SQLx](https://github.com/launchbadge/sqlx) and [Diesel](https://github.com/diesel-rs/diesel). And also supports GeoPackage geometries for [SQLx](https://github.com/launchbadge/sqlx). |
+| [WKT](https://github.com/georust/wkt) | ✅ | ✅ | |
+| CSV | ✅ | ✅ | |
+| SVG | ❌ | ✅ | |
+| [geo-types](https://github.com/georust/geo) | ✅ | ✅ | |
+| MVT (Mapbox Vector Tiles) | ✅ | ✅ | |
+| GPX | ✅ | ❌ | |
 
 [geozero-shp](https://github.com/georust/geozero/tree/main/geozero-shp) [![crates.io version](https://img.shields.io/crates/v/geozero-shp.svg)](https://crates.io/crates/geozero-shp)
 [![docs.rs docs](https://docs.rs/geozero-shp/badge.svg)](https://docs.rs/geozero-shp)
