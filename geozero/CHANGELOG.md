@@ -1,19 +1,3 @@
-## 0.13.0 - (2024-05-XX)
-
-* Fixed converting 2D geos::Geometry to ewkt
-  * <https://github.com/georust/geozero/pull/203>
-* Implement `srid` for GeosWriter
-  * <https://github.com/georust/geozero/pull/201>
-* Update docs with requisite `feature` requirements
-  * <https://github.com/georust/geozero/pull/205>
-* Omit GeoJSON properties with null values
-  * <https://github.com/georust/geozero/pull/206>
-* FIX: `with-gdal` feature missing `gdal-sys` requirement (broken in v0.12.0)
-  *  <https://github.com/georust/geozero/pull/212>
-* BREAKING: GeoJSONReader decodes `Array` and `Objects` as type `JSON`, not `String`
-            GeoJSONWriter writes `JSON` props, rather than ignoring them.
-  * <https://github.com/georust/geozero/pull/208>
-
 ## 0.12.0 - (2024-02-13)
 
 * Remove Arrow mod, point to the updated and expanded geozero integration in the `geoarrow` crate (#186)
