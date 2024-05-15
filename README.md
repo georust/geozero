@@ -21,34 +21,22 @@ Supported dimensions: X, Y, Z, M, T
 
 ## Available implementations
 
-* GeoJSON Reader + Writer
-* [GEOS](https://github.com/georust/geos) Reader + Writer
-* [GDAL](https://github.com/georust/gdal) geometry Reader + Writer
-* WKB Reader + Writer supporting
-  - PostGIS geometries for [rust-postgres](https://github.com/sfackler/rust-postgres), [SQLx](https://github.com/launchbadge/sqlx) and [Diesel](https://github.com/diesel-rs/diesel).
-  - GeoPackage geometries for [SQLx](https://github.com/launchbadge/sqlx)
-* [WKT](https://github.com/georust/wkt) Reader + Writer
-* CSV Reader + Writer
-* SVG Writer
-* [geo-types](https://github.com/georust/geo) Reader + Writer
-* MVT (Mapbox Vector Tiles) Reader + Writer
-* GPX Reader
-
-[geozero-shp](https://github.com/georust/geozero/tree/main/geozero-shp) [![crates.io version](https://img.shields.io/crates/v/geozero-shp.svg)](https://crates.io/crates/geozero-shp)
-[![docs.rs docs](https://docs.rs/geozero-shp/badge.svg)](https://docs.rs/geozero-shp)
-
-* Shapefile Reader
-
-[flatgeobuf](https://github.com/flatgeobuf/flatgeobuf) [![crates.io version](https://img.shields.io/crates/v/flatgeobuf.svg)](https://crates.io/crates/flatgeobuf)
-[![docs.rs docs](https://docs.rs/flatgeobuf/badge.svg)](https://docs.rs/flatgeobuf)
-
-* FlatGeobuf Reader
-
-[geoarrow](https://github.com/geoarrow/geoarrow-rs) [![crates.io version](https://img.shields.io/crates/v/geoarrow.svg)](https://crates.io/crates/geoarrow)
-[![docs.rs docs](https://docs.rs/geoarrow/badge.svg)](https://docs.rs/geoarrow)
-
-* GeoArrow Reader and Writer
-* GeoParquet Reader and Writer
+| Format  | Read | Write | Notes |
+|---------|------|-------|-------|
+| GeoJSON | ✅ | ✅ | |
+| [GEOS](https://github.com/georust/geos) | ✅ | ✅ | |
+| [GDAL](https://github.com/georust/gdal) | ✅ | ✅ | |
+| WKB | ✅ | ✅ | Supports PostGIS geometries for [rust-postgres](https://github.com/sfackler/rust-postgres), [SQLx](https://github.com/launchbadge/sqlx) and [Diesel](https://github.com/diesel-rs/diesel). And also supports GeoPackage geometries for [SQLx](https://github.com/launchbadge/sqlx). |
+| [WKT](https://github.com/georust/wkt) | ✅ | ✅ | |
+| CSV | ✅ | ✅ | |
+| SVG | ❌ | ✅ | |
+| [geo-types](https://github.com/georust/geo) | ✅ | ✅ | |
+| MVT (Mapbox Vector Tiles) | ✅ | ✅ | |
+| GPX | ✅ | ❌ | |
+| Shapefile | ✅ | ❌ | Available via the [geozero-shp](https://crates.io/crates/geozero-shp) crate. |
+| FlatGeobuf | ✅ | ❌ | Available via the [flatgeobuf](https://crates.io/crates/flatgeobuf) crate. |
+| GeoArrow | ✅ | ✅ | Available via the [geoarrow](https://crates.io/crates/geoarrow) crate. |
+| GeoParquet | ✅ | ✅ | Available via the [geoarrow](https://crates.io/crates/geoarrow) crate. |
 
 ## Applications
 
