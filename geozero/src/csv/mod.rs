@@ -1,7 +1,9 @@
 //! CSV conversions.
+mod csv_error;
 pub(crate) mod csv_reader;
 pub(crate) mod csv_writer;
 
+pub use csv_error::CsvError;
 pub use csv_reader::*;
 pub use csv_writer::*;
 
