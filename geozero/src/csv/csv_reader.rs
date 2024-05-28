@@ -1,5 +1,5 @@
-use crate::{ColumnValue, FeatureProcessor, GeomProcessor, GeozeroDatasource, GeozeroGeometry};
 use crate::error::{GeozeroError, Result};
+use crate::{ColumnValue, FeatureProcessor, GeomProcessor, GeozeroDatasource, GeozeroGeometry};
 
 use crate::csv::csv_error::CsvError;
 
