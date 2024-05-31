@@ -119,7 +119,7 @@ pub fn process_csv_geom(
         let record = record?;
         let geometry_field = record.get(geometry_idx).ok_or(CsvError::ColumnNotFound)?;
         let wkt =
-            wkt::Wkt::from_str(geometry_field).map_err(|e| CsvError::WktError(e.to_string()))?;
+            wkt::Wkt::from_str(geometry_field).map_err(|e| CsvError::WktError(e))?;
 
         // We don't know how many lines are in the file, so we dont' know the size of the geometry collection,
         // but at this point we *do* know that it's non-zero. Currently there aren't any other significant

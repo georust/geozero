@@ -10,5 +10,5 @@ pub enum CsvError {
     #[error("error processing dataset: `{0}`")]
     Processing(String),
     #[error("error parsing to WKT `{0}`")]
-    WktError(String),
+    WktError(&str),
 }
