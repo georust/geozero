@@ -6,5 +6,5 @@ pub enum CsvError {
     #[error("column not found or null")]
     ColumnNotFound,
     #[error("error parsing to WKT `{0}`")]
-    WktError(String),
+    WktError(&'static str),
 }
