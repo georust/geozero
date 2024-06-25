@@ -37,7 +37,7 @@ gdal-sys = "0.9"
 geo = "0.26.0"
 geo-types = { version = "0.7.11", default-features = false }
 geojson = { version = "0.24.1", default-features = false }
-geos = "8.3"
+geos = "9.0"
 gpx = { version = "0.9", default-features = false }
 hex = "0.4"
 kdbush = "0.2"
