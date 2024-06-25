@@ -13,11 +13,11 @@ pub(crate) mod conversion {
     /// Convert to GEOS geometry.
     pub trait ToGeos {
         /// Convert to GEOS geometry.
-        fn to_geos(&self) -> Result<geos::Geometry<'_>>;
+        fn to_geos(&self) -> Result<geos::Geometry>;
     }
 
     impl<T: GeozeroGeometry> ToGeos for T {
-        fn to_geos(&self) -> Result<geos::Geometry<'_>> {
+        fn to_geos(&self) -> Result<geos::Geometry> {
             let mut geos = GeosWriter::new();
             self.process_geom(&mut geos)?;
             Ok(geos.geom)
@@ -32,7 +32,7 @@ mod wkb {
     use crate::wkb::{FromWkb, WkbDialect};
     use std::io::Read;
 
-    impl FromWkb for geos::Geometry<'_> {
+    impl FromWkb for geos::Geometry {
         fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> Result<Self> {
             let mut geos = GeosWriter::new();
             crate::wkb::process_wkb_type_geom(rdr, &mut geos, dialect)?;
