@@ -37,6 +37,8 @@ pub enum GeozeroError {
     #[error("processing geometry `{0}`")]
     Geometry(String),
     // General
+    #[error("CSV error `{0}`")]
+    CsvError(#[from] crate::csv::CsvError),
     #[error("I/O error `{0}`")]
     IoError(#[from] std::io::Error),
     #[cfg(feature = "with-mvt")]
