@@ -450,3 +450,26 @@ mod test {
         }
     }
 }
+
+#[cfg(all(test, feature = "with-geojson"))]
+mod test_3d {
+    use crate::ToJson;
+
+    use super::*;
+
+    #[test]
+    #[ignore = "3d WKT not supported"]
+    fn point_3d() {
+        let wkt = Wkt("POINT Z(1.0 2.0 3.0)");
+        let actual = wkt.to_json().unwrap();
+        dbg!(actual);
+    }
+
+    #[test]
+    #[ignore = "M-value WKT not supported"]
+    fn point_m() {
+        let wkt = Wkt("POINT M(1.0 2.0 3.0)");
+        let actual = wkt.to_json().unwrap();
+        dbg!(actual);
+    }
+}
