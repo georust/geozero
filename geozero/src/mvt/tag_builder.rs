@@ -1,6 +1,5 @@
 use crate::mvt::tile_value::TileValue;
-use dup_indexer::{DupIndexer, PtrRead};
-use std::hash::Hash;
+use dup_indexer::{DupIndexer, DupIndexerRefs, PtrRead};
 
 /// A builder for key-value pairs, where the key is a `String` or `&str`, and the value is a
 /// [`TileValue`] enum which can hold any of the MVT value types.
@@ -17,8 +16,8 @@ use std::hash::Hash;
 /// let (keys, values) = builder.into_tags();
 /// # }
 #[derive(Debug)]
-pub struct TagsBuilder<K> {
-    keys: DupIndexer<K>,
+pub struct TagsBuilder {
+    keys: DupIndexerRefs<String>,
     values: DupIndexer<TileValue>,
 }
 
@@ -26,28 +25,35 @@ pub struct TagsBuilder<K> {
 /// both of which are safe for `PtrRead`.
 unsafe impl PtrRead for TileValue {}
 
-impl<K: Default + Eq + Hash + PtrRead> Default for TagsBuilder<K> {
+impl Default for TagsBuilder {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<K: Eq + Hash + PtrRead> TagsBuilder<K> {
+impl TagsBuilder {
     pub fn new() -> Self {
         Self {
-            keys: DupIndexer::new(),
+            keys: DupIndexerRefs::new(),
             values: DupIndexer::new(),
         }
     }
 
-    pub fn insert(&mut self, key: K, value: TileValue) -> (u32, u32) {
+    pub fn insert(&mut self, key: String, value: TileValue) -> (u32, u32) {
         (
-            self.keys.insert(key) as u32,
+            self.keys.insert_owned(key) as u32,
             self.values.insert(value) as u32,
         )
     }
 
-    pub fn into_tags(self) -> (Vec<K>, Vec<TileValue>) {
+    pub fn insert_ref(&mut self, key: &str, value: TileValue) -> (u32, u32) {
+        (
+            self.keys.insert_ref(key) as u32,
+            self.values.insert(value) as u32,
+        )
+    }
+
+    pub fn into_tags(self) -> (Vec<String>, Vec<TileValue>) {
         (self.keys.into_vec(), self.values.into_vec())
     }
 }
