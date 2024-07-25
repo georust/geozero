@@ -2,6 +2,7 @@ use crate::error::{GeozeroError, Result};
 use crate::{FeatureProcessor, GeomProcessor, GeozeroDatasource, GeozeroGeometry};
 
 use std::io::Read;
+use std::str::FromStr;
 use wkt::types::{Coord, LineString, Polygon};
 
 /// A wrapper around a WKT String or String slice.
@@ -10,7 +11,10 @@ pub struct Wkt<B: AsRef<[u8]>>(pub B);
 
 impl<B: AsRef<[u8]>> GeozeroGeometry for Wkt<B> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
-        read_wkt(&mut self.0.as_ref(), processor)
+        let wkt_str = std::str::from_utf8(self.0.as_ref())
+            .map_err(|e| GeozeroError::Geometry(e.to_string()))?;
+        let wkt = wkt::Wkt::from_str(wkt_str).map_err(|e| GeozeroError::Geometry(e.to_string()))?;
+        process_wkt_geom(&wkt.item, processor)
     }
 }
 
@@ -23,7 +27,9 @@ pub struct WktString(pub String);
 impl GeozeroGeometry for WktString {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
         #[allow(deprecated)]
-        read_wkt(&mut self.0.as_bytes(), processor)
+        let wkt = wkt::Wkt::from_str(self.0.as_str())
+            .map_err(|e| GeozeroError::Geometry(e.to_string()))?;
+        process_wkt_geom(&wkt.item, processor)
     }
 }
 
@@ -35,7 +41,8 @@ pub struct WktStr<'a>(pub &'a str);
 impl GeozeroGeometry for WktStr<'_> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
         #[allow(deprecated)]
-        read_wkt(&mut self.0.as_bytes(), processor)
+        let wkt = wkt::Wkt::from_str(self.0).map_err(|e| GeozeroError::Geometry(e.to_string()))?;
+        process_wkt_geom(&wkt.item, processor)
     }
 }
 
@@ -43,7 +50,8 @@ impl GeozeroGeometry for WktStr<'_> {
 impl GeozeroDatasource for WktStr<'_> {
     fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> Result<()> {
         #[allow(deprecated)]
-        read_wkt(&mut self.0.as_bytes(), processor)
+        let wkt = wkt::Wkt::from_str(self.0).map_err(|e| GeozeroError::Geometry(e.to_string()))?;
+        process_wkt_geom(&wkt.item, processor)
     }
 }
 
@@ -71,7 +79,6 @@ impl<R: Read> GeozeroDatasource for WktReader<R> {
 
 /// Read and process WKT geometry.
 pub fn read_wkt<R: Read, P: GeomProcessor>(reader: &mut R, processor: &mut P) -> Result<()> {
-    use std::str::FromStr;
     // PERF: it would be good to avoid copying data into this string when we already
     // have a string as input. Maybe the wkt crate needs a from_reader implementation.
     let mut wkt_string = String::new();
