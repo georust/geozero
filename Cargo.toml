@@ -7,7 +7,10 @@ resolver = "2"
 [workspace.package]
 # This version should match the version in [workspace.dependencies] below
 version = "0.13.0"
-authors = ["Pirmin Kalberer <pka@sourcepole.ch>", "Yuri Astrakhan <YuriAstrakhan@gmail.com>"]
+authors = [
+    "Pirmin Kalberer <pka@sourcepole.ch>",
+    "Yuri Astrakhan <YuriAstrakhan@gmail.com>",
+]
 edition = "2021"
 homepage = "https://github.com/georust/geozero"
 repository = "https://github.com/georust/geozero"
@@ -27,7 +30,9 @@ clap = { version = "4.3", features = ["derive"] }
 criterion = "0.5.1"
 csv = "1.2.2"
 dbase = "0.4"
-diesel = { version = "2.1.0", default-features = false, features = ["postgres"] }
+diesel = { version = "2.1.0", default-features = false, features = [
+    "postgres",
+] }
 dup-indexer = "0.3"
 env_logger = "0.10.0"
 flatgeobuf = "4.0.0"
@@ -53,7 +58,7 @@ prost-build = "0.11.9"
 scroll = "0.11"
 seek_bufread = "1.2"
 serde_json = "1.0.104"
-sqlx = { version = "0.7", default-features = false }
+sqlx = { version = "0.8", default-features = false }
 thiserror = "1.0"
 tokio = { version = "1.30.0", default-features = false }
 wkt = "0.10.3"
