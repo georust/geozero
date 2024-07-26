@@ -144,7 +144,8 @@ macro_rules! impl_sqlx_postgis_encode {
             fn encode_by_ref(
                 &self,
                 buf: &mut sqlx::postgres::PgArgumentBuffer,
-            ) -> sqlx::encode::IsNull {
+            ) -> std::result::Result<IsNull, Box<(dyn std::error::Error + Send + Sync + 'static)>>
+            {
                 use $crate::GeozeroGeometry;
                 let mut wkb_out: Vec<u8> = Vec::new();
                 let mut writer = $crate::wkb::WkbWriter::with_opts(
@@ -158,7 +159,7 @@ macro_rules! impl_sqlx_postgis_encode {
                     .expect("Failed to encode Geometry");
                 buf.extend(&wkb_out); // Is there a way to write directly into PgArgumentBuffer?
 
-                sqlx::encode::IsNull::No
+                std::result::Result::Ok(sqlx::encode::IsNull::No)
             }
         }
     };
