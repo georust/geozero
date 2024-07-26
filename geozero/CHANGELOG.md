@@ -1,3 +1,8 @@
+## Unreleased
+
+* Added `WrappedProcessor`
+  * <https://github.com/georust/geozero/pull/222>
+
 ## 0.13.0 - (2024-05-17)
 
 * Fixed converting 2D geos::Geometry to ewkt
