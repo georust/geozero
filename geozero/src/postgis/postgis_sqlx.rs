@@ -68,7 +68,7 @@ impl<T: GeozeroGeometry + Sized> PgHasArrayType for wkb::Encode<T> {
 }
 
 impl<T: GeozeroGeometry + Sized> Encode<'_, Postgres> for wkb::Encode<T> {
-    fn encode_by_ref(&self, buf: &mut PgArgumentBuffer) -> IsNull {
+    fn encode_by_ref(&self, buf: &mut PgArgumentBuffer) -> Result<IsNull, BoxDynError> {
         let mut wkb_out: Vec<u8> = Vec::new();
         let mut writer = wkb::WkbWriter::with_opts(
             &mut wkb_out,
@@ -82,7 +82,7 @@ impl<T: GeozeroGeometry + Sized> Encode<'_, Postgres> for wkb::Encode<T> {
             .expect("Failed to encode Geometry");
         buf.extend(&wkb_out); // Is there a way to write directly into PgArgumentBuffer?
 
-        IsNull::No
+        Ok(IsNull::No)
     }
 }
 
