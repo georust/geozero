@@ -144,8 +144,10 @@ macro_rules! impl_sqlx_postgis_encode {
             fn encode_by_ref(
                 &self,
                 buf: &mut sqlx::postgres::PgArgumentBuffer,
-            ) -> std::result::Result<IsNull, Box<(dyn std::error::Error + Send + Sync + 'static)>>
-            {
+            ) -> std::result::Result<
+                sqlx::encode::IsNull,
+                Box<(dyn std::error::Error + Send + Sync + 'static)>,
+            > {
                 use $crate::GeozeroGeometry;
                 let mut wkb_out: Vec<u8> = Vec::new();
                 let mut writer = $crate::wkb::WkbWriter::with_opts(
