@@ -14,7 +14,7 @@ impl<B: AsRef<[u8]>> GeozeroGeometry for Wkt<B> {
         let wkt_str = std::str::from_utf8(self.0.as_ref())
             .map_err(|e| GeozeroError::Geometry(e.to_string()))?;
         let wkt = wkt::Wkt::from_str(wkt_str).map_err(|e| GeozeroError::Geometry(e.to_string()))?;
-        process_wkt_geom(&wkt.item, processor)
+        process_wkt_geom(&wkt, processor)
     }
 }
 
@@ -29,7 +29,7 @@ impl GeozeroGeometry for WktString {
         #[allow(deprecated)]
         let wkt = wkt::Wkt::from_str(self.0.as_str())
             .map_err(|e| GeozeroError::Geometry(e.to_string()))?;
-        process_wkt_geom(&wkt.item, processor)
+        process_wkt_geom(&wkt, processor)
     }
 }
 
@@ -42,7 +42,7 @@ impl GeozeroGeometry for WktStr<'_> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
         #[allow(deprecated)]
         let wkt = wkt::Wkt::from_str(self.0).map_err(|e| GeozeroError::Geometry(e.to_string()))?;
-        process_wkt_geom(&wkt.item, processor)
+        process_wkt_geom(&wkt, processor)
     }
 }
 
@@ -51,7 +51,7 @@ impl GeozeroDatasource for WktStr<'_> {
     fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> Result<()> {
         #[allow(deprecated)]
         let wkt = wkt::Wkt::from_str(self.0).map_err(|e| GeozeroError::Geometry(e.to_string()))?;
-        process_wkt_geom(&wkt.item, processor)
+        process_wkt_geom(&wkt, processor)
     }
 }
 
