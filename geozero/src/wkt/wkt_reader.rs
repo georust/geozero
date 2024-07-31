@@ -4,7 +4,6 @@ use crate::{FeatureProcessor, GeomProcessor, GeozeroDatasource, GeozeroGeometry}
 use std::io::Read;
 use std::str::FromStr;
 use wkt::types::{Coord, LineString, Polygon};
-use wkt::Geometry;
 
 /// A wrapper around a WKT String or String slice.
 #[derive(Debug)]
@@ -15,7 +14,7 @@ impl<B: AsRef<[u8]>> GeozeroGeometry for Wkt<B> {
         let wkt_str = std::str::from_utf8(self.0.as_ref())
             .map_err(|e| GeozeroError::Geometry(e.to_string()))?;
         let wkt = wkt::Wkt::from_str(wkt_str).map_err(|e| GeozeroError::Geometry(e.to_string()))?;
-        process_wkt_geom(&wkt.item, processor)
+        process_wkt_geom(&wkt, processor)
     }
 }
 
@@ -30,7 +29,7 @@ impl GeozeroGeometry for WktString {
         #[allow(deprecated)]
         let wkt = wkt::Wkt::from_str(self.0.as_str())
             .map_err(|e| GeozeroError::Geometry(e.to_string()))?;
-        process_wkt_geom(&wkt.item, processor)
+        process_wkt_geom(&wkt, processor)
     }
 }
 
@@ -43,7 +42,7 @@ impl GeozeroGeometry for WktStr<'_> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
         #[allow(deprecated)]
         let wkt = wkt::Wkt::from_str(self.0).map_err(|e| GeozeroError::Geometry(e.to_string()))?;
-        process_wkt_geom(&wkt.item, processor)
+        process_wkt_geom(&wkt, processor)
     }
 }
 
@@ -52,7 +51,7 @@ impl GeozeroDatasource for WktStr<'_> {
     fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> Result<()> {
         #[allow(deprecated)]
         let wkt = wkt::Wkt::from_str(self.0).map_err(|e| GeozeroError::Geometry(e.to_string()))?;
-        process_wkt_geom(&wkt.item, processor)
+        process_wkt_geom(&wkt, processor)
     }
 }
 
@@ -85,22 +84,22 @@ pub fn read_wkt<R: Read, P: GeomProcessor>(reader: &mut R, processor: &mut P) ->
     let mut wkt_string = String::new();
     reader.read_to_string(&mut wkt_string)?;
     let wkt = wkt::Wkt::from_str(&wkt_string).map_err(|e| GeozeroError::Geometry(e.to_string()))?;
-    process_wkt_geom(&wkt.item, processor)
+    process_wkt_geom(&wkt, processor)
 }
 
 /// Process WKT geometry
-fn process_wkt_geom<P: GeomProcessor>(geometry: &Geometry<f64>, processor: &mut P) -> Result<()> {
+fn process_wkt_geom<P: GeomProcessor>(geometry: &wkt::Wkt<f64>, processor: &mut P) -> Result<()> {
     process_wkt_geom_n(geometry, 0, processor)
 }
 
 pub(crate) fn process_wkt_geom_n<P: GeomProcessor>(
-    geometry: &Geometry<f64>,
+    geometry: &wkt::Wkt<f64>,
     idx: usize,
     processor: &mut P,
 ) -> Result<()> {
     let multi_dim = processor.multi_dim();
     match geometry {
-        Geometry::Point(g) => {
+        wkt::Wkt::Point(g) => {
             if let Some(ref coord) = g.0 {
                 processor.point_begin(idx)?;
                 process_coord(coord, multi_dim, 0, processor)?;
@@ -109,7 +108,7 @@ pub(crate) fn process_wkt_geom_n<P: GeomProcessor>(
                 processor.empty_point(idx)
             }
         }
-        Geometry::MultiPoint(g) => {
+        wkt::Wkt::MultiPoint(g) => {
             processor.multipoint_begin(g.0.len(), idx)?;
             let multi_dim1 = processor.multi_dim();
             for (idxc, point) in g.0.iter().enumerate() {
@@ -123,23 +122,23 @@ pub(crate) fn process_wkt_geom_n<P: GeomProcessor>(
             }
             processor.multipoint_end(idx)
         }
-        Geometry::LineString(g) => process_linestring(g, true, idx, processor),
-        Geometry::MultiLineString(g) => {
+        wkt::Wkt::LineString(g) => process_linestring(g, true, idx, processor),
+        wkt::Wkt::MultiLineString(g) => {
             processor.multilinestring_begin(g.0.len(), idx)?;
             for (idxc, linestring) in g.0.iter().enumerate() {
                 process_linestring(linestring, false, idxc, processor)?;
             }
             processor.multilinestring_end(idx)
         }
-        Geometry::Polygon(g) => process_polygon(g, true, idx, processor),
-        Geometry::MultiPolygon(g) => {
+        wkt::Wkt::Polygon(g) => process_polygon(g, true, idx, processor),
+        wkt::Wkt::MultiPolygon(g) => {
             processor.multipolygon_begin(g.0.len(), idx)?;
             for (idx2, polygon) in g.0.iter().enumerate() {
                 process_polygon(polygon, false, idx2, processor)?;
             }
             processor.multipolygon_end(idx)
         }
-        Geometry::GeometryCollection(g) => {
+        wkt::Wkt::GeometryCollection(g) => {
             processor.geometrycollection_begin(g.0.len(), idx)?;
             for (idx2, geometry) in g.0.iter().enumerate() {
                 process_wkt_geom_n(geometry, idx2, processor)?;
