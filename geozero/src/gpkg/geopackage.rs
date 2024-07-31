@@ -51,7 +51,10 @@ impl<T: GeozeroGeometry + Sized> sqlx::Type<Sqlite> for wkb::Encode<T> {
 }
 
 impl<'q, T: GeozeroGeometry + Sized> Encode<'q, Sqlite> for wkb::Encode<T> {
-    fn encode_by_ref(&self, args: &mut Vec<SqliteArgumentValue<'q>>) -> IsNull {
+    fn encode_by_ref(
+        &self,
+        args: &mut Vec<SqliteArgumentValue<'q>>,
+    ) -> Result<IsNull, BoxDynError> {
         let mut wkb_out: Vec<u8> = Vec::new();
         let mut writer = wkb::WkbWriter::with_opts(
             &mut wkb_out,
@@ -64,7 +67,7 @@ impl<'q, T: GeozeroGeometry + Sized> Encode<'q, Sqlite> for wkb::Encode<T> {
             .process_geom(&mut writer)
             .expect("Failed to encode Geometry");
         args.push(SqliteArgumentValue::Blob(Cow::Owned(wkb_out)));
-        IsNull::No
+        Ok(IsNull::No)
     }
 }
 
@@ -120,7 +123,8 @@ macro_rules! impl_sqlx_gpkg_encode {
             fn encode_by_ref(
                 &self,
                 args: &mut Vec<sqlx::sqlite::SqliteArgumentValue<'q>>,
-            ) -> sqlx::encode::IsNull {
+            ) -> std::result::Result<sqlx::encode::IsNull, Box<dyn std::error::Error + Send + Sync>>
+            {
                 use $crate::GeozeroGeometry;
                 let mut wkb_out: Vec<u8> = Vec::new();
                 let mut writer = $crate::wkb::WkbWriter::with_opts(
@@ -135,7 +139,7 @@ macro_rules! impl_sqlx_gpkg_encode {
                 args.push(sqlx::sqlite::SqliteArgumentValue::Blob(
                     std::borrow::Cow::Owned(wkb_out),
                 ));
-                sqlx::encode::IsNull::No
+                std::result::Result::Ok(sqlx::encode::IsNull::No)
             }
         }
     };
