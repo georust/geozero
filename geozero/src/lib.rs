@@ -54,12 +54,14 @@ mod feature_processor;
 mod geometry_processor;
 mod multiplex;
 mod property_processor;
+mod wrap;
 
 pub use api::*;
 pub use feature_processor::*;
 pub use geometry_processor::*;
 pub use multiplex::*;
 pub use property_processor::*;
+pub use wrap::*;
 
 #[cfg(feature = "with-csv")]
 pub mod csv;
