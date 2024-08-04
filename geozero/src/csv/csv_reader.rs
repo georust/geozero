@@ -1,6 +1,8 @@
 use crate::error::{GeozeroError, Result};
 use crate::{ColumnValue, FeatureProcessor, GeomProcessor, GeozeroDatasource, GeozeroGeometry};
 
+use crate::csv::csv_error::CsvError;
+
 use std::io::Read;
 use std::str::FromStr;
 
@@ -109,17 +111,14 @@ pub fn process_csv_geom(
     let geometry_idx = headers
         .iter()
         .position(|f| f == geometry_column)
-        .ok_or(GeozeroError::ColumnNotFound)?;
+        .ok_or(CsvError::ColumnNotFound)?;
 
     let mut collection_started = false;
 
     for (record_idx, record) in reader.into_records().enumerate() {
         let record = record?;
-        let geometry_field = record
-            .get(geometry_idx)
-            .ok_or(GeozeroError::ColumnNotFound)?;
-        let wkt = wkt::Wkt::from_str(geometry_field)
-            .map_err(|e| GeozeroError::Geometry(e.to_string()))?;
+        let geometry_field = record.get(geometry_idx).ok_or(CsvError::ColumnNotFound)?;
+        let wkt = wkt::Wkt::from_str(geometry_field).map_err(CsvError::WktError)?;
 
         // We don't know how many lines are in the file, so we dont' know the size of the geometry collection,
         // but at this point we *do* know that it's non-zero. Currently there aren't any other significant
@@ -161,7 +160,7 @@ pub fn process_csv_features(
     let geometry_idx = headers
         .iter()
         .position(|f| f == geometry_column)
-        .ok_or(GeozeroError::ColumnNotFound)?;
+        .ok_or(CsvError::ColumnNotFound)?;
 
     for (feature_idx, record) in reader.into_records().enumerate() {
         let record = record?;
@@ -184,9 +183,7 @@ pub fn process_csv_features(
 
         processor.properties_end()?;
 
-        let geometry_field = record
-            .get(geometry_idx)
-            .ok_or(GeozeroError::ColumnNotFound)?;
+        let geometry_field = record.get(geometry_idx).ok_or(CsvError::ColumnNotFound)?;
 
         // Do all formats allow empty geometries?
         if !geometry_field.is_empty() {
