@@ -1,4 +1,5 @@
 use crate::error::{GeozeroError, Result};
+use crate::WrappedXYProcessor;
 
 /// Dimensions requested for processing
 #[derive(Default, Clone, Copy)]
@@ -379,6 +380,39 @@ pub trait GeomProcessor {
     /// End of Tin processing
     fn tin_end(&mut self, idx: usize) -> Result<()> {
         Ok(())
+    }
+
+    /// Combinator which inserts a call to `transform_xy` during processing, before [GeomProcessor::xy]
+    /// or [GeomProcessor::coordinate] is called.
+    ///
+    /// Useful for pipelining multiple processors, e.g. to project your coordinates before outputting
+    /// to a particular format.
+    ///
+    /// ```
+    /// use geozero::geojson::GeoJson;
+    /// use geozero::wkt::WktWriter;
+    /// use crate::geozero::GeozeroGeometry;
+    /// use crate::geozero::GeomProcessor;
+    /// let input = GeoJson(r#"{ "type": "Point", "coordinates": [1.1, 1.2] }"#);
+    ///
+    /// let mut output = vec![] ;
+    /// let mut wkt_writer = WktWriter::new(&mut output).pre_process_xy(|x: &mut f64, y: &mut f64| {
+    ///    // likely you would do something more interesting here, like project your coordinates
+    ///    *x += 1.0;
+    ///    *y += 1.0;
+    ///});
+    ///
+    /// input.process_geom(&mut wkt_writer).unwrap();
+    /// assert_eq!(String::from_utf8(output).unwrap(), "POINT(2.1 2.2)");
+    /// ```
+    fn pre_process_xy<F: Fn(&mut f64, &mut f64)>(
+        self,
+        transform_xy: F,
+    ) -> WrappedXYProcessor<Self, F>
+    where
+        Self: Sized,
+    {
+        WrappedXYProcessor::new(self, transform_xy)
     }
 }
 

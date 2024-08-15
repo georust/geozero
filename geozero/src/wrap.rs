@@ -3,26 +3,30 @@ use crate::{
 };
 
 /// Wraps another [`FeatureProcessor`], first transforming coordinates.
-pub struct WrappedProcessor<T, F: Fn(f64, f64) -> (f64, f64)> {
+pub struct WrappedXYProcessor<T, F: Fn(&mut f64, &mut f64)> {
     /// The underlying FeatureProcessor
     pub inner: T,
-    transform_coordinates: F,
+    pre_process_xy: F,
 }
 
-impl<T, F: Fn(f64, f64) -> (f64, f64)> WrappedProcessor<T, F> {
+impl<T, F: Fn(&mut f64, &mut f64)> WrappedXYProcessor<T, F> {
     /// Wraps an inner [`FeatureProcessor`], calling `transform_coordinates` on [GeomProcessor::xy]
     /// and [GeomProcessor::coordinate] first. The function takes and returns `(x, y)`.
-    pub fn new(inner: T, transform_coordinates: F) -> Self {
+    pub fn new(inner: T, pre_process_xy: F) -> Self {
         Self {
             inner,
-            transform_coordinates,
+            pre_process_xy,
         }
+    }
+
+    pub fn into_inner(self) -> T {
+        self.inner
     }
 }
 
 // The trait has many default implementations, but every single call must be specified here to
 // delegate
-impl<T: GeomProcessor, F: Fn(f64, f64) -> (f64, f64)> GeomProcessor for WrappedProcessor<T, F> {
+impl<T: GeomProcessor, F: Fn(&mut f64, &mut f64)> GeomProcessor for WrappedXYProcessor<T, F> {
     fn dimensions(&self) -> CoordDimensions {
         self.inner.dimensions()
     }
@@ -32,23 +36,22 @@ impl<T: GeomProcessor, F: Fn(f64, f64) -> (f64, f64)> GeomProcessor for WrappedP
     fn srid(&mut self, srid: Option<i32>) -> Result<()> {
         self.inner.srid(srid)
     }
-    fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
-        let (x_transformed, y_transformed) = (self.transform_coordinates)(x, y);
-        self.inner.xy(x_transformed, y_transformed, idx)
+    fn xy(&mut self, mut x: f64, mut y: f64, idx: usize) -> Result<()> {
+        (self.pre_process_xy)(&mut x, &mut y);
+        self.inner.xy(x, y, idx)
     }
     fn coordinate(
         &mut self,
-        x: f64,
-        y: f64,
+        mut x: f64,
+        mut y: f64,
         z: Option<f64>,
         m: Option<f64>,
         t: Option<f64>,
         tm: Option<u64>,
         idx: usize,
     ) -> Result<()> {
-        let (x_transformed, y_transformed) = (self.transform_coordinates)(x, y);
-        self.inner
-            .coordinate(x_transformed, y_transformed, z, m, t, tm, idx)
+        (self.pre_process_xy)(&mut x, &mut y);
+        self.inner.coordinate(x, y, z, m, t, tm, idx)
     }
     fn empty_point(&mut self, idx: usize) -> Result<()> {
         self.inner.empty_point(idx)
@@ -145,17 +148,15 @@ impl<T: GeomProcessor, F: Fn(f64, f64) -> (f64, f64)> GeomProcessor for WrappedP
     }
 }
 
-impl<T: PropertyProcessor, F: Fn(f64, f64) -> (f64, f64)> PropertyProcessor
-    for WrappedProcessor<T, F>
+impl<T: PropertyProcessor, F: Fn(&mut f64, &mut f64)> PropertyProcessor
+    for WrappedXYProcessor<T, F>
 {
     fn property(&mut self, idx: usize, name: &str, value: &ColumnValue<'_>) -> Result<bool> {
         self.inner.property(idx, name, value)
     }
 }
 
-impl<T: FeatureProcessor, F: Fn(f64, f64) -> (f64, f64)> FeatureProcessor
-    for WrappedProcessor<T, F>
-{
+impl<T: FeatureProcessor, F: Fn(&mut f64, &mut f64)> FeatureProcessor for WrappedXYProcessor<T, F> {
     fn dataset_begin(&mut self, name: Option<&str>) -> Result<()> {
         self.inner.dataset_begin(name)
     }
@@ -179,5 +180,33 @@ impl<T: FeatureProcessor, F: Fn(f64, f64) -> (f64, f64)> FeatureProcessor
     }
     fn geometry_end(&mut self) -> Result<()> {
         self.inner.geometry_end()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::geo_types::GeoWriter;
+    use crate::geojson::read_geojson_lines;
+    use crate::GeomProcessor;
+    use wkt::ToWkt;
+
+    #[test]
+    fn test_pre_process() {
+        let input = r#"{ "type": "Point", "coordinates": [1.1, 1.2] }
+{ "type": "Point", "coordinates": [2.1, 2.2] }
+{ "type": "Point", "coordinates": [3.1, 3.2] }
+"#;
+
+        let mut geo_writer = GeoWriter::new().pre_process_xy(|x: &mut f64, y: &mut f64| {
+            *x *= 2.0;
+            *y *= 4.0;
+        });
+
+        read_geojson_lines(input.as_bytes(), &mut geo_writer).unwrap();
+        let geometry = geo_writer.into_inner().take_geometry().unwrap();
+        assert_eq!(
+            geometry.wkt_string(),
+            "GEOMETRYCOLLECTION(POINT(2.2 4.8),POINT(4.2 8.8),POINT(6.2 12.8))"
+        );
     }
 }
