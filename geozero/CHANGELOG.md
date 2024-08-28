@@ -1,4 +1,4 @@
-## 0.13.0 - (2024-05-XX)
+## 0.13.0 - (2024-05-17)
 
 * Fixed converting 2D geos::Geometry to ewkt
   * <https://github.com/georust/geozero/pull/203>

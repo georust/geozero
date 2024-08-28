@@ -38,13 +38,6 @@ Supported dimensions: X, Y, Z, M, T
 | GeoArrow | ✅ | ✅ | Available via the [geoarrow](https://crates.io/crates/geoarrow) crate. |
 | GeoParquet | ✅ | ✅ | Available via the [geoarrow](https://crates.io/crates/geoarrow) crate. |
 
-## Applications
-
-* [flatgeobuf-gpu](https://github.com/pka/flatgeobuf-gpu): Demo rendering FlatGeobuf to GPU
-* [flatgeobuf-bevy](https://github.com/pka/flatgeobuf-bevy): Demo rendering FlatGeobuf with WebGPU (native platforms) and WebGL2 (Web/WASM)
-* [flatgeobuf-wasm](https://github.com/pka/flatgeobuf-wasm): WASM demo displaying FlatGeobuf as SVG
-
-
 ## Conversion API
 
 Convert a GeoJSON polygon to geo-types and calculate centroid:
