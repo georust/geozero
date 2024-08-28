@@ -1,8 +1,8 @@
-use crate::shp_reader::{read_shape, RecordHeader};
-use crate::shx_reader::{read_index_file, ShapeIndex};
-use crate::{header, Error};
+use crate::shp::shp_reader::{read_shape, RecordHeader};
+use crate::shp::shx_reader::{read_index_file, ShapeIndex};
+use crate::shp::{header, Error};
+use crate::{FeatureProcessor, FeatureProperties, GeomProcessor};
 pub use dbase::{FieldInfo, FieldType};
-use geozero::{FeatureProcessor, FeatureProperties, GeomProcessor};
 use std::fs::File;
 use std::io::{BufReader, Read, Seek};
 use std::iter::FusedIterator;
@@ -91,14 +91,14 @@ impl<'a, P: FeatureProcessor, T: Read + Seek + 'a> Iterator for ShapeRecordItera
 impl<'a, P: FeatureProcessor, T: Read + Seek + 'a> FusedIterator for ShapeRecordIterator<'a, P, T> {}
 
 /// struct that reads the content of a shapefile
-pub struct Reader<T: Read + Seek> {
+pub struct ShpReader<T: Read + Seek> {
     source: T,
     header: header::Header,
     shapes_index: Option<Vec<ShapeIndex>>,
     dbf_reader: Option<dbase::Reader<T>>,
 }
 
-impl<T: Read + Seek> Reader<T> {
+impl<T: Read + Seek> ShpReader<T> {
     /// Creates a new Reader from a source that implements the `Read` trait
     ///
     /// The Shapefile header is read upon creation (but no reading of the Shapes is done)
@@ -110,10 +110,10 @@ impl<T: Read + Seek> Reader<T> {
     /// Will also return an error if the data is not a shapefile (Wrong file code)
     ///
     /// Will also return an error if the shape type read from the input source is invalid
-    pub fn new(mut source: T) -> Result<Reader<T>, Error> {
+    pub fn new(mut source: T) -> Result<ShpReader<T>, Error> {
         let header = header::Header::read_from(&mut source)?;
 
-        Ok(Reader {
+        Ok(ShpReader {
             source,
             header,
             shapes_index: None,
@@ -192,7 +192,7 @@ impl<T: Read + Seek> Reader<T> {
     }
 }
 
-impl Reader<BufReader<File>> {
+impl ShpReader<BufReader<File>> {
     /// Creates a reader from a path to a file
     ///
     /// Will attempt to read both the .shx and .dbf associated with the file,
@@ -220,7 +220,7 @@ impl Reader<BufReader<File>> {
 }
 
 // Does not work, because iter_features requires P instead of &mut P
-// impl<T: Read> GeozeroDatasource for Reader<T> {
+// impl<T: Read> GeozeroDatasource for ShpReader<T> {
 //     fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> geozero::error::Result<()> {
 //         self.iter_features(*processor).unwrap().all();
 //         Ok(())

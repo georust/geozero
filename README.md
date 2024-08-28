@@ -33,7 +33,7 @@ Supported dimensions: X, Y, Z, M, T
 | [geo-types](https://github.com/georust/geo) | ✅ | ✅ | |
 | MVT (Mapbox Vector Tiles) | ✅ | ✅ | |
 | GPX | ✅ | ❌ | |
-| Shapefile | ✅ | ❌ | Available via the [geozero-shp](https://crates.io/crates/geozero-shp) crate. |
+| Shapefile | ✅ | ❌ | |
 | FlatGeobuf | ✅ | ❌ | Available via the [flatgeobuf](https://crates.io/crates/flatgeobuf) crate. |
 | GeoArrow | ✅ | ✅ | Available via the [geoarrow](https://crates.io/crates/geoarrow) crate. |
 | GeoParquet | ✅ | ✅ | Available via the [geoarrow](https://crates.io/crates/geoarrow) crate. |

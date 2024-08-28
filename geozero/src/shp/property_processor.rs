@@ -1,7 +1,7 @@
-use crate::reader::ShapeRecord;
+use crate::error::Result;
+use crate::shp::reader::ShapeRecord;
+use crate::{ColumnValue, FeatureProperties, PropertyProcessor};
 use dbase::FieldValue;
-use geozero::error::Result;
-use geozero::{ColumnValue, FeatureProperties, PropertyProcessor};
 
 impl FeatureProperties for ShapeRecord {
     /// Process feature properties.
