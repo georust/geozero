@@ -1,3 +1,5 @@
+> **DEPRECATED**: The shp driver is now included in `geozero`.
+
 # GeoZero Shapefile driver
 
 Reading Shapefiles with [GeoZero](https://github.com/georust/geozero) API.
