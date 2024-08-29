@@ -15,10 +15,10 @@ readme = "README.md"
 license = "MIT OR Apache-2.0"
 
 [workspace.dependencies]
-# This should point to the last published version
-# This is a major hack, due to some code (like geozero tests!) relying on flatgeobuf crate,
-# which in turn relies on geozero itself.
+# Used in geozero-cli and geozero-bench
+# geozero version must be in sync with flatgeobuf version!
 geozero = { version = "0.13.0", default-features = false }
+flatgeobuf = "4.3.0"
 
 async-trait = "0.1"
 byteorder = { version = "1.4.3", default-features = false }
@@ -30,7 +30,6 @@ dbase = "0.4"
 diesel = { version = "2.1.0", default-features = false, features = ["postgres"] }
 dup-indexer = "0.3"
 env_logger = "0.10.0"
-flatgeobuf = "4.0.0"
 futures-util = "0.3.28"
 gdal = { version = "0.16", default-features = false }
 gdal-sys = "0.9"
@@ -43,7 +42,6 @@ hex = "0.4"
 kdbush = "0.2"
 log = "0.4.19"
 lyon = "1.0.1"
-polylabel = "2.5"
 postgis = "0.9.0"
 postgres = "0.19"
 postgres-types = "0.2"

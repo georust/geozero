@@ -55,11 +55,9 @@ sqlx = { workspace = true, optional = true }
 wkt = { workspace = true, optional = true }
 
 [dev-dependencies]
-flatgeobuf.workspace = true
 geo.workspace = true
 hex.workspace = true
 kdbush.workspace = true
-polylabel.workspace = true
 postgres.workspace = true
 seek_bufread.workspace = true
 sqlx = { workspace = true, features = ["runtime-tokio-native-tls", "macros", "time", "postgres", "sqlite"] }
@@ -81,7 +79,7 @@ required-features = ["with-gdal"]
 [[test]]
 name = "geojson"
 path = "tests/geojson.rs"
-required-features = ["with-geojson"]
+required-features = ["with-geojson", "with-wkt"]
 
 [[test]]
 name = "geopackage"
@@ -101,7 +99,7 @@ required-features = ["with-geo", "with-geojson"]
 [[test]]
 name = "geozero-api"
 path = "tests/geozero-api.rs"
-required-features = []
+required-features = ["with-wkt"]
 
 [[test]]
 name = "kdbush"
@@ -112,11 +110,6 @@ required-features = ["with-geojson"]
 name = "mvt"
 path = "tests/mvt.rs"
 required-features = ["with-mvt", "with-geo", "with-geojson"]
-
-[[test]]
-name = "polylabel"
-path = "tests/polylabel.rs"
-required-features = ["with-geo"]
 
 [[test]]
 name = "postgis"
