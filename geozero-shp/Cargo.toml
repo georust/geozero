@@ -1,6 +1,6 @@
 [package]
 name = "geozero-shp"
-version = "0.6.0"
+version = "0.5.1"
 description = "WARNING: The shp driver is now included in geozero."
 readme = "README.md"
 keywords = ["geo", "shapefile"]
