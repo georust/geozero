@@ -1,3 +1,7 @@
+#![deprecated(
+    note = "The geozero_shp crate has been deprecated. Instead, use geozero's built-in shapefile feature"
+)]
+
 mod header;
 mod point_z;
 mod property_processor;
