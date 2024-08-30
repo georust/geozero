@@ -12,7 +12,7 @@ repository.workspace = true
 license.workspace = true
 
 [features]
-default = ["with-svg", "with-wkt", "with-geo", "with-geojson"]
+default = ["with-geo", "with-geojson", "with-svg", "with-wkt"]
 with-csv = ["dep:csv", "with-wkt"]
 with-gdal = ["dep:gdal", "dep:gdal-sys"]
 with-gdal-bindgen = ["with-gdal", "gdal?/bindgen"]
@@ -25,6 +25,7 @@ with-mvt = ["dep:prost", "dep:prost-build", "dep:dup-indexer"]
 with-postgis-diesel = ["with-wkb", "dep:diesel", "dep:byteorder"]
 with-postgis-postgres = ["with-wkb", "dep:postgres-types", "dep:bytes"]
 with-postgis-sqlx = ["with-wkb", "dep:sqlx", "sqlx?/postgres"]
+with-shp = ["dep:byteorder", "dep:dbase"]
 with-svg = []
 with-tessellator = ["dep:lyon"]
 with-wkb = ["dep:scroll", "with-wkt"]
@@ -39,6 +40,7 @@ thiserror.workspace = true
 byteorder = { workspace = true, optional = true }
 bytes = { workspace = true, optional = true }
 csv = { workspace = true, optional = true }
+dbase = { workspace = true, optional = true }
 diesel = { workspace = true, optional = true }
 dup-indexer = { workspace = true, optional = true }
 gdal = { workspace = true, optional = true }
@@ -127,6 +129,11 @@ required-features = ["with-wkb", "with-wkt", "with-geo"]
 name = "gpx"
 path = "tests/gpx.rs"
 required-features = ["with-gpx", "with-wkt", "with-geojson"]
+
+[[test]]
+name = "shp-reader"
+path = "tests/shp-reader.rs"
+required-features = ["with-shp"]
 
 [[test]]
 name = "svg"

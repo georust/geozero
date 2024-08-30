@@ -1,6 +1,28 @@
-#![deprecated(
-    note = "The geozero_shp crate has been deprecated. Instead, use geozero's built-in shapefile feature"
-)]
+//! Shapefile reader.
+//!
+//! Features:
+//! - [x] Read support for OGC simple feature types
+//! - [x] Convert to GeoJSON, WKB (PostGIS/GeoPackage), WKT, GEOS, GDAL formats and more
+//! - [ ] Support for Multipatch types
+//! - [ ] Read spatial index
+//! - [ ] Read projection files
+//!
+//! For writing Shapefiles either use [shapefile-rs](https://crates.io/crates/shapefile) or the GDAL driver.
+//!
+//! Originally based on shapefile-rs from Thomas Montaigu.
+//!
+//! # Usage example:
+//!
+//! Use Shapefile feature iterator:
+//!
+//! ```rust,ignore
+//! use geozero::geojson::GeoJsonWriter;
+//! use geozero::shp::ShpReader;
+//!
+//! let reader = ShpReader::from_path("poly.shp")?;
+//! let mut json: Vec<u8> = Vec::new();
+//! let cnt = reader.iter_features(GeoJsonWriter::new(&mut json))?.count();
+//! ```
 
 mod header;
 mod point_z;
@@ -9,12 +31,9 @@ pub mod reader;
 mod shp_reader;
 mod shx_reader;
 
-pub use crate::header::ShapeType;
-pub use crate::reader::Reader;
-pub use crate::shp_reader::NO_DATA;
-
-// Re-export GeoZero to help avoid version conflicts
-pub use geozero;
+pub use crate::shp::header::ShapeType;
+pub use crate::shp::reader::ShpReader;
+pub use crate::shp::shp_reader::NO_DATA;
 
 /// All Errors that can happen when using this library
 #[derive(thiserror::Error, Debug)]
@@ -50,5 +69,5 @@ pub enum Error {
     #[error("Index file missing")]
     MissingIndexFile,
     #[error("Geozero error")]
-    GeozeroError(#[from] geozero::error::GeozeroError),
+    GeozeroError(#[from] crate::error::GeozeroError),
 }

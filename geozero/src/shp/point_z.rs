@@ -1,4 +1,4 @@
-use crate::shp_reader::{is_no_data, NO_DATA};
+use crate::shp::shp_reader::{is_no_data, NO_DATA};
 use std::fmt;
 
 /// Point with `x`, `y`, `m`, `z`

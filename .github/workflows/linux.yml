@@ -45,7 +45,7 @@ jobs:
         shell: bash
         # Make sure this list matches the members list in Cargo.toml
         run: |
-          for package in geozero geozero-shp geozero-cli geozero-bench; do
+          for package in geozero geozero-cli geozero-bench; do
             (echo "----- Testing doc build for package $package ----" && cargo doc -p $package --all-features --no-deps)
           done
         env:

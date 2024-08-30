@@ -1,6 +1,6 @@
-use crate::{Error, ShapeType};
+use crate::shp::{Error, ShapeType};
+use crate::GeomProcessor;
 use byteorder::{BigEndian, LittleEndian, ReadBytesExt};
-use geozero::GeomProcessor;
 use std::io::Read;
 use std::mem::size_of;
 
