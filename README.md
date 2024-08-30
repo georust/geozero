@@ -70,23 +70,6 @@ println!("{}", fgb.to_json()?);
 Full source code: [geojson.rs](./geozero/tests/geojson.rs)
 
 
-Read FlatGeobuf data as geo-types geometries and calculate label position with [polylabel-rs](https://github.com/urschrei/polylabel-rs):
-```rust,ignore
-let mut file = BufReader::new(File::open("countries.fgb")?);
-let mut fgb = FgbReader::open(&mut file)?.select_all()?;
-while let Some(feature) = fgb.next()? {
-    let name: String = feature.property("name").unwrap();
-    if let Ok(Geometry::MultiPolygon(mpoly)) = feature.to_geo() {
-        if let Some(poly) = &mpoly.0.iter().next() {
-            let label_pos = polylabel(&poly, &0.10).unwrap();
-            println!("{name}: {label_pos:?}");
-        }
-    }
-}
-```
-Full source code: [polylabel.rs](./geozero/tests/polylabel.rs)
-
-
 ## PostGIS usage examples
 
 Select and insert geo-types geometries with rust-postgres. Requires the `with-postgis-postgres` feature:
@@ -189,7 +172,7 @@ geometry.process(&mut vertex_counter, GeometryType::MultiPolygon)?;
 ```
 Full source code: [geozero-api.rs](./geozero/tests/geozero-api.rs)
 
-Find maximal height in 3D polygons:
+Find maximal height in 3D points:
 ```rust,ignore
 struct MaxHeightFinder(f64);
 
@@ -205,10 +188,8 @@ impl GeomProcessor for MaxHeightFinder {
 }
 
 let mut max_finder = MaxHeightFinder(0.0);
-while let Some(feature) = fgb.next()? {
-    let geometry = feature.geometry().unwrap();
-    geometry.process(&mut max_finder, GeometryType::MultiPolygon)?;
-}
+points.process_geom(&mut max_finder)?;
+assert_eq!(max_finder.0, 457.1);
 ```
 Full source code: [geozero-api.rs](./geozero/tests/geozero-api.rs)
 
