@@ -260,8 +260,8 @@ mod test {
     use crate::wkb::{FromWkb, WkbDialect};
     #[cfg(feature = "with-wkb")]
     use crate::wkt::Ewkt;
-    use crate::wkt::{Wkt, WktWriter};
-    use crate::{CoordDimensions, GeozeroGeometry, ToWkt};
+    use crate::wkt::{Wkt, WktDialect};
+    use crate::{CoordDimensions, ToWkt};
 
     #[test]
     #[cfg(feature = "with-geo")]
@@ -285,11 +285,9 @@ mod test {
         let s = "POINT Z(40 10 50)";
         let wkt = Wkt(s);
 
-        let out = vec![];
-        let mut writer = WktWriter::with_dims(out, CoordDimensions::xyz());
-        wkt.process_geom(&mut writer).unwrap();
-
-        let out = String::from_utf8(writer.out).unwrap();
+        let out = wkt
+            .to_wkt_with_opts(WktDialect::Wkt, CoordDimensions::xyz(), None)
+            .unwrap();
         assert_eq!(s, out.as_str());
     }
 }

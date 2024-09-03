@@ -35,7 +35,7 @@ pub(crate) mod conversion {
         }
 
         fn to_ewkt(&self, srid: Option<i32>) -> Result<String> {
-            self.to_wkt_with_opts(WktDialect::Ewkt, CoordDimensions::xyzm(), srid)
+            self.to_wkt_with_opts(WktDialect::Ewkt, CoordDimensions::xy(), srid)
         }
 
         fn to_wkt_ndim(&self, dims: CoordDimensions) -> Result<String> {
