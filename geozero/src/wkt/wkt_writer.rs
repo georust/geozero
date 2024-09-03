@@ -63,6 +63,13 @@ impl<W: Write> WktWriter<W> {
         if tagged {
             self.out.write_all(tag)?;
         }
+        if is_z(self.dims) {
+            self.out.write_all(b" Z")?;
+        } else if is_m(self.dims) {
+            self.out.write_all(b" M")?;
+        } else if is_zm(self.dims) {
+            self.out.write_all(b" ZM")?;
+        }
         self.geometry_sizes.push(size);
         if size == 0 {
             if tagged {
@@ -235,13 +242,26 @@ impl<W: Write> PropertyProcessor for WktWriter<W> {}
 
 impl<W: Write> FeatureProcessor for WktWriter<W> {}
 
+fn is_z(dims: CoordDimensions) -> bool {
+    dims.z && !dims.m
+}
+
+fn is_m(dims: CoordDimensions) -> bool {
+    dims.m && !dims.z
+}
+
+fn is_zm(dims: CoordDimensions) -> bool {
+    dims.z && dims.m
+}
+
 #[cfg(test)]
 mod test {
     #[cfg(feature = "with-wkb")]
     use crate::wkb::{FromWkb, WkbDialect};
     #[cfg(feature = "with-wkb")]
     use crate::wkt::Ewkt;
-    use crate::ToWkt;
+    use crate::wkt::{Wkt, WktWriter};
+    use crate::{CoordDimensions, GeozeroGeometry, ToWkt};
 
     #[test]
     #[cfg(feature = "with-geo")]
@@ -258,5 +278,18 @@ mod test {
         let mut cursor = std::io::Cursor::new(blob);
         let ewkt = Ewkt::from_wkb(&mut cursor, WkbDialect::Ewkb).unwrap();
         assert_eq!(ewkt.0, "SRID=4326;MULTIPOINT(10 -20 100,0 -0.5 101)")
+    }
+
+    #[test]
+    fn read_write_wkt_point_z() {
+        let s = "POINT Z(40 10 50)";
+        let wkt = Wkt(s);
+
+        let out = vec![];
+        let mut writer = WktWriter::with_dims(out, CoordDimensions::xyz());
+        wkt.process_geom(&mut writer).unwrap();
+
+        let out = String::from_utf8(writer.out).unwrap();
+        assert_eq!(s, out.as_str());
     }
 }
