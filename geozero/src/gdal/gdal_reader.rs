@@ -288,7 +288,7 @@ mod test {
 
     #[test]
     fn line_3d() {
-        let wkt = "LINESTRING(1 1 10,2 2 20)";
+        let wkt = "LINESTRING Z(1 1 10,2 2 20)";
         let geo = Geometry::from_wkt(wkt).unwrap();
         assert_eq!(
             geo.to_wkt_ndim(CoordDimensions {
