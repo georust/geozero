@@ -389,6 +389,8 @@ pub trait GeomProcessor {
     /// to a particular format.
     ///
     /// ```
+    /// # #[cfg(all(feature = "with-wkt", feature = "with-geojson"))]
+    /// # {
     /// use geozero::geojson::GeoJson;
     /// use geozero::wkt::WktWriter;
     /// use crate::geozero::GeozeroGeometry;
@@ -400,10 +402,11 @@ pub trait GeomProcessor {
     ///    // likely you would do something more interesting here, like project your coordinates
     ///    *x += 1.0;
     ///    *y += 1.0;
-    ///});
+    /// });
     ///
     /// input.process_geom(&mut wkt_writer).unwrap();
     /// assert_eq!(String::from_utf8(output).unwrap(), "POINT(2.1 2.2)");
+    /// # }
     /// ```
     fn pre_process_xy<F: Fn(&mut f64, &mut f64)>(
         self,

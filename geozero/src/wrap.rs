@@ -183,30 +183,86 @@ impl<T: FeatureProcessor, F: Fn(&mut f64, &mut f64)> FeatureProcessor for Wrappe
     }
 }
 
+#[cfg(all(feature = "with-csv", feature = "with-geojson"))]
 #[cfg(test)]
 mod test {
-    use crate::geo_types::GeoWriter;
-    use crate::geojson::read_geojson_lines;
-    use crate::GeomProcessor;
-    use wkt::ToWkt;
+    use crate::csv::CsvWriter;
+    use crate::geojson::GeoJsonString;
+    use crate::{GeomProcessor, GeozeroDatasource};
+    use serde_json::json;
+
+    fn geojson_fixture_data() -> GeoJsonString {
+        GeoJsonString(
+            json!({
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "population": 100
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [1.0, 2.0]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "population": 200
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [3.0, 4.0]
+                        }
+                    }
+                ]
+            })
+            .to_string(),
+        )
+    }
 
     #[test]
     fn test_pre_process() {
-        let input = r#"{ "type": "Point", "coordinates": [1.1, 1.2] }
-{ "type": "Point", "coordinates": [2.1, 2.2] }
-{ "type": "Point", "coordinates": [3.1, 3.2] }
-"#;
-
-        let mut geo_writer = GeoWriter::new().pre_process_xy(|x: &mut f64, y: &mut f64| {
-            *x *= 2.0;
-            *y *= 4.0;
-        });
-
-        read_geojson_lines(input.as_bytes(), &mut geo_writer).unwrap();
-        let geometry = geo_writer.into_inner().take_geometry().unwrap();
+        let mut geojson = geojson_fixture_data();
+        let mut out = Vec::new();
+        {
+            let mut transforming_csv_writer =
+                CsvWriter::new(&mut out).pre_process_xy(|x: &mut f64, y: &mut f64| {
+                    *x += 1.0;
+                    *y += 2.0;
+                });
+            geojson.process(&mut transforming_csv_writer).unwrap();
+        }
         assert_eq!(
-            geometry.wkt_string(),
-            "GEOMETRYCOLLECTION(POINT(2.2 4.8),POINT(4.2 8.8),POINT(6.2 12.8))"
+            String::from_utf8(out).unwrap(),
+            "geometry,population\nPOINT(2 4),100\nPOINT(4 6),200\n"
+        );
+    }
+
+    #[test]
+    fn multiple_transforms() {
+        let mut geojson = geojson_fixture_data();
+        let mut out = Vec::new();
+        {
+            let mut transforming_csv_writer = CsvWriter::new(&mut out)
+                .pre_process_xy(|x: &mut f64, y: &mut f64| {
+                    *x += 1.0;
+                    *y += 2.0;
+                })
+                .pre_process_xy(|x: &mut f64, y: &mut f64| {
+                    // It might be surprising that this second transformation is applied before the first.
+                    // It makes sense if you think about each subsequent call as an "insert first", but
+                    // it's admittedly potentially confusing.
+                    *x *= 2.0;
+                    *y *= 2.0;
+                });
+            geojson.process(&mut transforming_csv_writer).unwrap();
+        }
+
+        assert_eq!(
+            String::from_utf8(out).unwrap(),
+            "geometry,population\nPOINT(3 6),100\nPOINT(7 10),200\n"
         );
     }
 }

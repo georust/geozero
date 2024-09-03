@@ -1,6 +1,6 @@
 ## Unreleased
 
-* Added `WrappedProcessor`
+* Added `WrappedXYProcessor` for pre-processing XY coordinates.
   * <https://github.com/georust/geozero/pull/222>
 
 ## 0.13.0 - (2024-05-17)
