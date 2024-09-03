@@ -328,7 +328,7 @@ mod test {
         let mut out = WktWriter::with_dims(&mut wkt_data, CoordDimensions::xyz());
         assert!(read_geojson_geom(&mut geojson.as_bytes(), &mut out).is_ok());
         let wkt = std::str::from_utf8(&wkt_data).unwrap();
-        assert_eq!(wkt, "LINESTRING(1 1,2 2)");
+        assert_eq!(wkt, "LINESTRING Z(1 1,2 2)");
 
         Ok(())
     }
