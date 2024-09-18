@@ -1,5 +1,5 @@
-use crate::point_z::BBoxZ;
-use crate::Error;
+use crate::shp::point_z::BBoxZ;
+use crate::shp::Error;
 use byteorder::{BigEndian, LittleEndian, ReadBytesExt};
 use std::fmt;
 use std::io::Read;
@@ -105,7 +105,7 @@ impl ShapeType {
     /// Returns the ShapeType corresponding to the input code
     /// if the code is valid
     /// ```
-    /// use geozero_shp::ShapeType;
+    /// use geozero::shp::ShapeType;
     ///
     /// assert_eq!(ShapeType::from(25), Some(ShapeType::PolygonM));
     /// assert_eq!(ShapeType::from(60), None);

@@ -74,8 +74,8 @@ impl GeomProcessor for MvtWriter {
         if !last_ring_coord {
             let (x, y) = if self.extent != 0 {
                 // scale to tile coordinate space
-                let x = ((x_coord - self.left) * self.x_multiplier) as i32;
-                let y = ((y_coord - self.bottom) * self.y_multiplier) as i32;
+                let x = ((x_coord - self.left) * self.x_multiplier).floor() as i32;
+                let y = ((y_coord - self.bottom) * self.y_multiplier).floor() as i32;
                 // Y is stored as reversed
                 (x, self.extent.saturating_sub(y))
             } else {

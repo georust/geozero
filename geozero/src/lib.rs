@@ -12,7 +12,6 @@
 //! Supported dimensions: X, Y, Z, M, T
 //!
 //! Available implementations:
-//! * [geozero-shp](https://docs.rs/geozero-shp)
 //! * [flatgeobuf](https://docs.rs/flatgeobuf)
 //! * [geoarrow](https://docs.rs/geoarrow)
 //!
@@ -28,6 +27,7 @@
 //! | GEOS          | `geos::Geometry`                                                                                                         | XYZ        | -                                                                                    | [ToGeos]            | [GeosWriter](geos::GeosWriter)                  |
 //! | GPX           |                                                                                                                          | XY         | [GpxReader](gpx::GpxReader)                                                          |                     |                                                 |
 //! | MVT           | [mvt::tile::Feature]                                                                                                     | XY         | [mvt::tile::Layer]                                                                   | [ToMvt]             | [MvtWriter](mvt::MvtWriter)                     |
+//! | Shapefile     | -                                                                                                                        | XYZM       | [shp::ShpReader]                                                                     |                     |                                                 |
 //! | SVG           | -                                                                                                                        | XY         | -                                                                                    | [ToSvg]             | [SvgWriter](svg::SvgWriter)                     |
 //! | WKB           | [Wkb](wkb::Wkb), [Ewkb](wkb::Ewkb), [GpkgWkb](wkb::GpkgWkb), [SpatiaLiteWkb](wkb::SpatiaLiteWkb), [MySQL](wkb::MySQLWkb) | XYZM       | -                                                                                    | [ToWkb]             | [WkbWriter](wkb::WkbWriter)                     |
 //! | WKT           | [wkt::WktStr], [wkt::WktString], [wkt::EwktStr], [wkt::EwktString]                                                       | XYZM       | [wkt::WktReader], [wkt::WktStr], [wkt::WktString], [wkt::EwktStr], [wkt::EwktString] | [ToWkt]             | [WktWriter](wkt::WktWriter)                     |
@@ -54,12 +54,14 @@ mod feature_processor;
 mod geometry_processor;
 mod multiplex;
 mod property_processor;
+mod wrap;
 
 pub use api::*;
 pub use feature_processor::*;
 pub use geometry_processor::*;
 pub use multiplex::*;
 pub use property_processor::*;
+pub use wrap::*;
 
 #[cfg(feature = "with-csv")]
 pub mod csv;
@@ -98,6 +100,9 @@ pub mod gpx;
     feature = "with-postgis-sqlx",
 ))]
 pub mod postgis;
+
+#[cfg(feature = "with-shp")]
+pub mod shp;
 
 #[cfg(feature = "with-svg")]
 pub mod svg;

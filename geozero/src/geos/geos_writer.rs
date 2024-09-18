@@ -3,16 +3,16 @@ use crate::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 use geos::{CoordDimensions, CoordSeq, GResult, Geometry as GGeometry};
 
 /// Generator for GEOS geometry type.
-pub struct GeosWriter<'a> {
-    pub(crate) geom: GGeometry<'a>,
+pub struct GeosWriter {
+    pub(crate) geom: GGeometry,
     srid: Option<i32>,
     // CoordSeq for Points, Lines and Rings
-    cs: Vec<CoordSeq<'a>>,
+    cs: Vec<CoordSeq>,
     // Polygons or MultiPolygons
-    polys: Vec<GGeometry<'a>>,
+    polys: Vec<GGeometry>,
 }
 
-impl<'a> GeosWriter<'a> {
+impl GeosWriter {
     pub fn new() -> Self {
         Self::default()
     }
@@ -21,12 +21,12 @@ impl<'a> GeosWriter<'a> {
             .push(CoordSeq::new(len as u32, CoordDimensions::TwoD)?);
         Ok(())
     }
-    pub fn geometry(&self) -> &GGeometry<'a> {
+    pub fn geometry(&self) -> &GGeometry {
         &self.geom
     }
 }
 
-impl<'a> Default for GeosWriter<'a> {
+impl Default for GeosWriter {
     fn default() -> Self {
         GeosWriter {
             geom: GGeometry::create_empty_point().unwrap(),
@@ -37,7 +37,7 @@ impl<'a> Default for GeosWriter<'a> {
     }
 }
 
-impl GeomProcessor for GeosWriter<'_> {
+impl GeomProcessor for GeosWriter {
     fn srid(&mut self, srid: Option<i32>) -> Result<()> {
         self.srid = srid;
         Ok(())
@@ -168,8 +168,8 @@ impl GeomProcessor for GeosWriter<'_> {
     }
 }
 
-impl PropertyProcessor for GeosWriter<'_> {}
-impl FeatureProcessor for GeosWriter<'_> {}
+impl PropertyProcessor for GeosWriter {}
+impl FeatureProcessor for GeosWriter {}
 
 #[cfg(test)]
 #[cfg(feature = "with-geojson")]

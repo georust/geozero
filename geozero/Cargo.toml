@@ -12,7 +12,7 @@ repository.workspace = true
 license.workspace = true
 
 [features]
-default = ["with-svg", "with-wkt", "with-geo", "with-geojson"]
+default = ["with-geo", "with-geojson", "with-svg", "with-wkt"]
 with-csv = ["dep:csv", "with-wkt"]
 with-gdal = ["dep:gdal", "dep:gdal-sys"]
 with-gdal-bindgen = ["with-gdal", "gdal?/bindgen"]
@@ -25,6 +25,7 @@ with-mvt = ["dep:prost", "dep:prost-build", "dep:dup-indexer"]
 with-postgis-diesel = ["with-wkb", "dep:diesel", "dep:byteorder"]
 with-postgis-postgres = ["with-wkb", "dep:postgres-types", "dep:bytes"]
 with-postgis-sqlx = ["with-wkb", "dep:sqlx", "sqlx?/postgres"]
+with-shp = ["dep:byteorder", "dep:dbase"]
 with-svg = []
 with-tessellator = ["dep:lyon"]
 with-wkb = ["dep:scroll", "with-wkt"]
@@ -39,6 +40,7 @@ thiserror.workspace = true
 byteorder = { workspace = true, optional = true }
 bytes = { workspace = true, optional = true }
 csv = { workspace = true, optional = true }
+dbase = { workspace = true, optional = true }
 diesel = { workspace = true, optional = true }
 dup-indexer = { workspace = true, optional = true }
 gdal = { workspace = true, optional = true }
@@ -55,11 +57,9 @@ sqlx = { workspace = true, optional = true }
 wkt = { workspace = true, optional = true }
 
 [dev-dependencies]
-flatgeobuf.workspace = true
 geo.workspace = true
 hex.workspace = true
 kdbush.workspace = true
-polylabel.workspace = true
 postgres.workspace = true
 seek_bufread.workspace = true
 sqlx = { workspace = true, features = ["runtime-tokio-native-tls", "macros", "time", "postgres", "sqlite"] }
@@ -81,7 +81,7 @@ required-features = ["with-gdal"]
 [[test]]
 name = "geojson"
 path = "tests/geojson.rs"
-required-features = ["with-geojson"]
+required-features = ["with-geojson", "with-wkt"]
 
 [[test]]
 name = "geopackage"
@@ -101,7 +101,7 @@ required-features = ["with-geo", "with-geojson"]
 [[test]]
 name = "geozero-api"
 path = "tests/geozero-api.rs"
-required-features = []
+required-features = ["with-wkt"]
 
 [[test]]
 name = "kdbush"
@@ -114,11 +114,6 @@ path = "tests/mvt.rs"
 required-features = ["with-mvt", "with-geo", "with-geojson"]
 
 [[test]]
-name = "polylabel"
-path = "tests/polylabel.rs"
-required-features = ["with-geo"]
-
-[[test]]
 name = "postgis"
 path = "tests/postgis.rs"
 required-features = ["with-wkb", "with-wkt", "with-geo"]
@@ -127,6 +122,11 @@ required-features = ["with-wkb", "with-wkt", "with-geo"]
 name = "gpx"
 path = "tests/gpx.rs"
 required-features = ["with-gpx", "with-wkt", "with-geojson"]
+
+[[test]]
+name = "shp-reader"
+path = "tests/shp-reader.rs"
+required-features = ["with-shp"]
 
 [[test]]
 name = "svg"

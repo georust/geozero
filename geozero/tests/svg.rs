@@ -1,10 +1,6 @@
-use flatgeobuf::{FgbReader, Header};
 use geozero::geojson::GeoJsonReader;
-use geozero::svg::SvgWriter;
 use geozero::ProcessToSvg;
-use seek_bufread::BufReader;
 use std::fs::File;
-use std::io::Write;
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[test]
@@ -22,6 +18,16 @@ fn json_to_svg() -> Result<()> {
 
     Ok(())
 }
+
+/*
+// FlatgeoBuf to SVG conversion
+// Disabled, since we don't want to have a circular dependency between flatgeobuf and geozero
+
+
+use flatgeobuf::{FgbReader, Header};
+use geozero::svg::SvgWriter;
+use seek_bufread::BufReader;
+use std::io::Write;
 
 fn invert_y(header: &Header) -> bool {
     if let Some(crs) = header.crs() {
@@ -69,3 +75,4 @@ fn fgb_to_svg() -> Result<()> {
 
     Ok(())
 }
+*/

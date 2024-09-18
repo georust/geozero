@@ -2,7 +2,7 @@ use crate::error::{GeozeroError, Result};
 use crate::{CoordDimensions, GeomProcessor, GeozeroGeometry};
 use geos::{CoordSeq, Geom, Geometry as GGeometry, GeometryTypes};
 
-impl GeozeroGeometry for geos::Geometry<'_> {
+impl GeozeroGeometry for geos::Geometry {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
         process_geom(self, processor)
     }
@@ -39,7 +39,7 @@ pub fn process_geom<P: GeomProcessor>(ggeom: &GGeometry, processor: &mut P) -> R
     process_geom_n(ggeom, 0, processor)
 }
 
-fn process_geom_n<'a, P: GeomProcessor, G: Geom<'a>>(
+fn process_geom_n<P: GeomProcessor, G: Geom>(
     ggeom: &G,
     idx: usize,
     processor: &mut P,
@@ -128,7 +128,7 @@ fn process_coord_seq<P: GeomProcessor>(
     Ok(())
 }
 
-fn process_point<'a, P: GeomProcessor, G: Geom<'a>>(
+fn process_point<P: GeomProcessor, G: Geom>(
     ggeom: &G,
     idx: usize,
     processor: &mut P,
@@ -139,7 +139,7 @@ fn process_point<'a, P: GeomProcessor, G: Geom<'a>>(
     process_coord_seq(&cs, idx, processor)
 }
 
-fn process_linestring<'a, P: GeomProcessor, G: Geom<'a>>(
+fn process_linestring<P: GeomProcessor, G: Geom>(
     ggeom: &G,
     tagged: bool,
     idx: usize,
@@ -154,7 +154,7 @@ fn process_linestring<'a, P: GeomProcessor, G: Geom<'a>>(
     processor.linestring_end(tagged, idx)
 }
 
-fn process_polygon<'a, P: GeomProcessor, G: Geom<'a>>(
+fn process_polygon<P: GeomProcessor, G: Geom>(
     ggeom: &G,
     tagged: bool,
     idx: usize,

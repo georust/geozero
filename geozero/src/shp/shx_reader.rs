@@ -1,4 +1,4 @@
-use crate::{header, Error};
+use crate::shp::{header, Error};
 use byteorder::{BigEndian, ReadBytesExt};
 use std::io::Read;
 

@@ -1,7 +1,9 @@
 # Release checklist
 
-With flatgeobuf as test requirement we have a circular dependency on geozero,
-which causes build conflicts when doing major version updates.
+geozero-cli and geozero-bench are dependent on geozero and flatgeobuf.
+This implies the following update sequence for major version updates:
+
+	geozero -> flatgeobuf -> geozero-cli/geozero-bench
 
 ## geozero
 
@@ -18,5 +20,5 @@ which causes build conflicts when doing major version updates.
 * `git commit -a -m "Bump version"`
 
 Major updates:
-* Create branch of flatgeobuf with updated geozero dependency
-* Change flatgeobuf to git version until flatgeobuf crate is released
+* Release new version of flatgeobuf with updated geozero dependency
+* Update geozero version in top-level Cargo.toml

@@ -51,7 +51,10 @@ impl<T: GeozeroGeometry + Sized> sqlx::Type<Sqlite> for wkb::Encode<T> {
 }
 
 impl<'q, T: GeozeroGeometry + Sized> Encode<'q, Sqlite> for wkb::Encode<T> {
-    fn encode_by_ref(&self, args: &mut Vec<SqliteArgumentValue<'q>>) -> IsNull {
+    fn encode_by_ref(
+        &self,
+        args: &mut Vec<SqliteArgumentValue<'q>>,
+    ) -> Result<IsNull, BoxDynError> {
         let mut wkb_out: Vec<u8> = Vec::new();
         let mut writer = wkb::WkbWriter::with_opts(
             &mut wkb_out,
@@ -64,7 +67,7 @@ impl<'q, T: GeozeroGeometry + Sized> Encode<'q, Sqlite> for wkb::Encode<T> {
             .process_geom(&mut writer)
             .expect("Failed to encode Geometry");
         args.push(SqliteArgumentValue::Blob(Cow::Owned(wkb_out)));
-        IsNull::No
+        Ok(IsNull::No)
     }
 }
 
@@ -116,13 +119,18 @@ macro_rules! impl_sqlx_gpkg_decode {
 #[macro_export]
 macro_rules! impl_sqlx_gpkg_encode {
     ( $t:ty ) => {
-        impl<'q> sqlx::encode::Encode<'q, sqlx::sqlite::Sqlite> for $t {
+        impl<'q> ::sqlx::encode::Encode<'q, ::sqlx::sqlite::Sqlite> for $t {
             fn encode_by_ref(
                 &self,
-                args: &mut Vec<sqlx::sqlite::SqliteArgumentValue<'q>>,
-            ) -> sqlx::encode::IsNull {
+                args: &mut Vec<::sqlx::sqlite::SqliteArgumentValue<'q>>,
+            ) -> ::std::result::Result<
+                ::sqlx::encode::IsNull,
+                ::std::boxed::Box<
+                    dyn ::std::error::Error + ::std::marker::Send + ::std::marker::Sync,
+                >,
+            > {
                 use $crate::GeozeroGeometry;
-                let mut wkb_out: Vec<u8> = Vec::new();
+                let mut wkb_out = Vec::<u8>::new();
                 let mut writer = $crate::wkb::WkbWriter::with_opts(
                     &mut wkb_out,
                     $crate::wkb::WkbDialect::Geopackage,
@@ -132,10 +140,10 @@ macro_rules! impl_sqlx_gpkg_encode {
                 );
                 self.process_geom(&mut writer)
                     .expect("Failed to encode Geometry");
-                args.push(sqlx::sqlite::SqliteArgumentValue::Blob(
-                    std::borrow::Cow::Owned(wkb_out),
+                args.push(::sqlx::sqlite::SqliteArgumentValue::Blob(
+                    ::std::borrow::Cow::Owned(wkb_out),
                 ));
-                sqlx::encode::IsNull::No
+                ::std::result::Result::Ok(::sqlx::encode::IsNull::No)
             }
         }
     };

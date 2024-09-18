@@ -1,7 +1,7 @@
 [workspace]
 # Make sure this list matches the "Test Doc Build" section in .github/workflows/ci.yml
-members = ["geozero", "geozero-shp", "geozero-cli", "geozero-bench"]
-default-members = ["geozero", "geozero-shp", "geozero-cli"]
+members = ["geozero", "geozero-cli", "geozero-bench"]
+default-members = ["geozero", "geozero-cli"]
 resolver = "2"
 
 [workspace.package]
@@ -15,10 +15,10 @@ readme = "README.md"
 license = "MIT OR Apache-2.0"
 
 [workspace.dependencies]
-# This should point to the last published version
-# This is a major hack, due to some code (like geozero tests!) relying on flatgeobuf crate,
-# which in turn relies on geozero itself.
+# Used in geozero-cli and geozero-bench
+# geozero version must be in sync with flatgeobuf version!
 geozero = { version = "0.13.0", default-features = false }
+flatgeobuf = "4.3.0"
 
 async-trait = "0.1"
 byteorder = { version = "1.4.3", default-features = false }
@@ -30,20 +30,18 @@ dbase = "0.4"
 diesel = { version = "2.1.0", default-features = false, features = ["postgres"] }
 dup-indexer = "0.3"
 env_logger = "0.10.0"
-flatgeobuf = "4.0.0"
 futures-util = "0.3.28"
 gdal = { version = "0.16", default-features = false }
 gdal-sys = "0.9"
 geo = "0.26.0"
 geo-types = { version = "0.7.11", default-features = false }
 geojson = { version = "0.24.1", default-features = false }
-geos = "8.3"
+geos = "9.0"
 gpx = { version = "0.9", default-features = false }
 hex = "0.4"
 kdbush = "0.2"
 log = "0.4.19"
 lyon = "1.0.1"
-polylabel = "2.5"
 postgis = "0.9.0"
 postgres = "0.19"
 postgres-types = "0.2"
@@ -53,10 +51,10 @@ prost-build = "0.11.9"
 scroll = "0.11"
 seek_bufread = "1.2"
 serde_json = "1.0.104"
-sqlx = { version = "0.7", default-features = false }
+sqlx = { version = "0.8", default-features = false }
 thiserror = "1.0"
 tokio = { version = "1.30.0", default-features = false }
-wkt = "0.10.3"
+wkt = "0.11"
 
 [patch.crates-io]
 geozero = { path = "./geozero" }

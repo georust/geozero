@@ -131,14 +131,12 @@ pub fn process_csv_geom(
             processor.geometrycollection_begin(1, 0)?;
         }
 
-        crate::wkt::wkt_reader::process_wkt_geom_n(&wkt.item, record_idx, processor).map_err(
-            |e| {
-                // +2 to start at line 1 and to account for the header row
-                let line = record_idx + 2;
-                log::warn!("line {line}: invalid WKT: '{geometry_field}', record: {record:?}");
-                e
-            },
-        )?;
+        crate::wkt::wkt_reader::process_wkt_geom_n(&wkt, record_idx, processor).map_err(|e| {
+            // +2 to start at line 1 and to account for the header row
+            let line = record_idx + 2;
+            log::warn!("line {line}: invalid WKT: '{geometry_field}', record: {record:?}");
+            e
+        })?;
     }
 
     if !collection_started {

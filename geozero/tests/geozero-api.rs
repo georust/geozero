@@ -1,8 +1,6 @@
-use flatgeobuf::{FallibleStreamingIterator as _, FeatureProperties as _, FgbReader, GeometryType};
 use geozero::error::Result as GeozeroResult;
-use geozero::{ColumnValue, CoordDimensions, GeomProcessor, PropertyProcessor};
-use seek_bufread::BufReader;
-use std::fs::File;
+use geozero::wkt::Wkt;
+use geozero::{CoordDimensions, GeomProcessor, GeozeroGeometry};
 
 struct VertexCounter(u64);
 
@@ -17,14 +15,13 @@ impl GeomProcessor for VertexCounter {
 
 #[test]
 fn vertex_counter() -> Result<()> {
-    let mut filein = BufReader::new(File::open("tests/data/countries.fgb")?);
-    let mut fgb = FgbReader::open(&mut filein)?.select_bbox(8.8, 47.2, 9.5, 55.3)?;
-    let feature = fgb.next()?.unwrap();
-    let geometry = feature.geometry().unwrap();
+    let wkt = Wkt("MULTIPOLYGON (((40 40, 20 45, 45 30, 40 40)),
+                         ((35 10, 45 45, 15 40, 10 20, 35 10),
+                         (20 30, 35 35, 30 20, 20 30)))");
 
     let mut vertex_counter = VertexCounter(0);
-    geometry.process(&mut vertex_counter, GeometryType::MultiPolygon)?;
-    assert_eq!(vertex_counter.0, 24);
+    wkt.process_geom(&mut vertex_counter)?;
+    assert_eq!(vertex_counter.0, 13);
 
     Ok(())
 }
@@ -60,21 +57,18 @@ impl GeomProcessor for MaxHeightFinder {
 }
 
 #[test]
-#[ignore]
 fn max_height_finder() -> Result<()> {
-    let mut filein = BufReader::new(File::open(
-        "tests/data/geoz_lod1_gebaeude_max_3d_extract.fgb",
-    )?);
-    let mut fgb = FgbReader::open(&mut filein)?.select_all()?;
+    let points = Wkt("MULTIPOINTZ (10 40 200.0, 40 30 150.0, 20 20 457.1, 30 10 0.0)");
     let mut max_finder = MaxHeightFinder(0.0);
-    while let Some(feature) = fgb.next()? {
-        let geometry = feature.geometry().unwrap();
-        geometry.process(&mut max_finder, GeometryType::MultiPolygon)?;
-    }
+    points.process_geom(&mut max_finder)?;
     assert_eq!(max_finder.0, 457.1);
 
     Ok(())
 }
+
+/*
+// Broken: this example does work with Flatgeobuf, but not GeoJson
+// Disabled, since we don't want to have a circular dependency between flatgeobuf and geozero
 
 struct FeatureFinder;
 
@@ -86,20 +80,25 @@ impl PropertyProcessor for FeatureFinder {
 
 #[test]
 fn feature_finder() -> Result<()> {
-    let mut filein = BufReader::new(File::open("tests/data/countries.fgb")?);
-    let mut fgb = FgbReader::open(&mut filein)?.select_all()?;
+    let mut filein = BufReader::new(File::open("tests/data/countries.geojson")?);
+    let mut json = GeoJsonLineReader::new(&mut filein);
 
     let mut finder = FeatureFinder {};
-    while let Some(feature) = fgb.next()? {
-        let found = feature.process_properties(&mut finder);
-        if found.is_err() || found.unwrap() {
-            break;
-        }
-    }
-    let feature = fgb.cur_feature();
-    let props = feature.properties()?;
-    assert_eq!(props["id"], "DNK".to_string());
-    assert_eq!(props["name"], "Denmark".to_string());
+    // process_properties is not public. We should have feature iterators for all `GeozeroDatasource`s!
+    // json.process_properties(&mut finder);
+    //
+    // Using FgbReader:
+    // while let Some(feature) = fgb.next()? {
+    //     let found = feature.process_properties(&mut finder);
+    //     if found.is_err() || found.unwrap() {
+    //         break;
+    //     }
+    // }
+    // let feature = fgb.cur_feature();
+    // let props = feature.properties()?;
+    // assert_eq!(props["id"], "DNK".to_string());
+    // assert_eq!(props["name"], "Denmark".to_string());
 
     Ok(())
 }
+*/

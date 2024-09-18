@@ -255,7 +255,7 @@ mod postgis_sqlx {
     #[tokio::test]
     #[ignore]
     // Requires DATABASE_URL at compile time
-    #[cfg(feature = "dont-compile")]
+    #[cfg(not(test))] // Delete this line to compile the test
     async fn rust_geo_macro_query() -> Result<(), sqlx::Error> {
         let pool = pg::get_pool().await;
 
