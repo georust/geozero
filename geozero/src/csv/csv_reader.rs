@@ -1,6 +1,8 @@
 use crate::error::{GeozeroError, Result};
 use crate::{ColumnValue, FeatureProcessor, GeomProcessor, GeozeroDatasource, GeozeroGeometry};
 
+use crate::csv::csv_error::CsvError;
+
 use std::io::Read;
 use std::str::FromStr;
 
@@ -109,17 +111,14 @@ pub fn process_csv_geom(
     let geometry_idx = headers
         .iter()
         .position(|f| f == geometry_column)
-        .ok_or(GeozeroError::ColumnNotFound)?;
+        .ok_or(CsvError::ColumnNotFound)?;
 
     let mut collection_started = false;
 
     for (record_idx, record) in reader.into_records().enumerate() {
         let record = record?;
-        let geometry_field = record
-            .get(geometry_idx)
-            .ok_or(GeozeroError::ColumnNotFound)?;
-        let wkt = wkt::Wkt::from_str(geometry_field)
-            .map_err(|e| GeozeroError::Geometry(e.to_string()))?;
+        let geometry_field = record.get(geometry_idx).ok_or(CsvError::ColumnNotFound)?;
+        let wkt = wkt::Wkt::from_str(geometry_field).map_err(CsvError::WktError)?;
 
         // We don't know how many lines are in the file, so we dont' know the size of the geometry collection,
         // but at this point we *do* know that it's non-zero. Currently there aren't any other significant
@@ -132,12 +131,13 @@ pub fn process_csv_geom(
             processor.geometrycollection_begin(1, 0)?;
         }
 
-        crate::wkt::wkt_reader::process_wkt_geom_n(&wkt, record_idx, processor).map_err(|e| {
-            // +2 to start at line 1 and to account for the header row
-            let line = record_idx + 2;
-            log::warn!("line {line}: invalid WKT: '{geometry_field}', record: {record:?}");
-            e
-        })?;
+        crate::wkt::wkt_reader::process_wkt_geom_n(&wkt, record_idx, processor).inspect_err(
+            |_e| {
+                // +2 to start at line 1 and to account for the header row
+                let line = record_idx + 2;
+                log::warn!("line {line}: invalid WKT: '{geometry_field}', record: {record:?}");
+            },
+        )?;
     }
 
     if !collection_started {
@@ -159,7 +159,7 @@ pub fn process_csv_features(
     let geometry_idx = headers
         .iter()
         .position(|f| f == geometry_column)
-        .ok_or(GeozeroError::ColumnNotFound)?;
+        .ok_or(CsvError::ColumnNotFound)?;
 
     for (feature_idx, record) in reader.into_records().enumerate() {
         let record = record?;
@@ -182,21 +182,17 @@ pub fn process_csv_features(
 
         processor.properties_end()?;
 
-        let geometry_field = record
-            .get(geometry_idx)
-            .ok_or(GeozeroError::ColumnNotFound)?;
+        let geometry_field = record.get(geometry_idx).ok_or(CsvError::ColumnNotFound)?;
 
         // Do all formats allow empty geometries?
         if !geometry_field.is_empty() {
             processor.geometry_begin()?;
-            crate::wkt::wkt_reader::read_wkt(&mut geometry_field.as_bytes(), processor).map_err(
-                |e| {
+            crate::wkt::wkt_reader::read_wkt(&mut geometry_field.as_bytes(), processor)
+                .inspect_err(|_e| {
                     // +2 to start at line 1 and to account for the header row
                     let line = feature_idx + 2;
                     log::warn!("line {line}: invalid WKT: '{geometry_field}', record: {record:?}");
-                    e
-                },
-            )?;
+                })?;
             processor.geometry_end()?;
         }
 
