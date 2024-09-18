@@ -1,6 +1,6 @@
-//! CSV Error type.
 use thiserror::Error;
 
+/// CSV Error type.
 #[derive(Error, Debug)]
 pub enum CsvError {
     #[error("column not found or null")]
