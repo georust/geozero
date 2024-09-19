@@ -5,8 +5,7 @@ default-members = ["geozero", "geozero-cli"]
 resolver = "2"
 
 [workspace.package]
-# This version should match the version in [workspace.dependencies] below
-version = "0.13.0"
+version = "0.14.0"
 authors = ["Pirmin Kalberer <pka@sourcepole.ch>", "Yuri Astrakhan <YuriAstrakhan@gmail.com>"]
 edition = "2021"
 homepage = "https://github.com/georust/geozero"

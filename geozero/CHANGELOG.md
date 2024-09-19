@@ -1,7 +1,23 @@
-## Unreleased
+## 0.14.0 - (2024-09-19)
 
-* Added `WrappedXYProcessor` for pre-processing XY coordinates.
+* Update to `geos` 9.0
+  * <https://github.com/georust/geozero/pull/217>
+* Avoid copying string for WKT parsing
+  * <https://github.com/georust/geozero/pull/220>
+* Upgrade sqlx from 0.7 to 0.8
+  * <https://github.com/georust/geozero/pull/224>
+* Update to `wkt` 0.11
+  * <https://github.com/georust/geozero/pull/221>
+* Use floor for coordinate transformation in `mvt_writer`
+  * <https://github.com/georust/geozero/pull/229>
+* Integrate `shp` driver
+  * <https://github.com/georust/geozero/pull/233>
+* Drop `flatgeobuf` build dependency
+  * <https://github.com/georust/geozero/pull/235>
+* Added `WrappedXYProcessor` for pre-processing XY coordinates
   * <https://github.com/georust/geozero/pull/222>
+* CSV Error Refactor
+  * <https://github.com/georust/geozero/pull/216>
 
 ## 0.13.0 - (2024-05-17)
 
