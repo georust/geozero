@@ -1,4 +1,4 @@
-## 0.14.0 - (2024-09-19)
+## 0.14.0 - (2024-09-26)
 
 * Update to `geos` 9.0
   * <https://github.com/georust/geozero/pull/217>
@@ -18,6 +18,8 @@
   * <https://github.com/georust/geozero/pull/222>
 * CSV Error Refactor
   * <https://github.com/georust/geozero/pull/216>
+* Update to `diesel` 2.2.3
+  * <https://github.com/georust/geozero/pull/239>
 
 ## 0.13.0 - (2024-05-17)
 
