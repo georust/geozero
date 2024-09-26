@@ -16,8 +16,10 @@ license = "MIT OR Apache-2.0"
 [workspace.dependencies]
 # Used in geozero-cli and geozero-bench
 # geozero version must be in sync with flatgeobuf version!
-geozero = { version = "0.13.0", default-features = false }
-flatgeobuf = "4.3.0"
+#geozero = { version = "0.14.0", default-features = false }
+geozero = { git = "https://github.com/pka/geozero", branch = "release-0-14", default-features = false }
+#flatgeobuf = "4.4.0"
+flatgeobuf = { git = "https://github.com/pka/flatgeobuf", branch = "geozero-0-14" }
 
 async-trait = "0.1"
 byteorder = { version = "1.4.3", default-features = false }
@@ -56,7 +58,4 @@ tokio = { version = "1.30.0", default-features = false }
 wkt = "0.11"
 
 [patch.crates-io]
-geozero = { path = "./geozero" }
-#flatgeobuf = { path = "../../gis/flatgeobuf/src/rust" }
-# use pre-release version of flatgeobuf for testing
-flatgeobuf = { git = "https://github.com/michaelkirk/flatgeobuf", branch = "mkirk/geozero-0.13.0" }
+#geozero = { path = "./geozero" }
