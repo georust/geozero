@@ -360,7 +360,7 @@ mod postgis_sqlx {
             }
         }
 
-        impl<'de> Decode<'de, Postgres> for Text {
+        impl Decode<'_, Postgres> for Text {
             fn decode(value: PgValueRef) -> Result<Self, BoxDynError> {
                 if value.is_null() {
                     return Ok(Text("EMPTY".to_string()));
