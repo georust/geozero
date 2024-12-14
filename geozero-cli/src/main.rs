@@ -152,6 +152,9 @@ fn fgb_to_geozero_err(fgb_err: flatgeobuf::Error) -> GeozeroError {
             GeozeroError::Dataset(format!("Invalid Flatbuffer: {e}"))
         }
         flatgeobuf::Error::IO(io) => GeozeroError::IoError(io),
+        flatgeobuf::Error::UnsupportedGeometryType(error_message) => {
+            GeozeroError::Dataset(error_message)
+        }
     }
 }
 
