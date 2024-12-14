@@ -183,7 +183,7 @@ mod test {
     #[test]
     fn point_geom() {
         let geojson = r#"{"type": "Point", "coordinates": [1, 1]}"#;
-        let wkt = "POINT (1.0000000000000000 1.0000000000000000)";
+        let wkt = "POINT (1 1)";
         let mut geos = GeosWriter::new();
         assert!(read_geojson(geojson.as_bytes(), &mut geos).is_ok());
         assert_eq!(geos.geometry().to_wkt().unwrap(), wkt);
@@ -192,7 +192,7 @@ mod test {
     #[test]
     fn multipoint_geom() {
         let geojson = GeoJson(r#"{"type": "MultiPoint", "coordinates": [[1, 1], [2, 2]]}"#);
-        let wkt = "MULTIPOINT (1.0000000000000000 1.0000000000000000, 2.0000000000000000 2.0000000000000000)";
+        let wkt = "MULTIPOINT ((1 1), (2 2))";
         let geos = geojson.to_geos().unwrap();
         assert_eq!(geos.to_wkt().unwrap(), wkt);
     }
@@ -200,7 +200,7 @@ mod test {
     #[test]
     fn line_geom() {
         let geojson = GeoJson(r#"{"type": "LineString", "coordinates": [[1,1], [2,2]]}"#);
-        let wkt = "LINESTRING (1.0000000000000000 1.0000000000000000, 2.0000000000000000 2.0000000000000000)";
+        let wkt = "LINESTRING (1 1, 2 2)";
         let geos = geojson.to_geos().unwrap();
         assert_eq!(geos.to_wkt().unwrap(), wkt);
     }
@@ -217,7 +217,7 @@ mod test {
     fn multiline_geom() {
         let geojson =
             GeoJson(r#"{"type": "MultiLineString", "coordinates": [[[1,1],[2,2]],[[3,3],[4,4]]]}"#);
-        let wkt = "MULTILINESTRING ((1.0000000000000000 1.0000000000000000, 2.0000000000000000 2.0000000000000000), (3.0000000000000000 3.0000000000000000, 4.0000000000000000 4.0000000000000000))";
+        let wkt = "MULTILINESTRING ((1 1, 2 2), (3 3, 4 4))";
         let geos = geojson.to_geos().unwrap();
         assert_eq!(geos.to_wkt().unwrap(), wkt);
     }
@@ -233,7 +233,7 @@ mod test {
             ]]
         }"#;
         let geojson = GeoJson(geojson);
-        let wkt = "POLYGON ((0.0000000000000000 0.0000000000000000, 0.0000000000000000 3.0000000000000000, 3.0000000000000000 3.0000000000000000, 3.0000000000000000 0.0000000000000000, 0.0000000000000000 0.0000000000000000), (0.2000000000000000 0.2000000000000000, 0.2000000000000000 2.0000000000000000, 2.0000000000000000 2.0000000000000000, 2.0000000000000000 0.2000000000000000, 0.2000000000000000 0.2000000000000000))";
+        let wkt = "POLYGON ((0 0, 0 3, 3 3, 3 0, 0 0), (0.2 0.2, 0.2 2, 2 2, 2 0.2, 0.2 0.2))";
         let geos = geojson.to_geos().unwrap();
         assert_eq!(geos.to_wkt().unwrap(), wkt);
     }
@@ -247,7 +247,7 @@ mod test {
             ]]]
         }"#;
         let geojson = GeoJson(geojson);
-        let wkt = "MULTIPOLYGON (((0.0000000000000000 0.0000000000000000, 0.0000000000000000 1.0000000000000000, 1.0000000000000000 1.0000000000000000, 1.0000000000000000 0.0000000000000000, 0.0000000000000000 0.0000000000000000)))";
+        let wkt = "MULTIPOLYGON (((0 0, 0 1, 1 1, 1 0, 0 0)))";
         let geos = geojson.to_geos().unwrap();
         assert_eq!(geos.to_wkt().unwrap(), wkt);
     }
@@ -267,10 +267,7 @@ mod test {
         let geo =
             geo_types::Geometry::try_from(wkt::Wkt::from_str("POINT (10 20)").unwrap()).unwrap();
         let geos = geo.to_geos()?;
-        assert_eq!(
-            &geos.to_wkt().unwrap(),
-            "POINT (10.0000000000000000 20.0000000000000000)"
-        );
+        assert_eq!(&geos.to_wkt().unwrap(), "POINT (10 20)");
         Ok(())
     }
 

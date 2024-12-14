@@ -17,7 +17,8 @@ license = "MIT OR Apache-2.0"
 # Used in geozero-cli and geozero-bench
 # geozero version must be in sync with flatgeobuf version!
 geozero = { version = "0.14.0", default-features = false }
-flatgeobuf = "4.4.0"
+# flatgeobuf had a breaking (!) change released in 4.5.0, so we'll pin until we adapt to the new version.
+flatgeobuf = ">=4.4.0,<4.5.0"
 
 async-trait = "0.1"
 byteorder = { version = "1.4.3", default-features = false }

@@ -4,7 +4,7 @@ use std::io;
 /// GPX geometry collection
 pub struct Gpx<'a>(pub &'a str);
 
-impl<'a> crate::GeozeroGeometry for Gpx<'a> {
+impl crate::GeozeroGeometry for Gpx<'_> {
     fn process_geom<P: crate::GeomProcessor>(&self, processor: &mut P) -> crate::error::Result<()> {
         read_gpx(&mut self.0.as_bytes(), processor)
     }

@@ -33,7 +33,7 @@ impl<'a> Tessellator<'a> {
     }
 }
 
-impl<'a> GeomProcessor for Tessellator<'a> {
+impl GeomProcessor for Tessellator<'_> {
     fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
         if idx == 0 {
             self.has_started = true;
@@ -124,8 +124,8 @@ fn tessellate_poly(path: &Path, out: &dyn VertexOutput) {
     }
 }
 
-impl<'a> PropertyProcessor for Tessellator<'a> {}
-impl<'a> FeatureProcessor for Tessellator<'a> {}
+impl PropertyProcessor for Tessellator<'_> {}
+impl FeatureProcessor for Tessellator<'_> {}
 
 /// OBJ writer
 pub struct ObjWriter;

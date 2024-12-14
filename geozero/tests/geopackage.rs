@@ -82,10 +82,7 @@ async fn geos_query() -> Result<(), sqlx::Error> {
         .fetch_one(&pool)
         .await?;
     let geom = row.0.geometry.unwrap();
-    assert_eq!(
-        geom.to_wkt().unwrap(),
-        "POINT (1.1000000000000001 1.1000000000000001)"
-    );
+    assert_eq!(geom.to_wkt().unwrap(), "POINT (1.1 1.1)");
 
     let row: (wkb::Decode<geos::Geometry>,) =
         sqlx::query_as("SELECT geom FROM pt2d WHERE geom IS NULL")
