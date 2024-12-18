@@ -7,7 +7,7 @@ use geo_types::{
 use std::mem;
 
 /// Generator for geo-types geometry type.
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct GeoWriter {
     geoms: Vec<Geometry<f64>>,
     /// Stack of any in-progress (potentially nested) GeometryCollections
@@ -34,6 +34,10 @@ impl GeoWriter {
                 Some(Geometry::GeometryCollection(GeometryCollection(geoms)))
             }
         }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.geoms.is_empty()
     }
 
     fn finish_geometry(&mut self, geometry: Geometry<f64>) -> Result<()> {
