@@ -28,13 +28,9 @@ struct Cli {
     extent: Option<Extent>,
 
     /// The path or URL to the input file to read
-    ///
-    /// Supported formats: CSV, GeoJSON, GeoJSON Lines, FGB, WKT, Parquet
     input: String,
 
     /// The path to the file to write
-    ///
-    /// Supported formats: CSV, GeoJSON, GeoJSON Lines, FGB, WKT, SVG
     dest: PathBuf,
 }
 
