@@ -27,7 +27,7 @@ struct Cli {
     #[arg(short, long, value_parser = parse_extent)]
     extent: Option<Extent>,
 
-    /// The path or URL to the input file to read
+    /// The path to the input file, or the URL for remote FlatGeobuf files
     input: String,
 
     /// The path to the file to write
