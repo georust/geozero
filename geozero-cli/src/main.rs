@@ -1,5 +1,8 @@
 use clap::Parser;
 use flatgeobuf::{FgbReader, FgbWriter, GeometryType, HttpFgbReader};
+use geo::Rect;
+use geoarrow::io::parquet::{GeoParquetReaderOptions, GeoParquetRecordBatchReaderBuilder};
+use geoarrow::io::RecordBatchReader;
 use geozero::csv::{CsvReader, CsvWriter};
 use geozero::error::{GeozeroError, Result};
 use geozero::geojson::{GeoJsonLineReader, GeoJsonReader, GeoJsonWriter};
@@ -24,7 +27,7 @@ struct Cli {
     #[arg(short, long, value_parser = parse_extent)]
     extent: Option<Extent>,
 
-    /// The path or URL to the FlatGeobuf file to read
+    /// The path to the input file, or the URL for remote FlatGeobuf files
     input: String,
 
     /// The path to the file to write
@@ -88,6 +91,26 @@ async fn transform<P: FeatureProcessor>(args: Cli, processor: &mut P) -> Result<
             Some("jsonl") | Some("geojsonl") => {
                 GeozeroDatasource::process(&mut GeoJsonLineReader::new(filein), processor)
             }
+            Some("parquet") | Some("geoparquet") => {
+                let mut geo_options = GeoParquetReaderOptions::default();
+                if let Some(bbox) = &args.extent {
+                    geo_options = geo_options.with_bbox(
+                        Rect::new((bbox.minx, bbox.miny), (bbox.maxx, bbox.maxy)),
+                        None,
+                    );
+                }
+                let reader = GeoParquetRecordBatchReaderBuilder::try_new_with_options(
+                    File::open(path_in)?,
+                    Default::default(),
+                    geo_options,
+                )
+                .map_err(arrow_to_geozero_err)?
+                .build()
+                .map_err(arrow_to_geozero_err)?;
+
+                let mut wrapper = RecordBatchReader::new(Box::new(reader));
+                wrapper.process(processor)
+            }
             Some("fgb") => {
                 let ds = FgbReader::open(&mut filein).map_err(fgb_to_geozero_err)?;
                 let mut ds = if let Some(bbox) = &args.extent {
@@ -127,12 +150,20 @@ async fn process(args: Cli) -> Result<()> {
     }
     Ok(())
 }
+
 fn set_dimensions(processor: &mut SvgWriter<&mut BufWriter<File>>, extent: Option<Extent>) {
     if let Some(extent) = extent {
         processor.set_dimensions(extent.minx, extent.miny, extent.maxx, extent.maxy, 800, 600);
     } else {
         // TODO: get image size as opts and full extent from data
         processor.set_dimensions(-180.0, -90.0, 180.0, 90.0, 800, 600);
+    }
+}
+
+fn arrow_to_geozero_err(parquet_err: geoarrow::error::GeoArrowError) -> GeozeroError {
+    match parquet_err {
+        geoarrow::error::GeoArrowError::IOError(e) => GeozeroError::IoError(e),
+        err => GeozeroError::Dataset(format!("Unknown GeoArrow error: {err:?}")),
     }
 }
 
