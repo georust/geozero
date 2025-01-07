@@ -216,7 +216,7 @@ mod test {
 
     #[test]
     fn line_geom_3d() {
-        let wkt = "LINESTRING(1 1 10,2 2 20)";
+        let wkt = "LINESTRING Z(1 1 10,2 2 20)";
         let ggeom = GGeometry::new_from_wkt(wkt).unwrap();
 
         let mut wkt_data: Vec<u8> = Vec::new();
