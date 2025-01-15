@@ -29,6 +29,10 @@ struct Cli {
 
     /// The path to the file to write
     dest: PathBuf,
+
+    /// Will be placed within <style>...</style> tags of the top level svg element.
+    #[arg(long)]
+    svg_style: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -123,6 +127,7 @@ async fn process(args: Cli) -> Result<()> {
             let extent = get_extent(&args).await?;
             let mut processor = SvgWriter::new(&mut fout, true);
             // TODO: get width/height from args
+            processor.set_style(args.svg_style.clone());
             processor.set_dimensions(extent.minx, extent.miny, extent.maxx, extent.maxy, 800, 600);
             transform(&args, &mut processor).await?;
         }
