@@ -1,5 +1,6 @@
 ## UNRELEASED
 
+* Add `BoundsProcessor` to compute bounds of geometry
 * Update Deps:
   * BREAKING: `flatgeobuf` to 4.5.0
   * BREAKING: `dbase` to 0.5.0
