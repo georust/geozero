@@ -7,6 +7,7 @@ pub struct SvgWriter<W: Write> {
     out: W,
     invert_y: bool,
     view_box: Option<(f64, f64, f64, f64)>,
+    style: Option<String>,
     size: Option<(u32, u32)>,
 }
 
@@ -16,6 +17,7 @@ impl<W: Write> SvgWriter<W> {
             out,
             invert_y,
             view_box: None,
+            style: None,
             size: None,
         }
     }
@@ -34,6 +36,9 @@ impl<W: Write> SvgWriter<W> {
             Some((xmin, ymin, xmax, ymax))
         };
         self.size = Some((width, height));
+    }
+    pub fn set_style(&mut self, style: Option<String>) {
+        self.style = style;
     }
 }
 
@@ -55,7 +60,14 @@ impl<W: Write> FeatureProcessor for SvgWriter<W> {
         }
         self.out.write_all(
             br#"stroke-linecap="round" stroke-linejoin="round">
-<g id=""#,
+"#)?;
+
+        if let Some(style) = &self.style {
+            writeln!(self.out, "<style>{style}</style>")?;
+        }
+
+        self.out.write_all(
+br#"<g id=""#,
         )?;
         if let Some(name) = name {
             self.out.write_all(name.as_bytes())?;

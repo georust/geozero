@@ -1,5 +1,6 @@
 ## UNRELEASED
 
+* Add `style` option to SVGWriter for writing \<style\> tags
 * Add `BoundsProcessor` to compute bounds of geometry
 * Update Deps:
   * BREAKING: `flatgeobuf` to 4.5.0
