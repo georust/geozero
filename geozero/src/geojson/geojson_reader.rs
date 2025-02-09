@@ -321,11 +321,11 @@ mod test {
         let mut out = WktWriter::with_dims(&mut wkt_data, CoordDimensions::xyz());
         assert!(read_geojson_geom(&mut geojson.as_bytes(), &mut out).is_ok());
         let wkt = std::str::from_utf8(&wkt_data).unwrap();
-        assert_eq!(wkt, "LINESTRING(1 1 10,2 2 20)");
+        assert_eq!(wkt, "LINESTRING Z(1 1 10,2 2 20)");
 
         let geojson = r#"{"type": "LineString", "coordinates": [[1,1],[2,2]]}"#;
         let mut wkt_data: Vec<u8> = Vec::new();
-        let mut out = WktWriter::with_dims(&mut wkt_data, CoordDimensions::xyz());
+        let mut out = WktWriter::with_dims(&mut wkt_data, CoordDimensions::xy());
         assert!(read_geojson_geom(&mut geojson.as_bytes(), &mut out).is_ok());
         let wkt = std::str::from_utf8(&wkt_data).unwrap();
         assert_eq!(wkt, "LINESTRING(1 1,2 2)");
