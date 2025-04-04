@@ -1,10 +1,21 @@
 use crate::error::Result;
 use crate::{GeomProcessor, GeozeroGeometry};
-use geo_types::{Coord, Geometry, LineString, Polygon};
+use geo_types::{Coord, Point, Geometry, LineString, Polygon};
 
 impl GeozeroGeometry for Geometry<f64> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
         process_geom(self, processor)
+    }
+}
+
+impl GeozeroGeometry for Point<f64> {
+    fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()>
+    where
+        Self: Sized,
+    {
+        processor.point_begin(0)?;
+        process_coord(&self.0, 0, processor)?;
+        processor.point_end(0)
     }
 }
 
