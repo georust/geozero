@@ -57,7 +57,7 @@ async fn rust_geo_query() -> Result<(), sqlx::Error> {
         .fetch_one(&pool)
         .await?;
     let geom = row.0.geometry.unwrap();
-    assert_eq!(&format!("{geom:?}"), "POINT (1.1 1.1)");
+    assert_eq!(&format!("{geom:?}"), "POINT(1.1 1.1)");
 
     Ok(())
 }
