@@ -7,6 +7,7 @@ pub struct SvgWriter<W: Write> {
     out: W,
     invert_y: bool,
     view_box: Option<(f64, f64, f64, f64)>,
+    style: Option<String>,
     size: Option<(u32, u32)>,
 }
 
@@ -16,6 +17,7 @@ impl<W: Write> SvgWriter<W> {
             out,
             invert_y,
             view_box: None,
+            style: None,
             size: None,
         }
     }
@@ -34,6 +36,9 @@ impl<W: Write> SvgWriter<W> {
             Some((xmin, ymin, xmax, ymax))
         };
         self.size = Some((width, height));
+    }
+    pub fn set_style(&mut self, style: Option<String>) {
+        self.style = style;
     }
 }
 
@@ -55,8 +60,14 @@ impl<W: Write> FeatureProcessor for SvgWriter<W> {
         }
         self.out.write_all(
             br#"stroke-linecap="round" stroke-linejoin="round">
-<g id=""#,
+"#,
         )?;
+
+        if let Some(style) = &self.style {
+            writeln!(self.out, "<style>{style}</style>")?;
+        }
+
+        self.out.write_all(br#"<g id=""#)?;
         if let Some(name) = name {
             self.out.write_all(name.as_bytes())?;
         }
@@ -131,7 +142,7 @@ impl<W: Write> PropertyProcessor for SvgWriter<W> {}
 mod test {
     use super::*;
     use crate::geojson::read_geojson;
-    use crate::ToSvg;
+    use crate::{GeozeroDatasource, GeozeroGeometry, ToSvg};
     use geo_types::polygon;
 
     #[test]
@@ -302,5 +313,53 @@ mod test {
 </g>
 </svg>"#
         );
+    }
+
+    #[test]
+    fn test_style() {
+        let geojson = serde_json::json!({
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [-122.4194, 37.7749],
+                    [-118.2437, 34.0522]
+                ]
+            },
+            "properties": {
+                "name": "San Francisco to Los Angeles"
+            }
+        })
+        .to_string();
+        let mut geom = crate::geojson::GeoJson(&geojson);
+
+        {
+            let mut output: Vec<u8> = vec![];
+            let mut svg_writer = SvgWriter::new(&mut output, false);
+            geom.process_geom(&mut svg_writer).unwrap();
+            let svg_output = String::from_utf8(output).unwrap();
+            assert_eq!(
+                svg_output,
+                r#"<path d="-122.4194 37.7749 -118.2437 34.0522 "/>"#
+            );
+        }
+
+        {
+            let mut output: Vec<u8> = vec![];
+            let mut svg_writer = SvgWriter::new(&mut output, false);
+            svg_writer.set_style(Some("path { opacity: 0.123; }".to_string()));
+            GeozeroDatasource::process(&mut geom, &mut svg_writer).unwrap();
+            let svg_output = String::from_utf8(output).unwrap();
+            assert_eq!(
+                svg_output,
+                r#"<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny" stroke-linecap="round" stroke-linejoin="round">
+<style>path { opacity: 0.123; }</style>
+<g id="">
+<path d="-122.4194 37.7749 -118.2437 34.0522 "/>
+</g>
+</svg>"#
+            );
+        }
     }
 }
