@@ -3,6 +3,7 @@ mod geo_types_feature_writer;
 pub(crate) mod geo_types_reader;
 pub(crate) mod geo_types_writer;
 
+pub use geo_types_feature_writer::*;
 pub use geo_types_reader::*;
 pub use geo_types_writer::*;
 

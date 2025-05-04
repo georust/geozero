@@ -10,8 +10,8 @@ pub type GeoProperties = HashMap<String, OwnedColumnValue>;
 
 #[derive(Debug, PartialEq)]
 pub struct GeoFeature {
-    geometry: geo_types::Geometry,
-    properties: GeoProperties,
+    pub geometry: geo_types::Geometry,
+    pub properties: GeoProperties,
 }
 
 #[derive(Debug, Default)]
