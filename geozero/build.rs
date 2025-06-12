@@ -9,7 +9,7 @@ use std::{
 #[cfg(feature = "with-mvt")]
 fn compile_protos() -> Result<(), Box<dyn std::error::Error>> {
     // override the build location, in order to check in the changes to proto files
-    env::set_var("OUT_DIR", "src/mvt");
+    unsafe{ env::set_var("OUT_DIR", "src/mvt"); }
 
     if !Path::new("src/mvt/vector_tile.rs").exists() {
         prost_build::compile_protos(&["src/mvt/vector_tile.proto"], &["src/mvt/"])?;

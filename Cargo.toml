@@ -2,12 +2,12 @@
 # Make sure this list matches the "Test Doc Build" section in .github/workflows/ci.yml
 members = ["geozero", "geozero-cli", "geozero-bench"]
 default-members = ["geozero", "geozero-cli"]
-resolver = "2"
+resolver = "3"
 
 [workspace.package]
 version = "0.14.0"
 authors = ["Pirmin Kalberer <pka@sourcepole.ch>", "Yuri Astrakhan <YuriAstrakhan@gmail.com>"]
-edition = "2021"
+edition = "2024"
 homepage = "https://github.com/georust/geozero"
 repository = "https://github.com/georust/geozero"
 readme = "README.md"
