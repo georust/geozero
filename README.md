@@ -259,3 +259,10 @@ read_geojson_geom(&mut f, &mut points)?;
 points.index.build_index();
 ```
 Full source code: [kdbush.rs](./geozero/tests/kdbush.rs)
+
+## Dependencies
+
+```sh
+# Ubuntu/Debian/Mint
+apt-get install -y libgeos-dev libgdal-dev
+```
