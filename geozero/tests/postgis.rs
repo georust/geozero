@@ -16,9 +16,9 @@ mod pg {
 #[cfg(feature = "with-postgis-postgres")]
 mod postgis_postgres {
     use crate::pg::get_db_string;
+    use geozero::ToWkt as _;
     use geozero::wkb;
     use geozero::wkt::WktWriter;
-    use geozero::ToWkt as _;
 
     #[test]
     #[ignore]
@@ -144,8 +144,8 @@ mod postgis_postgres {
 mod postgis_sqlx {
     use super::PointZ;
     use crate::pg;
-    use geozero::wkb;
     use geozero::ToWkt as _;
+    use geozero::wkb;
 
     #[tokio::test]
     #[ignore]
@@ -346,9 +346,9 @@ mod postgis_sqlx {
     mod register_type {
         use super::*;
         use geozero::wkt::WktWriter;
+        use sqlx::ValueRef;
         use sqlx::decode::Decode;
         use sqlx::postgres::{PgTypeInfo, PgValueRef, Postgres};
-        use sqlx::ValueRef;
 
         type BoxDynError = Box<dyn std::error::Error + Send + Sync>;
 

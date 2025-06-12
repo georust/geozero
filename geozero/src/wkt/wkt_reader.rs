@@ -191,8 +191,8 @@ fn process_polygon<P: GeomProcessor>(
 #[cfg(all(test, feature = "with-geo"))]
 mod test {
     use super::*;
-    use crate::geo_types::conversion::ToGeo;
     use crate::ToWkt;
+    use crate::geo_types::conversion::ToGeo;
     use geo_types::{line_string, point, polygon};
 
     #[test]

@@ -1,5 +1,5 @@
 use crate::{
-    error::Result, ColumnValue, CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcessor,
+    ColumnValue, CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcessor, error::Result,
 };
 
 /// Wraps another [`FeatureProcessor`], first transforming coordinates.

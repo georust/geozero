@@ -1,6 +1,6 @@
-use crate::shp::shp_reader::{read_shape, RecordHeader};
-use crate::shp::shx_reader::{read_index_file, ShapeIndex};
-use crate::shp::{header, Error};
+use crate::shp::shp_reader::{RecordHeader, read_shape};
+use crate::shp::shx_reader::{ShapeIndex, read_index_file};
+use crate::shp::{Error, header};
 use crate::{FeatureProcessor, FeatureProperties, GeomProcessor};
 pub use dbase::{FieldInfo, FieldType};
 use std::fs::File;

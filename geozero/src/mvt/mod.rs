@@ -18,10 +18,10 @@ pub use prost::Message;
 pub use vector_tile::*;
 
 pub(crate) mod conversion {
-    use crate::error::Result;
-    use crate::mvt::vector_tile::tile;
-    use crate::mvt::MvtWriter;
     use crate::GeozeroGeometry;
+    use crate::error::Result;
+    use crate::mvt::MvtWriter;
+    use crate::mvt::vector_tile::tile;
 
     /// Convert to MVT geometry.
     pub trait ToMvt {
@@ -71,8 +71,8 @@ pub use mvt_error::MvtError;
 #[cfg(feature = "with-wkb")]
 mod wkb {
     use crate::error::Result;
-    use crate::mvt::vector_tile::tile;
     use crate::mvt::MvtWriter;
+    use crate::mvt::vector_tile::tile;
     use crate::wkb::{FromWkb, WkbDialect};
     use std::io::Read;
 

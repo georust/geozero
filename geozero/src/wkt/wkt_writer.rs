@@ -237,11 +237,11 @@ impl<W: Write> FeatureProcessor for WktWriter<W> {}
 
 #[cfg(test)]
 mod test {
+    use crate::ToWkt;
     #[cfg(feature = "with-wkb")]
     use crate::wkb::{FromWkb, WkbDialect};
     #[cfg(feature = "with-wkb")]
     use crate::wkt::Ewkt;
-    use crate::ToWkt;
 
     #[test]
     #[cfg(feature = "with-geo")]

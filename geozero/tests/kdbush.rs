@@ -1,6 +1,6 @@
+use geozero::GeozeroDatasource;
 use geozero::error::Result;
 use geozero::geojson::GeoJsonReader;
-use geozero::GeozeroDatasource;
 use kdbush::*;
 use std::fs::File;
 

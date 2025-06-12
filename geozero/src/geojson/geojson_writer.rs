@@ -244,9 +244,9 @@ impl<W: Write> PropertyProcessor for GeoJsonWriter<W> {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::ToJson;
     use crate::geojson::read_geojson;
     use crate::wkt::Wkt;
-    use crate::ToJson;
 
     #[test]
     fn geometries() -> Result<()> {

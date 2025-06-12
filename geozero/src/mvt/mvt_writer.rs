@@ -1,10 +1,10 @@
 //! Encode geometries according to MVT spec
 //! <https://github.com/mapbox/vector-tile-spec/tree/master/2.1>
 
+use crate::GeomProcessor;
 use crate::error::Result;
 use crate::mvt::mvt_commands::{Command, CommandInteger, ParameterInteger};
 use crate::mvt::vector_tile::{tile, tile::GeomType};
-use crate::GeomProcessor;
 
 use super::mvt_error::MvtError;
 
@@ -178,8 +178,8 @@ impl GeomProcessor for MvtWriter {
 #[cfg(test)]
 mod test_mvt {
     use super::*;
-    use crate::mvt::vector_tile::Tile;
     use crate::mvt::TileValue;
+    use crate::mvt::vector_tile::Tile;
 
     // https://github.com/mapbox/vector-tile-spec/tree/master/2.1#45-example
     const TILE_EXAMPLE: &str = r#"Tile {
@@ -391,9 +391,9 @@ mod test_mvt {
 #[cfg(feature = "with-geojson")]
 mod test {
     use super::*;
-    use crate::geojson::conversion::ToJson;
-    use crate::geojson::GeoJson;
     use crate::ToMvt;
+    use crate::geojson::GeoJson;
+    use crate::geojson::conversion::ToJson;
     use serde_json::json;
 
     // https://github.com/mapbox/vector-tile-spec/tree/master/2.1#435-example-geometry-encodings
