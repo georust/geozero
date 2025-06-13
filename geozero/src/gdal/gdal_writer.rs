@@ -188,8 +188,8 @@ impl FeatureProcessor for GdalWriter {}
 #[cfg(all(feature = "with-wkt", feature = "with-geojson"))]
 mod test {
     use super::*;
-    use crate::geojson::{read_geojson, GeoJson};
     use crate::ToGdal;
+    use crate::geojson::{GeoJson, read_geojson};
 
     #[test]
     fn point_geom() {

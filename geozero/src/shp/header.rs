@@ -1,5 +1,5 @@
-use crate::shp::point_z::BBoxZ;
 use crate::shp::Error;
+use crate::shp::point_z::BBoxZ;
 use byteorder::{BigEndian, LittleEndian, ReadBytesExt};
 use std::fmt;
 use std::io::Read;

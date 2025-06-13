@@ -9,8 +9,8 @@ pub use geo_types_writer::*;
 
 pub(crate) mod conversion {
     use crate::error::{GeozeroError, Result};
-    use crate::geo_types::geo_types_feature_writer::{GeoFeature, GeoFeatureWriter};
     use crate::geo_types::GeoWriter;
+    use crate::geo_types::geo_types_feature_writer::{GeoFeature, GeoFeatureWriter};
     use crate::{GeozeroDatasource, GeozeroGeometry};
 
     /// Convert to geo-types Geometry.

@@ -289,8 +289,8 @@ impl GeoFeature {
 
 #[cfg(test)]
 mod tests {
-    use crate::geojson::GeoJsonReader;
     use crate::ToGeoFeatures;
+    use crate::geojson::GeoJsonReader;
     use std::fs::File;
     #[test]
     fn from_json() {

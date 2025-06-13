@@ -1,4 +1,4 @@
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, criterion_group, criterion_main};
 use geozero::ToGeo;
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -216,8 +216,8 @@ mod gpkg {
 
 mod gdal {
     use super::Extent;
-    use gdal::vector::{Geometry, Layer, LayerAccess};
     use gdal::Dataset;
+    use gdal::vector::{Geometry, Layer, LayerAccess};
     use std::path::Path;
 
     pub(super) fn gdal_read(

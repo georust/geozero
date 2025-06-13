@@ -1,4 +1,4 @@
-use geozero::{wkt::Wkt, ToJson};
+use geozero::{ToJson, wkt::Wkt};
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[test]

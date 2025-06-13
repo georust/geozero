@@ -19,7 +19,7 @@ fn process_geom_n<P: GeomProcessor>(
     processor: &mut P,
 ) -> Result<()> {
     match geom {
-        Geometry::Point(ref geom) => {
+        Geometry::Point(geom) => {
             processor.point_begin(idx)?;
             process_coord(&geom.0, 0, processor)?;
             processor.point_end(idx)
@@ -30,30 +30,30 @@ fn process_geom_n<P: GeomProcessor>(
             process_coord(&geom.end, 1, processor)?;
             processor.linestring_end(true, idx)
         }
-        Geometry::LineString(ref geom) => process_linestring(geom, true, idx, processor),
-        Geometry::Polygon(ref geom) => process_polygon(geom, true, idx, processor),
-        Geometry::MultiPoint(ref geom) => {
+        Geometry::LineString(geom) => process_linestring(geom, true, idx, processor),
+        Geometry::Polygon(geom) => process_polygon(geom, true, idx, processor),
+        Geometry::MultiPoint(geom) => {
             processor.multipoint_begin(geom.0.len(), idx)?;
             for (i, pt) in geom.0.iter().enumerate() {
                 process_coord(&pt.0, i, processor)?;
             }
             processor.multipoint_end(idx)
         }
-        Geometry::MultiLineString(ref geom) => {
+        Geometry::MultiLineString(geom) => {
             processor.multilinestring_begin(geom.0.len(), idx)?;
             for (i, line) in geom.0.iter().enumerate() {
                 process_linestring(line, false, i, processor)?;
             }
             processor.multilinestring_end(idx)
         }
-        Geometry::MultiPolygon(ref geom) => {
+        Geometry::MultiPolygon(geom) => {
             processor.multipolygon_begin(geom.0.len(), idx)?;
             for (i, poly) in geom.0.iter().enumerate() {
                 process_polygon(poly, false, i, processor)?;
             }
             processor.multipolygon_end(idx)
         }
-        Geometry::GeometryCollection(ref geom) => {
+        Geometry::GeometryCollection(geom) => {
             processor.geometrycollection_begin(geom.0.len(), idx)?;
             for (i, g) in geom.0.iter().enumerate() {
                 process_geom_n(g, i, processor)?;
@@ -116,8 +116,8 @@ fn process_polygon<P: GeomProcessor>(
 #[cfg(feature = "with-wkt")]
 mod test {
     use super::*;
-    use crate::wkt::WktWriter;
     use crate::ToWkt;
+    use crate::wkt::WktWriter;
     use std::convert::TryFrom;
     use std::str::FromStr;
 

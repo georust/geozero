@@ -1,6 +1,6 @@
 use crate::{
-    error::{GeozeroError, Result},
     FeatureProcessor, GeomProcessor, GeozeroDatasource, GeozeroGeometry,
+    error::{GeozeroError, Result},
 };
 
 use super::{process_geojson_geom_n, process_properties};

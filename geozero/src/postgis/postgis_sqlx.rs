@@ -1,9 +1,9 @@
-use crate::wkb::{self, FromWkb};
 use crate::GeozeroGeometry;
+use crate::wkb::{self, FromWkb};
+use sqlx::ValueRef;
 use sqlx::decode::Decode;
 use sqlx::encode::{Encode, IsNull};
 use sqlx::postgres::{PgArgumentBuffer, PgHasArrayType, PgTypeInfo, PgValueRef, Postgres};
-use sqlx::ValueRef;
 
 type BoxDynError = Box<dyn std::error::Error + Send + Sync>;
 

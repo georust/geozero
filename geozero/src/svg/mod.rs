@@ -6,9 +6,9 @@ pub use writer::SvgWriter;
 pub struct SvgString(pub String);
 
 pub(crate) mod conversion {
+    use crate::FeatureProcessor;
     use crate::error::Result;
     use crate::svg::SvgWriter;
-    use crate::FeatureProcessor;
     use crate::{GeozeroDatasource, GeozeroGeometry};
 
     /// Convert to SVG.
