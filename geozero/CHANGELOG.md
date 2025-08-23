@@ -16,6 +16,7 @@
   * BREAKING: `wkt` to 0.14.0
   * <https://github.com/georust/geozero/pull/244>
 * Updated to 2024 edition
+* `ShpReader` no longer requires `Seek` trait.
 
 ## 0.14.0 - (2024-09-26)
 
