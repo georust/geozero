@@ -4,7 +4,7 @@ use crate::shp::{Error, header};
 use crate::{FeatureProcessor, FeatureProperties, GeomProcessor};
 pub use dbase::{FieldInfo, FieldType};
 use std::fs::File;
-use std::io::{BufReader, Read, Seek};
+use std::io::{BufReader, Read};
 use std::iter::FusedIterator;
 use std::path::Path;
 
@@ -34,9 +34,9 @@ impl<'a, P: GeomProcessor, T: Read + 'a> Iterator for ShapeIterator<'a, P, T> {
     }
 }
 
-impl<'a, P: FeatureProcessor, T: Read + Seek + 'a> FusedIterator for ShapeIterator<'a, P, T> {}
+impl<'a, P: FeatureProcessor, T: Read + 'a> FusedIterator for ShapeIterator<'a, P, T> {}
 
-pub struct ShapeRecordIterator<'a, P: FeatureProcessor, T: Read + Seek> {
+pub struct ShapeRecordIterator<'a, P: FeatureProcessor, T: Read> {
     shape_iter: ShapeIterator<'a, P, T>,
     dbf_reader: dbase::Reader<T>,
     featno: u64,
@@ -46,7 +46,7 @@ pub struct ShapeRecord {
     pub record: dbase::Record,
 }
 
-impl<'a, P: FeatureProcessor, T: Read + Seek + 'a> Iterator for ShapeRecordIterator<'a, P, T> {
+impl<'a, P: FeatureProcessor, T: Read + 'a> Iterator for ShapeRecordIterator<'a, P, T> {
     type Item = Result<ShapeRecord, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -88,17 +88,17 @@ impl<'a, P: FeatureProcessor, T: Read + Seek + 'a> Iterator for ShapeRecordItera
     }
 }
 
-impl<'a, P: FeatureProcessor, T: Read + Seek + 'a> FusedIterator for ShapeRecordIterator<'a, P, T> {}
+impl<'a, P: FeatureProcessor, T: Read + 'a> FusedIterator for ShapeRecordIterator<'a, P, T> {}
 
 /// struct that reads the content of a shapefile
-pub struct ShpReader<T: Read + Seek> {
+pub struct ShpReader<T: Read> {
     source: T,
     header: header::Header,
     shapes_index: Option<Vec<ShapeIndex>>,
     dbf_reader: Option<dbase::Reader<T>>,
 }
 
-impl<T: Read + Seek> ShpReader<T> {
+impl<T: Read> ShpReader<T> {
     /// Creates a new Reader from a source that implements the `Read` trait
     ///
     /// The Shapefile header is read upon creation (but no reading of the Shapes is done)
