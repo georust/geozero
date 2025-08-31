@@ -3,15 +3,19 @@
 
 use crate::GeomProcessor;
 use crate::error::Result;
+use crate::mvt::TagsBuilder;
 use crate::mvt::mvt_commands::{Command, CommandInteger, ParameterInteger};
 use crate::mvt::vector_tile::{tile, tile::GeomType};
+use crate::{ColumnValue, FeatureProcessor, PropertyProcessor};
 
 use super::mvt_error::MvtError;
 
 /// Generator for MVT geometry type.
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct MvtWriter {
+    // Current feature
     pub(crate) feature: tile::Feature,
+    features: Vec<tile::Feature>,
     // Extent, 0 for unscaled
     extent: i32,
     // Scale geometry to bounds
@@ -24,6 +28,26 @@ pub struct MvtWriter {
     last_y: i32,
     line_state: LineState,
     is_multiline: bool,
+    tags_builder: TagsBuilder,
+}
+
+impl Default for MvtWriter {
+    fn default() -> Self {
+        Self {
+            feature: tile::Feature::default(),
+            features: Vec::new(),
+            extent: 4096,
+            left: 0.0,
+            bottom: 0.0,
+            x_multiplier: 1.0,
+            y_multiplier: 1.0,
+            last_x: 0,
+            last_y: 0,
+            line_state: LineState::None,
+            is_multiline: false,
+            tags_builder: TagsBuilder::new(),
+        }
+    }
 }
 
 #[derive(Default, Debug, PartialEq)]
@@ -50,6 +74,18 @@ impl MvtWriter {
 
     pub fn geometry(&self) -> &tile::Feature {
         &self.feature
+    }
+
+    pub fn layer(self, name: &str) -> tile::Layer {
+        let (keys, values) = self.tags_builder.into_tags();
+        tile::Layer {
+            version: 2,
+            name: name.to_string(),
+            features: self.features,
+            keys,
+            values: values.into_iter().map(|v| v.into()).collect(),
+            extent: Some(self.extent as u32),
+        }
     }
 
     fn reserve(&mut self, capacity: usize) {
@@ -171,6 +207,33 @@ impl GeomProcessor for MvtWriter {
 
     fn multipolygon_begin(&mut self, _size: usize, _idx: usize) -> Result<()> {
         self.feature.set_type(GeomType::Polygon);
+        Ok(())
+    }
+}
+
+impl PropertyProcessor for MvtWriter {
+    fn property(&mut self, _idx: usize, name: &str, value: &ColumnValue) -> Result<bool> {
+        let (key_idx, val_idx) = self.tags_builder.insert_ref(
+            name,
+            value
+                .try_into()
+                .map_err(|_| MvtError::UnsupportedKeyValueType(name.to_string()))?,
+        );
+        self.feature.tags.reserve(2);
+        self.feature.tags.push(key_idx);
+        self.feature.tags.push(val_idx);
+        Ok(false)
+    }
+}
+
+impl FeatureProcessor for MvtWriter {
+    fn feature_begin(&mut self, _idx: u64) -> Result<()> {
+        self.feature = tile::Feature::default();
+        Ok(())
+    }
+
+    fn feature_end(&mut self, _idx: u64) -> Result<()> {
+        self.features.push(self.feature.clone());
         Ok(())
     }
 }
@@ -400,28 +463,29 @@ mod test {
 
     #[test]
     fn point_geom() {
-        let geojson = GeoJson(r#"{"type": "Point", "coordinates": [25, 17]}"#);
+        let mut geojson = GeoJson(r#"{"type": "Point", "coordinates": [25, 17]}"#);
         let mvt = geojson.to_mvt_unscaled().unwrap();
         assert_eq!(mvt.geometry, [9, 50, 34]);
     }
 
     #[test]
     fn multipoint_geom() {
-        let geojson = GeoJson(r#"{"type": "MultiPoint", "coordinates": [[5, 7], [3, 2]]}"#);
+        let mut geojson = GeoJson(r#"{"type": "MultiPoint", "coordinates": [[5, 7], [3, 2]]}"#);
         let mvt = geojson.to_mvt_unscaled().unwrap();
         assert_eq!(mvt.geometry, [17, 10, 14, 3, 9]);
     }
 
     #[test]
     fn line_geom() {
-        let geojson = GeoJson(r#"{"type": "LineString", "coordinates": [[2,2], [2,10], [10,10]]}"#);
+        let mut geojson =
+            GeoJson(r#"{"type": "LineString", "coordinates": [[2,2], [2,10], [10,10]]}"#);
         let mvt = geojson.to_mvt_unscaled().unwrap();
         assert_eq!(mvt.geometry, [9, 4, 4, 18, 0, 16, 16, 0]);
     }
 
     #[test]
     fn multiline_geom() {
-        let geojson = GeoJson(
+        let mut geojson = GeoJson(
             r#"{"type": "MultiLineString", "coordinates": [[[2,2], [2,10], [10,10]],[[1,1],[3,5]]]}"#,
         );
         let mvt = geojson.to_mvt_unscaled().unwrap();
@@ -433,7 +497,7 @@ mod test {
 
     #[test]
     fn polygon_geom() {
-        let geojson =
+        let mut geojson =
             GeoJson(r#"{"type": "Polygon", "coordinates": [[[3, 6], [8, 12], [20, 34], [3, 6]]]}"#);
         let mvt = geojson.to_mvt_unscaled().unwrap();
         assert_eq!(mvt.geometry, [9, 6, 12, 18, 10, 12, 24, 44, 15]);
@@ -457,7 +521,7 @@ mod test {
                 ]
             ]
         }"#;
-        let geojson = GeoJson(geojson);
+        let mut geojson = GeoJson(geojson);
         let mvt = geojson.to_mvt_unscaled().unwrap();
         assert_eq!(
             mvt.geometry,
@@ -473,7 +537,7 @@ mod test {
             "type": "Polygon",
             "coordinates": [[[34876,37618],[37047,39028],[37756,39484],[38779,40151],[39247,40451],[39601,40672],[40431,41182],[41010,41525],[41834,41995],[42190,42193],[42547,42387],[42540,42402],[42479,42516],[42420,42627],[42356,42749],[42344,42770],[42337,42784],[41729,42461],[40755,41926],[40118,41563],[39435,41161],[38968,40882],[38498,40595],[37200,39786],[36547,39382],[34547,38135],[34555,38122],[34595,38059],[34655,37964],[34726,37855],[34795,37745],[34863,37638],[34876,37618]]]
         }"#;
-        let geojson = GeoJson(geojson);
+        let mut geojson = GeoJson(geojson);
         let mvt = geojson.to_mvt_unscaled().unwrap();
         assert_eq!(
             mvt.geometry,
@@ -489,17 +553,8 @@ mod test {
 
     #[test]
     #[cfg(feature = "with-geo")]
-    fn geo_screen_coords_to_mvt() -> Result<()> {
-        let geo: geo_types::Geometry<f64> = geo_types::Point::new(25.0, 17.0).into();
-        let mvt = geo.to_mvt_unscaled()?;
-        assert_eq!(mvt.geometry, [9, 50, 34]);
-        Ok(())
-    }
-
-    #[test]
-    #[cfg(feature = "with-geo")]
     fn geo_to_mvt() -> Result<()> {
-        let geo: geo_types::Geometry<f64> = geo_types::Point::new(960000.0, 6002729.0).into();
+        let mut geo = GeoJson(r#"{"type": "Point", "coordinates": [960000.0, 6002729.0]}"#);
         let mvt = geo.to_mvt(256, 958826.08, 5987771.04, 978393.96, 6007338.92)?;
         assert_eq!(mvt.geometry, [9, 30, 122]);
         let geojson = mvt.to_json()?;
