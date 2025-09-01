@@ -16,8 +16,9 @@ pub struct MvtWriter {
     // Current feature
     pub(crate) feature: tile::Feature,
     features: Vec<tile::Feature>,
-    // Extent, 0 for unscaled
+    // Extent
     extent: i32,
+    scale: bool,
     // Scale geometry to bounds
     left: f64,
     bottom: f64,
@@ -37,6 +38,7 @@ impl Default for MvtWriter {
             feature: tile::Feature::default(),
             features: Vec::new(),
             extent: 4096,
+            scale: false,
             left: 0.0,
             bottom: 0.0,
             x_multiplier: 1.0,
@@ -64,6 +66,7 @@ impl MvtWriter {
         assert_ne!(extent, 0);
         MvtWriter {
             extent: extent as i32,
+            scale: true,
             left,
             bottom,
             x_multiplier: (extent as f64) / (right - left),
@@ -108,15 +111,12 @@ impl GeomProcessor for MvtWriter {
         };
 
         if !last_ring_coord {
-            let (x, y) = if self.extent != 0 {
+            let (x, y) = if self.scale {
                 // scale to tile coordinate space
                 let x = ((x_coord - self.left) * self.x_multiplier).floor() as i32;
                 let y = ((y_coord - self.bottom) * self.y_multiplier).floor() as i32;
-                // TODO: fails mvt::mvt_writer::test::geo_to_mvt since y is not reversed
-                // but it passes all other tests
-                // // Y is stored as reversed
-                // (x, self.extent.saturating_sub(y))
-                (x as i32, y as i32)
+                // Y is stored as reversed
+                (x, self.extent.saturating_sub(y))
             } else {
                 // unscaled
                 (x_coord as i32, y_coord as i32)
