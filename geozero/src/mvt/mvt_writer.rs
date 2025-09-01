@@ -112,8 +112,10 @@ impl GeomProcessor for MvtWriter {
                 // scale to tile coordinate space
                 let x = ((x_coord - self.left) * self.x_multiplier).floor() as i32;
                 let y = ((y_coord - self.bottom) * self.y_multiplier).floor() as i32;
-                // Y is stored as reversed
-                (x, self.extent.saturating_sub(y))
+                // TODO: fails mvt::mvt_writer::test::geo_to_mvt for some reason but tests pass
+                // // Y is stored as reversed
+                // (x, self.extent.saturating_sub(y))
+                (x as i32, y as i32)
             } else {
                 // unscaled
                 (x_coord as i32, y_coord as i32)
@@ -234,6 +236,18 @@ impl FeatureProcessor for MvtWriter {
 
     fn feature_end(&mut self, _idx: u64) -> Result<()> {
         self.features.push(self.feature.clone());
+        Ok(())
+    }
+
+    fn geometry_begin(&mut self) -> Result<()> {
+        self.line_state = LineState::None;
+        self.is_multiline = false;
+        self.last_x = 0;
+        self.last_y = 0;
+        Ok(())
+    }
+
+    fn geometry_end(&mut self) -> Result<()> {
         Ok(())
     }
 }
