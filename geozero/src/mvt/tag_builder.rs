@@ -10,8 +10,8 @@ use dup_indexer::{DupIndexer, DupIndexerRefs, PtrRead};
 /// # fn main() {
 /// let mut builder = TagsBuilder::new();
 /// // Use returned key and value indexes in a MVT tile construction
-/// let (key_idx, val_idx) = builder.insert("name", TileValue::Str("value1".to_string()));
-/// let (key_idx, val_idx) = builder.insert("name", TileValue::Str("value2".to_string()));
+/// let (key_idx, val_idx) = builder.insert_ref("name", TileValue::Str("value1".to_string()));
+/// let (key_idx, val_idx) = builder.insert_ref("name", TileValue::Str("value2".to_string()));
 /// // Get the keys and values as vectors and save them as MVT key and value tables///
 /// let (keys, values) = builder.into_tags();
 /// # }
