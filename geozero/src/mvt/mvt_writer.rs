@@ -112,7 +112,8 @@ impl GeomProcessor for MvtWriter {
                 // scale to tile coordinate space
                 let x = ((x_coord - self.left) * self.x_multiplier).floor() as i32;
                 let y = ((y_coord - self.bottom) * self.y_multiplier).floor() as i32;
-                // TODO: fails mvt::mvt_writer::test::geo_to_mvt for some reason but tests pass
+                // TODO: fails mvt::mvt_writer::test::geo_to_mvt since y is not reversed
+                // but it passes all other tests
                 // // Y is stored as reversed
                 // (x, self.extent.saturating_sub(y))
                 (x as i32, y as i32)
