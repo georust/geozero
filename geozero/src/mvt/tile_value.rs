@@ -1,5 +1,5 @@
-use crate::mvt::tile::Value;
 use crate::ColumnValue;
+use crate::mvt::tile::Value;
 use std::hash::Hash;
 
 /// A wrapper for the MVT value types.
