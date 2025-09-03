@@ -332,6 +332,8 @@ fn mvt_decode() {
                 "{expected_file:?} didn't match mvt output, and failed to write {new_file:?}: {e}"
             )
         });
-        panic!("{expected_file:?} didn't match mvt output.  See {new_file:?} file for the new output, and if it is correct, replace {expected_file:?} with it");
+        panic!(
+            "{expected_file:?} didn't match mvt output.  See {new_file:?} file for the new output, and if it is correct, replace {expected_file:?} with it"
+        );
     }
 }

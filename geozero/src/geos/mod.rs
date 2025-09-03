@@ -6,9 +6,9 @@ pub use geos_reader::*;
 pub use geos_writer::*;
 
 pub(crate) mod conversion {
+    use crate::GeozeroGeometry;
     use crate::error::Result;
     use crate::geos::GeosWriter;
-    use crate::GeozeroGeometry;
 
     /// Convert to GEOS geometry.
     pub trait ToGeos {

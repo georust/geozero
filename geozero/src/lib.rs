@@ -124,6 +124,9 @@ pub use crate::wkt::conversion::*;
 
 #[cfg(feature = "with-mvt")]
 pub mod mvt;
+
+pub mod bounds;
+
 #[cfg(feature = "with-mvt")]
 pub use crate::mvt::conversion::*;
 

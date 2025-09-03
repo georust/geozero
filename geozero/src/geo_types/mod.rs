@@ -1,14 +1,17 @@
 //! geo-types conversions.
+mod geo_types_feature_writer;
 pub(crate) mod geo_types_reader;
 pub(crate) mod geo_types_writer;
 
+pub use geo_types_feature_writer::*;
 pub use geo_types_reader::*;
 pub use geo_types_writer::*;
 
 pub(crate) mod conversion {
     use crate::error::{GeozeroError, Result};
     use crate::geo_types::GeoWriter;
-    use crate::GeozeroGeometry;
+    use crate::geo_types::geo_types_feature_writer::{GeoFeature, GeoFeatureWriter};
+    use crate::{GeozeroDatasource, GeozeroGeometry};
 
     /// Convert to geo-types Geometry.
     pub trait ToGeo {
@@ -22,6 +25,18 @@ pub(crate) mod conversion {
             self.process_geom(&mut geo)?;
             geo.take_geometry()
                 .ok_or(GeozeroError::Geometry("Missing Geometry".to_string()))
+        }
+    }
+
+    pub trait ToGeoFeatures {
+        fn to_geo_features(&mut self) -> Result<impl Iterator<Item = GeoFeature>>;
+    }
+
+    impl<DS: GeozeroDatasource> ToGeoFeatures for DS {
+        fn to_geo_features(&mut self) -> Result<impl Iterator<Item = GeoFeature>> {
+            let mut geo = GeoFeatureWriter::new();
+            self.process(&mut geo)?;
+            Ok(geo.features.into_iter())
         }
     }
 }

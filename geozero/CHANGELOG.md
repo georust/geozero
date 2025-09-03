@@ -1,3 +1,22 @@
+## UNRELEASED
+
+* Add `style` option to SVGWriter for writing \<style\> tags
+* Add `BoundsProcessor` to compute bounds of geometry
+* Update Deps:
+  * BREAKING: `dbase` to 0.6.0
+  * BREAKING: `flatgeobuf` to 4.5.0
+  * BREAKING: `gdal` to 0.18.0
+  * BREAKING: `gdal-sys` to 0.11.0
+  * BREAKING: `geo` to 0.30.0
+  * BREAKING: `geos` to 10.0
+  * BREAKING: `gpx` to 0.10
+  * BREAKING: `prost` to 0.13.4
+  * BREAKING: `scroll` to 0.13
+  * BREAKING: `thiserror` to 2.0
+  * BREAKING: `wkt` to 0.14.0
+  * <https://github.com/georust/geozero/pull/244>
+* Updated to 2024 edition
+
 ## 0.14.0 - (2024-09-26)
 
 * Update to `geos` 9.0

@@ -1,5 +1,5 @@
-use crate::error::{GeozeroError, Result};
 use crate::WrappedXYProcessor;
+use crate::error::{GeozeroError, Result};
 
 /// Dimensions requested for processing
 #[derive(Default, Clone, Copy)]

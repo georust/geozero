@@ -60,11 +60,11 @@ pub(crate) mod conversion {
 
 #[cfg(feature = "with-wkb")]
 mod wkb {
+    use crate::CoordDimensions;
     use crate::error::Result;
     use crate::wkb::{FromWkb, WkbDialect};
     #[allow(deprecated)]
     use crate::wkt::{Ewkt, EwktString, Wkt, WktDialect, WktString, WktWriter};
-    use crate::CoordDimensions;
     use std::io::Read;
 
     impl FromWkb for Wkt<String> {

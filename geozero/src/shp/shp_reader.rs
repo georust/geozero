@@ -1,5 +1,5 @@
-use crate::shp::{Error, ShapeType};
 use crate::GeomProcessor;
+use crate::shp::{Error, ShapeType};
 use byteorder::{BigEndian, LittleEndian, ReadBytesExt};
 use std::io::Read;
 use std::mem::size_of;

@@ -8,9 +8,9 @@ pub use csv_reader::*;
 pub use csv_writer::*;
 
 pub(crate) mod conversion {
+    use crate::GeozeroDatasource;
     use crate::csv::CsvWriter;
     use crate::error::Result;
-    use crate::GeozeroDatasource;
 
     /// Consume features into CSV
     pub trait ProcessToCsv {
