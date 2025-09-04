@@ -18,7 +18,7 @@ pub use prost::Message;
 pub use vector_tile::*;
 
 pub(crate) mod conversion {
-    use crate::GeozeroDatasource;
+    use crate::GeozeroGeometry;
     use crate::error::Result;
     use crate::mvt::MvtWriter;
     use crate::mvt::vector_tile::tile;
@@ -31,7 +31,7 @@ pub(crate) mod conversion {
         /// * `extent` - Size of MVT tile in tile coordinate space (e.g. 4096).
         /// * `left`, `bottom`, `right`, `top` - Bounds of tile in map coordinate space, with no buffer.
         fn to_mvt(
-            &mut self,
+            &self,
             extent: u32,
             left: f64,
             bottom: f64,
@@ -40,12 +40,12 @@ pub(crate) mod conversion {
         ) -> Result<tile::Feature>;
 
         /// Convert to MVT geometry with geometries in unmodified tile coordinate space.
-        fn to_mvt_unscaled(&mut self) -> Result<tile::Feature>;
+        fn to_mvt_unscaled(&self) -> Result<tile::Feature>;
     }
 
-    impl<T: GeozeroDatasource> ToMvt for T {
+    impl<T: GeozeroGeometry> ToMvt for T {
         fn to_mvt(
-            &mut self,
+            &self,
             extent: u32,
             left: f64,
             bottom: f64,
@@ -53,13 +53,13 @@ pub(crate) mod conversion {
             top: f64,
         ) -> Result<tile::Feature> {
             let mut mvt = MvtWriter::new(extent, left, bottom, right, top);
-            self.process(&mut mvt)?;
+            self.process_geom(&mut mvt)?;
             Ok(mvt.feature)
         }
 
-        fn to_mvt_unscaled(&mut self) -> Result<tile::Feature> {
+        fn to_mvt_unscaled(&self) -> Result<tile::Feature> {
             let mut mvt = MvtWriter::default();
-            self.process(&mut mvt)?;
+            self.process_geom(&mut mvt)?;
             Ok(mvt.feature)
         }
     }

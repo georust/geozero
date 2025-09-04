@@ -478,29 +478,28 @@ mod test {
 
     #[test]
     fn point_geom() {
-        let mut geojson = GeoJson(r#"{"type": "Point", "coordinates": [25, 17]}"#);
+        let geojson = GeoJson(r#"{"type": "Point", "coordinates": [25, 17]}"#);
         let mvt = geojson.to_mvt_unscaled().unwrap();
         assert_eq!(mvt.geometry, [9, 50, 34]);
     }
 
     #[test]
     fn multipoint_geom() {
-        let mut geojson = GeoJson(r#"{"type": "MultiPoint", "coordinates": [[5, 7], [3, 2]]}"#);
+        let geojson = GeoJson(r#"{"type": "MultiPoint", "coordinates": [[5, 7], [3, 2]]}"#);
         let mvt = geojson.to_mvt_unscaled().unwrap();
         assert_eq!(mvt.geometry, [17, 10, 14, 3, 9]);
     }
 
     #[test]
     fn line_geom() {
-        let mut geojson =
-            GeoJson(r#"{"type": "LineString", "coordinates": [[2,2], [2,10], [10,10]]}"#);
+        let geojson = GeoJson(r#"{"type": "LineString", "coordinates": [[2,2], [2,10], [10,10]]}"#);
         let mvt = geojson.to_mvt_unscaled().unwrap();
         assert_eq!(mvt.geometry, [9, 4, 4, 18, 0, 16, 16, 0]);
     }
 
     #[test]
     fn multiline_geom() {
-        let mut geojson = GeoJson(
+        let geojson = GeoJson(
             r#"{"type": "MultiLineString", "coordinates": [[[2,2], [2,10], [10,10]],[[1,1],[3,5]]]}"#,
         );
         let mvt = geojson.to_mvt_unscaled().unwrap();
@@ -512,7 +511,7 @@ mod test {
 
     #[test]
     fn polygon_geom() {
-        let mut geojson =
+        let geojson =
             GeoJson(r#"{"type": "Polygon", "coordinates": [[[3, 6], [8, 12], [20, 34], [3, 6]]]}"#);
         let mvt = geojson.to_mvt_unscaled().unwrap();
         assert_eq!(mvt.geometry, [9, 6, 12, 18, 10, 12, 24, 44, 15]);
@@ -536,7 +535,7 @@ mod test {
                 ]
             ]
         }"#;
-        let mut geojson = GeoJson(geojson);
+        let geojson = GeoJson(geojson);
         let mvt = geojson.to_mvt_unscaled().unwrap();
         assert_eq!(
             mvt.geometry,
@@ -552,7 +551,7 @@ mod test {
             "type": "Polygon",
             "coordinates": [[[34876,37618],[37047,39028],[37756,39484],[38779,40151],[39247,40451],[39601,40672],[40431,41182],[41010,41525],[41834,41995],[42190,42193],[42547,42387],[42540,42402],[42479,42516],[42420,42627],[42356,42749],[42344,42770],[42337,42784],[41729,42461],[40755,41926],[40118,41563],[39435,41161],[38968,40882],[38498,40595],[37200,39786],[36547,39382],[34547,38135],[34555,38122],[34595,38059],[34655,37964],[34726,37855],[34795,37745],[34863,37638],[34876,37618]]]
         }"#;
-        let mut geojson = GeoJson(geojson);
+        let geojson = GeoJson(geojson);
         let mvt = geojson.to_mvt_unscaled().unwrap();
         assert_eq!(
             mvt.geometry,
@@ -569,7 +568,7 @@ mod test {
     #[test]
     #[cfg(feature = "with-geo")]
     fn geo_to_mvt() -> Result<()> {
-        let mut geo = GeoJson(r#"{"type": "Point", "coordinates": [960000.0, 6002729.0]}"#);
+        let geo = GeoJson(r#"{"type": "Point", "coordinates": [960000.0, 6002729.0]}"#);
         let mvt = geo.to_mvt(256, 958826.08, 5987771.04, 978393.96, 6007338.92)?;
         assert_eq!(mvt.geometry, [9, 30, 122]);
         let geojson = mvt.to_json()?;
