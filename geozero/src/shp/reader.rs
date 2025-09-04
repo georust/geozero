@@ -144,7 +144,10 @@ impl<T: Read + Seek> ShpReader<T> {
         Ok(fields)
     }
 
-    pub fn iter_geometries<P: FeatureProcessor>(self, processor: &mut P) -> ShapeIterator<P, T> {
+    pub fn iter_geometries<P: FeatureProcessor>(
+        self,
+        processor: &mut P,
+    ) -> ShapeIterator<'_, P, T> {
         ShapeIterator {
             processor,
             source: self.source,
@@ -161,7 +164,7 @@ impl<T: Read + Seek> ShpReader<T> {
     pub fn iter_features<P: FeatureProcessor>(
         mut self,
         processor: &mut P,
-    ) -> Result<ShapeRecordIterator<P, T>, Error> {
+    ) -> Result<ShapeRecordIterator<'_, P, T>, Error> {
         let maybe_dbf_reader = self.dbf_reader.take();
         if let Some(dbf_reader) = maybe_dbf_reader {
             let shape_iter = self.iter_geometries(processor);
