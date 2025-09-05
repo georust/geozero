@@ -77,14 +77,6 @@ impl TryFrom<&ColumnValue<'_>> for TileValue {
     type Error = ();
 
     fn try_from(v: &ColumnValue) -> Result<Self, Self::Error> {
-        // string_value - ColumnValue::String
-        // float_value - ColumnValue::Float
-        // double_value - ColumnValue::Double
-        // int_value - ColumnValue::Long
-        // uint_value - ColumnValue::ULong
-        // sint_value - ColumnValue::Long
-        // bool_value - ColumnValue::Bool
-
         Ok(match v {
             ColumnValue::Byte(v) => TileValue::Sint(*v as i64),
             ColumnValue::UByte(v) => TileValue::Uint(*v as u64),

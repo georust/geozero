@@ -568,7 +568,7 @@ mod test {
     #[test]
     #[cfg(feature = "with-geo")]
     fn geo_to_mvt() -> Result<()> {
-        let geo = GeoJson(r#"{"type": "Point", "coordinates": [960000.0, 6002729.0]}"#);
+        let geo: geo_types::Geometry<f64> = geo_types::Point::new(960000.0, 6002729.0).into();
         let mvt = geo.to_mvt(256, 958826.08, 5987771.04, 978393.96, 6007338.92)?;
         assert_eq!(mvt.geometry, [9, 30, 122]);
         let geojson = mvt.to_json()?;
