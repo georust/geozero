@@ -38,7 +38,7 @@ impl Default for MvtWriter {
     /// The resulting writer expects all geometries to be provided in tile-local coordinates,
     /// matching the default extent of 4096, as [specified in the MVT standard](https://github.com/mapbox/vector-tile-spec/blob/5330dfc6ba2d5f8c8278c2c4f56fff2c7dee1dbd/2.1/vector_tile.proto#L70).
     fn default() -> Self {
-        return Self::new_unscaled(4096);
+        Self::new_unscaled(4096)
     }
 }
 
