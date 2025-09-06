@@ -1,5 +1,7 @@
 use crate::ColumnValue;
 use crate::mvt::tile::Value;
+use base64::Engine;
+use base64::prelude::BASE64_STANDARD;
 use std::hash::Hash;
 
 /// A wrapper for the MVT value types.
@@ -76,6 +78,10 @@ impl TryFrom<Value> for TileValue {
 impl TryFrom<&ColumnValue<'_>> for TileValue {
     type Error = ();
 
+    /// Attempts to convert a [`ColumnValue`] reference into a [`TileValue`].
+    ///
+    /// Note that [`ColumnValue::Json`], [`ColumnValue::DateTime`], and [`ColumnValue::Binary`]
+    /// are represented as [`TileValue::Str`](TileValue::Str). For [`Binary`](ColumnValue::Binary), base64 encoding is used.
     fn try_from(v: &ColumnValue) -> Result<Self, Self::Error> {
         Ok(match v {
             ColumnValue::Byte(v) => TileValue::Sint(*v as i64),
@@ -92,7 +98,7 @@ impl TryFrom<&ColumnValue<'_>> for TileValue {
             ColumnValue::String(v) => TileValue::Str(v.to_string()),
             ColumnValue::Json(v) => TileValue::Str(v.to_string()),
             ColumnValue::DateTime(v) => TileValue::Str(v.to_string()),
-            ColumnValue::Binary(_) => Err(())?,
+            ColumnValue::Binary(b) => TileValue::Str(BASE64_STANDARD.encode(b)),
         })
     }
 }
