@@ -584,6 +584,15 @@ mod test {
 
     #[test]
     #[cfg(feature = "with-geo")]
+    fn geo_screen_coords_to_mvt() -> Result<()> {
+        let geo: geo_types::Geometry<f64> = geo_types::Point::new(25.0, 17.0).into();
+        let mvt = geo.to_mvt_unscaled()?;
+        assert_eq!(mvt.geometry, [9, 50, 34]);
+        Ok(())
+    }
+
+    #[test]
+    #[cfg(feature = "with-geo")]
     fn geo_to_mvt() -> Result<()> {
         let geo: geo_types::Geometry<f64> = geo_types::Point::new(960000.0, 6002729.0).into();
         let mvt = geo.to_mvt(256, 958826.08, 5987771.04, 978393.96, 6007338.92)?;
