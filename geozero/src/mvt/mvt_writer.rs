@@ -35,7 +35,7 @@ pub struct MvtWriter {
 impl Default for MvtWriter {
     /// Creates a new `MvtWriter` that does not transform any geometries.
     ///
-    /// The resulting writer expects all geometries to be provided in tile-local coordinates,
+    /// The resulting writer expects all geometries to be provided in tile coordinate space,
     /// matching the default extent of 4096, as [specified in the MVT standard](https://github.com/mapbox/vector-tile-spec/blob/5330dfc6ba2d5f8c8278c2c4f56fff2c7dee1dbd/2.1/vector_tile.proto#L70).
     fn default() -> Self {
         Self::new_unscaled(4096)
@@ -52,7 +52,7 @@ enum LineState {
 }
 
 impl MvtWriter {
-    /// Creates a new `MvtWriter` that transforms geometries to be in tile-local coordinates.
+    /// Creates a new `MvtWriter` that transforms geometries to be in tile coordinate space.
     pub fn new(extent: u32, left: f64, bottom: f64, right: f64, top: f64) -> MvtWriter {
         assert_ne!(extent, 0);
         MvtWriter {
@@ -68,7 +68,7 @@ impl MvtWriter {
 
     /// Creates a new `MvtWriter` that does not transform any geometries.
     ///
-    /// The resulting writer expects all geometries to be provided in tile-local coordinates,
+    /// The resulting writer expects all geometries to be provided in tile coordinate space,
     /// matching the specified `extent`.
     pub fn new_unscaled(extent: u32) -> MvtWriter {
         assert_ne!(extent, 0);
