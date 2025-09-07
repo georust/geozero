@@ -11,6 +11,46 @@ use crate::{ColumnValue, FeatureProcessor, PropertyProcessor};
 use super::mvt_error::MvtError;
 
 /// Generator for MVT geometry type.
+/// # Example
+/// Generate a MVT layer using a type that implements [`GeozeroDatasource`](crate::GeozeroDatasource).
+/// ```
+/// use geozero::{GeozeroDatasource, geojson::GeoJsonString, mvt::MvtWriter};
+///
+/// let mut geojson = GeoJsonString(
+///     serde_json::json!({
+///         "type": "FeatureCollection",
+///         "features": [
+///             {
+///                 "type": "Feature",
+///                 "properties": {
+///                     "population": 100
+///                 },
+///                 "geometry": {
+///                     "type": "Point",
+///                     "coordinates": [1.0, 2.0]
+///                 }
+///             },
+///             {
+///                 "type": "Feature",
+///                 "properties": {
+///                     "population": 200
+///                 },
+///                 "geometry": {
+///                     "type": "Point",
+///                     "coordinates": [3.0, 4.0]
+///                 }
+///             }
+///         ]
+///     })
+///     .to_string(),
+/// ); // implements GeozeroDatasource
+/// let mut mvt_writer = MvtWriter::new_unscaled(4096);
+/// geojson.process(&mut mvt_writer);
+/// let mvt_layer = mvt_writer.layer("sample"); // returns MVT layer with all features
+/// ```
+///
+/// To convert a single geometry into a [`tile::Feature`](crate::mvt::tile::Feature),
+/// see the [`ToMvt`](crate::ToMvt) trait.
 #[derive(Debug)]
 pub struct MvtWriter {
     // Current feature
