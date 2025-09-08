@@ -53,10 +53,8 @@ use super::mvt_error::MvtError;
 /// see the [`ToMvt`](crate::ToMvt) trait.
 #[derive(Debug)]
 pub struct MvtWriter {
-    // Current feature
     pub(crate) feature: tile::Feature,
     features: Vec<tile::Feature>,
-    // Extent
     extent: i32,
     scale: bool,
     // Scale geometry to bounds
@@ -78,7 +76,24 @@ impl Default for MvtWriter {
     /// The resulting writer expects all geometries to be provided in tile coordinate space,
     /// matching the default extent of 4096, as [specified in the MVT standard](https://github.com/mapbox/vector-tile-spec/blob/5330dfc6ba2d5f8c8278c2c4f56fff2c7dee1dbd/2.1/vector_tile.proto#L70).
     fn default() -> Self {
-        Self::new_unscaled(4096)
+        MvtWriter {
+            feature: tile::Feature::default(),
+            features: Vec::new(),
+            extent: 4096,
+            scale: false,
+            last_x: 0,
+            last_y: 0,
+            line_state: LineState::None,
+            is_multiline: false,
+            tags_builder: TagsBuilder::new(),
+            // unscaled writer does not use the following values
+            // as it does not perform any geometry transformation
+            // see the impl of GeomProcessor.xy
+            left: 0.0,
+            bottom: 0.0,
+            x_multiplier: 1.0,
+            y_multiplier: 1.0,
+        }
     }
 }
 
@@ -113,22 +128,9 @@ impl MvtWriter {
     pub fn new_unscaled(extent: u32) -> MvtWriter {
         assert_ne!(extent, 0);
         MvtWriter {
-            feature: tile::Feature::default(),
-            features: Vec::new(),
             extent: extent as i32,
             scale: false,
-            last_x: 0,
-            last_y: 0,
-            line_state: LineState::None,
-            is_multiline: false,
-            tags_builder: TagsBuilder::new(),
-            // unscaled writer does not use the following values
-            // as it does not perform any geometry transformation
-            // see the impl of GeomProcessor.xy
-            left: 0.0,
-            bottom: 0.0,
-            x_multiplier: 1.0,
-            y_multiplier: 1.0,
+            ..Default::default()
         }
     }
 

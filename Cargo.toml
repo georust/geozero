@@ -20,6 +20,7 @@ geozero = { version = "0.14.0", default-features = false }
 flatgeobuf = "4.5.0"
 
 async-trait = "0.1"
+base64 = "0.22.1"
 byteorder = { version = "1.4.3", default-features = false }
 bytes = "1.4"
 clap = { version = "4.3", features = ["derive"] }
