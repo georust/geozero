@@ -1,7 +1,7 @@
 use geozero::mvt::{Message, Tile};
 use geozero::{
     ColumnValue, CoordDimensions, FeatureProcessor, GeomProcessor, GeozeroDatasource,
-    PropertyProcessor,
+    PropertyProcessor, ToJson, ToMvt,
 };
 use serde_json::json;
 use std::env;
