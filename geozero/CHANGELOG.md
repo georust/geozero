@@ -15,6 +15,10 @@
   * BREAKING: `thiserror` to 2.0
   * BREAKING: `wkt` to 0.14.0
   * <https://github.com/georust/geozero/pull/244>
+* Add feature writing support and MVT layer output to `MvtWriter`
+  * Breaking: `MvtWriter::new` now returns a `Result` instead of a `MvtWriter`
+  * Breaking: `MvtWriter` does not implement `Default` anymore
+  * <https://github.com/georust/geozero/pull/264>
 * Updated to 2024 edition
 
 ## 0.14.0 - (2024-09-26)

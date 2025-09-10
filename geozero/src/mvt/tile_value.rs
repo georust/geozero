@@ -1,4 +1,7 @@
+use crate::ColumnValue;
 use crate::mvt::tile::Value;
+use base64::Engine;
+use base64::prelude::BASE64_STANDARD;
 use std::hash::Hash;
 
 /// A wrapper for the MVT value types.
@@ -68,6 +71,34 @@ impl TryFrom<Value> for TileValue {
             Self::Bool(b)
         } else {
             Err(())?
+        })
+    }
+}
+
+impl TryFrom<&ColumnValue<'_>> for TileValue {
+    type Error = ();
+
+    /// Attempts to convert a [`ColumnValue`] reference into a [`TileValue`].
+    ///
+    /// Note that [`ColumnValue::Json`], [`ColumnValue::DateTime`], and [`ColumnValue::Binary`]
+    /// are represented as [`TileValue::Str`](TileValue::Str). For [`Binary`](ColumnValue::Binary), base64 encoding is used.
+    fn try_from(v: &ColumnValue) -> Result<Self, Self::Error> {
+        Ok(match v {
+            ColumnValue::Byte(v) => TileValue::Sint(*v as i64),
+            ColumnValue::UByte(v) => TileValue::Uint(*v as u64),
+            ColumnValue::Bool(v) => TileValue::Bool(*v),
+            ColumnValue::Short(v) => TileValue::Sint(*v as i64),
+            ColumnValue::UShort(v) => TileValue::Uint(*v as u64),
+            ColumnValue::Int(v) => TileValue::Sint(*v as i64),
+            ColumnValue::UInt(v) => TileValue::Uint(*v as u64),
+            ColumnValue::Long(v) => TileValue::Sint(*v),
+            ColumnValue::ULong(v) => TileValue::Uint(*v),
+            ColumnValue::Float(v) => TileValue::Float(*v),
+            ColumnValue::Double(v) => TileValue::Double(*v),
+            ColumnValue::String(v) => TileValue::Str(v.to_string()),
+            ColumnValue::Json(v) => TileValue::Str(v.to_string()),
+            ColumnValue::DateTime(v) => TileValue::Str(v.to_string()),
+            ColumnValue::Binary(b) => TileValue::Str(BASE64_STANDARD.encode(b)),
         })
     }
 }

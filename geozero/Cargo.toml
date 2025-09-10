@@ -21,7 +21,7 @@ with-geojson = ["dep:geojson"]
 with-geos = ["dep:geos"]
 with-gpkg = ["with-wkb", "dep:sqlx", "sqlx?/sqlite"]
 with-gpx = ["dep:gpx"]
-with-mvt = ["dep:prost", "dep:prost-build", "dep:dup-indexer"]
+with-mvt = ["dep:prost", "dep:prost-build", "dep:dup-indexer", "dep:base64"]
 with-postgis-diesel = ["with-wkb", "dep:diesel", "dep:byteorder"]
 with-postgis-postgres = ["with-wkb", "dep:postgres-types", "dep:bytes"]
 with-postgis-sqlx = ["with-wkb", "dep:sqlx", "sqlx?/postgres"]
@@ -55,6 +55,7 @@ prost = { workspace = true, optional = true }
 scroll = { workspace = true, optional = true }
 sqlx = { workspace = true, optional = true }
 wkt = { workspace = true, optional = true }
+base64 = { workspace = true, optional = true }
 
 [dev-dependencies]
 geo.workspace = true
