@@ -52,13 +52,16 @@ pub(crate) mod conversion {
             right: f64,
             top: f64,
         ) -> Result<tile::Feature> {
-            let mut mvt = MvtWriter::new(extent, left, bottom, right, top);
+            let mut mvt = MvtWriter::new(extent, left, bottom, right, top)?;
             self.process_geom(&mut mvt)?;
             Ok(mvt.feature)
         }
 
         fn to_mvt_unscaled(&self) -> Result<tile::Feature> {
-            let mut mvt = MvtWriter::default();
+            // unwrap is safe since extent is nonzero
+            // note that extent does not matter here since
+            // only layers have extent values, not features
+            let mut mvt = MvtWriter::new_unscaled(4096).unwrap();
             self.process_geom(&mut mvt)?;
             Ok(mvt.feature)
         }
@@ -78,7 +81,10 @@ mod wkb {
 
     impl FromWkb for tile::Feature {
         fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> Result<Self> {
-            let mut mvt = MvtWriter::default();
+            // unwrap is safe since extent is nonzero
+            // note that extent does not matter here since
+            // only layers have extent values, not features
+            let mut mvt = MvtWriter::new_unscaled(4096).unwrap();
             crate::wkb::process_wkb_type_geom(rdr, &mut mvt, dialect)?;
             Ok(mvt.feature)
         }

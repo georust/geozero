@@ -44,7 +44,7 @@ use super::mvt_error::MvtError;
 ///     })
 ///     .to_string(),
 /// ); // implements GeozeroDatasource
-/// let mut mvt_writer = MvtWriter::new_unscaled(4096);
+/// let mut mvt_writer = MvtWriter::new_unscaled(4096).unwrap();
 /// geojson.process(&mut mvt_writer);
 /// let mvt_layer = mvt_writer.layer("sample"); // returns MVT layer with all features
 /// ```
@@ -70,16 +70,50 @@ pub struct MvtWriter {
     tags_builder: TagsBuilder,
 }
 
-impl Default for MvtWriter {
+#[derive(Default, Debug, PartialEq)]
+enum LineState {
+    #[default]
+    None,
+    // Issue LineTo command after first point
+    Line(usize),
+    Ring(usize),
+}
+
+impl MvtWriter {
+    /// Creates a new `MvtWriter` that transforms geometries to be in tile coordinate space.
+    pub fn new(extent: u32, left: f64, bottom: f64, right: f64, top: f64) -> Result<MvtWriter> {
+        if extent == 0 {
+            return Err(MvtError::InvalidExtent.into());
+        }
+        Ok(MvtWriter {
+            feature: tile::Feature::default(),
+            features: Vec::new(),
+            extent: extent as i32,
+            scale: true,
+            last_x: 0,
+            last_y: 0,
+            line_state: LineState::None,
+            is_multiline: false,
+            tags_builder: TagsBuilder::new(),
+            left,
+            bottom,
+            x_multiplier: (extent as f64) / (right - left),
+            y_multiplier: (extent as f64) / (top - bottom),
+        })
+    }
+
     /// Creates a new `MvtWriter` that does not transform any geometries.
     ///
     /// The resulting writer expects all geometries to be provided in tile coordinate space,
-    /// matching the default extent of 4096, as [specified in the MVT standard](https://github.com/mapbox/vector-tile-spec/blob/5330dfc6ba2d5f8c8278c2c4f56fff2c7dee1dbd/2.1/vector_tile.proto#L70).
-    fn default() -> Self {
-        MvtWriter {
+    /// matching the specified `extent`.
+    pub fn new_unscaled(extent: u32) -> Result<MvtWriter> {
+        if extent == 0 {
+            return Err(MvtError::InvalidExtent.into());
+        }
+        Ok(MvtWriter {
             feature: tile::Feature::default(),
             features: Vec::new(),
-            extent: 4096,
+            extent: extent as i32,
             scale: false,
             last_x: 0,
             last_y: 0,
@@ -93,45 +127,7 @@ impl Default for MvtWriter {
             bottom: 0.0,
             x_multiplier: 1.0,
             y_multiplier: 1.0,
-        }
-    }
-}
-
-#[derive(Default, Debug, PartialEq)]
-enum LineState {
-    #[default]
-    None,
-    // Issue LineTo command after first point
-    Line(usize),
-    Ring(usize),
-}
-
-impl MvtWriter {
-    /// Creates a new `MvtWriter` that transforms geometries to be in tile coordinate space.
-    pub fn new(extent: u32, left: f64, bottom: f64, right: f64, top: f64) -> MvtWriter {
-        assert_ne!(extent, 0);
-        MvtWriter {
-            extent: extent as i32,
-            scale: true,
-            left,
-            bottom,
-            x_multiplier: (extent as f64) / (right - left),
-            y_multiplier: (extent as f64) / (top - bottom),
-            ..Default::default()
-        }
-    }
-
-    /// Creates a new `MvtWriter` that does not transform any geometries.
-    ///
-    /// The resulting writer expects all geometries to be provided in tile coordinate space,
-    /// matching the specified `extent`.
-    pub fn new_unscaled(extent: u32) -> MvtWriter {
-        assert_ne!(extent, 0);
-        MvtWriter {
-            extent: extent as i32,
-            scale: false,
-            ..Default::default()
-        }
+        })
     }
 
     pub fn geometry(&self) -> &tile::Feature {
