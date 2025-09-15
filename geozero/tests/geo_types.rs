@@ -21,7 +21,7 @@ fn simplify() {
     );
     if let Ok(Geometry::LineString(line)) = geojson.to_geo() {
         assert_eq!(line.coords_count(), 7);
-        let simplified = line.simplify_vw_preserve(&800000.0);
+        let simplified = line.simplify_vw_preserve(800000.0);
         assert_eq!(simplified.coords_count(), 4);
     }
 }
