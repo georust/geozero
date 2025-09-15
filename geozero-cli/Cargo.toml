@@ -9,6 +9,7 @@ edition.workspace = true
 homepage.workspace = true
 repository.workspace = true
 license.workspace = true
+rust-version.workspace = true
 
 [[bin]]
 name = "geozero"
@@ -21,3 +22,6 @@ env_logger.workspace = true
 flatgeobuf.workspace = true
 geozero = { workspace = true, default-features = true, features = ["with-csv"] }
 tokio = { workspace = true, default-features = true, features = ["full"] }
+
+[lints]
+workspace = true

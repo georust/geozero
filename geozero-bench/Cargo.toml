@@ -26,6 +26,9 @@ seek_bufread.workspace = true
 sqlx = { workspace = true, features = ["runtime-tokio-native-tls", "postgres", "sqlite"] }
 tokio = { workspace = true, features = ["rt-multi-thread"] }
 
+[lints]
+workspace = true
+
 [[bench]]
 name = "geobench"
 harness = false
