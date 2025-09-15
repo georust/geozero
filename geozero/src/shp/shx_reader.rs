@@ -2,7 +2,7 @@ use crate::shp::{Error, header};
 use byteorder::{BigEndian, ReadBytesExt};
 use std::io::Read;
 
-const INDEX_RECORD_SIZE: usize = 2 * std::mem::size_of::<i32>();
+const INDEX_RECORD_SIZE: usize = 2 * size_of::<i32>();
 
 pub(crate) struct ShapeIndex {
     #[allow(dead_code)]
