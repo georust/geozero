@@ -26,20 +26,21 @@ pub(crate) mod conversion {
             dialect: WktDialect,
             dims: CoordDimensions,
             srid: Option<i32>,
+            precision: Option<usize>,
         ) -> Result<String>;
     }
 
     impl<T: GeozeroGeometry> ToWkt for T {
         fn to_wkt(&self) -> Result<String> {
-            self.to_wkt_with_opts(WktDialect::Wkt, CoordDimensions::default(), None)
+            self.to_wkt_with_opts(WktDialect::Wkt, CoordDimensions::default(), None, None)
         }
 
         fn to_ewkt(&self, srid: Option<i32>) -> Result<String> {
-            self.to_wkt_with_opts(WktDialect::Ewkt, CoordDimensions::xyzm(), srid)
+            self.to_wkt_with_opts(WktDialect::Ewkt, CoordDimensions::xyzm(), srid, None)
         }
 
         fn to_wkt_ndim(&self, dims: CoordDimensions) -> Result<String> {
-            self.to_wkt_with_opts(WktDialect::Wkt, dims, None)
+            self.to_wkt_with_opts(WktDialect::Wkt, dims, None, None)
         }
 
         fn to_wkt_with_opts(
@@ -47,9 +48,10 @@ pub(crate) mod conversion {
             dialect: WktDialect,
             dims: CoordDimensions,
             srid: Option<i32>,
+            precision: Option<usize>,
         ) -> Result<String> {
             let mut out: Vec<u8> = Vec::new();
-            let mut writer = WktWriter::with_opts(&mut out, dialect, dims, srid);
+            let mut writer = WktWriter::with_opts(&mut out, dialect, dims, srid, precision);
             self.process_geom(&mut writer)?;
             String::from_utf8(out).map_err(|_| {
                 crate::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())
@@ -82,8 +84,13 @@ mod wkb {
     impl FromWkb for Ewkt<String> {
         fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> Result<Self> {
             let mut out: Vec<u8> = Vec::new();
-            let mut writer =
-                WktWriter::with_opts(&mut out, WktDialect::Ewkt, CoordDimensions::xyzm(), None);
+            let mut writer = WktWriter::with_opts(
+                &mut out,
+                WktDialect::Ewkt,
+                CoordDimensions::xyzm(),
+                None,
+                None,
+            );
             crate::wkb::process_wkb_type_geom(rdr, &mut writer, dialect)?;
             let wkt = String::from_utf8(out).map_err(|_| {
                 crate::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())
@@ -110,8 +117,13 @@ mod wkb {
     impl FromWkb for EwktString {
         fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> Result<Self> {
             let mut out: Vec<u8> = Vec::new();
-            let mut writer =
-                WktWriter::with_opts(&mut out, WktDialect::Ewkt, CoordDimensions::xyzm(), None);
+            let mut writer = WktWriter::with_opts(
+                &mut out,
+                WktDialect::Ewkt,
+                CoordDimensions::xyzm(),
+                None,
+                None,
+            );
             crate::wkb::process_wkb_type_geom(rdr, &mut writer, dialect)?;
             let wkt = String::from_utf8(out).map_err(|_| {
                 crate::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())
