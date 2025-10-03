@@ -7,7 +7,7 @@ use std::io::Read;
 pub(crate) const HEADER_SIZE: i32 = 100;
 const FILE_CODE: i32 = 9994;
 /// Size of reserved bytes in the header, that have do defined use
-const SIZE_OF_SKIP: usize = std::mem::size_of::<i32>() * 5;
+const SIZE_OF_SKIP: usize = size_of::<i32>() * 5;
 
 /// struct representing the Header of a shapefile
 /// can be retrieved via the reader used to read

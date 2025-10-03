@@ -1,23 +1,27 @@
 [workspace]
 # Make sure this list matches the "Test Doc Build" section in .github/workflows/ci.yml
-members = ["geozero", "geozero-cli", "geozero-bench"]
+members = ["geozero", "geozero-bench", "geozero-cli"]
 default-members = ["geozero", "geozero-cli"]
 resolver = "3"
 
 [workspace.package]
 version = "0.14.0"
-authors = ["Pirmin Kalberer <pka@sourcepole.ch>", "Yuri Astrakhan <YuriAstrakhan@gmail.com>"]
+authors = [
+    "Pirmin Kalberer <pka@sourcepole.ch>",
+    "Yuri Astrakhan <YuriAstrakhan@gmail.com>",
+]
 edition = "2024"
 homepage = "https://github.com/georust/geozero"
 repository = "https://github.com/georust/geozero"
 readme = "README.md"
 license = "MIT OR Apache-2.0"
+rust-version = "1.85.0"
 
 [workspace.dependencies]
 # Used in geozero-cli and geozero-bench
 # geozero version must be in sync with flatgeobuf version!
-geozero = { version = "0.14.0", default-features = false }
 flatgeobuf = "5.0.0"
+geozero = { version = "0.14.0", default-features = false }
 
 async-trait = "0.1"
 base64 = "0.22.1"
@@ -55,6 +59,49 @@ sqlx = { version = "0.8", default-features = false }
 thiserror = "2.0.7"
 tokio = { version = "1.30.0", default-features = false }
 wkt = "0.14.0"
+
+[workspace.lints.rust]
+# unsafe_code = "forbid"  # One day...
+unused_qualifications = "warn"
+
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+mut_mut = "allow"
+explicit_iter_loop = "allow"
+if_not_else = "allow"
+doc_markdown = "allow"  # 256
+missing_errors_doc = "allow"  # 190
+cast_possible_truncation = "allow"  # 56
+must_use_candidate = "allow"  # 54
+unreadable_literal = "allow"  # 51
+semicolon_if_nothing_returned = "allow"  # 43
+cast_lossless = "allow"  # 32
+unnecessary_wraps = "allow"  # 19
+items_after_statements = "allow"  # 16
+cast_sign_loss = "allow"  # 16
+many_single_char_names = "allow"  # 15
+inefficient_to_string = "allow"  # 12
+ignore_without_reason = "allow"  # 10
+cast_possible_wrap = "allow"  # 10
+needless_raw_string_hashes = "allow"  # 8
+map_unwrap_or = "allow"  # 8
+ref_option = "allow"  # 7
+unnested_or_patterns = "allow"  # 6
+unnecessary_semicolon = "allow"  # 6
+no_effect_underscore_binding = "allow"  # 4
+match_wildcard_for_single_variants = "allow"  # 4
+match_same_arms = "allow"  # 4
+format_push_string = "allow"  # 4
+too_many_lines = "allow"  # 2
+struct_excessive_bools = "allow"  # 2
+single_match_else = "allow"  # 2
+redundant_closure_for_method_calls = "allow"  # 2
+missing_panics_doc = "allow"  # 2
+manual_assert = "allow"  # 2
+ignored_unit_patterns = "allow"  # 2
+wildcard_imports = "allow"  # 1
+float_cmp = "allow"  # 1
+enum_glob_use = "allow"  # 1
 
 [patch.crates-io]
 geozero = { path = "./geozero" }
