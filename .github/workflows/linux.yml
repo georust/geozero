@@ -16,6 +16,14 @@ jobs:
         uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
         with: { persist-credentials: false }
 
+      - name: Install dependencies
+        shell: bash
+        run: |
+          rustc --version
+          cargo --version
+          sudo apt-get update
+          sudo apt-get install -y libgdal-dev libgeos-dev
+
       - name: Format Check
         shell: bash
         run: cargo fmt --all -- --check
