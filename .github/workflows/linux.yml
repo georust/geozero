@@ -6,26 +6,12 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build_and_test:
-
-    name: stable - x86_64-unknown-linux-gnu
+  lint:
+    name: docs - stable - x86_64-unknown-linux-gnu
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: read
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Install dependencies
-        shell: bash
-        run: |
-          rustc --version
-          cargo --version
-          sudo apt-get update
-          sudo apt-get install -y libgdal-dev libgeos-dev
-
-      - name: Install protoc
-        uses: arduino/setup-protoc@v1
-
       - name: Format Check
         shell: bash
         run: cargo fmt --all -- --check
@@ -33,13 +19,6 @@ jobs:
       - name: Clippy Check
         shell: bash
         run: cargo clippy --workspace --all-features --bins --examples --tests --benches -- -D warnings
-
-      - name: Tests
-        shell: bash
-        run: |
-          cargo test -p geozero
-          cargo test -p geozero --no-default-features
-          cargo test --workspace --all-features
 
       - name: Test Doc Build
         shell: bash
@@ -50,9 +29,35 @@ jobs:
           done
         env:
           RUSTDOCFLAGS: "-D warnings"
+    
+  test:
+    name: tests - stable - x86_64-unknown-linux-gnu
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          rustc --version
+          cargo --version
+          sudo apt-get update
+          sudo apt-get install -y libgdal-dev libgeos-dev
+
+      - name: Install protoc
+        uses: arduino/setup-protoc@149f6c87b92550901b26acd1632e11c3662e381f # v1.3.0
+
+      - name: Tests
+        shell: bash
+        run: |
+          cargo test -p geozero
+          cargo test -p geozero --no-default-features
+          cargo test --workspace --all-features
 
       - name: Set up PostgreSQL with PostGIS
-        uses: nyurik/action-setup-postgis@v1
+        uses: nyurik/action-setup-postgis@b10c6d8544c44e56c00b46174b0b580699a86620 # v1
         with:
           username: ci
           password: ci
