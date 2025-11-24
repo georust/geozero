@@ -64,7 +64,7 @@ fn process_properties(
         } else if let Some(v) = value.bool_value {
             processor.property(i, key, &ColumnValue::Bool(v))?;
         } else {
-            return Err(MvtError::UnsupportedKeyValueType(key.to_string()).into());
+            return Err(MvtError::UnsupportedKeyValueType(key.clone()).into());
         }
     }
     processor.properties_end()
