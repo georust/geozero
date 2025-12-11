@@ -1,5 +1,11 @@
 ## UNRELEASED
 
+
+## 0.15.1 - (2025-12-11)
+* Update `geo` dependency to 0.32.0
+
+## 0.15.0 - (2025-12-11)
+
 * Add `style` option to SVGWriter for writing \<style\> tags
 * Add `BoundsProcessor` to compute bounds of geometry
 * Update Deps:
