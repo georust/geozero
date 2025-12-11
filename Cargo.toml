@@ -5,7 +5,7 @@ default-members = ["geozero", "geozero-cli"]
 resolver = "3"
 
 [workspace.package]
-version = "0.14.0"
+version = "0.15.0"
 authors = [
     "Pirmin Kalberer <pka@sourcepole.ch>",
     "Yuri Astrakhan <YuriAstrakhan@gmail.com>",
@@ -21,7 +21,7 @@ rust-version = "1.85.0"
 # Used in geozero-cli and geozero-bench
 # geozero version must be in sync with flatgeobuf version!
 flatgeobuf = "5.0.0"
-geozero = { version = "0.14.0", default-features = false }
+geozero = { version = "0.15.0", default-features = false }
 
 async-trait = "0.1"
 base64 = "0.22.1"
