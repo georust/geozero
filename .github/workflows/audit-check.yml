@@ -39,7 +39,6 @@ jobs:
       matrix:
         include:
         - language: actions
-        - language: javascript-typescript
         - language: rust
     steps:
     - name: Checkout repository
