@@ -1,6 +1,6 @@
 use crate::error::{GeozeroError, Result};
 use crate::wkb::{WKBGeometryType, WkbDialect};
-use crate::{GeomProcessor, GeozeroGeometry};
+use crate::{CoordDimensions, GeomProcessor, GeozeroGeometry};
 use scroll::ctx::{FromCtx, SizeWith};
 use scroll::{Endian, IOread};
 use std::io::Read;
@@ -17,6 +17,11 @@ impl<B: AsRef<[u8]>> GeozeroGeometry for Wkb<B> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
         process_wkb_geom(&mut self.0.as_ref(), processor)
     }
+    fn dims(&self) -> CoordDimensions {
+        read_wkb_header(&mut self.0.as_ref())
+            .map(|info| info.dims())
+            .unwrap_or_default()
+    }
 }
 
 /// EWKB reader.
@@ -32,6 +37,16 @@ impl<B: AsRef<[u8]>> GeozeroGeometry for Ewkb<B> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
         process_ewkb_geom(&mut self.0.as_ref(), processor)
     }
+    fn dims(&self) -> CoordDimensions {
+        read_ewkb_header(&mut self.0.as_ref())
+            .map(|info| info.dims())
+            .unwrap_or_default()
+    }
+    fn srid(&self) -> Option<i32> {
+        read_ewkb_header(&mut self.0.as_ref())
+            .ok()
+            .and_then(|info| info.srid)
+    }
 }
 
 /// GeoPackage WKB reader.
@@ -40,6 +55,16 @@ pub struct GpkgWkb<B: AsRef<[u8]>>(pub B);
 impl<B: AsRef<[u8]>> GeozeroGeometry for GpkgWkb<B> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
         process_gpkg_geom(&mut self.0.as_ref(), processor)
+    }
+    fn dims(&self) -> CoordDimensions {
+        read_gpkg_header(&mut self.0.as_ref())
+            .map(|info| info.dims())
+            .unwrap_or_default()
+    }
+    fn srid(&self) -> Option<i32> {
+        read_gpkg_header(&mut self.0.as_ref())
+            .ok()
+            .and_then(|info| info.srid)
     }
 }
 
@@ -50,6 +75,16 @@ impl<B: AsRef<[u8]>> GeozeroGeometry for SpatiaLiteWkb<B> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
         process_spatialite_geom(&mut self.0.as_ref(), processor)
     }
+    fn dims(&self) -> CoordDimensions {
+        read_spatialite_header(&mut self.0.as_ref())
+            .map(|info| info.dims())
+            .unwrap_or_default()
+    }
+    fn srid(&self) -> Option<i32> {
+        read_spatialite_header(&mut self.0.as_ref())
+            .ok()
+            .and_then(|info| info.srid)
+    }
 }
 
 /// MySQL WKB reader.
@@ -58,6 +93,16 @@ pub struct MySQLWkb<B: AsRef<[u8]>>(pub B);
 impl<B: AsRef<[u8]>> GeozeroGeometry for MySQLWkb<B> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
         process_mysql_geom(&mut self.0.as_ref(), processor)
+    }
+    fn dims(&self) -> CoordDimensions {
+        read_mysql_header(&mut self.0.as_ref())
+            .map(|info| info.dims())
+            .unwrap_or_default()
+    }
+    fn srid(&self) -> Option<i32> {
+        read_mysql_header(&mut self.0.as_ref())
+            .ok()
+            .and_then(|info| info.srid)
     }
 }
 
@@ -125,6 +170,17 @@ pub(crate) struct WkbInfo {
     #[allow(dead_code)]
     envelope: Vec<f64>,
     is_compressed: bool,
+}
+
+impl WkbInfo {
+    pub fn dims(&self) -> CoordDimensions {
+        CoordDimensions {
+            z: self.has_z,
+            m: self.has_m,
+            t: false,
+            tm: false,
+        }
+    }
 }
 
 /// OGC WKB header.
@@ -624,6 +680,13 @@ mod test {
     use crate::wkt::WktWriter;
     use crate::{CoordDimensions, ToWkt};
 
+    #[track_caller]
+    fn assert_srid_dims(wkb: &impl GeozeroGeometry, srid: Option<i32>, z: bool, m: bool) {
+        assert_eq!(wkb.srid(), srid);
+        assert_eq!(wkb.dims().z, z, "z dimension mismatch");
+        assert_eq!(wkb.dims().m, m, "m dimension mismatch");
+    }
+
     #[test]
     fn ewkb_format() {
         // SELECT 'POINT(10 -20 100 1)'::geometry
@@ -636,6 +699,7 @@ mod test {
         assert_eq!(info.srid, None);
         assert!(info.has_z);
         assert!(info.has_m);
+        assert_srid_dims(&Ewkb(&ewkb), None, true, true);
 
         // Process xy only
         let mut wkt_data: Vec<u8> = Vec::new();
@@ -661,6 +725,7 @@ mod test {
         assert_eq!(info.base_type, WKBGeometryType::MultiPoint);
         assert_eq!(info.srid, Some(4326));
         assert!(info.has_z);
+        assert_srid_dims(&Ewkb(&ewkb), Some(4326), true, false);
 
         let mut wkt_data: Vec<u8> = Vec::new();
         let mut writer = WktWriter::with_dims(&mut wkt_data, CoordDimensions::xyz());
@@ -861,6 +926,7 @@ mod test {
         assert_eq!(info.srid, Some(4326));
         assert!(info.has_z);
         assert!(info.has_m);
+        assert_srid_dims(&SpatiaLiteWkb(&ewkb), Some(4326), true, true);
 
         // Process xy only
         let mut wkt_data: Vec<u8> = Vec::new();
@@ -889,6 +955,7 @@ mod test {
         assert_eq!(info.srid, Some(4326));
         assert!(info.has_z);
         assert!(info.has_m);
+        assert_srid_dims(&SpatiaLiteWkb(&ewkb), Some(4326), true, true);
 
         let mut wkt_data: Vec<u8> = Vec::new();
         assert!(
@@ -904,6 +971,7 @@ mod test {
         assert_eq!(info.srid, Some(4326));
         assert!(info.has_z);
         assert!(info.has_m);
+        assert_srid_dims(&SpatiaLiteWkb(&ewkb), Some(4326), true, true);
 
         let mut wkt_data: Vec<u8> = Vec::new();
         let mut writer = WktWriter::with_dims(&mut wkt_data, CoordDimensions::xyzm());
@@ -921,6 +989,7 @@ mod test {
         assert!(info.has_m);
         // Spatialite store envelope as [minx, miny, maxx, maxy]
         assert_eq!(info.envelope, vec![10.0, 10.0, 20.0, 20.0]);
+        assert_srid_dims(&SpatiaLiteWkb(&wkb), None, true, true);
 
         let mut wkt_data: Vec<u8> = Vec::new();
         assert!(
@@ -937,6 +1006,7 @@ mod test {
         let info = read_spatialite_header(&mut wkb.as_slice()).unwrap();
         assert_eq!(info.base_type, WKBGeometryType::GeometryCollection);
         assert_eq!(info.envelope, vec![1.0, 3.0, 22.0, 22.0]);
+        assert_srid_dims(&SpatiaLiteWkb(&wkb), None, false, false);
 
         let mut wkt_data: Vec<u8> = Vec::new();
         assert!(
@@ -958,6 +1028,7 @@ mod test {
         assert_eq!(info.srid, Some(4326));
         assert!(!info.has_z);
         assert!(!info.has_m);
+        assert_srid_dims(&MySQLWkb(&ewkb), Some(4326), false, false);
 
         let mut wkt_data: Vec<u8> = Vec::new();
         assert!(
@@ -971,6 +1042,7 @@ mod test {
         assert_eq!(info.base_type, WKBGeometryType::MultiLineString);
         assert!(!info.has_z);
         assert!(!info.has_m);
+        assert_srid_dims(&MySQLWkb(&wkb), Some(0), false, false);
 
         let mut wkt_data: Vec<u8> = Vec::new();
         assert!(
@@ -985,6 +1057,7 @@ mod test {
         let wkb = hex::decode("000000000107000000020000000101000000000000000000F03F00000000000008400103000000010000000400000000000000000035400000000000003540000000000000364000000000000035400000000000003540000000000000364000000000000035400000000000003540").unwrap();
         let info = read_mysql_header(&mut wkb.as_slice()).unwrap();
         assert_eq!(info.base_type, WKBGeometryType::GeometryCollection);
+        assert_srid_dims(&MySQLWkb(&wkb), Some(0), false, false);
 
         let mut wkt_data: Vec<u8> = Vec::new();
         assert!(
@@ -1005,6 +1078,7 @@ mod test {
         assert!(!info.has_z);
         assert!(!info.has_m);
         assert_eq!(info.srid, Some(4326));
+        assert_srid_dims(&GpkgWkb(&wkb), Some(4326), false, false);
 
         let mut wkt_data: Vec<u8> = Vec::new();
         assert!(process_gpkg_geom(&mut wkb.as_slice(), &mut WktWriter::new(&mut wkt_data)).is_ok());
@@ -1018,6 +1092,7 @@ mod test {
         assert!(info.has_m);
         // GPKG stores envelope as [minx, maxx, miny, maxy]
         assert_eq!(info.envelope, vec![10.0, 20.0, 10.0, 20.0]);
+        assert_srid_dims(&GpkgWkb(&wkb), Some(4326), true, true);
 
         let mut wkt_data: Vec<u8> = Vec::new();
         assert!(process_gpkg_geom(&mut wkb.as_slice(), &mut WktWriter::new(&mut wkt_data)).is_ok());
@@ -1031,6 +1106,7 @@ mod test {
         let info = read_gpkg_header(&mut wkb.as_slice()).unwrap();
         assert_eq!(info.base_type, WKBGeometryType::GeometryCollection);
         assert_eq!(info.envelope, vec![1.0, 22.0, 3.0, 22.0]);
+        assert_srid_dims(&GpkgWkb(&wkb), Some(4326), false, false);
 
         let mut wkt_data: Vec<u8> = Vec::new();
         assert!(process_gpkg_geom(&mut wkb.as_slice(), &mut WktWriter::new(&mut wkt_data)).is_ok());
