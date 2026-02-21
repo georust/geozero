@@ -1,4 +1,13 @@
 mod pg {
+    pub fn should_skip_postgis_tests() -> bool {
+        if std::env::var("DATABASE_URL").is_ok() {
+            false
+        } else {
+            eprintln!("Skipping PostGIS tests: DATABASE_URL is not set");
+            true
+        }
+    }
+
     pub fn get_db_string() -> String {
         std::env::var("DATABASE_URL").unwrap()
     }
@@ -21,8 +30,10 @@ mod postgis_postgres {
     use geozero::wkt::WktWriter;
 
     #[test]
-    #[ignore]
     fn blob_query() -> Result<(), postgres::error::Error> {
+        if crate::pg::should_skip_postgis_tests() {
+            return Ok(());
+        }
         let mut client = postgres::Client::connect(&get_db_string(), postgres::NoTls).unwrap();
         let row = client.query_one(
             "SELECT 'SRID=4326;POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))'::geometry::bytea",
@@ -36,8 +47,10 @@ mod postgis_postgres {
     }
 
     #[test]
-    #[ignore]
     fn rust_geo_query() -> Result<(), postgres::error::Error> {
+        if crate::pg::should_skip_postgis_tests() {
+            return Ok(());
+        }
         let mut client = postgres::Client::connect(&get_db_string(), postgres::NoTls).unwrap();
 
         let row = client.query_one(
@@ -73,9 +86,11 @@ mod postgis_postgres {
     }
 
     #[test]
-    #[ignore]
     #[cfg(feature = "with-geos")]
     fn geos_query() -> Result<(), postgres::error::Error> {
+        if crate::pg::should_skip_postgis_tests() {
+            return Ok(());
+        }
         let mut client = postgres::Client::connect(&get_db_string(), postgres::NoTls).unwrap();
 
         let row = client.query_one(
@@ -124,8 +139,10 @@ mod postgis_postgres {
         }
 
         #[test]
-        #[ignore]
         fn geometry_query() -> Result<(), postgres::error::Error> {
+            if crate::pg::should_skip_postgis_tests() {
+                return Ok(());
+            }
             let mut client = postgres::Client::connect(&get_db_string(), postgres::NoTls).unwrap();
 
             let row = client.query_one(
@@ -148,8 +165,10 @@ mod postgis_sqlx {
     use geozero::wkb;
 
     #[tokio::test]
-    #[ignore]
     async fn blob_query() -> Result<(), sqlx::Error> {
+        if pg::should_skip_postgis_tests() {
+            return Ok(());
+        }
         let pool = pg::get_pool().await;
 
         let row: (Vec<u8>,) = sqlx::query_as(
@@ -173,8 +192,10 @@ mod postgis_sqlx {
     }
 
     #[tokio::test]
-    #[ignore]
     async fn point3d_query() -> Result<(), sqlx::Error> {
+        if pg::should_skip_postgis_tests() {
+            return Ok(());
+        }
         let pool = pg::get_pool().await;
 
         let row: (PointZ,) = sqlx::query_as("SELECT 'POINT(1 2 3)'::geometry")
@@ -195,8 +216,10 @@ mod postgis_sqlx {
     }
 
     #[tokio::test]
-    #[ignore]
     async fn rust_geo_query() -> Result<(), sqlx::Error> {
+        if pg::should_skip_postgis_tests() {
+            return Ok(());
+        }
         let pool = pg::get_pool().await;
 
         let row: (wkb::Decode<geo_types::Geometry<f64>>,) =
@@ -233,8 +256,10 @@ mod postgis_sqlx {
     }
 
     #[tokio::test]
-    #[ignore]
     async fn bulk_insert() -> Result<(), sqlx::Error> {
+        if pg::should_skip_postgis_tests() {
+            return Ok(());
+        }
         // https://github.com/launchbadge/sqlx/blob/v0.5.13/FAQ.md#how-can-i-bind-an-array-to-a-values-clause-how-can-i-do-bulk-inserts
         let pool = pg::get_pool().await;
 
@@ -253,7 +278,6 @@ mod postgis_sqlx {
     }
 
     #[tokio::test]
-    #[ignore]
     // Requires DATABASE_URL at compile time
     #[cfg(not(test))] // Delete this line to compile the test
     async fn rust_geo_macro_query() -> Result<(), sqlx::Error> {
@@ -310,9 +334,11 @@ mod postgis_sqlx {
     }
 
     #[tokio::test]
-    #[ignore]
     #[cfg(feature = "with-geos")]
     async fn geos_query() -> Result<(), sqlx::Error> {
+        if pg::should_skip_postgis_tests() {
+            return Ok(());
+        }
         let pool = pg::get_pool().await;
 
         let row: (wkb::Decode<geos::Geometry>,) =
@@ -376,8 +402,10 @@ mod postgis_sqlx {
         }
 
         #[tokio::test]
-        #[ignore]
         async fn geometry_query() -> Result<(), sqlx::Error> {
+            if pg::should_skip_postgis_tests() {
+                return Ok(());
+            }
             let pool = pg::get_pool().await;
 
             let row: (Text,) =

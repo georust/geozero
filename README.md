@@ -266,3 +266,19 @@ Full source code: [kdbush.rs](./geozero/tests/kdbush.rs)
 # Ubuntu/Debian/Mint
 apt-get install -y libgeos-dev libgdal-dev
 ```
+
+## Testing
+
+PostGIS integration tests in `geozero/tests/postgis.rs` run automatically when `DATABASE_URL` is set.
+If `DATABASE_URL` is not set, those tests are skipped with an informational message.
+
+Examples:
+
+```sh
+# regular test run (PostGIS tests auto-skip when DATABASE_URL is unset)
+cargo test -p geozero --all-features
+
+# run PostGIS tests explicitly
+DATABASE_URL=postgres://ci:ci@localhost:5432/test?sslmode=disable \
+    cargo test -p geozero --all-features --test postgis -- --test-threads 1
+```
