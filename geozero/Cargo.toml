@@ -76,6 +76,7 @@ prost-build = { workspace = true, optional = true }
 geo.workspace = true
 hex.workspace = true
 kdbush.workspace = true
+diesel = { workspace = true, features = ["postgres"] }
 postgres.workspace = true
 seek_bufread.workspace = true
 sqlx = { workspace = true, features = ["runtime-tokio-native-tls", "macros", "time", "postgres", "sqlite"] }
