@@ -31,7 +31,7 @@ clap = { version = "4.3", features = ["derive"] }
 criterion = "0.7.0"
 csv = "1.2.2"
 dbase = "0.6.0"
-diesel = { version = "2.2.3", default-features = false, features = ["postgres"] }
+diesel = { version = "2.2.3", default-features = false, features = ["postgres_backend"] }
 dup-indexer = "0.4.0"
 env_logger = "0.11.5"
 futures-util = "0.3.28"
