@@ -326,7 +326,7 @@ fn mvt_decode() {
     let new_file = test_dir.join("tile.mvt.new.txt");
 
     let expected = std::fs::read_to_string(&expected_file).ok();
-    if expected.filter(|e| e == &buf).is_none() {
+    if expected.as_ref().is_none_or(|e| e != &buf) {
         std::fs::write(&new_file, buf).unwrap_or_else(|e| {
             panic!(
                 "{expected_file:?} didn't match mvt output, and failed to write {new_file:?}: {e}"
