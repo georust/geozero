@@ -23,7 +23,7 @@ geozero = { workspace = true, features = ["with-geo", "with-geojson", "with-geos
 postgis.workspace = true
 postgres.workspace = true
 seek_bufread.workspace = true
-sqlx = { workspace = true, features = ["runtime-tokio-native-tls", "postgres", "sqlite"] }
+sqlx = { workspace = true, features = ["runtime-tokio", "postgres", "sqlite"] }
 tokio = { workspace = true, features = ["rt-multi-thread"] }
 
 [lints]
