@@ -639,7 +639,7 @@ fn process_curvepolygon<R: Read, P: GeomProcessor>(
 mod test {
     use super::*;
     use crate::wkt::WktWriter;
-    use crate::{CoordDimensions, ProcessorSink, ToWkt};
+    use crate::{CoordDimensions, ToWkt};
 
     #[test]
     fn ewkb_format() {
