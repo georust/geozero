@@ -5,6 +5,10 @@ use scroll::ctx::{FromCtx, SizeWith};
 use scroll::{Endian, IOread};
 use std::io::Read;
 
+/// Maximum nesting depth for WKB container geometries.
+/// A depth of 128 is well clear of any real geometry while staying safe on constrained stacks.
+pub(crate) const WKB_MAX_NESTING_DEPTH: u32 = 128;
+
 #[cfg(feature = "with-postgis-diesel")]
 use crate::postgis::diesel::sql_types::{Geography, Geometry};
 #[cfg(feature = "with-postgis-diesel")]
@@ -65,21 +69,21 @@ impl<B: AsRef<[u8]>> GeozeroGeometry for MySQLWkb<B> {
 pub fn process_wkb_geom<R: Read, P: GeomProcessor>(raw: &mut R, processor: &mut P) -> Result<()> {
     let info = read_wkb_header(raw)?;
     processor.srid(info.srid)?;
-    process_wkb_geom_n(raw, &info, read_wkb_nested_header, 0, processor)
+    process_wkb_geom_n(raw, &info, read_wkb_nested_header, 0, 0, processor)
 }
 
 /// Process EWKB geometry.
 pub fn process_ewkb_geom<R: Read, P: GeomProcessor>(raw: &mut R, processor: &mut P) -> Result<()> {
     let info = read_ewkb_header(raw)?;
     processor.srid(info.srid)?;
-    process_wkb_geom_n(raw, &info, read_ewkb_nested_header, 0, processor)
+    process_wkb_geom_n(raw, &info, read_ewkb_nested_header, 0, 0, processor)
 }
 
 /// Process GPKG geometry.
 pub fn process_gpkg_geom<R: Read, P: GeomProcessor>(raw: &mut R, processor: &mut P) -> Result<()> {
     let info = read_gpkg_header(raw)?;
     processor.srid(info.srid)?;
-    process_wkb_geom_n(raw, &info, read_wkb_nested_header, 0, processor)
+    process_wkb_geom_n(raw, &info, read_wkb_nested_header, 0, 0, processor)
 }
 
 /// Process MySQL WKB geometry.
@@ -89,14 +93,14 @@ pub fn process_spatialite_geom<R: Read, P: GeomProcessor>(
 ) -> Result<()> {
     let info = read_spatialite_header(raw)?;
     processor.srid(info.srid)?;
-    process_wkb_geom_n(raw, &info, read_spatialite_nested_header, 0, processor)
+    process_wkb_geom_n(raw, &info, read_spatialite_nested_header, 0, 0, processor)
 }
 
 /// Process MySQL WKB geometry.
 pub fn process_mysql_geom<R: Read, P: GeomProcessor>(raw: &mut R, processor: &mut P) -> Result<()> {
     let info = read_mysql_header(raw)?;
     processor.srid(info.srid)?;
-    process_wkb_geom_n(raw, &info, read_wkb_nested_header, 0, processor)
+    process_wkb_geom_n(raw, &info, read_wkb_nested_header, 0, 0, processor)
 }
 
 /// Process WKB type geometry..
@@ -310,8 +314,12 @@ pub(crate) fn process_wkb_geom_n<R: Read, P: GeomProcessor>(
     info: &WkbInfo,
     read_header: fn(&mut R, info: &WkbInfo) -> Result<WkbInfo>,
     idx: usize,
+    depth: u32,
     processor: &mut P,
 ) -> Result<()> {
+    if depth > WKB_MAX_NESTING_DEPTH {
+        return Err(GeozeroError::WkbMaxNestingDepth(WKB_MAX_NESTING_DEPTH));
+    }
     match info.base_type {
         WKBGeometryType::Point => {
             let coords = read_coord_as::<R, f64>(raw, info)?;
@@ -340,7 +348,7 @@ pub(crate) fn process_wkb_geom_n<R: Read, P: GeomProcessor>(
         WKBGeometryType::LineString => process_linestring(raw, info, true, idx, processor),
         WKBGeometryType::CircularString => process_circularstring(raw, info, idx, processor),
         WKBGeometryType::CompoundCurve => {
-            process_compoundcurve(raw, info, read_header, idx, processor)
+            process_compoundcurve(raw, info, read_header, idx, depth + 1, processor)
         }
         WKBGeometryType::MultiLineString => {
             let n_lines = raw.ioread_with::<u32>(info.endian)? as usize;
@@ -355,14 +363,14 @@ pub(crate) fn process_wkb_geom_n<R: Read, P: GeomProcessor>(
             let n_curves = raw.ioread_with::<u32>(info.endian)? as usize;
             processor.multicurve_begin(n_curves, idx)?;
             for i in 0..n_curves {
-                process_curve(raw, info, read_header, i, processor)?;
+                process_curve(raw, info, read_header, i, depth + 1, processor)?;
             }
             processor.multicurve_end(idx)
         }
         WKBGeometryType::Polygon => process_polygon(raw, info, true, idx, processor),
         WKBGeometryType::Triangle => process_triangle(raw, info, true, idx, processor),
         WKBGeometryType::CurvePolygon => {
-            process_curvepolygon(raw, info, read_header, idx, processor)
+            process_curvepolygon(raw, info, read_header, idx, depth + 1, processor)
         }
         WKBGeometryType::MultiPolygon => {
             let n_polys = raw.ioread_with::<u32>(info.endian)? as usize;
@@ -398,7 +406,7 @@ pub(crate) fn process_wkb_geom_n<R: Read, P: GeomProcessor>(
                 let info = read_header(raw, info)?;
                 match info.base_type {
                     WKBGeometryType::CurvePolygon => {
-                        process_curvepolygon(raw, &info, read_header, i, processor)?;
+                        process_curvepolygon(raw, &info, read_header, i, depth + 1, processor)?;
                     }
                     WKBGeometryType::Polygon => {
                         process_polygon(raw, &info, false, i, processor)?;
@@ -414,7 +422,7 @@ pub(crate) fn process_wkb_geom_n<R: Read, P: GeomProcessor>(
             processor.geometrycollection_begin(n_geoms, idx)?;
             for i in 0..n_geoms {
                 let info = read_header(raw, info)?;
-                process_wkb_geom_n(raw, &info, read_header, i, processor)?;
+                process_wkb_geom_n(raw, &info, read_header, i, depth + 1, processor)?;
             }
             processor.geometrycollection_end(idx)
         }
@@ -565,8 +573,12 @@ fn process_compoundcurve<R: Read, P: GeomProcessor>(
     parent_info: &WkbInfo,
     read_header: fn(&mut R, info: &WkbInfo) -> Result<WkbInfo>,
     idx: usize,
+    depth: u32,
     processor: &mut P,
 ) -> Result<()> {
+    if depth > WKB_MAX_NESTING_DEPTH {
+        return Err(GeozeroError::WkbMaxNestingDepth(WKB_MAX_NESTING_DEPTH));
+    }
     let n_strings = raw.ioread_with::<u32>(parent_info.endian)? as usize;
     processor.compoundcurve_begin(n_strings, idx)?;
     for i in 0..n_strings {
@@ -589,6 +601,7 @@ fn process_curve<R: Read, P: GeomProcessor>(
     parent_info: &WkbInfo,
     read_header: fn(&mut R, info: &WkbInfo) -> Result<WkbInfo>,
     idx: usize,
+    depth: u32,
     processor: &mut P,
 ) -> Result<()> {
     let info = read_header(raw, parent_info)?;
@@ -596,7 +609,7 @@ fn process_curve<R: Read, P: GeomProcessor>(
         WKBGeometryType::CircularString => process_circularstring(raw, &info, idx, processor),
         WKBGeometryType::LineString => process_linestring(raw, &info, false, idx, processor),
         WKBGeometryType::CompoundCurve => {
-            process_compoundcurve(raw, &info, read_header, idx, processor)
+            process_compoundcurve(raw, &info, read_header, idx, depth + 1, processor)
         }
         _ => Err(GeozeroError::GeometryFormat),
     }
@@ -607,12 +620,16 @@ fn process_curvepolygon<R: Read, P: GeomProcessor>(
     info: &WkbInfo,
     read_header: fn(&mut R, &WkbInfo) -> Result<WkbInfo>,
     idx: usize,
+    depth: u32,
     processor: &mut P,
 ) -> Result<()> {
+    if depth > WKB_MAX_NESTING_DEPTH {
+        return Err(GeozeroError::WkbMaxNestingDepth(WKB_MAX_NESTING_DEPTH));
+    }
     let ring_count = raw.ioread_with::<u32>(info.endian)? as usize;
     processor.curvepolygon_begin(ring_count, idx)?;
     for i in 0..ring_count {
-        process_curve(raw, info, read_header, i, processor)?;
+        process_curve(raw, info, read_header, i, depth + 1, processor)?;
     }
     processor.curvepolygon_end(idx)
 }
@@ -622,7 +639,7 @@ fn process_curvepolygon<R: Read, P: GeomProcessor>(
 mod test {
     use super::*;
     use crate::wkt::WktWriter;
-    use crate::{CoordDimensions, ToWkt};
+    use crate::{CoordDimensions, ProcessorSink, ToWkt};
 
     #[test]
     fn ewkb_format() {
@@ -1058,5 +1075,59 @@ mod test {
 
         let wkb = GpkgWkb(hex::decode("47500003E61000009A9999999999F13F9A9999999999F13F9A9999999999F13F9A9999999999F13F01010000009A9999999999F13F9A9999999999F13F").unwrap());
         assert_eq!(wkb.to_wkt().unwrap(), "POINT(1.1 1.1)");
+    }
+    #[test]
+    fn deeply_nested_geometry_collection_returns_error() {
+        // Build a deeply nested chain of empty GeometryCollections
+        // Each level: byte order (1) + type (4) + count (4) = 9 bytes
+        fn nested_gc(depth: usize) -> Vec<u8> {
+            // innermost: empty GeometryCollection
+            let mut blob = vec![0x01u8]; // little-endian
+            blob.extend_from_slice(&7u32.to_le_bytes()); // GeometryCollection
+            blob.extend_from_slice(&0u32.to_le_bytes()); // count = 0
+            for _ in 0..depth {
+                let mut outer = vec![0x01u8];
+                outer.extend_from_slice(&7u32.to_le_bytes());
+                outer.extend_from_slice(&1u32.to_le_bytes()); // one child
+                outer.extend_from_slice(&blob);
+                blob = outer;
+            }
+            blob
+        }
+
+        // Depth well beyond the limit should return an error
+        let bomb = nested_gc(WKB_MAX_NESTING_DEPTH as usize + 10);
+        let result = process_ewkb_geom(&mut bomb.as_slice(), &mut crate::ProcessorSink);
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert_eq!(
+            err.to_string(),
+            format!("WKB geometry nesting exceeds maximum depth of {WKB_MAX_NESTING_DEPTH}")
+        );
+    }
+
+    #[test]
+    fn nesting_depth_at_limit_succeeds() {
+        // A geometry at exactly the limit should still work
+        fn nested_gc(depth: usize) -> Vec<u8> {
+            let mut blob = vec![0x01u8];
+            blob.extend_from_slice(&7u32.to_le_bytes());
+            blob.extend_from_slice(&0u32.to_le_bytes());
+            for _ in 0..depth {
+                let mut outer = vec![0x01u8];
+                outer.extend_from_slice(&7u32.to_le_bytes());
+                outer.extend_from_slice(&1u32.to_le_bytes());
+                outer.extend_from_slice(&blob);
+                blob = outer;
+            }
+            blob
+        }
+
+        let wkb = nested_gc(WKB_MAX_NESTING_DEPTH as usize);
+        let result = process_ewkb_geom(&mut wkb.as_slice(), &mut crate::ProcessorSink);
+        assert!(
+            result.is_ok(),
+            "depth {WKB_MAX_NESTING_DEPTH} should succeed: {result:?}"
+        );
     }
 }
