@@ -10,6 +10,14 @@ homepage.workspace = true
 repository.workspace = true
 license.workspace = true
 
+[[bench]]
+name = "geobench"
+harness = false
+
+[[bench]]
+name = "mvtbench"
+harness = false
+
 [dependencies]
 criterion.workspace = true
 flatgeobuf.workspace = true
@@ -28,11 +36,3 @@ tokio = { workspace = true, features = ["rt-multi-thread"] }
 
 [lints]
 workspace = true
-
-[[bench]]
-name = "geobench"
-harness = false
-
-[[bench]]
-name = "mvtbench"
-harness = false

@@ -20,6 +20,7 @@
   * Breaking: `MvtWriter` does not implement `Default` anymore
   * <https://github.com/georust/geozero/pull/264>
 * Updated to 2024 edition
+* Cleanup justfile, editor config, other minor non-coding aspects
 
 ## 0.14.0 - (2024-09-26)
 

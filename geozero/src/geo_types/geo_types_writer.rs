@@ -73,7 +73,7 @@ impl GeomProcessor for GeoWriter {
             .coords
             .take()
             .ok_or(GeozeroError::Geometry("No coords for Point".to_string()))?;
-        debug_assert!(coords.len() == 1);
+        debug_assert_eq!(coords.len(), 1);
         self.finish_geometry(Point(coords[0]).into())
     }
 
