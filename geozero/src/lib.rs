@@ -127,3 +127,11 @@ impl ProcessorSink {
 impl FeatureProcessor for ProcessorSink {}
 impl GeomProcessor for ProcessorSink {}
 impl PropertyProcessor for ProcessorSink {}
+
+// Run the README code blocks as doctests (see issue #119).
+// Gated on the features the enabled example needs, so this module is absent
+// under `--no-default-features` (where it could not compile) and during
+// `cargo doc`/clippy (where `cfg(doctest)` is not set).
+#[cfg(all(doctest, feature = "with-geo", feature = "with-geojson"))]
+#[doc = include_str!("../../README.md")]
+mod readme_doctests {}

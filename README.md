@@ -44,7 +44,11 @@ Supported dimensions: X, Y, Z, M, T
 ## Conversion API
 
 Convert a GeoJSON polygon to geo-types and calculate centroid:
-```rust,ignore
+```rust
+# use geo::algorithm::centroid::Centroid;
+# use geo::{Geometry, Point};
+# use geozero::ToGeo;
+# use geozero::geojson::GeoJson;
 let geojson = GeoJson(r#"{"type": "Polygon", "coordinates": [[[0, 0], [10, 0], [10, 6], [0, 6], [0, 0]]]}"#);
 if let Ok(Geometry::Polygon(poly)) = geojson.to_geo() {
     assert_eq!(poly.centroid().unwrap(), Point::new(5.0, 3.0));
