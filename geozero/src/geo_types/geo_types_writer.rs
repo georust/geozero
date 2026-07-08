@@ -80,7 +80,7 @@ impl GeomProcessor for GeoWriter {
 
     fn multipoint_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
         debug_assert!(self.coords.is_none());
-        self.coords = Some(bounded_vec::<Coord<f64>>(size)?);
+        self.coords = Some(bounded_vec(size)?);
         Ok(())
     }
 
@@ -94,7 +94,7 @@ impl GeomProcessor for GeoWriter {
 
     fn linestring_begin(&mut self, _tagged: bool, size: usize, _idx: usize) -> Result<()> {
         debug_assert!(self.coords.is_none());
-        self.coords = Some(bounded_vec::<Coord<f64>>(size)?);
+        self.coords = Some(bounded_vec(size)?);
         Ok(())
     }
 
@@ -116,7 +116,7 @@ impl GeomProcessor for GeoWriter {
 
     fn multilinestring_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
         debug_assert!(self.line_strings.is_none());
-        self.line_strings = Some(bounded_vec::<LineString<f64>>(size)?);
+        self.line_strings = Some(bounded_vec(size)?);
         Ok(())
     }
 
@@ -129,7 +129,7 @@ impl GeomProcessor for GeoWriter {
 
     fn polygon_begin(&mut self, _tagged: bool, size: usize, _idx: usize) -> Result<()> {
         debug_assert!(self.line_strings.is_none());
-        self.line_strings = Some(bounded_vec::<LineString<f64>>(size)?);
+        self.line_strings = Some(bounded_vec(size)?);
         Ok(())
     }
 
@@ -158,7 +158,7 @@ impl GeomProcessor for GeoWriter {
 
     fn multipolygon_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
         debug_assert!(self.polygons.is_none());
-        self.polygons = Some(bounded_vec::<Polygon<f64>>(size)?);
+        self.polygons = Some(bounded_vec(size)?);
         Ok(())
     }
 
@@ -170,7 +170,7 @@ impl GeomProcessor for GeoWriter {
     }
 
     fn geometrycollection_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
-        self.collections.push(bounded_vec::<Geometry<f64>>(size)?);
+        self.collections.push(bounded_vec(size)?);
         Ok(())
     }
 
@@ -246,7 +246,7 @@ mod test {
     use geo::algorithm::coords_iter::CoordsIter;
 
     #[test]
-    fn line_string() -> Result<()> {
+    fn line_string() {
         let geojson = r#"{
             "type": "LineString",
             "coordinates": [
@@ -266,11 +266,10 @@ mod test {
             }
             _ => unreachable!(),
         }
-        Ok(())
     }
 
     #[test]
-    fn multipolygon() -> Result<()> {
+    fn multipolygon() {
         let geojson = r#"{
             "type": "MultiPolygon",
             "coordinates": [[[
@@ -291,7 +290,6 @@ mod test {
             }
             _ => unreachable!(),
         }
-        Ok(())
     }
 
     #[test]
@@ -348,9 +346,8 @@ mod test {
     }
 
     #[test]
-    fn to_geo() -> Result<()> {
+    fn to_geo() {
         let geom: Geometry<f64> = Point::new(10.0, 20.0).into();
         assert_eq!(geom.clone().to_geo().unwrap(), geom);
-        Ok(())
     }
 }

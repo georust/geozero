@@ -18,7 +18,7 @@ pub(crate) fn bounded_vec<T>(capacity: usize) -> Result<Vec<T>> {
 /// [`MAX_PREALLOC_BYTES`]. Split from [`bounded_vec`] so the check itself can
 /// be unit tested, and never called from production code except through `bounded_vec`.
 #[cfg(feature = "with-geo")]
-pub(crate) fn validate_capacity<T>(capacity: usize) -> Result<()> {
+fn validate_capacity<T>(capacity: usize) -> Result<()> {
     if capacity.saturating_mul(size_of::<T>()) > MAX_PREALLOC_BYTES {
         return Err(GeozeroError::Geometry(format!(
             "declared element count {capacity} exceeds preallocation budget"
@@ -497,7 +497,7 @@ mod bounded_alloc {
 
     #[test]
     fn bounded_vec_reserves_exact_valid_capacity() {
-        let v: Vec<u64> = bounded_vec::<u64>(128).unwrap();
+        let v: Vec<u64> = bounded_vec(128).unwrap();
         assert!(v.is_empty());
         assert_eq!(v.capacity(), 128);
     }
