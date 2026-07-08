@@ -1,14 +1,15 @@
-use crate::error::{GeozeroError, Result};
-use crate::wkb::{WKBGeometryType, WkbDialect};
-use crate::{GeomProcessor, GeozeroGeometry};
-use scroll::ctx::{FromCtx, SizeWith};
-use scroll::{Endian, IOread};
 use std::io::Read;
 
 #[cfg(feature = "with-postgis-diesel")]
-use crate::postgis::diesel::sql_types::{Geography, Geometry};
-#[cfg(feature = "with-postgis-diesel")]
 use diesel::{deserialize::FromSqlRow, expression::AsExpression};
+use scroll::ctx::{FromCtx, SizeWith};
+use scroll::{Endian, IOread};
+
+use crate::error::{GeozeroError, Result};
+#[cfg(feature = "with-postgis-diesel")]
+use crate::postgis::diesel::sql_types::{Geography, Geometry};
+use crate::wkb::{WKBGeometryType, WkbDialect};
+use crate::{GeomProcessor, GeozeroGeometry};
 
 /// WKB reader.
 pub struct Wkb<B: AsRef<[u8]>>(pub B);

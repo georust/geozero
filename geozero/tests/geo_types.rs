@@ -1,4 +1,5 @@
-use geo::algorithm::{centroid::Centroid, coords_iter::CoordsIter};
+use geo::algorithm::centroid::Centroid;
+use geo::algorithm::coords_iter::CoordsIter;
 use geo::simplify_vw::SimplifyVwPreserve;
 use geo::{Geometry, Point};
 use geozero::ToGeo;

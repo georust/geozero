@@ -1,5 +1,6 @@
-use crate::shp::shp_reader::{NO_DATA, is_no_data};
 use std::fmt;
+
+use crate::shp::shp_reader::{NO_DATA, is_no_data};
 
 /// Point with `x`, `y`, `m`, `z`
 #[derive(PartialEq, Debug, Copy, Clone)]
