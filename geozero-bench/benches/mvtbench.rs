@@ -1,3 +1,5 @@
+use std::hint::black_box;
+
 use criterion::{Criterion, criterion_group, criterion_main};
 use geozero::error::Result;
 use geozero::mvt::{Message, Tile};
@@ -5,7 +7,6 @@ use geozero::{
     ColumnValue, CoordDimensions, FeatureProcessor, GeomProcessor, GeozeroDatasource,
     PropertyProcessor,
 };
-use std::hint::black_box;
 
 struct Proc {
     dimensions: CoordDimensions,

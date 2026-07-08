@@ -73,11 +73,12 @@ pub use mvt_error::MvtError;
 
 #[cfg(feature = "with-wkb")]
 mod wkb {
+    use std::io::Read;
+
     use crate::error::Result;
     use crate::mvt::MvtWriter;
     use crate::mvt::vector_tile::tile;
     use crate::wkb::{FromWkb, WkbDialect};
-    use std::io::Read;
 
     impl FromWkb for tile::Feature {
         fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> Result<Self> {

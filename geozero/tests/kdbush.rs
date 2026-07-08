@@ -1,8 +1,9 @@
+use std::fs::File;
+
 use geozero::GeozeroDatasource;
 use geozero::error::Result;
 use geozero::geojson::GeoJsonReader;
 use kdbush::*;
-use std::fs::File;
 
 struct PointIndex {
     pos: usize,

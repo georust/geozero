@@ -1,3 +1,10 @@
+use std::ffi::OsStr;
+use std::fs::File;
+use std::io::{BufReader, BufWriter};
+use std::num::ParseFloatError;
+use std::path::{Path, PathBuf};
+use std::process::exit;
+
 use clap::Parser;
 use flatgeobuf::{FgbReader, FgbWriter, GeometryType, HttpFgbReader};
 use geozero::csv::{CsvReader, CsvWriter};
@@ -6,12 +13,6 @@ use geozero::geojson::{GeoJsonLineReader, GeoJsonReader, GeoJsonWriter};
 use geozero::svg::SvgWriter;
 use geozero::wkt::{WktReader, WktWriter};
 use geozero::{FeatureProcessor, GeozeroDatasource};
-use std::ffi::OsStr;
-use std::fs::File;
-use std::io::{BufReader, BufWriter};
-use std::num::ParseFloatError;
-use std::path::{Path, PathBuf};
-use std::process::exit;
 
 #[derive(Parser)]
 #[command(about, version)]

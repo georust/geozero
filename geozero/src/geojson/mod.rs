@@ -60,10 +60,11 @@ impl From<geojson::Error> for crate::error::GeozeroError {
 
 #[cfg(feature = "with-wkb")]
 mod wkb {
+    use std::io::Read;
+
     use crate::error::Result;
     use crate::geojson::{GeoJsonString, GeoJsonWriter};
     use crate::wkb::{FromWkb, WkbDialect};
-    use std::io::Read;
 
     impl FromWkb for GeoJsonString {
         fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> Result<Self> {

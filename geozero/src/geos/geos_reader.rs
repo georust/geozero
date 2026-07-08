@@ -1,6 +1,7 @@
+use geos::{CoordSeq, Geom, Geometry as GGeometry, GeometryTypes};
+
 use crate::error::{GeozeroError, Result};
 use crate::{CoordDimensions, GeomProcessor, GeozeroGeometry};
-use geos::{CoordSeq, Geom, Geometry as GGeometry, GeometryTypes};
 
 impl GeozeroGeometry for geos::Geometry {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
@@ -286,8 +287,7 @@ mod test {
 
     #[test]
     fn geos_to_ewkt() {
-        use crate::GeozeroGeometry;
-        use crate::ToWkt;
+        use crate::{GeozeroGeometry, ToWkt};
 
         let wkt = "POINT(1 1)";
         let mut ggeom = geos::Geometry::new_from_wkt(wkt).unwrap();

@@ -1,12 +1,13 @@
+use std::env;
+use std::fmt::Write;
+use std::sync::Mutex;
+
 use geozero::mvt::{Message, Tile};
 use geozero::{
     ColumnValue, CoordDimensions, FeatureProcessor, GeomProcessor, GeozeroDatasource,
     PropertyProcessor, ToJson, ToMvt,
 };
 use serde_json::json;
-use std::env;
-use std::fmt::Write;
-use std::sync::Mutex;
 
 #[test]
 fn geo_screen_coords_to_mvt() {
