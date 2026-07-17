@@ -41,6 +41,23 @@ Supported dimensions: X, Y, Z, M, T
 | GeoArrow | ✅ | ✅ | Available via the [geoarrow](https://crates.io/crates/geoarrow) crate. |
 | GeoParquet | ✅ | ✅ | Available via the [geoarrow](https://crates.io/crates/geoarrow) crate. |
 
+## Format conversion overview
+
+|               |                         [`GeozeroGeometry`]                                                                              | Dimensions |                        [`GeozeroDatasource`]                                         | Geometry Conversion |            [`GeomProcessor`]                    |
+|---------------|--------------------------------------------------------------------------------------------------------------------------|------------|--------------------------------------------------------------------------------------|---------------------|-------------------------------------------------|
+| CSV           | [csv::Csv], [csv::CsvString]                                                                                             | XY         | -                                                                                    | [ProcessToCsv]      | [CsvWriter](csv::CsvWriter)                     |
+| GDAL          | `gdal::vector::Geometry`                                                                                                 | XYZ        | -                                                                                    | [ToGdal]            | [GdalWriter](gdal::GdalWriter)                  |
+| geo-types     | `geo_types::Geometry<f64>`                                                                                               | XY         | -                                                                                    | [ToGeo]             | [GeoWriter](geo_types::GeoWriter)               |
+| GeoJSON       | [GeoJson](geojson::GeoJson), [GeoJsonString](geojson::GeoJsonString)                                                     | XYZ        | [GeoJsonReader](geojson::GeoJsonReader), [GeoJson](geojson::GeoJson)                 | [ToJson]            | [GeoJsonWriter](geojson::GeoJsonWriter)         |
+| GeoJSON Lines |                                                                                                                          | XYZ        | [GeoJsonLineReader](geojson::GeoJsonLineReader)                                      |                     | [GeoJsonLineWriter](geojson::GeoJsonLineWriter) |
+| GEOS          | `geos::Geometry`                                                                                                         | XYZ        | -                                                                                    | [ToGeos]            | [GeosWriter](geos::GeosWriter)                  |
+| GPX           |                                                                                                                          | XY         | [GpxReader](gpx::GpxReader)                                                          |                     |                                                 |
+| MVT           | [mvt::tile::Feature]                                                                                                     | XY         | [mvt::tile::Layer]                                                                   | [ToMvt]             | [MvtWriter](mvt::MvtWriter)                     |
+| Shapefile     | -                                                                                                                        | XYZM       | [shp::ShpReader]                                                                     |                     |                                                 |
+| SVG           | -                                                                                                                        | XY         | -                                                                                    | [ToSvg]             | [SvgWriter](svg::SvgWriter)                     |
+| WKB           | [Wkb](wkb::Wkb), [Ewkb](wkb::Ewkb), [GpkgWkb](wkb::GpkgWkb), [SpatiaLiteWkb](wkb::SpatiaLiteWkb), [MySQL](wkb::MySQLWkb) | XYZM       | -                                                                                    | [ToWkb]             | [WkbWriter](wkb::WkbWriter)                     |
+| WKT           | [wkt::WktStr], [wkt::WktString], [wkt::EwktStr], [wkt::EwktString]                                                       | XYZM       | [wkt::WktReader], [wkt::WktStr], [wkt::WktString], [wkt::EwktStr], [wkt::EwktString] | [ToWkt]             | [WktWriter](wkt::WktWriter)                     |
+
 ## Conversion API
 
 Convert a GeoJSON polygon to geo-types and calculate centroid:
