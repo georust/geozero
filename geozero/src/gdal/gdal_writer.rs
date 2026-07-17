@@ -82,7 +82,7 @@ impl GeomProcessor for GdalWriter {
             }
             _ => {
                 let unsupported_type = self.geom.geometry_type();
-                return Err(GdalError::UnsupportedGeometryType(unsupported_type))?;
+                return Err(GdalError::UnsupportedGeometryType(unsupported_type).into());
             }
         }
         Ok(())
@@ -114,7 +114,7 @@ impl GeomProcessor for GdalWriter {
             }
             _ => {
                 let unsupported_type = self.geom.geometry_type();
-                return Err(GdalError::UnsupportedGeometryType(unsupported_type))?;
+                return Err(GdalError::UnsupportedGeometryType(unsupported_type).into());
             }
         }
         Ok(())
@@ -156,7 +156,7 @@ impl GeomProcessor for GdalWriter {
                     self.line = unsafe { poly.get_unowned_geometry(n - 1) };
                 }
                 unsupported_type => {
-                    return Err(GdalError::UnsupportedGeometryType(unsupported_type))?;
+                    return Err(GdalError::UnsupportedGeometryType(unsupported_type).into());
                 }
             };
         }
