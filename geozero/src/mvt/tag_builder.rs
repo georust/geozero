@@ -1,5 +1,6 @@
-use crate::mvt::tile_value::TileValue;
 use dup_indexer::{DupIndexer, DupIndexerRefs, PtrRead};
+
+use crate::mvt::tile_value::TileValue;
 
 /// A builder for key-value pairs, where the key is a `String` or `&str`, and the value is a
 /// [`TileValue`] enum which can hold any of the MVT value types.

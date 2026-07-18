@@ -1,11 +1,12 @@
+use std::fs::File;
+use std::io::BufReader;
+use std::str::from_utf8;
+
 use dbase::FieldValue;
 use geozero::geojson::GeoJsonWriter;
 use geozero::shp::ShpReader;
 use geozero::wkt::WktWriter;
 use geozero::{CoordDimensions, FeatureProperties, ProcessorSink};
-use std::fs::File;
-use std::io::BufReader;
-use std::str::from_utf8;
 
 #[test]
 fn read_header() {

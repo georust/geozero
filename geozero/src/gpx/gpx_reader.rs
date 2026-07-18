@@ -1,5 +1,6 @@
-use crate::error::GeozeroError;
 use std::io;
+
+use crate::error::GeozeroError;
 
 /// GPX geometry collection
 pub struct Gpx<'a>(pub &'a str);

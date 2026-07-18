@@ -43,10 +43,11 @@ pub(crate) mod conversion {
 
 #[cfg(feature = "with-wkb")]
 mod wkb {
+    use std::io::Read;
+
     use crate::error::{GeozeroError, Result};
     use crate::geo_types::GeoWriter;
     use crate::wkb::{FromWkb, WkbDialect};
-    use std::io::Read;
 
     impl FromWkb for geo_types::Geometry<f64> {
         fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> Result<Self> {
@@ -60,11 +61,11 @@ mod wkb {
 
 #[cfg(test)]
 mod test {
-    use crate::geo_types::conversion::ToGeo;
-    use crate::geojson::GeoJsonString;
-
     use geo_types::{Geometry, GeometryCollection, Point};
     use serde_json::json;
+
+    use crate::geo_types::conversion::ToGeo;
+    use crate::geojson::GeoJsonString;
 
     #[test]
     fn from_geojson_feature_collection_of_points() {

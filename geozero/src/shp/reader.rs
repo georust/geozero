@@ -1,12 +1,14 @@
-use crate::shp::shp_reader::{RecordHeader, read_shape};
-use crate::shp::shx_reader::{ShapeIndex, read_index_file};
-use crate::shp::{Error, header};
-use crate::{FeatureProcessor, FeatureProperties, GeomProcessor};
-pub use dbase::{FieldInfo, FieldType};
 use std::fs::File;
 use std::io::{BufReader, Read, Seek};
 use std::iter::FusedIterator;
 use std::path::Path;
+
+pub use dbase::{FieldInfo, FieldType};
+
+use crate::shp::shp_reader::{RecordHeader, read_shape};
+use crate::shp::shx_reader::{ShapeIndex, read_index_file};
+use crate::shp::{Error, header};
+use crate::{FeatureProcessor, FeatureProperties, GeomProcessor};
 
 /// Struct that handle iteration over the shapes of a .shp file
 pub struct ShapeIterator<'a, P: GeomProcessor, T: Read> {

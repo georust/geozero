@@ -1,8 +1,10 @@
+use std::io::Write;
+
+use scroll::IOwrite;
+
 use crate::error::{GeozeroError, Result};
 use crate::wkb::{WKBByteOrder, WKBGeometryType, WkbDialect};
 use crate::{CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcessor};
-use scroll::IOwrite;
-use std::io::Write;
 
 /// WKB writer.
 pub struct WkbWriter<W: Write> {

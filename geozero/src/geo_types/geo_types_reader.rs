@@ -1,6 +1,7 @@
+use geo_types::{Coord, Geometry, LineString, Polygon};
+
 use crate::error::Result;
 use crate::{GeomProcessor, GeozeroGeometry};
-use geo_types::{Coord, Geometry, LineString, Polygon};
 
 impl GeozeroGeometry for Geometry<f64> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
@@ -115,11 +116,12 @@ fn process_polygon<P: GeomProcessor>(
 #[cfg(test)]
 #[cfg(feature = "with-wkt")]
 mod test {
+    use std::convert::TryFrom;
+    use std::str::FromStr;
+
     use super::*;
     use crate::ToWkt;
     use crate::wkt::WktWriter;
-    use std::convert::TryFrom;
-    use std::str::FromStr;
 
     #[test]
     fn point() {

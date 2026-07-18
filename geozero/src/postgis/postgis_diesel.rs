@@ -1,10 +1,11 @@
-use crate::postgis::postgis_diesel::sql_types::{Geography, Geometry};
-use crate::wkb::Ewkb;
 use std::io::Write as _;
 
 use diesel::deserialize::{self, FromSql};
 use diesel::pg::{self, Pg};
 use diesel::serialize::{self, IsNull, Output, ToSql};
+
+use crate::postgis::postgis_diesel::sql_types::{Geography, Geometry};
+use crate::wkb::Ewkb;
 
 pub mod sql_types {
     use diesel::query_builder::QueryId;

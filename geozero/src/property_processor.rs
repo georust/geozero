@@ -1,7 +1,8 @@
-use crate::error::{GeozeroError, Result};
 use std::collections::HashMap;
 use std::fmt;
 use std::hash::BuildHasher;
+
+use crate::error::{GeozeroError, Result};
 
 /// Feature property value.
 #[derive(PartialEq, Debug)]

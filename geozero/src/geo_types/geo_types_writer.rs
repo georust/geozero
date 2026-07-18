@@ -1,11 +1,13 @@
-use crate::error::{GeozeroError, Result};
-use crate::geometry_processor::bounded_vec;
-use crate::{FeatureProcessor, GeomProcessor, PropertyProcessor};
+use std::mem;
+
 use geo_types::{
     Coord, Geometry, GeometryCollection, LineString, MultiLineString, MultiPoint, MultiPolygon,
     Point, Polygon, coord,
 };
-use std::mem;
+
+use crate::error::{GeozeroError, Result};
+use crate::geometry_processor::bounded_vec;
+use crate::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 
 /// Generator for geo-types geometry type.
 #[derive(Debug, Default)]
@@ -240,10 +242,11 @@ mod prealloc_guard {
 #[cfg(test)]
 #[cfg(feature = "with-geojson")]
 mod test {
+    use geo::algorithm::coords_iter::CoordsIter;
+
     use super::*;
     use crate::ToGeo;
     use crate::geojson::{GeoJson, read_geojson};
-    use geo::algorithm::coords_iter::CoordsIter;
 
     #[test]
     fn line_string() {

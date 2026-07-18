@@ -1,13 +1,14 @@
+use std::io::Read;
+
+use geojson::{Feature, FeatureReader, GeoJson as GeoGeoJson, Geometry, Value};
+use serde_json::map::Map;
+use serde_json::value::Value as JsonValue;
+
 use crate::error::{GeozeroError, Result};
 use crate::{
     ColumnValue, FeatureProcessor, GeomProcessor, GeozeroDatasource, GeozeroGeometry,
     PropertyProcessor,
 };
-use geojson::{Feature, FeatureReader};
-use geojson::{GeoJson as GeoGeoJson, Geometry, Value};
-use serde_json::map::Map;
-use serde_json::value::Value as JsonValue;
-use std::io::Read;
 
 /// GeoJSON String.
 #[derive(Debug)]
@@ -291,11 +292,12 @@ fn process_polygon<P: GeomProcessor>(
 
 #[cfg(test)]
 mod test {
+    use std::fs::File;
+
     use super::*;
     use crate::geojson::GeoJsonWriter;
     use crate::wkt::WktWriter;
     use crate::{CoordDimensions, ProcessToSvg, ToJson, ToWkt};
-    use std::fs::File;
 
     #[test]
     fn line_string() -> Result<()> {
