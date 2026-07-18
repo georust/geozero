@@ -415,6 +415,12 @@ fn countries_bbox_benchmark(c: &mut Criterion) {
 }
 
 fn buildings_benchmark(c: &mut Criterion) {
+    // The OSM buildings dataset is a large external download (see the crate
+    // README and tests/data/Makefile) and is not committed, so these benches
+    // only run once it has been prepared locally.
+    if !std::path::Path::new("tests/data/osm-buildings-3857-ch.fgb").exists() {
+        return;
+    }
     let mut group = c.benchmark_group("buildings");
     let rt = tokio::runtime::Runtime::new().unwrap();
     let bbox = None;
@@ -499,6 +505,12 @@ fn buildings_benchmark(c: &mut Criterion) {
 }
 
 fn buildings_bbox_benchmark(c: &mut Criterion) {
+    // The OSM buildings dataset is a large external download (see the crate
+    // README and tests/data/Makefile) and is not committed, so these benches
+    // only run once it has been prepared locally.
+    if !std::path::Path::new("tests/data/osm-buildings-3857-ch.fgb").exists() {
+        return;
+    }
     let rt = tokio::runtime::Runtime::new().unwrap();
     let mut group = c.benchmark_group("buildings_bbox");
     let bbox = Some(Extent {
