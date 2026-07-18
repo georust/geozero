@@ -95,7 +95,7 @@ jobs:
           DATABASE_URL: "${{ steps.pg.outputs.connection-uri }}?sslmode=disable"
           
   zizmor:
-    name: zizmor - GitHub Actions static analysis
+    name: zizmor
     runs-on: ubuntu-latest
     permissions:
       contents: read
