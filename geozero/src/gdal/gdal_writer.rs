@@ -80,10 +80,9 @@ impl GeomProcessor for GdalWriter {
             | OGRwkbGeometryType::wkbMultiPolygon => {
                 self.line.set_point_2d(idx, (x, y));
             }
-            _ => {
-                let unsupported_type = self.geom.geometry_type();
-                Err(GdalError::UnsupportedGeometryType(unsupported_type))?;
-            }
+            _ => Err(GdalError::UnsupportedGeometryType(
+                self.geom.geometry_type(),
+            ))?,
         }
         Ok(())
     }
@@ -112,10 +111,9 @@ impl GeomProcessor for GdalWriter {
             | OGRwkbGeometryType::wkbMultiPolygon => {
                 self.line.set_point(idx, (x, y, z));
             }
-            _ => {
-                let unsupported_type = self.geom.geometry_type();
-                Err(GdalError::UnsupportedGeometryType(unsupported_type))?;
-            }
+            _ => Err(GdalError::UnsupportedGeometryType(
+                self.geom.geometry_type(),
+            ))?,
         }
         Ok(())
     }
@@ -155,9 +153,7 @@ impl GeomProcessor for GdalWriter {
                     let n = poly.geometry_count();
                     self.line = unsafe { poly.get_unowned_geometry(n - 1) };
                 }
-                unsupported_type => {
-                    Err(GdalError::UnsupportedGeometryType(unsupported_type))?;
-                }
+                unsupported_type => Err(GdalError::UnsupportedGeometryType(unsupported_type))?,
             };
         }
         Ok(())
