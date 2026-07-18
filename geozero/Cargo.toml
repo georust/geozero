@@ -32,6 +32,7 @@ with-geojson = ["dep:geojson"]
 with-geos = ["dep:geos"]
 with-gpkg = ["with-wkb", "dep:sqlx", "sqlx?/sqlite"]
 with-gpx = ["dep:gpx"]
+with-mlt = ["with-mvt", "dep:mlt-core"]
 with-mvt = ["dep:prost", "dep:prost-build", "dep:dup-indexer", "dep:base64"]
 with-postgis-diesel = ["with-wkb", "dep:diesel", "dep:byteorder"]
 with-postgis-postgres = ["with-wkb", "dep:postgres-types", "dep:bytes"]
@@ -62,6 +63,7 @@ geojson = { workspace = true, optional = true }
 geos = { workspace = true, optional = true }
 gpx = { workspace = true, optional = true }
 lyon = { workspace = true, optional = true }
+mlt-core = { workspace = true, optional = true }
 postgres-types = { workspace = true, optional = true }
 prost = { workspace = true, optional = true }
 scroll = { workspace = true, optional = true }
@@ -143,3 +145,8 @@ required-features = ["with-shp"]
 name = "svg"
 path = "tests/svg.rs"
 required-features = ["with-svg"]
+
+[[test]]
+name = "mlt"
+path = "tests/mlt.rs"
+required-features = ["with-mlt", "with-geojson"]

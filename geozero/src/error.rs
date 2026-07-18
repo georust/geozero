@@ -46,6 +46,9 @@ pub enum GeozeroError {
     #[cfg(feature = "with-mvt")]
     #[error("MVT error `{0}`")]
     MvtError(#[from] crate::mvt::MvtError),
+    #[cfg(feature = "with-mlt")]
+    #[error("MLT error `{0}`")]
+    MltError(#[from] crate::mlt::MltError),
     #[cfg(feature = "with-gdal")]
     #[error("GDAL error `{0}`")]
     GdalError(#[from] crate::gdal::GdalError),
