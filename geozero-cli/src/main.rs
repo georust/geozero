@@ -11,13 +11,13 @@ use geo::Rect;
 use geoarrow_array::geozero::export::GeozeroRecordBatchReader;
 use geoarrow_schema::CoordType;
 use geoparquet::reader::{GeoParquetReaderBuilder, GeoParquetRecordBatchReader};
-use parquet::arrow::arrow_reader::ParquetRecordBatchReaderBuilder;
 use geozero::csv::{CsvReader, CsvWriter};
 use geozero::error::{GeozeroError, Result};
 use geozero::geojson::{GeoJsonLineReader, GeoJsonReader, GeoJsonWriter};
 use geozero::svg::SvgWriter;
 use geozero::wkt::{WktReader, WktWriter};
 use geozero::{FeatureProcessor, GeozeroDatasource};
+use parquet::arrow::arrow_reader::ParquetRecordBatchReaderBuilder;
 
 #[derive(Parser)]
 #[command(about, version)]
