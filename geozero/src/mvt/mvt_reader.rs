@@ -239,6 +239,7 @@ fn process_polygons<P: GeomProcessor>(
 ) -> Result<()> {
     let mut polygon_slices: Vec<Vec<&[u32]>> = vec![];
     let mut geom: &[u32] = &geom.geometry;
+    let mut positive_is_exterior: Option<bool> = None;
 
     while !geom.is_empty() {
         let lineto = CommandInteger(geom[3]);
@@ -249,7 +250,19 @@ fn process_polygons<P: GeomProcessor>(
             &slice[1..3],
             &slice[4..4 + lineto.count() as usize * 2],
         );
-        if positive_area {
+
+        // Determine winding convention from the first ring
+        // First ring positive area (CW): positive=exterior, negative=interior
+        // First ring negative area (CCW): negative=exterior, positive=interior
+        let is_exterior = match positive_is_exterior {
+            None => {
+                positive_is_exterior = Some(positive_area);
+                true
+            }
+            Some(positive_is_exterior) => positive_area == positive_is_exterior,
+        };
+
+        if is_exterior {
             // new polygon with exterior ring
             polygon_slices.push(vec![slice]);
         } else if let Some(last_slice) = polygon_slices.last_mut() {
@@ -517,6 +530,64 @@ mod test {
             json!({
                 "type": "Polygon",
                 "coordinates": [[[34876,37618],[37047,39028],[37756,39484],[38779,40151],[39247,40451],[39601,40672],[40431,41182],[41010,41525],[41834,41995],[42190,42193],[42547,42387],[42540,42402],[42479,42516],[42420,42627],[42356,42749],[42344,42770],[42337,42784],[41729,42461],[40755,41926],[40118,41563],[39435,41161],[38968,40882],[38498,40595],[37200,39786],[36547,39382],[34547,38135],[34555,38122],[34595,38059],[34655,37964],[34726,37855],[34795,37745],[34863,37638],[34876,37618]]]
+            })
+        );
+    }
+
+    #[test]
+    fn polygon_ccw_winding() {
+        let mut mvt_feature = tile::Feature::default();
+        mvt_feature.set_type(GeomType::Polygon);
+        mvt_feature.geometry = [
+            9, 0, 0,  // MoveTo(1) at (0, 0)
+            26, // LineTo(3)
+            0, 20, // (0, 10)
+            20, 0, // (10, 0)
+            0, 19, // (0, -10)
+            15, // ClosePath(1)
+        ]
+        .to_vec();
+
+        let geojson = mvt_feature.to_json().unwrap();
+
+        assert_eq!(
+            serde_json::from_str::<serde_json::Value>(&geojson).unwrap(),
+            json!({
+                "type": "Polygon",
+                "coordinates": [[[0,0],[0,10],[10,10],[10,0],[0,0]]]
+            })
+        );
+    }
+
+    #[test]
+    fn multipolygon_ccw_winding() {
+        let mut mvt_feature = tile::Feature::default();
+        mvt_feature.set_type(GeomType::Polygon);
+        mvt_feature.geometry = [
+            // First polygon exterior (CCW = negative area)
+            9, 0, 0,  // MoveTo(1) at (0,0)
+            26, // LineTo(3)
+            0, 20, // (0, 10)
+            20, 0, // (10, 10)
+            0, 19, // (10, 0)
+            15, // ClosePath
+            // First polygon interior (CW = positive area)
+            9, 4, 4,  // MoveTo(1) at (12, 2) from (10,0)
+            26, // LineTo(3)
+            12, 0, // (8, 2)
+            0, 12, // (8, 8)
+            11, 0,  // (2, 8)
+            15, // ClosePath
+        ]
+        .to_vec();
+
+        let geojson = mvt_feature.to_json().unwrap();
+
+        assert_eq!(
+            serde_json::from_str::<serde_json::Value>(&geojson).unwrap(),
+            json!({
+                "type": "Polygon",
+                "coordinates": [[[0,0],[0,10],[10,10],[10,0],[0,0]],[[12,2],[18,2],[18,8],[12,8],[12,2]]]
             })
         );
     }
