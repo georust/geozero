@@ -5,6 +5,8 @@ updates:
   - package-ecosystem: github-actions
     directory: '/'
     schedule: { interval: weekly }
+    cooldown:
+      default-days: 7
     groups:
       all-actions-version-updates:
         applies-to: version-updates
@@ -18,6 +20,8 @@ updates:
     directory: '/'
     schedule: { interval: daily, time: '02:00' }
     open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
     groups:
       all-cargo-version-updates:
         applies-to: version-updates
