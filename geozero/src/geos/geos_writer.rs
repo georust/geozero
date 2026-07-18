@@ -18,8 +18,7 @@ impl GeosWriter {
         Self::default()
     }
     fn add_coord_seq(&mut self, len: usize) -> Result<()> {
-        self.cs
-            .push(CoordSeq::new(len as u32, CoordType::XY)?);
+        self.cs.push(CoordSeq::new(len as u32, CoordType::XY)?);
         Ok(())
     }
     pub fn geometry(&self) -> &GGeometry {

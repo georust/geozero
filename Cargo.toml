@@ -20,7 +20,8 @@ rust-version = "1.88.0"
 [workspace.dependencies]
 # Used in geozero-cli and geozero-bench
 # geozero version must be in sync with flatgeobuf version!
-flatgeobuf = "6.0.1"
+# Held at 5.0.0: flatgeobuf 6.x requires geozero 0.15, but this workspace is still 0.14.
+flatgeobuf = "5.0.0"
 geozero = { version = "0.14.0", default-features = false }
 
 base64 = "0.22.1"
