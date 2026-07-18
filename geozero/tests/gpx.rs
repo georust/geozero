@@ -1,6 +1,6 @@
-use geozero::gpx::{Gpx, GpxReader};
-
 use std::io;
+
+use geozero::gpx::{Gpx, GpxReader};
 
 mod test_writer;
 

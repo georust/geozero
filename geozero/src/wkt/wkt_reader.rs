@@ -1,9 +1,10 @@
-use crate::error::{GeozeroError, Result};
-use crate::{FeatureProcessor, GeomProcessor, GeozeroDatasource, GeozeroGeometry};
-
 use std::io::Read;
 use std::str::FromStr;
+
 use wkt::types::{Coord, LineString, Polygon};
+
+use crate::error::{GeozeroError, Result};
+use crate::{FeatureProcessor, GeomProcessor, GeozeroDatasource, GeozeroGeometry};
 
 /// A wrapper around a WKT String or String slice.
 #[derive(Debug)]
@@ -190,10 +191,11 @@ fn process_polygon<P: GeomProcessor>(
 
 #[cfg(all(test, feature = "with-geo"))]
 mod test {
+    use geo_types::{line_string, point, polygon};
+
     use super::*;
     use crate::ToWkt;
     use crate::geo_types::conversion::ToGeo;
-    use geo_types::{line_string, point, polygon};
 
     #[test]
     fn point() {

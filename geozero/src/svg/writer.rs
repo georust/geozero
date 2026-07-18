@@ -1,6 +1,7 @@
+use std::io::Write;
+
 use crate::error::Result;
 use crate::{FeatureProcessor, GeomProcessor, PropertyProcessor};
-use std::io::Write;
 
 /// SVG writer.
 pub struct SvgWriter<W: Write> {
@@ -140,10 +141,11 @@ impl<W: Write> PropertyProcessor for SvgWriter<W> {}
 #[cfg(test)]
 #[cfg(feature = "with-geojson")]
 mod test {
+    use geo_types::polygon;
+
     use super::*;
     use crate::geojson::read_geojson;
     use crate::{GeozeroDatasource, GeozeroGeometry, ToSvg};
-    use geo_types::polygon;
 
     #[test]
     fn geometries() -> Result<()> {

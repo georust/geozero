@@ -1,7 +1,8 @@
-use crate::error::{GeozeroError, Result};
-use crate::{GeomProcessor, GeozeroGeometry};
 use gdal::vector::Geometry;
 use gdal_sys::{self, OGRwkbGeometryType};
+
+use crate::error::{GeozeroError, Result};
+use crate::{GeomProcessor, GeozeroGeometry};
 
 impl GeozeroGeometry for Geometry {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {

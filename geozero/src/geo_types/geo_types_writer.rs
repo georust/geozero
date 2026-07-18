@@ -1,10 +1,13 @@
-use crate::error::{GeozeroError, Result};
-use crate::{FeatureProcessor, GeomProcessor, PropertyProcessor};
+use std::mem;
+
 use geo_types::{
     Coord, Geometry, GeometryCollection, LineString, MultiLineString, MultiPoint, MultiPolygon,
     Point, Polygon, coord,
 };
-use std::mem;
+
+use crate::error::{GeozeroError, Result};
+use crate::geometry_processor::bounded_vec;
+use crate::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 
 /// Generator for geo-types geometry type.
 #[derive(Debug, Default)]
@@ -73,13 +76,13 @@ impl GeomProcessor for GeoWriter {
             .coords
             .take()
             .ok_or(GeozeroError::Geometry("No coords for Point".to_string()))?;
-        debug_assert!(coords.len() == 1);
+        debug_assert_eq!(coords.len(), 1);
         self.finish_geometry(Point(coords[0]).into())
     }
 
     fn multipoint_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
         debug_assert!(self.coords.is_none());
-        self.coords = Some(Vec::with_capacity(size));
+        self.coords = Some(bounded_vec(size)?);
         Ok(())
     }
 
@@ -93,7 +96,7 @@ impl GeomProcessor for GeoWriter {
 
     fn linestring_begin(&mut self, _tagged: bool, size: usize, _idx: usize) -> Result<()> {
         debug_assert!(self.coords.is_none());
-        self.coords = Some(Vec::with_capacity(size));
+        self.coords = Some(bounded_vec(size)?);
         Ok(())
     }
 
@@ -115,7 +118,7 @@ impl GeomProcessor for GeoWriter {
 
     fn multilinestring_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
         debug_assert!(self.line_strings.is_none());
-        self.line_strings = Some(Vec::with_capacity(size));
+        self.line_strings = Some(bounded_vec(size)?);
         Ok(())
     }
 
@@ -128,7 +131,7 @@ impl GeomProcessor for GeoWriter {
 
     fn polygon_begin(&mut self, _tagged: bool, size: usize, _idx: usize) -> Result<()> {
         debug_assert!(self.line_strings.is_none());
-        self.line_strings = Some(Vec::with_capacity(size));
+        self.line_strings = Some(bounded_vec(size)?);
         Ok(())
     }
 
@@ -157,7 +160,7 @@ impl GeomProcessor for GeoWriter {
 
     fn multipolygon_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
         debug_assert!(self.polygons.is_none());
-        self.polygons = Some(Vec::with_capacity(size));
+        self.polygons = Some(bounded_vec(size)?);
         Ok(())
     }
 
@@ -169,7 +172,7 @@ impl GeomProcessor for GeoWriter {
     }
 
     fn geometrycollection_begin(&mut self, size: usize, _idx: usize) -> Result<()> {
-        self.collections.push(Vec::with_capacity(size));
+        self.collections.push(bounded_vec(size)?);
         Ok(())
     }
 
@@ -187,15 +190,66 @@ impl PropertyProcessor for GeoWriter {}
 impl FeatureProcessor for GeoWriter {}
 
 #[cfg(test)]
+mod prealloc_guard {
+    use super::*;
+
+    // `*_begin` must not turn an untrusted element count into an unbounded
+    // reservation: an absurd requested count is rejected up front.
+
+    #[test]
+    fn multipoint_begin_rejects_oversized_hint() {
+        assert!(GeoWriter::new().multipoint_begin(usize::MAX, 0).is_err());
+    }
+
+    #[test]
+    fn linestring_begin_rejects_oversized_hint() {
+        assert!(
+            GeoWriter::new()
+                .linestring_begin(true, usize::MAX, 0)
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn multilinestring_begin_rejects_oversized_hint() {
+        assert!(
+            GeoWriter::new()
+                .multilinestring_begin(usize::MAX, 0)
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn polygon_begin_rejects_oversized_hint() {
+        assert!(GeoWriter::new().polygon_begin(true, usize::MAX, 0).is_err());
+    }
+
+    #[test]
+    fn multipolygon_begin_rejects_oversized_hint() {
+        assert!(GeoWriter::new().multipolygon_begin(usize::MAX, 0).is_err());
+    }
+
+    #[test]
+    fn geometrycollection_begin_rejects_oversized_hint() {
+        assert!(
+            GeoWriter::new()
+                .geometrycollection_begin(usize::MAX, 0)
+                .is_err()
+        );
+    }
+}
+
+#[cfg(test)]
 #[cfg(feature = "with-geojson")]
 mod test {
+    use geo::algorithm::coords_iter::CoordsIter;
+
     use super::*;
     use crate::ToGeo;
     use crate::geojson::{GeoJson, read_geojson};
-    use geo::algorithm::coords_iter::CoordsIter;
 
     #[test]
-    fn line_string() -> Result<()> {
+    fn line_string() {
         let geojson = r#"{
             "type": "LineString",
             "coordinates": [
@@ -215,11 +269,10 @@ mod test {
             }
             _ => unreachable!(),
         }
-        Ok(())
     }
 
     #[test]
-    fn multipolygon() -> Result<()> {
+    fn multipolygon() {
         let geojson = r#"{
             "type": "MultiPolygon",
             "coordinates": [[[
@@ -240,7 +293,6 @@ mod test {
             }
             _ => unreachable!(),
         }
-        Ok(())
     }
 
     #[test]
@@ -297,9 +349,8 @@ mod test {
     }
 
     #[test]
-    fn to_geo() -> Result<()> {
+    fn to_geo() {
         let geom: Geometry<f64> = Point::new(10.0, 20.0).into();
         assert_eq!(geom.clone().to_geo().unwrap(), geom);
-        Ok(())
     }
 }

@@ -16,7 +16,6 @@ name = "geozero"
 path = "src/main.rs"
 
 [dependencies]
-async-trait.workspace = true
 clap.workspace = true
 env_logger.workspace = true
 flatgeobuf.workspace = true
