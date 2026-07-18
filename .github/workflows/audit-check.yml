@@ -6,15 +6,18 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions: {}
+
 jobs:
   audit:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      issues: write
-      checks: write
+      issues: write # rustsec/audit-check opens issues for new advisories
+      checks: write # rustsec/audit-check publishes a check run with the results
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with: { persist-credentials: false }
       - uses: rustsec/audit-check@69366f33c96575abad1ee0dba8212993eecbe998 # v2.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -43,6 +46,7 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      with: { persist-credentials: false }
     - name: Initialize CodeQL
       uses: github/codeql-action/init@99df26d4f13ea111d4ec1a7dddef6063f76b97e9 # v4.37.0
       with:
