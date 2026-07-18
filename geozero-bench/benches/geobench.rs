@@ -401,6 +401,13 @@ fn countries_bbox_benchmark(c: &mut Criterion) {
 }
 
 fn buildings_benchmark(c: &mut Criterion) {
+    // The full OSM buildings dataset is a large external download (see the crate
+    // README and tests/data/Makefile) and is not committed, so these benches are
+    // local-only and skipped when it is absent. A committed subset is exercised
+    // in CI by `buildings_sample_benchmark` instead.
+    if !std::path::Path::new("tests/data/osm-buildings-3857-ch.fgb").exists() {
+        return;
+    }
     let mut group = c.benchmark_group("buildings");
     let rt = tokio::runtime::Runtime::new().unwrap();
     let bbox = None;
@@ -485,6 +492,11 @@ fn buildings_benchmark(c: &mut Criterion) {
 }
 
 fn buildings_bbox_benchmark(c: &mut Criterion) {
+    // Local-only; see buildings_benchmark. A committed subset is exercised in CI
+    // by `buildings_sample_benchmark` instead.
+    if !std::path::Path::new("tests/data/osm-buildings-3857-ch.fgb").exists() {
+        return;
+    }
     let rt = tokio::runtime::Runtime::new().unwrap();
     let mut group = c.benchmark_group("buildings_bbox");
     let bbox = Some(Extent {
@@ -555,6 +567,23 @@ fn buildings_bbox_benchmark(c: &mut Criterion) {
     group.finish()
 }
 
+// Small committed subset of the OSM buildings dataset (204 features, all within
+// the bbox below) so the FlatGeobuf reader path is exercised in CI without the
+// large external download that `buildings_benchmark` needs.
+fn buildings_sample_benchmark(c: &mut Criterion) {
+    let mut group = c.benchmark_group("buildings_sample");
+    let path = "tests/data/buildings-sample.fgb";
+    let bbox = Some(Extent {
+        minx: 939651.0,
+        miny: 5997817.0,
+        maxx: 957733.0,
+        maxy: 6012256.0,
+    });
+    group.bench_function("fgb", |b| b.iter(|| fgb::fgb_to_geo(path, &None, 204)));
+    group.bench_function("fgb_bbox", |b| b.iter(|| fgb::fgb_to_geo(path, &bbox, 204)));
+    group.finish()
+}
+
 criterion_group!(name=benches; config=Criterion::default().sample_size(10);
-                 targets=countries_benchmark,countries_bbox_benchmark,buildings_bbox_benchmark,buildings_benchmark);
+                 targets=countries_benchmark,countries_bbox_benchmark,buildings_bbox_benchmark,buildings_benchmark,buildings_sample_benchmark);
 criterion_main!(benches);
