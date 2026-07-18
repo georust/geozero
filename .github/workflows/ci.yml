@@ -102,7 +102,6 @@ jobs:
           rustc --version
           cargo --version
           sudo apt-get update
-          # gdal-bin provides ogr2ogr, used below to load the PostGIS bench table
           sudo apt-get install -y libgdal-dev libgeos-dev gdal-bin
 
       - name: Install protoc
