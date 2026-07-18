@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use sqlx::ValueRef;
 use sqlx::decode::Decode;
 use sqlx::encode::{Encode, IsNull};
