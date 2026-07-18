@@ -1,6 +1,6 @@
 use geos::{CoordSeq, Geom, Geometry as GGeometry, GeometryTypes};
 
-use crate::error::{GeozeroError, Result};
+use crate::error::Result;
 use crate::{CoordDimensions, GeomProcessor, GeozeroGeometry};
 
 impl GeozeroGeometry for geos::Geometry {
@@ -15,19 +15,6 @@ impl GeozeroGeometry for geos::Geometry {
     }
     fn srid(&self) -> Option<i32> {
         self.get_srid().ok()
-    }
-}
-
-impl From<geos::Error> for GeozeroError {
-    fn from(error: geos::Error) -> Self {
-        use geos::Error::*;
-        match error {
-            ImpossibleOperation(e) | ConversionError(e) | GenericError(e) => {
-                GeozeroError::Geometry(e)
-            }
-            GeosError((caller, Some(e))) => GeozeroError::Geometry(format!("{caller}: {e}")),
-            GeosError((caller, None)) => GeozeroError::Geometry(caller.to_string()),
-        }
     }
 }
 
