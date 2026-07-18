@@ -74,7 +74,7 @@ hex.workspace = true
 kdbush.workspace = true
 postgres.workspace = true
 seek_bufread.workspace = true
-sqlx = { workspace = true, features = ["runtime-tokio-native-tls", "macros", "time", "postgres", "sqlite"] }
+sqlx = { workspace = true, features = ["runtime-tokio", "macros", "time", "postgres", "sqlite"] }
 tokio = { workspace = true, features = ["macros"] }
 wkt.workspace = true
 
