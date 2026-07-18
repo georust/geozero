@@ -14,7 +14,7 @@ impl GeozeroGeometry for geos::Geometry {
         }
     }
     fn srid(&self) -> Option<i32> {
-        self.get_srid().map(|srid| srid as i32).ok()
+        self.get_srid().ok()
     }
 }
 
@@ -22,15 +22,11 @@ impl From<geos::Error> for GeozeroError {
     fn from(error: geos::Error) -> Self {
         use geos::Error::*;
         match error {
-            InvalidGeometry(e)
-            | ImpossibleOperation(e)
-            | GeosError(e)
-            | NoConstructionFromNullPtr(e)
-            | ConversionError(e)
-            | GenericError(e)
-            | VoronoiError(e)
-            | NormalizeError(e) => GeozeroError::Geometry(e),
-            GeosFunctionError(_, _) => GeozeroError::GeometryFormat,
+            ImpossibleOperation(e) | ConversionError(e) | GenericError(e) => {
+                GeozeroError::Geometry(e)
+            }
+            GeosError((caller, Some(e))) => GeozeroError::Geometry(format!("{caller}: {e}")),
+            GeosError((caller, None)) => GeozeroError::Geometry(caller.to_string()),
         }
     }
 }
@@ -45,7 +41,7 @@ fn process_geom_n<P: GeomProcessor, G: Geom>(
     idx: usize,
     processor: &mut P,
 ) -> Result<()> {
-    match ggeom.geometry_type() {
+    match ggeom.geometry_type()? {
         GeometryTypes::Point => {
             processor.point_begin(idx)?;
             process_point(ggeom, 0, processor)?;
@@ -91,7 +87,6 @@ fn process_geom_n<P: GeomProcessor, G: Geom>(
             }
             processor.geometrycollection_end(idx)
         }
-        GeometryTypes::__Unknown(_) => Err(GeozeroError::GeometryFormat),
     }
 }
 
@@ -169,7 +164,7 @@ fn process_polygon<P: GeomProcessor, G: Geom>(
     process_linestring(&ring, false, 0, processor)?;
     // Interior rings
     for ix_interior in 0..nb_interiors {
-        let ring = ggeom.get_interior_ring_n(ix_interior as u32)?;
+        let ring = ggeom.get_interior_ring_n(ix_interior)?;
         process_linestring(&ring, false, ix_interior + 1, processor)?;
     }
     processor.polygon_end(tagged, idx)

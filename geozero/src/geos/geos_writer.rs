@@ -1,4 +1,4 @@
-use geos::{CoordDimensions, CoordSeq, GResult, Geometry as GGeometry};
+use geos::{CoordSeq, CoordType, GResult, Geometry as GGeometry};
 
 use crate::error::{GeozeroError, Result};
 use crate::{FeatureProcessor, GeomProcessor, PropertyProcessor};
@@ -19,7 +19,7 @@ impl GeosWriter {
     }
     fn add_coord_seq(&mut self, len: usize) -> Result<()> {
         self.cs
-            .push(CoordSeq::new(len as u32, CoordDimensions::TwoD)?);
+            .push(CoordSeq::new(len as u32, CoordType::XY)?);
         Ok(())
     }
     pub fn geometry(&self) -> &GGeometry {
@@ -65,7 +65,7 @@ impl GeomProcessor for GeosWriter {
             .ok_or_else(|| GeozeroError::Geometry("CoordSeq missing".to_string()))?;
         self.geom = GGeometry::create_point(cs)?;
         if let Some(srid) = self.srid {
-            self.geom.set_srid(srid as usize);
+            self.geom.set_srid(srid);
         }
         Ok(())
     }
@@ -90,7 +90,7 @@ impl GeomProcessor for GeosWriter {
             .collect::<GResult<Vec<GGeometry>>>()?;
         self.geom = GGeometry::create_multipoint(ggpts)?;
         if let Some(srid) = self.srid {
-            self.geom.set_srid(srid as usize);
+            self.geom.set_srid(srid);
         }
         Ok(())
     }
@@ -108,7 +108,7 @@ impl GeomProcessor for GeosWriter {
                 .ok_or_else(|| GeozeroError::Geometry("CoordSeq missing".to_string()))?;
             self.geom = GGeometry::create_line_string(cs)?;
             if let Some(srid) = self.srid {
-                self.geom.set_srid(srid as usize);
+                self.geom.set_srid(srid);
             }
         }
         Ok(())
@@ -125,7 +125,7 @@ impl GeomProcessor for GeosWriter {
             .collect::<GResult<Vec<GGeometry>>>()?;
         self.geom = GGeometry::create_multiline_string(gglines)?;
         if let Some(srid) = self.srid {
-            self.geom.set_srid(srid as usize);
+            self.geom.set_srid(srid);
         }
         Ok(())
     }
@@ -149,7 +149,7 @@ impl GeomProcessor for GeosWriter {
         if tagged {
             self.geom = gpoly;
             if let Some(srid) = self.srid {
-                self.geom.set_srid(srid as usize);
+                self.geom.set_srid(srid);
             }
         } else {
             self.polys.push(gpoly);
@@ -163,7 +163,7 @@ impl GeomProcessor for GeosWriter {
     fn multipolygon_end(&mut self, _idx: usize) -> Result<()> {
         self.geom = GGeometry::create_multipolygon(std::mem::take(&mut self.polys))?;
         if let Some(srid) = self.srid {
-            self.geom.set_srid(srid as usize);
+            self.geom.set_srid(srid);
         }
         Ok(())
     }

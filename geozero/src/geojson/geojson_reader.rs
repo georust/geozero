@@ -1,6 +1,9 @@
 use std::io::Read;
 
-use geojson::{Feature, FeatureReader, GeoJson as GeoGeoJson, Geometry, Value};
+use geojson::{
+    Feature, FeatureReader, GeoJson as GeoGeoJson, Geometry, GeometryValue, LineStringType,
+    PointType, PolygonType,
+};
 use serde_json::map::Map;
 use serde_json::value::Value as JsonValue;
 
@@ -160,12 +163,16 @@ pub(crate) fn process_geojson_geom_n<P: GeomProcessor>(
     processor: &mut P,
 ) -> Result<()> {
     match geom.value {
-        Value::Point(ref geometry) => {
+        GeometryValue::Point {
+            coordinates: ref geometry,
+        } => {
             processor.point_begin(idx)?;
             process_coord(geometry, processor.multi_dim(), 0, processor)?;
             processor.point_end(idx)
         }
-        Value::MultiPoint(ref geometry) => {
+        GeometryValue::MultiPoint {
+            coordinates: ref geometry,
+        } => {
             processor.multipoint_begin(geometry.len(), idx)?;
             let multi_dim = processor.multi_dim();
             for (idxc, point_type) in geometry.iter().enumerate() {
@@ -173,23 +180,33 @@ pub(crate) fn process_geojson_geom_n<P: GeomProcessor>(
             }
             processor.multipoint_end(idx)
         }
-        Value::LineString(ref geometry) => process_linestring(geometry, true, idx, processor),
-        Value::MultiLineString(ref geometry) => {
+        GeometryValue::LineString {
+            coordinates: ref geometry,
+        } => process_linestring(geometry, true, idx, processor),
+        GeometryValue::MultiLineString {
+            coordinates: ref geometry,
+        } => {
             processor.multilinestring_begin(geometry.len(), idx)?;
             for (idx2, linestring_type) in geometry.iter().enumerate() {
                 process_linestring(linestring_type, false, idx2, processor)?;
             }
             processor.multilinestring_end(idx)
         }
-        Value::Polygon(ref geometry) => process_polygon(geometry, true, idx, processor),
-        Value::MultiPolygon(ref geometry) => {
+        GeometryValue::Polygon {
+            coordinates: ref geometry,
+        } => process_polygon(geometry, true, idx, processor),
+        GeometryValue::MultiPolygon {
+            coordinates: ref geometry,
+        } => {
             processor.multipolygon_begin(geometry.len(), idx)?;
             for (idx2, polygon_type) in geometry.iter().enumerate() {
                 process_polygon(polygon_type, false, idx2, processor)?;
             }
             processor.multipolygon_end(idx)
         }
-        Value::GeometryCollection(ref collection) => {
+        GeometryValue::GeometryCollection {
+            geometries: ref collection,
+        } => {
             processor.geometrycollection_begin(collection.len(), idx)?;
             for (idx2, geometry) in collection.iter().enumerate() {
                 process_geojson_geom_n(geometry, idx2, processor)?;
@@ -237,11 +254,6 @@ pub(crate) fn process_properties<P: PropertyProcessor>(
     Ok(())
 }
 
-type Position = Vec<f64>;
-type PointType = Position;
-type LineStringType = Vec<Position>;
-type PolygonType = Vec<Vec<Position>>;
-
 fn process_coord<P: GeomProcessor>(
     point_type: &PointType,
     multi_dim: bool,
@@ -252,7 +264,7 @@ fn process_coord<P: GeomProcessor>(
         processor.coordinate(
             point_type[0],
             point_type[1],
-            point_type.get(2).copied(),
+            point_type.as_slice().get(2).copied(),
             None,
             None,
             None,
