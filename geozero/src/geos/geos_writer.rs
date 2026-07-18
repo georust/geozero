@@ -1,6 +1,7 @@
+use geos::{CoordDimensions, CoordSeq, GResult, Geometry as GGeometry};
+
 use crate::error::{GeozeroError, Result};
 use crate::{FeatureProcessor, GeomProcessor, PropertyProcessor};
-use geos::{CoordDimensions, CoordSeq, GResult, Geometry as GGeometry};
 
 /// Generator for GEOS geometry type.
 pub struct GeosWriter {
@@ -174,11 +175,13 @@ impl FeatureProcessor for GeosWriter {}
 #[cfg(test)]
 #[cfg(feature = "with-geojson")]
 mod test {
+    use std::convert::TryFrom;
+
+    use geos::Geom;
+
     use super::*;
     use crate::geojson::{GeoJson, read_geojson};
     use crate::{GeozeroGeometry, ToGeos};
-    use geos::Geom;
-    use std::convert::TryFrom;
 
     #[test]
     fn point_geom() {
@@ -275,8 +278,7 @@ mod test {
     #[cfg(feature = "with-wkb")]
     fn point_geom_with_srid() {
         use crate::ToWkb;
-        use crate::wkb::FromWkb;
-        use crate::wkb::WkbDialect;
+        use crate::wkb::{FromWkb, WkbDialect};
 
         let wkt = "POINT(1 1)";
         let mut ggeom = GGeometry::new_from_wkt(wkt).unwrap();

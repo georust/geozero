@@ -4,13 +4,14 @@
 //! The current feature can be processed with `FeatureAccess` processing API methods.
 //! Some datasources process features during consumption (e.g. reading from file).
 
+use std::collections::HashMap;
+
 use crate::error::{GeozeroError, Result};
 use crate::feature_processor::FeatureProcessor;
 use crate::property_processor::{
     PropertyProcessor, PropertyReadType, PropertyReader, PropertyReaderIdx,
 };
 use crate::{CoordDimensions, GeomProcessor};
-use std::collections::HashMap;
 
 /// Geometry processing trait.
 pub trait GeozeroGeometry {

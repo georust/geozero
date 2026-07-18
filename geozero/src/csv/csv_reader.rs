@@ -1,10 +1,9 @@
-use crate::error::{GeozeroError, Result};
-use crate::{ColumnValue, FeatureProcessor, GeomProcessor, GeozeroDatasource, GeozeroGeometry};
-
-use crate::csv::csv_error::CsvError;
-
 use std::io::Read;
 use std::str::FromStr;
+
+use crate::csv::csv_error::CsvError;
+use crate::error::{GeozeroError, Result};
+use crate::{ColumnValue, FeatureProcessor, GeomProcessor, GeozeroDatasource, GeozeroGeometry};
 
 pub struct Csv<'a> {
     csv_text: &'a str,

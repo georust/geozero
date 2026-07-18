@@ -1,13 +1,10 @@
-use crate::{
-    FeatureProcessor, GeomProcessor, GeozeroDatasource, GeozeroGeometry,
-    error::{GeozeroError, Result},
-};
-
-use super::{process_geojson_geom_n, process_properties};
-
 use std::io::{BufRead, BufReader, Read};
 
 use geojson::{Feature, GeoJson as GeoGeoJson, Geometry};
+
+use super::{process_geojson_geom_n, process_properties};
+use crate::error::{GeozeroError, Result};
+use crate::{FeatureProcessor, GeomProcessor, GeozeroDatasource, GeozeroGeometry};
 
 /// Line Delimited GeoJSON Reader: One feature per line.
 ///
@@ -128,8 +125,7 @@ fn process_geometry(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ProcessToJson;
-    use crate::ToWkt;
+    use crate::{ProcessToJson, ToWkt};
 
     #[test]
     fn good_geometries() {

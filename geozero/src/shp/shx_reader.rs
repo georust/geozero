@@ -1,6 +1,8 @@
-use crate::shp::{Error, header};
-use byteorder::{BigEndian, ReadBytesExt};
 use std::io::Read;
+
+use byteorder::{BigEndian, ReadBytesExt};
+
+use crate::shp::{Error, header};
 
 const INDEX_RECORD_SIZE: usize = 2 * size_of::<i32>();
 

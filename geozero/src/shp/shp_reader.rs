@@ -1,8 +1,10 @@
-use crate::GeomProcessor;
-use crate::shp::{Error, ShapeType};
-use byteorder::{BigEndian, LittleEndian, ReadBytesExt};
 use std::io::Read;
 use std::mem::size_of;
+
+use byteorder::{BigEndian, LittleEndian, ReadBytesExt};
+
+use crate::GeomProcessor;
+use crate::shp::{Error, ShapeType};
 
 /// Value inferior to this are considered as NO_DATA
 pub const NO_DATA: f64 = -10e38;

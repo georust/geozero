@@ -8,10 +8,11 @@ pub use gdal_reader::*;
 pub use gdal_writer::*;
 
 pub(crate) mod conversion {
+    use gdal::vector::Geometry;
+
     use crate::error::Result;
     use crate::gdal::GdalWriter;
     use crate::{CoordDimensions, GeozeroGeometry};
-    use gdal::vector::Geometry;
 
     /// Convert to GDAL geometry.
     pub trait ToGdal {
@@ -35,10 +36,11 @@ pub(crate) mod conversion {
 
 #[cfg(feature = "with-wkb")]
 mod wkb {
+    use std::io::Read;
+
     use crate::error::Result;
     use crate::gdal::GdalWriter;
     use crate::wkb::{FromWkb, WkbDialect};
-    use std::io::Read;
 
     impl FromWkb for gdal::vector::Geometry {
         fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> Result<Self> {

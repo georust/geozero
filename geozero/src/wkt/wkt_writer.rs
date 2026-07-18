@@ -1,9 +1,9 @@
-use crate::error::Result;
-use crate::{CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcessor};
 use std::io::Write;
 use std::vec;
 
 use super::WktDialect;
+use crate::error::Result;
+use crate::{CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcessor};
 
 /// WKT Writer.
 pub struct WktWriter<W: Write> {
