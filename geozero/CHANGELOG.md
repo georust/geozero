@@ -1,5 +1,6 @@
 ## UNRELEASED
 
+* Implement `GeozeroGeometry::srid` and `dims` for wkb types
 * Add `style` option to SVGWriter for writing \<style\> tags
 * Add `BoundsProcessor` to compute bounds of geometry
 * Update Deps:
