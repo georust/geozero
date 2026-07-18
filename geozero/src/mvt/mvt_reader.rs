@@ -1,11 +1,9 @@
+use super::mvt_commands::{Command, CommandInteger, ParameterInteger};
+use super::mvt_error::MvtError;
 use crate::error::Result;
-use crate::mvt::vector_tile::{tile, tile::GeomType};
+use crate::mvt::vector_tile::tile;
+use crate::mvt::vector_tile::tile::GeomType;
 use crate::{ColumnValue, FeatureProcessor, GeomProcessor, GeozeroDatasource, GeozeroGeometry};
-
-use super::{
-    mvt_commands::{Command, CommandInteger, ParameterInteger},
-    mvt_error::MvtError,
-};
 
 impl GeozeroDatasource for tile::Layer {
     fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> Result<()> {
@@ -64,7 +62,7 @@ fn process_properties(
         } else if let Some(v) = value.bool_value {
             processor.property(i, key, &ColumnValue::Bool(v))?;
         } else {
-            return Err(MvtError::UnsupportedKeyValueType(key.to_string()).into());
+            return Err(MvtError::UnsupportedKeyValueType(key.clone()).into());
         }
     }
     processor.properties_end()
@@ -297,9 +295,10 @@ fn is_area_positive(mut cursor: [i32; 2], first: &[u32], rest: &[u32]) -> bool {
 #[cfg(test)]
 #[cfg(feature = "with-geojson")]
 mod test {
+    use serde_json::json;
+
     use super::*;
     use crate::{ProcessToJson, ToJson};
-    use serde_json::json;
 
     #[test]
     fn layer() {

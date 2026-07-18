@@ -15,4 +15,6 @@ pub enum MvtError {
     GeometryFormat,
     #[error("too few coordinates in line or ring")]
     TooFewCoordinates,
+    #[error("invalid extent, extent cannot be 0")]
+    InvalidExtent,
 }

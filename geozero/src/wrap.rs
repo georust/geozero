@@ -1,6 +1,5 @@
-use crate::{
-    error::Result, ColumnValue, CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcessor,
-};
+use crate::error::Result;
+use crate::{ColumnValue, CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcessor};
 
 /// Wraps another [`FeatureProcessor`], first transforming coordinates.
 pub struct WrappedXYProcessor<T, F: Fn(&mut f64, &mut f64)> {
@@ -186,10 +185,11 @@ impl<T: FeatureProcessor, F: Fn(&mut f64, &mut f64)> FeatureProcessor for Wrappe
 #[cfg(all(feature = "with-csv", feature = "with-geojson"))]
 #[cfg(test)]
 mod test {
+    use serde_json::json;
+
     use crate::csv::CsvWriter;
     use crate::geojson::GeoJsonString;
     use crate::{GeomProcessor, GeozeroDatasource};
-    use serde_json::json;
 
     fn geojson_fixture_data() -> GeoJsonString {
         GeoJsonString(

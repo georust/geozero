@@ -1,5 +1,31 @@
-use crate::error::{GeozeroError, Result};
 use crate::WrappedXYProcessor;
+use crate::error::{GeozeroError, Result};
+
+/// Byte budget for speculatively pre-allocating a container sized from untrusted
+/// input, so a tiny malformed blob can't trigger a huge allocation (OOM DoS).
+#[cfg(feature = "with-geo")]
+pub(crate) const MAX_PREALLOC_BYTES: usize = 16 * 1024 * 1024;
+
+/// `Vec<T>` reserved for `capacity` untrusted elements, after
+/// [`validate_capacity`] has ruled out a size hint big enough to be a lie.
+#[cfg(feature = "with-geo")]
+pub(crate) fn bounded_vec<T>(capacity: usize) -> Result<Vec<T>> {
+    validate_capacity::<T>(capacity)?;
+    Ok(Vec::with_capacity(capacity))
+}
+
+/// Rejects a `capacity` whose `T`-sized reservation would exceed
+/// [`MAX_PREALLOC_BYTES`]. Split from [`bounded_vec`] so the check itself can
+/// be unit tested, and never called from production code except through `bounded_vec`.
+#[cfg(feature = "with-geo")]
+fn validate_capacity<T>(capacity: usize) -> Result<()> {
+    if capacity.saturating_mul(size_of::<T>()) > MAX_PREALLOC_BYTES {
+        return Err(GeozeroError::Geometry(format!(
+            "declared element count {capacity} exceeds preallocation budget"
+        )));
+    }
+    Ok(())
+}
 
 /// Dimensions requested for processing
 #[derive(Default, Clone, Copy)]
@@ -436,4 +462,48 @@ fn error_message() {
             .to_string(),
         "processing geometry `test`".to_string()
     );
+}
+
+#[cfg(all(test, feature = "with-geo"))]
+mod bounded_alloc {
+    use super::{MAX_PREALLOC_BYTES, bounded_vec, validate_capacity};
+
+    #[test]
+    fn validate_capacity_rejects_over_budget_hints() {
+        assert!(validate_capacity::<u8>(MAX_PREALLOC_BYTES + 1).is_err());
+        assert!(validate_capacity::<u64>(MAX_PREALLOC_BYTES / size_of::<u64>() + 1).is_err());
+        assert!(
+            validate_capacity::<[u64; 8]>(MAX_PREALLOC_BYTES / size_of::<[u64; 8]>() + 1).is_err()
+        );
+    }
+
+    #[test]
+    fn validate_capacity_saturates_on_overflowing_hints() {
+        assert!(validate_capacity::<u64>(usize::MAX).is_err());
+        assert!(validate_capacity::<[u64; 8]>(usize::MAX).is_err());
+    }
+
+    #[test]
+    fn validate_capacity_accepts_at_or_below_budget() {
+        assert!(validate_capacity::<u8>(0).is_ok());
+        assert!(validate_capacity::<u8>(MAX_PREALLOC_BYTES).is_ok());
+        assert!(validate_capacity::<u64>(MAX_PREALLOC_BYTES / size_of::<u64>()).is_ok());
+    }
+
+    #[test]
+    fn validate_capacity_handles_zero_sized_types() {
+        assert!(validate_capacity::<()>(usize::MAX).is_ok());
+    }
+
+    #[test]
+    fn bounded_vec_reserves_exact_valid_capacity() {
+        let v: Vec<u64> = bounded_vec(128).unwrap();
+        assert!(v.is_empty());
+        assert_eq!(v.capacity(), 128);
+    }
+
+    #[test]
+    fn bounded_vec_propagates_validation_error() {
+        assert!(bounded_vec::<u64>(usize::MAX).is_err());
+    }
 }

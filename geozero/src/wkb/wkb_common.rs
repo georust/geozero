@@ -1,7 +1,8 @@
-use crate::error::Result;
-use crate::{GeozeroGeometry, ToWkt};
 use std::fmt;
 use std::io::Read;
+
+use crate::error::Result;
+use crate::{GeozeroGeometry, ToWkt};
 
 /// Encode to WKB
 // Used to impl encoding for foreign types

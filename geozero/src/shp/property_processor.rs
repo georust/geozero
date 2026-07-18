@@ -1,7 +1,8 @@
+use dbase::FieldValue;
+
 use crate::error::Result;
 use crate::shp::reader::ShapeRecord;
 use crate::{ColumnValue, FeatureProperties, PropertyProcessor};
-use dbase::FieldValue;
 
 impl FeatureProperties for ShapeRecord {
     /// Process feature properties.

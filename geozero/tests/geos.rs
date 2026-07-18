@@ -1,6 +1,6 @@
 use geos::Geom;
-use geozero::geojson::GeoJson;
 use geozero::ToGeos;
+use geozero::geojson::GeoJson;
 
 #[test]
 fn prepared_geom() {

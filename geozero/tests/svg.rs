@@ -1,6 +1,7 @@
-use geozero::geojson::GeoJsonReader;
-use geozero::ProcessToSvg;
 use std::fs::File;
+
+use geozero::ProcessToSvg;
+use geozero::geojson::GeoJsonReader;
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[test]

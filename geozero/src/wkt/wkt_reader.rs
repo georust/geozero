@@ -1,9 +1,10 @@
-use crate::error::{GeozeroError, Result};
-use crate::{FeatureProcessor, GeomProcessor, GeozeroDatasource, GeozeroGeometry};
-
 use std::io::Read;
 use std::str::FromStr;
+
 use wkt::types::{Coord, LineString, Polygon};
+
+use crate::error::{GeozeroError, Result};
+use crate::{FeatureProcessor, GeomProcessor, GeozeroDatasource, GeozeroGeometry};
 
 /// A wrapper around a WKT String or String slice.
 #[derive(Debug)]
@@ -100,7 +101,7 @@ pub(crate) fn process_wkt_geom_n<P: GeomProcessor>(
     let multi_dim = processor.multi_dim();
     match geometry {
         wkt::Wkt::Point(g) => {
-            if let Some(ref coord) = g.0 {
+            if let Some(coord) = g.coord() {
                 processor.point_begin(idx)?;
                 process_coord(coord, multi_dim, 0, processor)?;
                 processor.point_end(idx)
@@ -109,10 +110,10 @@ pub(crate) fn process_wkt_geom_n<P: GeomProcessor>(
             }
         }
         wkt::Wkt::MultiPoint(g) => {
-            processor.multipoint_begin(g.0.len(), idx)?;
+            processor.multipoint_begin(g.points().len(), idx)?;
             let multi_dim1 = processor.multi_dim();
-            for (idxc, point) in g.0.iter().enumerate() {
-                if let Some(ref coord) = point.0 {
+            for (idxc, point) in g.points().iter().enumerate() {
+                if let Some(coord) = point.coord() {
                     process_coord(coord, multi_dim1, idxc, processor)?;
                 } else {
                     // skip processing of the untagged empty POINT, since no other formats support it.
@@ -124,23 +125,23 @@ pub(crate) fn process_wkt_geom_n<P: GeomProcessor>(
         }
         wkt::Wkt::LineString(g) => process_linestring(g, true, idx, processor),
         wkt::Wkt::MultiLineString(g) => {
-            processor.multilinestring_begin(g.0.len(), idx)?;
-            for (idxc, linestring) in g.0.iter().enumerate() {
+            processor.multilinestring_begin(g.line_strings().len(), idx)?;
+            for (idxc, linestring) in g.line_strings().iter().enumerate() {
                 process_linestring(linestring, false, idxc, processor)?;
             }
             processor.multilinestring_end(idx)
         }
         wkt::Wkt::Polygon(g) => process_polygon(g, true, idx, processor),
         wkt::Wkt::MultiPolygon(g) => {
-            processor.multipolygon_begin(g.0.len(), idx)?;
-            for (idx2, polygon) in g.0.iter().enumerate() {
+            processor.multipolygon_begin(g.polygons().len(), idx)?;
+            for (idx2, polygon) in g.polygons().iter().enumerate() {
                 process_polygon(polygon, false, idx2, processor)?;
             }
             processor.multipolygon_end(idx)
         }
         wkt::Wkt::GeometryCollection(g) => {
-            processor.geometrycollection_begin(g.0.len(), idx)?;
-            for (idx2, geometry) in g.0.iter().enumerate() {
+            processor.geometrycollection_begin(g.geometries().len(), idx)?;
+            for (idx2, geometry) in g.geometries().iter().enumerate() {
                 process_wkt_geom_n(geometry, idx2, processor)?;
             }
             processor.geometrycollection_end(idx)
@@ -167,9 +168,9 @@ fn process_linestring<P: GeomProcessor>(
     idx: usize,
     processor: &mut P,
 ) -> Result<()> {
-    processor.linestring_begin(tagged, linestring.0.len(), idx)?;
+    processor.linestring_begin(tagged, linestring.coords().len(), idx)?;
     let multi_dim = processor.multi_dim();
-    for (idxc, coord) in linestring.0.iter().enumerate() {
+    for (idxc, coord) in linestring.coords().iter().enumerate() {
         process_coord(coord, multi_dim, idxc, processor)?;
     }
     processor.linestring_end(tagged, idx)
@@ -181,8 +182,8 @@ fn process_polygon<P: GeomProcessor>(
     idx: usize,
     processor: &mut P,
 ) -> Result<()> {
-    processor.polygon_begin(tagged, polygon.0.len(), idx)?;
-    for (idx2, linestring_type) in polygon.0.iter().enumerate() {
+    processor.polygon_begin(tagged, polygon.rings().len(), idx)?;
+    for (idx2, linestring_type) in polygon.rings().iter().enumerate() {
         process_linestring(linestring_type, false, idx2, processor)?;
     }
     processor.polygon_end(tagged, idx)
@@ -190,10 +191,11 @@ fn process_polygon<P: GeomProcessor>(
 
 #[cfg(all(test, feature = "with-geo"))]
 mod test {
-    use super::*;
-    use crate::geo_types::conversion::ToGeo;
-    use crate::ToWkt;
     use geo_types::{line_string, point, polygon};
+
+    use super::*;
+    use crate::ToWkt;
+    use crate::geo_types::conversion::ToGeo;
 
     #[test]
     fn point() {

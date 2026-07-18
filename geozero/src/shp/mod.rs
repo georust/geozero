@@ -53,7 +53,9 @@ pub enum Error {
     InvalidPatchType(i32),
     /// Error returned when trying to read the shape records as a certain shape type
     /// but the actual shape type does not correspond to the one asked
-    #[error("The requested type: '{requested}' does not correspond to the actual shape type: '{actual}'")]
+    #[error(
+        "The requested type: '{requested}' does not correspond to the actual shape type: '{actual}'"
+    )]
     MismatchShapeType {
         /// The requested ShapeType
         requested: ShapeType,

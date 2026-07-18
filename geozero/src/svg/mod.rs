@@ -8,8 +8,7 @@ pub struct SvgString(pub String);
 pub(crate) mod conversion {
     use crate::error::Result;
     use crate::svg::SvgWriter;
-    use crate::FeatureProcessor;
-    use crate::{GeozeroDatasource, GeozeroGeometry};
+    use crate::{FeatureProcessor, GeozeroDatasource, GeozeroGeometry};
 
     /// Convert to SVG.
     ///
@@ -82,10 +81,11 @@ pub(crate) mod conversion {
 
 #[cfg(feature = "with-wkb")]
 mod wkb {
+    use std::io::Read;
+
     use crate::error::Result;
     use crate::svg::{SvgString, SvgWriter};
     use crate::wkb::{FromWkb, WkbDialect};
-    use std::io::Read;
 
     impl FromWkb for SvgString {
         fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> Result<Self> {

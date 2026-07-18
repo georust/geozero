@@ -1,11 +1,13 @@
-use crate::error::Result;
-use crate::{FeatureProcessor, GeomProcessor, PropertyProcessor};
-use lyon::math::{point, Point};
-use lyon::path::path::Builder;
+use std::mem;
+
+use lyon::math::{Point, point};
 use lyon::path::Path;
+use lyon::path::path::Builder;
 use lyon::tessellation::geometry_builder::simple_builder;
 use lyon::tessellation::*;
-use std::mem;
+
+use crate::error::Result;
+use crate::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 
 /// Triangle generator output
 #[allow(unused_variables)]

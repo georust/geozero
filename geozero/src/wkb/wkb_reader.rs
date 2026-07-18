@@ -1,14 +1,15 @@
-use crate::error::{GeozeroError, Result};
-use crate::wkb::{WKBGeometryType, WkbDialect};
-use crate::{GeomProcessor, GeozeroGeometry};
-use scroll::ctx::{FromCtx, SizeWith};
-use scroll::{Endian, IOread};
 use std::io::Read;
 
 #[cfg(feature = "with-postgis-diesel")]
-use crate::postgis::diesel::sql_types::{Geography, Geometry};
-#[cfg(feature = "with-postgis-diesel")]
 use diesel::{deserialize::FromSqlRow, expression::AsExpression};
+use scroll::ctx::{FromCtx, SizeWith};
+use scroll::{Endian, IOread};
+
+use crate::error::{GeozeroError, Result};
+#[cfg(feature = "with-postgis-diesel")]
+use crate::postgis::diesel::sql_types::{Geography, Geometry};
+use crate::wkb::{WKBGeometryType, WkbDialect};
+use crate::{CoordDimensions, GeomProcessor, GeozeroGeometry};
 
 /// WKB reader.
 pub struct Wkb<B: AsRef<[u8]>>(pub B);
@@ -16,6 +17,11 @@ pub struct Wkb<B: AsRef<[u8]>>(pub B);
 impl<B: AsRef<[u8]>> GeozeroGeometry for Wkb<B> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
         process_wkb_geom(&mut self.0.as_ref(), processor)
+    }
+    fn dims(&self) -> CoordDimensions {
+        read_wkb_header(&mut self.0.as_ref())
+            .map(|info| info.dims())
+            .unwrap_or_default()
     }
 }
 
@@ -32,6 +38,16 @@ impl<B: AsRef<[u8]>> GeozeroGeometry for Ewkb<B> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
         process_ewkb_geom(&mut self.0.as_ref(), processor)
     }
+    fn dims(&self) -> CoordDimensions {
+        read_ewkb_header(&mut self.0.as_ref())
+            .map(|info| info.dims())
+            .unwrap_or_default()
+    }
+    fn srid(&self) -> Option<i32> {
+        read_ewkb_header(&mut self.0.as_ref())
+            .ok()
+            .and_then(|info| info.srid)
+    }
 }
 
 /// GeoPackage WKB reader.
@@ -40,6 +56,16 @@ pub struct GpkgWkb<B: AsRef<[u8]>>(pub B);
 impl<B: AsRef<[u8]>> GeozeroGeometry for GpkgWkb<B> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
         process_gpkg_geom(&mut self.0.as_ref(), processor)
+    }
+    fn dims(&self) -> CoordDimensions {
+        read_gpkg_header(&mut self.0.as_ref())
+            .map(|info| info.dims())
+            .unwrap_or_default()
+    }
+    fn srid(&self) -> Option<i32> {
+        read_gpkg_header(&mut self.0.as_ref())
+            .ok()
+            .and_then(|info| info.srid)
     }
 }
 
@@ -50,6 +76,16 @@ impl<B: AsRef<[u8]>> GeozeroGeometry for SpatiaLiteWkb<B> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
         process_spatialite_geom(&mut self.0.as_ref(), processor)
     }
+    fn dims(&self) -> CoordDimensions {
+        read_spatialite_header(&mut self.0.as_ref())
+            .map(|info| info.dims())
+            .unwrap_or_default()
+    }
+    fn srid(&self) -> Option<i32> {
+        read_spatialite_header(&mut self.0.as_ref())
+            .ok()
+            .and_then(|info| info.srid)
+    }
 }
 
 /// MySQL WKB reader.
@@ -58,6 +94,16 @@ pub struct MySQLWkb<B: AsRef<[u8]>>(pub B);
 impl<B: AsRef<[u8]>> GeozeroGeometry for MySQLWkb<B> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
         process_mysql_geom(&mut self.0.as_ref(), processor)
+    }
+    fn dims(&self) -> CoordDimensions {
+        read_mysql_header(&mut self.0.as_ref())
+            .map(|info| info.dims())
+            .unwrap_or_default()
+    }
+    fn srid(&self) -> Option<i32> {
+        read_mysql_header(&mut self.0.as_ref())
+            .ok()
+            .and_then(|info| info.srid)
     }
 }
 
@@ -125,6 +171,17 @@ pub(crate) struct WkbInfo {
     #[allow(dead_code)]
     envelope: Vec<f64>,
     is_compressed: bool,
+}
+
+impl WkbInfo {
+    pub fn dims(&self) -> CoordDimensions {
+        CoordDimensions {
+            z: self.has_z,
+            m: self.has_m,
+            t: false,
+            tm: false,
+        }
+    }
 }
 
 /// OGC WKB header.
@@ -624,6 +681,13 @@ mod test {
     use crate::wkt::WktWriter;
     use crate::{CoordDimensions, ToWkt};
 
+    #[track_caller]
+    fn assert_srid_dims(wkb: &impl GeozeroGeometry, srid: Option<i32>, z: bool, m: bool) {
+        assert_eq!(wkb.srid(), srid);
+        assert_eq!(wkb.dims().z, z, "z dimension mismatch");
+        assert_eq!(wkb.dims().m, m, "m dimension mismatch");
+    }
+
     #[test]
     fn ewkb_format() {
         // SELECT 'POINT(10 -20 100 1)'::geometry
@@ -636,6 +700,7 @@ mod test {
         assert_eq!(info.srid, None);
         assert!(info.has_z);
         assert!(info.has_m);
+        assert_srid_dims(&Ewkb(&ewkb), None, true, true);
 
         // Process xy only
         let mut wkt_data: Vec<u8> = Vec::new();
@@ -661,6 +726,7 @@ mod test {
         assert_eq!(info.base_type, WKBGeometryType::MultiPoint);
         assert_eq!(info.srid, Some(4326));
         assert!(info.has_z);
+        assert_srid_dims(&Ewkb(&ewkb), Some(4326), true, false);
 
         let mut wkt_data: Vec<u8> = Vec::new();
         let mut writer = WktWriter::with_dims(&mut wkt_data, CoordDimensions::xyz());
@@ -696,44 +762,64 @@ mod test {
 
         // SELECT 'SRID=4326;MULTIPOINT (10 -20 100, 0 -0.5 101)'::geometry
         assert_eq!(
-            &ewkb_to_wkt("01040000A0E6100000020000000101000080000000000000244000000000000034C0000000000000594001010000800000000000000000000000000000E0BF0000000000405940", true),
-            "MULTIPOINT(10 -20 100,0 -0.5 101)"
-            //OGR: MULTIPOINT ((10 -20 100),(0 -0.5 101))
+            &ewkb_to_wkt(
+                "01040000A0E6100000020000000101000080000000000000244000000000000034C0000000000000594001010000800000000000000000000000000000E0BF0000000000405940",
+                true
+            ),
+            "MULTIPOINT(10 -20 100,0 -0.5 101)" //OGR: MULTIPOINT ((10 -20 100),(0 -0.5 101))
         );
 
         // SELECT 'MULTIPOINT(1 2, EMPTY, 3 4)'::geometry
         assert_eq!(
-            &ewkb_to_wkt("0104000000030000000101000000000000000000f03f00000000000000400101000000000000000000f87f000000000000f87f010100000000000000000008400000000000001040", true),
+            &ewkb_to_wkt(
+                "0104000000030000000101000000000000000000f03f00000000000000400101000000000000000000f87f000000000000f87f010100000000000000000008400000000000001040",
+                true
+            ),
             "MULTIPOINT(1 2,EMPTY,3 4)"
         );
 
         // SELECT 'SRID=4326;LINESTRING (10 -20 100, 0 -0.5 101)'::geometry
         assert_eq!(
-            &ewkb_to_wkt("01020000A0E610000002000000000000000000244000000000000034C000000000000059400000000000000000000000000000E0BF0000000000405940", true),
+            &ewkb_to_wkt(
+                "01020000A0E610000002000000000000000000244000000000000034C000000000000059400000000000000000000000000000E0BF0000000000405940",
+                true
+            ),
             "LINESTRING(10 -20 100,0 -0.5 101)"
         );
 
         // SELECT 'SRID=4326;MULTILINESTRING ((10 -20, 0 -0.5), (0 0, 2 0))'::geometry
         assert_eq!(
-            &ewkb_to_wkt("0105000020E610000002000000010200000002000000000000000000244000000000000034C00000000000000000000000000000E0BF0102000000020000000000000000000000000000000000000000000000000000400000000000000000", false),
+            &ewkb_to_wkt(
+                "0105000020E610000002000000010200000002000000000000000000244000000000000034C00000000000000000000000000000E0BF0102000000020000000000000000000000000000000000000000000000000000400000000000000000",
+                false
+            ),
             "MULTILINESTRING((10 -20,0 -0.5),(0 0,2 0))"
         );
 
         // SELECT 'SRID=4326;POLYGON ((0 0, 2 0, 2 2, 0 2, 0 0))'::geometry
         assert_eq!(
-            &ewkb_to_wkt("0103000020E610000001000000050000000000000000000000000000000000000000000000000000400000000000000000000000000000004000000000000000400000000000000000000000000000004000000000000000000000000000000000", false),
+            &ewkb_to_wkt(
+                "0103000020E610000001000000050000000000000000000000000000000000000000000000000000400000000000000000000000000000004000000000000000400000000000000000000000000000004000000000000000000000000000000000",
+                false
+            ),
             "POLYGON((0 0,2 0,2 2,0 2,0 0))"
         );
 
         // SELECT 'SRID=4326;MULTIPOLYGON (((0 0, 2 0, 2 2, 0 2, 0 0)), ((10 10, -2 10, -2 -2, 10 -2, 10 10)))'::geometry
         assert_eq!(
-            &ewkb_to_wkt("0106000020E610000002000000010300000001000000050000000000000000000000000000000000000000000000000000400000000000000000000000000000004000000000000000400000000000000000000000000000004000000000000000000000000000000000010300000001000000050000000000000000002440000000000000244000000000000000C0000000000000244000000000000000C000000000000000C0000000000000244000000000000000C000000000000024400000000000002440", false),
+            &ewkb_to_wkt(
+                "0106000020E610000002000000010300000001000000050000000000000000000000000000000000000000000000000000400000000000000000000000000000004000000000000000400000000000000000000000000000004000000000000000000000000000000000010300000001000000050000000000000000002440000000000000244000000000000000C0000000000000244000000000000000C000000000000000C0000000000000244000000000000000C000000000000024400000000000002440",
+                false
+            ),
             "MULTIPOLYGON(((0 0,2 0,2 2,0 2,0 0)),((10 10,-2 10,-2 -2,10 -2,10 10)))"
         );
 
         // SELECT 'GeometryCollection(POINT (10 10),POINT (30 30),LINESTRING (15 15, 20 20))'::geometry
         assert_eq!(
-            &ewkb_to_wkt("01070000000300000001010000000000000000002440000000000000244001010000000000000000003E400000000000003E400102000000020000000000000000002E400000000000002E4000000000000034400000000000003440", false),
+            &ewkb_to_wkt(
+                "01070000000300000001010000000000000000002440000000000000244001010000000000000000003E400000000000003E400102000000020000000000000000002E400000000000002E4000000000000034400000000000003440",
+                false
+            ),
             "GEOMETRYCOLLECTION(POINT(10 10),POINT(30 30),LINESTRING(15 15,20 20))"
         );
     }
@@ -742,31 +828,46 @@ mod test {
     fn ewkb_curves() {
         // SELECT 'CIRCULARSTRING(0 0,1 1,2 0)'::geometry
         assert_eq!(
-            &ewkb_to_wkt("01080000000300000000000000000000000000000000000000000000000000F03F000000000000F03F00000000000000400000000000000000", false),
+            &ewkb_to_wkt(
+                "01080000000300000000000000000000000000000000000000000000000000F03F000000000000F03F00000000000000400000000000000000",
+                false
+            ),
             "CIRCULARSTRING(0 0,1 1,2 0)"
         );
 
         // SELECT 'COMPOUNDCURVE (CIRCULARSTRING (0 0,1 1,2 0),(2 0,3 0))'::geometry
         assert_eq!(
-            &ewkb_to_wkt("01090000000200000001080000000300000000000000000000000000000000000000000000000000F03F000000000000F03F000000000000004000000000000000000102000000020000000000000000000040000000000000000000000000000008400000000000000000", false),
+            &ewkb_to_wkt(
+                "01090000000200000001080000000300000000000000000000000000000000000000000000000000F03F000000000000F03F000000000000004000000000000000000102000000020000000000000000000040000000000000000000000000000008400000000000000000",
+                false
+            ),
             "COMPOUNDCURVE(CIRCULARSTRING(0 0,1 1,2 0),(2 0,3 0))"
         );
 
         // SELECT 'CURVEPOLYGON(COMPOUNDCURVE(CIRCULARSTRING(0 0,1 1,2 0),(2 0,3 0,3 -1,0 -1,0 0)))'::geometry
         assert_eq!(
-            &ewkb_to_wkt("010A0000000100000001090000000200000001080000000300000000000000000000000000000000000000000000000000F03F000000000000F03F0000000000000040000000000000000001020000000500000000000000000000400000000000000000000000000000084000000000000000000000000000000840000000000000F0BF0000000000000000000000000000F0BF00000000000000000000000000000000", false),
+            &ewkb_to_wkt(
+                "010A0000000100000001090000000200000001080000000300000000000000000000000000000000000000000000000000F03F000000000000F03F0000000000000040000000000000000001020000000500000000000000000000400000000000000000000000000000084000000000000000000000000000000840000000000000F0BF0000000000000000000000000000F0BF00000000000000000000000000000000",
+                false
+            ),
             "CURVEPOLYGON(COMPOUNDCURVE(CIRCULARSTRING(0 0,1 1,2 0),(2 0,3 0,3 -1,0 -1,0 0)))"
         );
 
         // SELECT 'MULTICURVE((0 0, 5 5),CIRCULARSTRING(4 0, 4 4, 8 4))'::geometry
         assert_eq!(
-            &ewkb_to_wkt("010B000000020000000102000000020000000000000000000000000000000000000000000000000014400000000000001440010800000003000000000000000000104000000000000000000000000000001040000000000000104000000000000020400000000000001040", false),
+            &ewkb_to_wkt(
+                "010B000000020000000102000000020000000000000000000000000000000000000000000000000014400000000000001440010800000003000000000000000000104000000000000000000000000000001040000000000000104000000000000020400000000000001040",
+                false
+            ),
             "MULTICURVE((0 0,5 5),CIRCULARSTRING(4 0,4 4,8 4))"
         );
 
         // SELECT 'MULTISURFACE (CURVEPOLYGON (COMPOUNDCURVE (CIRCULARSTRING (0 0,1 1,2 0),(2 0,3 0,3 -1,0 -1,0 0))))'::geometry
         assert_eq!(
-            &ewkb_to_wkt("010C00000001000000010A0000000100000001090000000200000001080000000300000000000000000000000000000000000000000000000000F03F000000000000F03F0000000000000040000000000000000001020000000500000000000000000000400000000000000000000000000000084000000000000000000000000000000840000000000000F0BF0000000000000000000000000000F0BF00000000000000000000000000000000", false),
+            &ewkb_to_wkt(
+                "010C00000001000000010A0000000100000001090000000200000001080000000300000000000000000000000000000000000000000000000000F03F000000000000F03F0000000000000040000000000000000001020000000500000000000000000000400000000000000000000000000000084000000000000000000000000000000840000000000000F0BF0000000000000000000000000000F0BF00000000000000000000000000000000",
+                false
+            ),
             "MULTISURFACE(CURVEPOLYGON(COMPOUNDCURVE(CIRCULARSTRING(0 0,1 1,2 0),(2 0,3 0,3 -1,0 -1,0 0))))"
         );
     }
@@ -775,18 +876,27 @@ mod test {
     fn ewkb_surfaces() {
         // SELECT 'POLYHEDRALSURFACE(((0 0 0,0 0 1,0 1 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0)),((0 0 0,1 0 0,1 0 1,0 0 1,0 0 0)),((1 1 0,1 1 1,1 0 1,1 0 0,1 1 0)),((0 1 0,0 1 1,1 1 1,1 1 0,0 1 0)),((0 0 1,1 0 1,1 1 1,0 1 1,0 0 1)))'::geometry
         assert_eq!(
-            &ewkb_to_wkt("010F000080060000000103000080010000000500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000F03F0000000000000000000000000000F03F000000000000F03F0000000000000000000000000000F03F0000000000000000000000000000000000000000000000000000000000000000010300008001000000050000000000000000000000000000000000000000000000000000000000000000000000000000000000F03F0000000000000000000000000000F03F000000000000F03F0000000000000000000000000000F03F0000000000000000000000000000000000000000000000000000000000000000000000000000000001030000800100000005000000000000000000000000000000000000000000000000000000000000000000F03F00000000000000000000000000000000000000000000F03F0000000000000000000000000000F03F00000000000000000000000000000000000000000000F03F00000000000000000000000000000000000000000000000001030000800100000005000000000000000000F03F000000000000F03F0000000000000000000000000000F03F000000000000F03F000000000000F03F000000000000F03F0000000000000000000000000000F03F000000000000F03F00000000000000000000000000000000000000000000F03F000000000000F03F0000000000000000010300008001000000050000000000000000000000000000000000F03F00000000000000000000000000000000000000000000F03F000000000000F03F000000000000F03F000000000000F03F000000000000F03F000000000000F03F000000000000F03F00000000000000000000000000000000000000000000F03F00000000000000000103000080010000000500000000000000000000000000000000000000000000000000F03F000000000000F03F0000000000000000000000000000F03F000000000000F03F000000000000F03F000000000000F03F0000000000000000000000000000F03F000000000000F03F00000000000000000000000000000000000000000000F03F", true),
+            &ewkb_to_wkt(
+                "010F000080060000000103000080010000000500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000F03F0000000000000000000000000000F03F000000000000F03F0000000000000000000000000000F03F0000000000000000000000000000000000000000000000000000000000000000010300008001000000050000000000000000000000000000000000000000000000000000000000000000000000000000000000F03F0000000000000000000000000000F03F000000000000F03F0000000000000000000000000000F03F0000000000000000000000000000000000000000000000000000000000000000000000000000000001030000800100000005000000000000000000000000000000000000000000000000000000000000000000F03F00000000000000000000000000000000000000000000F03F0000000000000000000000000000F03F00000000000000000000000000000000000000000000F03F00000000000000000000000000000000000000000000000001030000800100000005000000000000000000F03F000000000000F03F0000000000000000000000000000F03F000000000000F03F000000000000F03F000000000000F03F0000000000000000000000000000F03F000000000000F03F00000000000000000000000000000000000000000000F03F000000000000F03F0000000000000000010300008001000000050000000000000000000000000000000000F03F00000000000000000000000000000000000000000000F03F000000000000F03F000000000000F03F000000000000F03F000000000000F03F000000000000F03F000000000000F03F00000000000000000000000000000000000000000000F03F00000000000000000103000080010000000500000000000000000000000000000000000000000000000000F03F000000000000F03F0000000000000000000000000000F03F000000000000F03F000000000000F03F000000000000F03F0000000000000000000000000000F03F000000000000F03F00000000000000000000000000000000000000000000F03F",
+                true
+            ),
             "POLYHEDRALSURFACE(((0 0 0,0 0 1,0 1 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0)),((0 0 0,1 0 0,1 0 1,0 0 1,0 0 0)),((1 1 0,1 1 1,1 0 1,1 0 0,1 1 0)),((0 1 0,0 1 1,1 1 1,1 1 0,0 1 0)),((0 0 1,1 0 1,1 1 1,0 1 1,0 0 1)))"
         );
         // SELECT 'TIN(((0 0 0,0 0 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,0 0 0)))'::geometry
         assert_eq!(
-            &ewkb_to_wkt("0110000080020000000111000080010000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000F03F0000000000000000000000000000F03F0000000000000000000000000000000000000000000000000000000000000000011100008001000000040000000000000000000000000000000000000000000000000000000000000000000000000000000000F03F0000000000000000000000000000F03F000000000000F03F0000000000000000000000000000000000000000000000000000000000000000", true),
+            &ewkb_to_wkt(
+                "0110000080020000000111000080010000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000F03F0000000000000000000000000000F03F0000000000000000000000000000000000000000000000000000000000000000011100008001000000040000000000000000000000000000000000000000000000000000000000000000000000000000000000F03F0000000000000000000000000000F03F000000000000F03F0000000000000000000000000000000000000000000000000000000000000000",
+                true
+            ),
             "TIN(((0 0 0,0 0 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,0 0 0)))"
         );
 
         // SELECT 'TRIANGLE((0 0,0 9,9 0,0 0))'::geometry
         assert_eq!(
-            &ewkb_to_wkt("0111000000010000000400000000000000000000000000000000000000000000000000000000000000000022400000000000002240000000000000000000000000000000000000000000000000", false),
+            &ewkb_to_wkt(
+                "0111000000010000000400000000000000000000000000000000000000000000000000000000000000000022400000000000002240000000000000000000000000000000000000000000000000",
+                false
+            ),
             "TRIANGLE((0 0,0 9,9 0,0 0))"
         );
     }
@@ -817,6 +927,7 @@ mod test {
         assert_eq!(info.srid, Some(4326));
         assert!(info.has_z);
         assert!(info.has_m);
+        assert_srid_dims(&SpatiaLiteWkb(&ewkb), Some(4326), true, true);
 
         // Process xy only
         let mut wkt_data: Vec<u8> = Vec::new();
@@ -845,6 +956,7 @@ mod test {
         assert_eq!(info.srid, Some(4326));
         assert!(info.has_z);
         assert!(info.has_m);
+        assert_srid_dims(&SpatiaLiteWkb(&ewkb), Some(4326), true, true);
 
         let mut wkt_data: Vec<u8> = Vec::new();
         assert!(
@@ -860,6 +972,7 @@ mod test {
         assert_eq!(info.srid, Some(4326));
         assert!(info.has_z);
         assert!(info.has_m);
+        assert_srid_dims(&SpatiaLiteWkb(&ewkb), Some(4326), true, true);
 
         let mut wkt_data: Vec<u8> = Vec::new();
         let mut writer = WktWriter::with_dims(&mut wkt_data, CoordDimensions::xyzm());
@@ -877,6 +990,7 @@ mod test {
         assert!(info.has_m);
         // Spatialite store envelope as [minx, miny, maxx, maxy]
         assert_eq!(info.envelope, vec![10.0, 10.0, 20.0, 20.0]);
+        assert_srid_dims(&SpatiaLiteWkb(&wkb), None, true, true);
 
         let mut wkt_data: Vec<u8> = Vec::new();
         assert!(
@@ -893,6 +1007,7 @@ mod test {
         let info = read_spatialite_header(&mut wkb.as_slice()).unwrap();
         assert_eq!(info.base_type, WKBGeometryType::GeometryCollection);
         assert_eq!(info.envelope, vec![1.0, 3.0, 22.0, 22.0]);
+        assert_srid_dims(&SpatiaLiteWkb(&wkb), None, false, false);
 
         let mut wkt_data: Vec<u8> = Vec::new();
         assert!(
@@ -914,6 +1029,7 @@ mod test {
         assert_eq!(info.srid, Some(4326));
         assert!(!info.has_z);
         assert!(!info.has_m);
+        assert_srid_dims(&MySQLWkb(&ewkb), Some(4326), false, false);
 
         let mut wkt_data: Vec<u8> = Vec::new();
         assert!(
@@ -927,6 +1043,7 @@ mod test {
         assert_eq!(info.base_type, WKBGeometryType::MultiLineString);
         assert!(!info.has_z);
         assert!(!info.has_m);
+        assert_srid_dims(&MySQLWkb(&wkb), Some(0), false, false);
 
         let mut wkt_data: Vec<u8> = Vec::new();
         assert!(
@@ -941,6 +1058,7 @@ mod test {
         let wkb = hex::decode("000000000107000000020000000101000000000000000000F03F00000000000008400103000000010000000400000000000000000035400000000000003540000000000000364000000000000035400000000000003540000000000000364000000000000035400000000000003540").unwrap();
         let info = read_mysql_header(&mut wkb.as_slice()).unwrap();
         assert_eq!(info.base_type, WKBGeometryType::GeometryCollection);
+        assert_srid_dims(&MySQLWkb(&wkb), Some(0), false, false);
 
         let mut wkt_data: Vec<u8> = Vec::new();
         assert!(
@@ -961,6 +1079,7 @@ mod test {
         assert!(!info.has_z);
         assert!(!info.has_m);
         assert_eq!(info.srid, Some(4326));
+        assert_srid_dims(&GpkgWkb(&wkb), Some(4326), false, false);
 
         let mut wkt_data: Vec<u8> = Vec::new();
         assert!(process_gpkg_geom(&mut wkb.as_slice(), &mut WktWriter::new(&mut wkt_data)).is_ok());
@@ -974,6 +1093,7 @@ mod test {
         assert!(info.has_m);
         // GPKG stores envelope as [minx, maxx, miny, maxy]
         assert_eq!(info.envelope, vec![10.0, 20.0, 10.0, 20.0]);
+        assert_srid_dims(&GpkgWkb(&wkb), Some(4326), true, true);
 
         let mut wkt_data: Vec<u8> = Vec::new();
         assert!(process_gpkg_geom(&mut wkb.as_slice(), &mut WktWriter::new(&mut wkt_data)).is_ok());
@@ -987,6 +1107,7 @@ mod test {
         let info = read_gpkg_header(&mut wkb.as_slice()).unwrap();
         assert_eq!(info.base_type, WKBGeometryType::GeometryCollection);
         assert_eq!(info.envelope, vec![1.0, 22.0, 3.0, 22.0]);
+        assert_srid_dims(&GpkgWkb(&wkb), Some(4326), false, false);
 
         let mut wkt_data: Vec<u8> = Vec::new();
         assert!(process_gpkg_geom(&mut wkb.as_slice(), &mut WktWriter::new(&mut wkt_data)).is_ok());

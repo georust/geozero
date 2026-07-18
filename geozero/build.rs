@@ -1,6 +1,5 @@
 #[cfg(feature = "with-mvt")]
 use std::{
-    env,
     fs::OpenOptions,
     io::{Read, Write},
     path::Path,
@@ -8,11 +7,11 @@ use std::{
 
 #[cfg(feature = "with-mvt")]
 fn compile_protos() -> Result<(), Box<dyn std::error::Error>> {
-    // override the build location, in order to check in the changes to proto files
-    env::set_var("OUT_DIR", "src/mvt");
-
+    // Build vector_tile.rs only after manual deletion
     if !Path::new("src/mvt/vector_tile.rs").exists() {
-        prost_build::compile_protos(&["src/mvt/vector_tile.proto"], &["src/mvt/"])?;
+        let mut config = prost_build::Config::new();
+        config.out_dir("src/mvt");
+        config.compile_protos(&["src/mvt/vector_tile.proto"], &["src/mvt/"])?;
         // read file contents to string
         let mut file = OpenOptions::new()
             .read(true)

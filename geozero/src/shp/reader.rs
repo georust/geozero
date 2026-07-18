@@ -1,12 +1,14 @@
-use crate::shp::shp_reader::{read_shape, RecordHeader};
-use crate::shp::shx_reader::{read_index_file, ShapeIndex};
-use crate::shp::{header, Error};
-use crate::{FeatureProcessor, FeatureProperties, GeomProcessor};
-pub use dbase::{FieldInfo, FieldType};
 use std::fs::File;
 use std::io::{BufReader, Read, Seek};
 use std::iter::FusedIterator;
 use std::path::Path;
+
+pub use dbase::{FieldInfo, FieldType};
+
+use crate::shp::shp_reader::{RecordHeader, read_shape};
+use crate::shp::shx_reader::{ShapeIndex, read_index_file};
+use crate::shp::{Error, header};
+use crate::{FeatureProcessor, FeatureProperties, GeomProcessor};
 
 /// Struct that handle iteration over the shapes of a .shp file
 pub struct ShapeIterator<'a, P: GeomProcessor, T: Read> {
@@ -144,7 +146,10 @@ impl<T: Read + Seek> ShpReader<T> {
         Ok(fields)
     }
 
-    pub fn iter_geometries<P: FeatureProcessor>(self, processor: &mut P) -> ShapeIterator<P, T> {
+    pub fn iter_geometries<P: FeatureProcessor>(
+        self,
+        processor: &mut P,
+    ) -> ShapeIterator<'_, P, T> {
         ShapeIterator {
             processor,
             source: self.source,
@@ -161,7 +166,7 @@ impl<T: Read + Seek> ShpReader<T> {
     pub fn iter_features<P: FeatureProcessor>(
         mut self,
         processor: &mut P,
-    ) -> Result<ShapeRecordIterator<P, T>, Error> {
+    ) -> Result<ShapeRecordIterator<'_, P, T>, Error> {
         let maybe_dbf_reader = self.dbf_reader.take();
         if let Some(dbf_reader) = maybe_dbf_reader {
             let shape_iter = self.iter_geometries(processor);

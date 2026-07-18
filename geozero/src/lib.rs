@@ -1,52 +1,4 @@
-//! Zero-Copy reading and writing of geospatial data.
-//!
-//! `GeoZero` defines an API for reading geospatial data formats without an intermediate representation.
-//! It defines traits which can be implemented to read and convert to an arbitrary format
-//! or render geometries directly.
-//!
-//! Supported geometry types:
-//! * [OGC Simple Features](https://en.wikipedia.org/wiki/Simple_Features)
-//! * Circular arcs as defined by SQL-MM Part 3
-//! * TIN
-//!
-//! Supported dimensions: X, Y, Z, M, T
-//!
-//! Available implementations:
-//! * [flatgeobuf](https://docs.rs/flatgeobuf)
-//! * [geoarrow](https://docs.rs/geoarrow)
-//!
-//! ## Format conversion overview
-//!
-//! |               |                         [`GeozeroGeometry`]                                                                              | Dimensions |                        [`GeozeroDatasource`]                                         | Geometry Conversion |            [`GeomProcessor`]                    |
-//! |---------------|--------------------------------------------------------------------------------------------------------------------------|------------|--------------------------------------------------------------------------------------|---------------------|-------------------------------------------------|
-//! | CSV           | [csv::Csv], [csv::CsvString]                                                                                             | XY         | -                                                                                    | [ProcessToCsv]      | [CsvWriter](csv::CsvWriter)                     |
-//! | GDAL          | `gdal::vector::Geometry`                                                                                                 | XYZ        | -                                                                                    | [ToGdal]            | [GdalWriter](gdal::GdalWriter)                  |
-//! | geo-types     | `geo_types::Geometry<f64>`                                                                                               | XY         | -                                                                                    | [ToGeo]             | [GeoWriter](geo_types::GeoWriter)               |
-//! | GeoJSON       | [GeoJson](geojson::GeoJson), [GeoJsonString](geojson::GeoJsonString)                                                     | XYZ        | [GeoJsonReader](geojson::GeoJsonReader), [GeoJson](geojson::GeoJson)                 | [ToJson]            | [GeoJsonWriter](geojson::GeoJsonWriter)         |
-//! | GeoJSON Lines |                                                                                                                          | XYZ        | [GeoJsonLineReader](geojson::GeoJsonLineReader)                                      |                     | [GeoJsonLineWriter](geojson::GeoJsonLineWriter) |
-//! | GEOS          | `geos::Geometry`                                                                                                         | XYZ        | -                                                                                    | [ToGeos]            | [GeosWriter](geos::GeosWriter)                  |
-//! | GPX           |                                                                                                                          | XY         | [GpxReader](gpx::GpxReader)                                                          |                     |                                                 |
-//! | MVT           | [mvt::tile::Feature]                                                                                                     | XY         | [mvt::tile::Layer]                                                                   | [ToMvt]             | [MvtWriter](mvt::MvtWriter)                     |
-//! | Shapefile     | -                                                                                                                        | XYZM       | [shp::ShpReader]                                                                     |                     |                                                 |
-//! | SVG           | -                                                                                                                        | XY         | -                                                                                    | [ToSvg]             | [SvgWriter](svg::SvgWriter)                     |
-//! | WKB           | [Wkb](wkb::Wkb), [Ewkb](wkb::Ewkb), [GpkgWkb](wkb::GpkgWkb), [SpatiaLiteWkb](wkb::SpatiaLiteWkb), [MySQL](wkb::MySQLWkb) | XYZM       | -                                                                                    | [ToWkb]             | [WkbWriter](wkb::WkbWriter)                     |
-//! | WKT           | [wkt::WktStr], [wkt::WktString], [wkt::EwktStr], [wkt::EwktString]                                                       | XYZM       | [wkt::WktReader], [wkt::WktStr], [wkt::WktString], [wkt::EwktStr], [wkt::EwktString] | [ToWkt]             | [WktWriter](wkt::WktWriter)                     |
-
-#![warn(clippy::uninlined_format_args)]
-#![allow(
-    clippy::cast_possible_truncation,
-    clippy::cast_possible_wrap,
-    clippy::cast_sign_loss,
-    clippy::doc_markdown,
-    clippy::many_single_char_names,
-    clippy::missing_errors_doc,
-    clippy::missing_panics_doc,
-    clippy::module_name_repetitions,
-    clippy::must_use_candidate,
-    clippy::redundant_closure_for_method_calls,
-    clippy::similar_names,
-    clippy::struct_excessive_bools
-)]
+#![cfg_attr(feature = "default", doc = include_str!("../../README.md"))]
 
 mod api;
 pub mod error;
@@ -124,6 +76,9 @@ pub use crate::wkt::conversion::*;
 
 #[cfg(feature = "with-mvt")]
 pub mod mvt;
+
+pub mod bounds;
+
 #[cfg(feature = "with-mvt")]
 pub use crate::mvt::conversion::*;
 

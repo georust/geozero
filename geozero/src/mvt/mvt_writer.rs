@@ -1,19 +1,61 @@
 //! Encode geometries according to MVT spec
 //! <https://github.com/mapbox/vector-tile-spec/tree/master/2.1>
 
-use crate::error::Result;
-use crate::mvt::mvt_commands::{Command, CommandInteger, ParameterInteger};
-use crate::mvt::vector_tile::{tile, tile::GeomType};
-use crate::GeomProcessor;
-
 use super::mvt_error::MvtError;
+use crate::error::Result;
+use crate::mvt::TagsBuilder;
+use crate::mvt::mvt_commands::{Command, CommandInteger, ParameterInteger};
+use crate::mvt::vector_tile::tile;
+use crate::mvt::vector_tile::tile::GeomType;
+use crate::{ColumnValue, FeatureProcessor, GeomProcessor, PropertyProcessor};
 
 /// Generator for MVT geometry type.
-#[derive(Default, Debug)]
+/// # Example
+/// Generate a MVT layer using a type that implements [`GeozeroDatasource`](crate::GeozeroDatasource).
+/// ```
+/// use geozero::{GeozeroDatasource, geojson::GeoJsonString, mvt::MvtWriter};
+///
+/// let mut geojson = GeoJsonString(
+///     serde_json::json!({
+///         "type": "FeatureCollection",
+///         "features": [
+///             {
+///                 "type": "Feature",
+///                 "properties": {
+///                     "population": 100
+///                 },
+///                 "geometry": {
+///                     "type": "Point",
+///                     "coordinates": [1.0, 2.0]
+///                 }
+///             },
+///             {
+///                 "type": "Feature",
+///                 "properties": {
+///                     "population": 200
+///                 },
+///                 "geometry": {
+///                     "type": "Point",
+///                     "coordinates": [3.0, 4.0]
+///                 }
+///             }
+///         ]
+///     })
+///     .to_string(),
+/// ); // implements GeozeroDatasource
+/// let mut mvt_writer = MvtWriter::new_unscaled(4096).unwrap();
+/// geojson.process(&mut mvt_writer);
+/// let mvt_layer = mvt_writer.layer("sample"); // returns MVT layer with all features
+/// ```
+///
+/// To convert a single geometry into a [`tile::Feature`](crate::mvt::tile::Feature),
+/// see the [`ToMvt`](crate::ToMvt) trait.
+#[derive(Debug)]
 pub struct MvtWriter {
     pub(crate) feature: tile::Feature,
-    // Extent, 0 for unscaled
+    features: Vec<tile::Feature>,
     extent: i32,
+    scale: bool,
     // Scale geometry to bounds
     left: f64,
     bottom: f64,
@@ -24,6 +66,7 @@ pub struct MvtWriter {
     last_y: i32,
     line_state: LineState,
     is_multiline: bool,
+    tags_builder: TagsBuilder,
 }
 
 #[derive(Default, Debug, PartialEq)]
@@ -36,20 +79,70 @@ enum LineState {
 }
 
 impl MvtWriter {
-    pub fn new(extent: u32, left: f64, bottom: f64, right: f64, top: f64) -> MvtWriter {
-        assert_ne!(extent, 0);
-        MvtWriter {
+    /// Creates a new `MvtWriter` that transforms geometries to be in tile coordinate space.
+    pub fn new(extent: u32, left: f64, bottom: f64, right: f64, top: f64) -> Result<MvtWriter> {
+        if extent == 0 {
+            return Err(MvtError::InvalidExtent.into());
+        }
+        Ok(MvtWriter {
+            feature: tile::Feature::default(),
+            features: Vec::new(),
             extent: extent as i32,
+            scale: true,
+            last_x: 0,
+            last_y: 0,
+            line_state: LineState::None,
+            is_multiline: false,
+            tags_builder: TagsBuilder::new(),
             left,
             bottom,
             x_multiplier: (extent as f64) / (right - left),
             y_multiplier: (extent as f64) / (top - bottom),
-            ..Default::default()
+        })
+    }
+
+    /// Creates a new `MvtWriter` that does not transform any geometries.
+    ///
+    /// The resulting writer expects all geometries to be provided in tile coordinate space,
+    /// matching the specified `extent`.
+    pub fn new_unscaled(extent: u32) -> Result<MvtWriter> {
+        if extent == 0 {
+            return Err(MvtError::InvalidExtent.into());
         }
+        Ok(MvtWriter {
+            feature: tile::Feature::default(),
+            features: Vec::new(),
+            extent: extent as i32,
+            scale: false,
+            last_x: 0,
+            last_y: 0,
+            line_state: LineState::None,
+            is_multiline: false,
+            tags_builder: TagsBuilder::new(),
+            // unscaled writer does not use the following values
+            // as it does not perform any geometry transformation
+            // see the impl of GeomProcessor.xy
+            left: 0.0,
+            bottom: 0.0,
+            x_multiplier: 1.0,
+            y_multiplier: 1.0,
+        })
     }
 
     pub fn geometry(&self) -> &tile::Feature {
         &self.feature
+    }
+
+    pub fn layer(self, name: &str) -> tile::Layer {
+        let (keys, values) = self.tags_builder.into_tags();
+        tile::Layer {
+            version: 2,
+            name: name.to_string(),
+            features: self.features,
+            keys,
+            values: values.into_iter().map(|v| v.into()).collect(),
+            extent: Some(self.extent as u32),
+        }
     }
 
     fn reserve(&mut self, capacity: usize) {
@@ -72,7 +165,7 @@ impl GeomProcessor for MvtWriter {
         };
 
         if !last_ring_coord {
-            let (x, y) = if self.extent != 0 {
+            let (x, y) = if self.scale {
                 // scale to tile coordinate space
                 let x = ((x_coord - self.left) * self.x_multiplier).floor() as i32;
                 let y = ((y_coord - self.bottom) * self.y_multiplier).floor() as i32;
@@ -175,11 +268,50 @@ impl GeomProcessor for MvtWriter {
     }
 }
 
+impl PropertyProcessor for MvtWriter {
+    fn property(&mut self, _idx: usize, name: &str, value: &ColumnValue) -> Result<bool> {
+        let (key_idx, val_idx) = self.tags_builder.insert_ref(
+            name,
+            value
+                .try_into()
+                .map_err(|_| MvtError::UnsupportedKeyValueType(name.to_string()))?,
+        );
+        self.feature.tags.reserve(2);
+        self.feature.tags.push(key_idx);
+        self.feature.tags.push(val_idx);
+        Ok(false)
+    }
+}
+
+impl FeatureProcessor for MvtWriter {
+    fn feature_begin(&mut self, _idx: u64) -> Result<()> {
+        self.feature = tile::Feature::default();
+        Ok(())
+    }
+
+    fn feature_end(&mut self, _idx: u64) -> Result<()> {
+        self.features.push(self.feature.clone());
+        Ok(())
+    }
+
+    fn geometry_begin(&mut self) -> Result<()> {
+        self.line_state = LineState::None;
+        self.is_multiline = false;
+        self.last_x = 0;
+        self.last_y = 0;
+        Ok(())
+    }
+
+    fn geometry_end(&mut self) -> Result<()> {
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod test_mvt {
     use super::*;
-    use crate::mvt::vector_tile::Tile;
     use crate::mvt::TileValue;
+    use crate::mvt::vector_tile::Tile;
 
     // https://github.com/mapbox/vector-tile-spec/tree/master/2.1#45-example
     const TILE_EXAMPLE: &str = r#"Tile {
@@ -390,11 +522,12 @@ mod test_mvt {
 #[cfg(test)]
 #[cfg(feature = "with-geojson")]
 mod test {
-    use super::*;
-    use crate::geojson::conversion::ToJson;
-    use crate::geojson::GeoJson;
-    use crate::ToMvt;
     use serde_json::json;
+
+    use super::*;
+    use crate::ToMvt;
+    use crate::geojson::GeoJson;
+    use crate::geojson::conversion::ToJson;
 
     // https://github.com/mapbox/vector-tile-spec/tree/master/2.1#435-example-geometry-encodings
 

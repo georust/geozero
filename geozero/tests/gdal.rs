@@ -1,9 +1,10 @@
-use gdal::vector::LayerAccess;
+use std::path::Path;
+
 use gdal::Dataset;
+use gdal::vector::LayerAccess;
+use geozero::ToSvg;
 use geozero::gdal::process_geom;
 use geozero::svg::SvgWriter;
-use geozero::ToSvg;
-use std::path::Path;
 
 #[test]
 fn ogr_to_svg() -> Result<(), gdal::errors::GdalError> {

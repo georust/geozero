@@ -1,8 +1,39 @@
-use geo::algorithm::{centroid::Centroid, coords_iter::CoordsIter};
+use geo::algorithm::centroid::Centroid;
+use geo::algorithm::coords_iter::CoordsIter;
 use geo::simplify_vw::SimplifyVwPreserve;
 use geo::{Geometry, Point};
-use geozero::geojson::GeoJson;
 use geozero::ToGeo;
+use geozero::geojson::GeoJson;
+
+// A tiny malformed (E)WKB blob declaring a multi-billion element count must fail
+// cleanly instead of reserving tens of gigabytes and aborting (OOM DoS).
+#[cfg(feature = "with-wkb")]
+#[test]
+fn ewkb_huge_count_does_not_oom() {
+    use geozero::wkb::Ewkb;
+
+    // EWKB type ids (big-endian) with the high SRID flag set.
+    const SRID_FLAG: u32 = 0x2000_0000;
+    const LINESTRING: u32 = 2;
+    const GEOMETRYCOLLECTION: u32 = 7;
+
+    // Big-endian LineString declaring ~2.95 billion points but carrying no
+    // coordinates. Pre-fix this reserved tens of GiB before the read loop.
+    let mut linestring = vec![0x00]; // big-endian
+    linestring.extend((SRID_FLAG | LINESTRING).to_be_bytes());
+    linestring.extend(1i32.to_be_bytes()); // SRID
+    linestring.extend(0xb024_a594u32.to_be_bytes()); // lied-about point count
+    assert!(Ewkb(linestring.as_slice()).to_geo().is_err());
+
+    // The original fuzz finding: that same LineString wrapped in a
+    // GeometryCollection (so the over-large count is reached via a nested header).
+    let mut collection = vec![0x00]; // big-endian
+    collection.extend((SRID_FLAG | GEOMETRYCOLLECTION).to_be_bytes());
+    collection.extend(27i32.to_be_bytes()); // SRID
+    collection.extend(1u32.to_be_bytes()); // one member geometry
+    collection.extend(linestring);
+    assert!(Ewkb(collection.as_slice()).to_geo().is_err());
+}
 
 #[test]
 fn centroid() {
@@ -21,7 +52,7 @@ fn simplify() {
     );
     if let Ok(Geometry::LineString(line)) = geojson.to_geo() {
         assert_eq!(line.coords_count(), 7);
-        let simplified = line.simplify_vw_preserve(&800000.0);
+        let simplified = line.simplify_vw_preserve(800000.0);
         assert_eq!(simplified.coords_count(), 4);
     }
 }

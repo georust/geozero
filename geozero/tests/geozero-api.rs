@@ -47,10 +47,10 @@ impl GeomProcessor for MaxHeightFinder {
         _tm: Option<u64>,
         _idx: usize,
     ) -> GeozeroResult<()> {
-        if let Some(z) = z {
-            if z > self.0 {
-                self.0 = z
-            }
+        if let Some(z) = z
+            && z > self.0
+        {
+            self.0 = z
         }
         Ok(())
     }

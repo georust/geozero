@@ -1,7 +1,8 @@
-use crate::error::Result;
-use crate::{ColumnValue, CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcessor};
 use std::fmt::Display;
 use std::io::Write;
+
+use crate::error::Result;
+use crate::{ColumnValue, CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcessor};
 
 /// GeoJSON writer.
 pub struct GeoJsonWriter<W: Write> {
@@ -244,9 +245,9 @@ impl<W: Write> PropertyProcessor for GeoJsonWriter<W> {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::ToJson;
     use crate::geojson::read_geojson;
     use crate::wkt::Wkt;
-    use crate::ToJson;
 
     #[test]
     fn geometries() -> Result<()> {

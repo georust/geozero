@@ -1,7 +1,8 @@
-use crate::wkb::{self, FromWkb};
-use crate::GeozeroGeometry;
 use bytes::{BufMut, BytesMut};
-use postgres_types::{to_sql_checked, FromSql, IsNull, ToSql, Type};
+use postgres_types::{FromSql, IsNull, ToSql, Type, to_sql_checked};
+
+use crate::GeozeroGeometry;
+use crate::wkb::{self, FromWkb};
 
 impl<T: FromWkb + Sized> FromSql<'_> for wkb::Decode<T> {
     fn from_sql(_ty: &Type, raw: &[u8]) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {

@@ -1,9 +1,9 @@
+use gdal::vector::Geometry;
+use gdal_sys::OGRwkbGeometryType;
+
 use crate::error::{GeozeroError, Result};
 use crate::gdal::gdal_error::GdalError;
 use crate::{CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcessor};
-
-use gdal::vector::Geometry;
-use gdal_sys::OGRwkbGeometryType;
 
 /// Generator for GDAL geometry type.
 pub struct GdalWriter {
@@ -80,10 +80,9 @@ impl GeomProcessor for GdalWriter {
             | OGRwkbGeometryType::wkbMultiPolygon => {
                 self.line.set_point_2d(idx, (x, y));
             }
-            _ => {
-                let unsupported_type = self.geom.geometry_type();
-                return Err(GdalError::UnsupportedGeometryType(unsupported_type))?;
-            }
+            _ => Err(GdalError::UnsupportedGeometryType(
+                self.geom.geometry_type(),
+            ))?,
         }
         Ok(())
     }
@@ -112,10 +111,9 @@ impl GeomProcessor for GdalWriter {
             | OGRwkbGeometryType::wkbMultiPolygon => {
                 self.line.set_point(idx, (x, y, z));
             }
-            _ => {
-                let unsupported_type = self.geom.geometry_type();
-                return Err(GdalError::UnsupportedGeometryType(unsupported_type))?;
-            }
+            _ => Err(GdalError::UnsupportedGeometryType(
+                self.geom.geometry_type(),
+            ))?,
         }
         Ok(())
     }
@@ -155,9 +153,7 @@ impl GeomProcessor for GdalWriter {
                     let n = poly.geometry_count();
                     self.line = unsafe { poly.get_unowned_geometry(n - 1) };
                 }
-                unsupported_type => {
-                    return Err(GdalError::UnsupportedGeometryType(unsupported_type))?;
-                }
+                unsupported_type => Err(GdalError::UnsupportedGeometryType(unsupported_type))?,
             };
         }
         Ok(())
@@ -188,8 +184,8 @@ impl FeatureProcessor for GdalWriter {}
 #[cfg(all(feature = "with-wkt", feature = "with-geojson"))]
 mod test {
     use super::*;
-    use crate::geojson::{read_geojson, GeoJson};
     use crate::ToGdal;
+    use crate::geojson::{GeoJson, read_geojson};
 
     #[test]
     fn point_geom() {
