@@ -301,38 +301,28 @@ fn countries_benchmark(c: &mut Criterion) {
     group.bench_function("6-fgb_http", |b| {
         b.iter(|| rt.block_on(fgb::fgb_http_to_geo("countries.fgb", &bbox, 179)));
     });
-    // The PostGIS benches need a live database via DATABASE_URL; skip them when
-    // it is not set (e.g. in the coverage job) so the benchmark binary still runs.
-    if std::env::var_os("DATABASE_URL").is_some() {
-        group.bench_function("7-postgis_sqlx", |b| {
-            let mut conn = rt.block_on(postgis_sqlx::connect()).unwrap();
-            b.iter(|| {
-                rt.block_on(postgis_sqlx::postgis_sqlx_to_geo(
-                    &mut conn,
-                    "countries",
-                    &bbox,
-                    srid,
-                    179,
-                ))
-            });
+    group.bench_function("7-postgis_sqlx", |b| {
+        let mut conn = rt.block_on(postgis_sqlx::connect()).unwrap();
+        b.iter(|| {
+            rt.block_on(postgis_sqlx::postgis_sqlx_to_geo(
+                &mut conn,
+                "countries",
+                &bbox,
+                srid,
+                179,
+            ))
         });
-        group.bench_function("7-postgis_postgres", |b| {
-            let mut client = postgis_postgres::connect().unwrap();
-            b.iter(|| {
-                postgis_postgres::postgis_postgres_to_geo(
-                    &mut client,
-                    "countries",
-                    &bbox,
-                    srid,
-                    179,
-                )
-            })
-        });
-        group.bench_function("7-rust_postgis", |b| {
-            let mut client = postgis_postgres::connect().unwrap();
-            b.iter(|| rust_postgis::rust_postgis_read(&mut client, "countries", &bbox, srid, 179))
-        });
-    }
+    });
+    group.bench_function("7-postgis_postgres", |b| {
+        let mut client = postgis_postgres::connect().unwrap();
+        b.iter(|| {
+            postgis_postgres::postgis_postgres_to_geo(&mut client, "countries", &bbox, srid, 179)
+        })
+    });
+    group.bench_function("7-rust_postgis", |b| {
+        let mut client = postgis_postgres::connect().unwrap();
+        b.iter(|| rust_postgis::rust_postgis_read(&mut client, "countries", &bbox, srid, 179))
+    });
     group.finish()
 }
 
@@ -385,42 +375,32 @@ fn countries_bbox_benchmark(c: &mut Criterion) {
     group.bench_function("6-fgb_http", |b| {
         b.iter(|| rt.block_on(fgb::fgb_http_to_geo("countries.fgb", &bbox, 6)));
     });
-    // The PostGIS benches need a live database via DATABASE_URL; skip them when
-    // it is not set (e.g. in the coverage job) so the benchmark binary still runs.
-    if std::env::var_os("DATABASE_URL").is_some() {
-        group.bench_function("7-postgis_sqlx", |b| {
-            let mut conn = rt.block_on(postgis_sqlx::connect()).unwrap();
-            b.iter(|| {
-                rt.block_on(postgis_sqlx::postgis_sqlx_to_geo(
-                    &mut conn,
-                    "countries",
-                    &bbox,
-                    srid,
-                    6,
-                ))
-            })
-        });
-        group.bench_function("7-postgis_postgres", |b| {
-            let mut client = postgis_postgres::connect().unwrap();
-            b.iter(|| {
-                postgis_postgres::postgis_postgres_to_geo(&mut client, "countries", &bbox, srid, 6)
-            })
-        });
-        group.bench_function("7-rust_postgis", |b| {
-            let mut client = postgis_postgres::connect().unwrap();
-            b.iter(|| rust_postgis::rust_postgis_read(&mut client, "countries", &bbox, srid, 6))
-        });
-    }
+    group.bench_function("7-postgis_sqlx", |b| {
+        let mut conn = rt.block_on(postgis_sqlx::connect()).unwrap();
+        b.iter(|| {
+            rt.block_on(postgis_sqlx::postgis_sqlx_to_geo(
+                &mut conn,
+                "countries",
+                &bbox,
+                srid,
+                6,
+            ))
+        })
+    });
+    group.bench_function("7-postgis_postgres", |b| {
+        let mut client = postgis_postgres::connect().unwrap();
+        b.iter(|| {
+            postgis_postgres::postgis_postgres_to_geo(&mut client, "countries", &bbox, srid, 6)
+        })
+    });
+    group.bench_function("7-rust_postgis", |b| {
+        let mut client = postgis_postgres::connect().unwrap();
+        b.iter(|| rust_postgis::rust_postgis_read(&mut client, "countries", &bbox, srid, 6))
+    });
     group.finish()
 }
 
 fn buildings_benchmark(c: &mut Criterion) {
-    // The OSM buildings dataset is a large external download (see the crate
-    // README and tests/data/Makefile) and is not committed, so these benches
-    // only run once it has been prepared locally.
-    if !std::path::Path::new("tests/data/osm-buildings-3857-ch.fgb").exists() {
-        return;
-    }
     let mut group = c.benchmark_group("buildings");
     let rt = tokio::runtime::Runtime::new().unwrap();
     let bbox = None;
@@ -505,12 +485,6 @@ fn buildings_benchmark(c: &mut Criterion) {
 }
 
 fn buildings_bbox_benchmark(c: &mut Criterion) {
-    // The OSM buildings dataset is a large external download (see the crate
-    // README and tests/data/Makefile) and is not committed, so these benches
-    // only run once it has been prepared locally.
-    if !std::path::Path::new("tests/data/osm-buildings-3857-ch.fgb").exists() {
-        return;
-    }
     let rt = tokio::runtime::Runtime::new().unwrap();
     let mut group = c.benchmark_group("buildings_bbox");
     let bbox = Some(Extent {
