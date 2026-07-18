@@ -118,7 +118,7 @@ jobs:
           cargo llvm-cov --workspace --all-targets --all-features --include-build-script --codecov --output-path target/llvm-cov/codecov.info
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac # v5.5.5
         with:
           files: target/llvm-cov/codecov.info
           fail_ci_if_error: false
