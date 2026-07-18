@@ -21,6 +21,11 @@ env_logger.workspace = true
 flatgeobuf.workspace = true
 geozero = { workspace = true, default-features = true, features = ["with-csv"] }
 tokio = { workspace = true, default-features = true, features = ["full"] }
+geo.workspace = true
+geoarrow-array = { workspace = true, features = ["geozero"] }
+geoarrow-schema.workspace = true
+geoparquet.workspace = true
+parquet.workspace = true
 
 [lints]
 workspace = true
