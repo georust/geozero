@@ -252,7 +252,7 @@ mod test {
         let out = ObjWriter {};
         let mut tessellator = Tessellator::new(&out);
         assert!(read_geojson(geojson.as_bytes(), &mut tessellator).is_ok());
-        let geojson = r#"{"type": "MultiPolygon", "coordinates": [[]]}"#;
+        let geojson = r#"{"type": "MultiPolygon", "coordinates": [[[[0, 0]]]]}"#;
         let out = ObjWriter {};
         let mut tessellator = Tessellator::new(&out);
         assert!(read_geojson(geojson.as_bytes(), &mut tessellator).is_ok());
