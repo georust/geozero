@@ -11,12 +11,14 @@ pub struct Extent {
 }
 
 mod fgb {
-    use super::*;
-    use flatgeobuf::{FallibleStreamingIterator, FgbReader, HttpFgbReader};
     use std::fs::File;
+
+    use flatgeobuf::{FallibleStreamingIterator, FgbReader, HttpFgbReader};
     // seek_bufread::BufReader is much faster for bbox queries,
     // because seek resets buffer of std::io::BufReader
     use seek_bufread::BufReader;
+
+    use super::*;
 
     pub(super) fn fgb_to_geo(fpath: &str, bbox: &Option<Extent>, count: usize) -> Result<()> {
         let mut filein = BufReader::new(File::open(fpath)?);
@@ -60,9 +62,10 @@ mod fgb {
 }
 
 mod postgis_postgres {
-    use super::Extent;
     use geozero::wkb;
     use postgres::{self, Client, NoTls};
+
+    use super::Extent;
 
     // export DATABASE_URL=postgresql://pi@%2Fvar%2Frun%2Fpostgresql/testdb
     // export DATABASE_URL=postgresql://pi@localhost/testdb
@@ -97,10 +100,11 @@ mod postgis_postgres {
 }
 
 mod rust_postgis {
-    use super::Extent;
     // use geo::algorithm::from_postgis::FromPostgis;
     use postgis::ewkb;
     use postgres::{self, Client};
+
+    use super::Extent;
 
     pub(super) fn rust_postgis_read(
         client: &mut Client,
@@ -129,11 +133,12 @@ mod rust_postgis {
 }
 
 mod postgis_sqlx {
-    use super::Extent;
     use futures_util::stream::TryStreamExt;
     use geozero::wkb;
     use sqlx::postgres::PgConnection;
     use sqlx::{AssertSqlSafe, prelude::*};
+
+    use super::Extent;
 
     // export DATABASE_URL=postgresql://pi@%2Fvar%2Frun%2Fpostgresql/testdb
     // export DATABASE_URL=postgresql://pi@localhost/testdb
@@ -175,11 +180,12 @@ mod postgis_sqlx {
 }
 
 mod gpkg {
-    use super::Extent;
     use futures_util::stream::TryStreamExt;
     use geozero::wkb;
     use sqlx::sqlite::SqliteConnection;
     use sqlx::{AssertSqlSafe, prelude::*};
+
+    use super::Extent;
 
     pub(super) async fn gpkg_to_geo(
         fpath: &str,
@@ -215,10 +221,12 @@ mod gpkg {
 }
 
 mod gdal {
-    use super::Extent;
+    use std::path::Path;
+
     use gdal::Dataset;
     use gdal::vector::{Geometry, Layer, LayerAccess};
-    use std::path::Path;
+
+    use super::Extent;
 
     pub(super) fn gdal_read(
         fpath: &str,

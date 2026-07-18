@@ -27,10 +27,11 @@ pub(crate) mod conversion {
 
 #[cfg(feature = "with-wkb")]
 mod wkb {
+    use std::io::Read;
+
     use crate::error::Result;
     use crate::geos::GeosWriter;
     use crate::wkb::{FromWkb, WkbDialect};
-    use std::io::Read;
 
     impl FromWkb for geos::Geometry {
         fn from_wkb<R: Read>(rdr: &mut R, dialect: WkbDialect) -> Result<Self> {

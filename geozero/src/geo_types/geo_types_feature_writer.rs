@@ -1,10 +1,11 @@
+use std::collections::HashMap;
+
 use crate::error::{GeozeroError, Result};
 use crate::geo_types::GeoWriter;
 use crate::{
     ColumnValue, CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcessor,
     PropertyReadType,
 };
-use std::collections::HashMap;
 
 pub type GeoProperties = HashMap<String, OwnedColumnValue>;
 
@@ -289,9 +290,10 @@ impl GeoFeature {
 
 #[cfg(test)]
 mod tests {
+    use std::fs::File;
+
     use crate::ToGeoFeatures;
     use crate::geojson::GeoJsonReader;
-    use std::fs::File;
     #[test]
     fn from_json() {
         let f = File::open("tests/data/places.json").unwrap();

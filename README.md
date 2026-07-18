@@ -1,9 +1,12 @@
 # GeoZero
 
-[![GitHub](https://img.shields.io/badge/github-georust/geozero-8da0cb?logo=github)](https://github.com/georust/geozero)
-[![CI build](https://github.com/georust/geozero/workflows/CI-Linux/badge.svg)](https://github.com/georust/geozero/actions)
-[![crates.io version](https://img.shields.io/crates/v/geozero.svg)](https://crates.io/crates/geozero)
-[![docs.rs docs](https://docs.rs/geozero/badge.svg)](https://docs.rs/geozero)
+[![GitHub repo](https://img.shields.io/badge/github-georust/geozero-8da0cb?logo=github)](https://github.com/georust/geozero)
+[![crates.io version](https://img.shields.io/crates/v/geozero)](https://crates.io/crates/geozero)
+[![crate usage](https://img.shields.io/crates/d/geozero)](https://crates.io/crates/geozero)
+[![docs.rs status](https://img.shields.io/docsrs/geozero)](https://docs.rs/geozero)
+[![crates.io license](https://img.shields.io/crates/l/geozero)](https://github.com/georust/geozero/blob/main/LICENSE-APACHE)
+[![CI build status](https://github.com/georust/geozero/actions/workflows/ci.yml/badge.svg)](https://github.com/georust/geozero/actions)
+[![Codecov](https://img.shields.io/codecov/c/github/georust/geozero)](https://app.codecov.io/gh/georust/geozero)
 [![Discord Chat](https://img.shields.io/discord/598002550221963289.svg)](https://discord.gg/Fp2aape)
 
 Zero-Copy reading and writing of geospatial data.
@@ -38,10 +41,31 @@ Supported dimensions: X, Y, Z, M, T
 | GeoArrow | ✅ | ✅ | Available via the [geoarrow](https://crates.io/crates/geoarrow) crate. |
 | GeoParquet | ✅ | ✅ | Available via the [geoarrow](https://crates.io/crates/geoarrow) crate. |
 
+## Format conversion overview
+
+|               |                         [`GeozeroGeometry`]                                                                              | Dimensions |                        [`GeozeroDatasource`]                                         | Geometry Conversion |            [`GeomProcessor`]                    |
+|---------------|--------------------------------------------------------------------------------------------------------------------------|------------|--------------------------------------------------------------------------------------|---------------------|-------------------------------------------------|
+| CSV           | [csv::Csv], [csv::CsvString]                                                                                             | XY         | -                                                                                    | [ProcessToCsv]      | [CsvWriter](csv::CsvWriter)                     |
+| GDAL          | `gdal::vector::Geometry`                                                                                                 | XYZ        | -                                                                                    | [ToGdal]            | [GdalWriter](gdal::GdalWriter)                  |
+| geo-types     | `geo_types::Geometry<f64>`                                                                                               | XY         | -                                                                                    | [ToGeo]             | [GeoWriter](geo_types::GeoWriter)               |
+| GeoJSON       | [GeoJson](geojson::GeoJson), [GeoJsonString](geojson::GeoJsonString)                                                     | XYZ        | [GeoJsonReader](geojson::GeoJsonReader), [GeoJson](geojson::GeoJson)                 | [ToJson]            | [GeoJsonWriter](geojson::GeoJsonWriter)         |
+| GeoJSON Lines |                                                                                                                          | XYZ        | [GeoJsonLineReader](geojson::GeoJsonLineReader)                                      |                     | [GeoJsonLineWriter](geojson::GeoJsonLineWriter) |
+| GEOS          | `geos::Geometry`                                                                                                         | XYZ        | -                                                                                    | [ToGeos]            | [GeosWriter](geos::GeosWriter)                  |
+| GPX           |                                                                                                                          | XY         | [GpxReader](gpx::GpxReader)                                                          |                     |                                                 |
+| MVT           | [mvt::tile::Feature]                                                                                                     | XY         | [mvt::tile::Layer]                                                                   | [ToMvt]             | [MvtWriter](mvt::MvtWriter)                     |
+| Shapefile     | -                                                                                                                        | XYZM       | [shp::ShpReader]                                                                     |                     |                                                 |
+| SVG           | -                                                                                                                        | XY         | -                                                                                    | [ToSvg]             | [SvgWriter](svg::SvgWriter)                     |
+| WKB           | [Wkb](wkb::Wkb), [Ewkb](wkb::Ewkb), [GpkgWkb](wkb::GpkgWkb), [SpatiaLiteWkb](wkb::SpatiaLiteWkb), [MySQL](wkb::MySQLWkb) | XYZM       | -                                                                                    | [ToWkb]             | [WkbWriter](wkb::WkbWriter)                     |
+| WKT           | [wkt::WktStr], [wkt::WktString], [wkt::EwktStr], [wkt::EwktString]                                                       | XYZM       | [wkt::WktReader], [wkt::WktStr], [wkt::WktString], [wkt::EwktStr], [wkt::EwktString] | [ToWkt]             | [WktWriter](wkt::WktWriter)                     |
+
 ## Conversion API
 
 Convert a GeoJSON polygon to geo-types and calculate centroid:
-```rust,ignore
+```rust
+# use geo::algorithm::centroid::Centroid;
+# use geo::{Geometry, Point};
+# use geozero::ToGeo;
+# use geozero::geojson::GeoJson;
 let geojson = GeoJson(r#"{"type": "Polygon", "coordinates": [[[0, 0], [10, 0], [10, 6], [0, 6], [0, 0]]]}"#);
 if let Ok(Geometry::Polygon(poly)) = geojson.to_geo() {
     assert_eq!(poly.centroid().unwrap(), Point::new(5.0, 3.0));
@@ -266,3 +290,25 @@ Full source code: [kdbush.rs](./geozero/tests/kdbush.rs)
 # Ubuntu/Debian/Mint
 apt-get install -y libgeos-dev libgdal-dev
 ```
+
+## Development
+
+* This project is easier to develop with [just](https://github.com/casey/just#readme), a modern alternative to `make`.
+  Install it with `cargo install just`.
+* To get a list of available commands, run `just`.
+* To run tests, use `just test`.
+
+## License
+
+Licensed under either of
+
+* Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or <https://www.apache.org/licenses/LICENSE-2.0>)
+* MIT license ([LICENSE-MIT](LICENSE-MIT) or <https://opensource.org/licenses/MIT>)
+  at your option.
+
+### Contributing
+
+Unless you explicitly state otherwise, any contribution intentionally
+submitted for inclusion in the work by you, as defined in the
+Apache-2.0 license, shall be dual-licensed as above, without any
+additional terms or conditions.

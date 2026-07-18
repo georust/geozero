@@ -1,8 +1,8 @@
+use std::io::Write;
+
 use crate::error::Result;
 use crate::wkt::WktWriter;
 use crate::{ColumnValue, CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcessor};
-
-use std::io::Write;
 
 pub struct CsvWriter<W: Write> {
     csv: csv::Writer<W>,
@@ -246,8 +246,9 @@ impl<W: Write> GeomProcessor for CsvWriter<W> {
 
 #[cfg(test)]
 mod tests {
-    use crate::ProcessToCsv;
     use serde_json::json;
+
+    use crate::ProcessToCsv;
 
     #[test]
     fn geojson_to_csv() {

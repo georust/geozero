@@ -1,8 +1,10 @@
-use crate::ColumnValue;
-use crate::mvt::tile::Value;
+use std::hash::Hash;
+
 use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
-use std::hash::Hash;
+
+use crate::ColumnValue;
+use crate::mvt::tile::Value;
 
 /// A wrapper for the MVT value types.
 #[derive(Debug, Clone, PartialEq)]

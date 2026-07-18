@@ -15,10 +15,10 @@ mod pg {
 
 #[cfg(feature = "with-postgis-postgres")]
 mod postgis_postgres {
-    use crate::pg::get_db_string;
-    use geozero::ToWkt as _;
-    use geozero::wkb;
     use geozero::wkt::WktWriter;
+    use geozero::{ToWkt as _, wkb};
+
+    use crate::pg::get_db_string;
 
     #[test]
     #[ignore]
@@ -100,8 +100,9 @@ mod postgis_postgres {
     }
 
     mod register_type {
-        use super::*;
         use postgres_types::{FromSql, Type};
+
+        use super::*;
 
         struct Wkt(String);
 
@@ -142,10 +143,10 @@ mod postgis_postgres {
 
 #[cfg(feature = "with-postgis-sqlx")]
 mod postgis_sqlx {
+    use geozero::{ToWkt as _, wkb};
+
     use super::PointZ;
     use crate::pg;
-    use geozero::ToWkt as _;
-    use geozero::wkb;
 
     #[tokio::test]
     #[ignore]
@@ -344,11 +345,12 @@ mod postgis_sqlx {
     }
 
     mod register_type {
-        use super::*;
         use geozero::wkt::WktWriter;
         use sqlx::ValueRef;
         use sqlx::decode::Decode;
         use sqlx::postgres::{PgTypeInfo, PgValueRef, Postgres};
+
+        use super::*;
 
         type BoxDynError = Box<dyn std::error::Error + Send + Sync>;
 
@@ -398,9 +400,10 @@ mod postgis_sqlx {
 
 // --- Minimal geometry implementation with PostGIS/GPKG support
 
+use std::io::Read;
+
 use geozero::wkb::{FromWkb, WkbDialect};
 use geozero::{CoordDimensions, GeomProcessor, GeozeroGeometry};
-use std::io::Read;
 
 #[derive(Debug, PartialEq, Default)]
 struct PointZ {
