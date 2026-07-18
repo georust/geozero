@@ -21,6 +21,7 @@
   * <https://github.com/georust/geozero/pull/264>
 * Updated to 2024 edition
 * Cleanup justfile, editor config, other minor non-coding aspects
+* Use `fast-mvt` for all MVT handling
 
 ## 0.14.0 - (2024-09-26)
 

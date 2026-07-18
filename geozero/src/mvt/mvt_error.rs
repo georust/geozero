@@ -3,18 +3,9 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum MvtError {
-    #[error("invalid feature.tags length: {0}")]
-    InvalidFeatureTagsLength(usize),
-    #[error("invalid key index {0}")]
-    InvalidKeyIndex(u32),
-    #[error("invalid value index {0}")]
-    InvalidValueIndex(u32),
-    #[error("unsupported value type for key {0}")]
-    UnsupportedKeyValueType(String),
-    #[error("geometry format")]
-    GeometryFormat,
-    #[error("too few coordinates in line or ring")]
-    TooFewCoordinates,
     #[error("invalid extent, extent cannot be 0")]
     InvalidExtent,
+    /// An error originating from the underlying `fast-mvt` crate.
+    #[error(transparent)]
+    Mvt(#[from] fast_mvt::MvtError),
 }
