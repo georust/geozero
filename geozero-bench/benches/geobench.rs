@@ -136,7 +136,7 @@ mod postgis_sqlx {
     use futures_util::stream::TryStreamExt;
     use geozero::wkb;
     use sqlx::postgres::PgConnection;
-    use sqlx::prelude::*;
+    use sqlx::{AssertSqlSafe, prelude::*};
 
     use super::Extent;
 
@@ -161,7 +161,7 @@ mod postgis_sqlx {
                 bbox.minx, bbox.miny, bbox.maxx, bbox.maxy
             );
         }
-        let mut cursor = sqlx::query(&sql).fetch(conn);
+        let mut cursor = sqlx::query(AssertSqlSafe(sql)).fetch(conn);
 
         let mut cnt = 0;
 
@@ -182,8 +182,8 @@ mod postgis_sqlx {
 mod gpkg {
     use futures_util::stream::TryStreamExt;
     use geozero::wkb;
-    use sqlx::prelude::*;
     use sqlx::sqlite::SqliteConnection;
+    use sqlx::{AssertSqlSafe, prelude::*};
 
     use super::Extent;
 
@@ -205,7 +205,7 @@ mod gpkg {
                 bbox.maxx, bbox.minx, bbox.maxy, bbox.miny
             );
         }
-        let mut cursor = sqlx::query(&sql).fetch(&mut conn);
+        let mut cursor = sqlx::query(AssertSqlSafe(sql)).fetch(&mut conn);
         let mut cnt = 0;
         while let Some(row) = cursor.try_next().await? {
             if let Some(_geom) = row
