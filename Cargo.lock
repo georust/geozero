@@ -1224,6 +1224,7 @@ dependencies = [
  "kdbush",
  "log",
  "lyon",
+ "postgis_diesel",
  "postgres",
  "postgres-types",
  "prost",
@@ -2391,6 +2392,15 @@ dependencies = [
  "byteorder",
  "bytes",
  "postgres-types",
+]
+
+[[package]]
+name = "postgis_diesel"
+version = "3.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "436e1a10fb43ba8d366b70d0daf6dbff621808dfecfa46d85198f17d3bd2611f"
+dependencies = [
+ "byteorder",
 ]
 
 [[package]]
