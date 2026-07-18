@@ -14,6 +14,7 @@
   * BREAKING: `scroll` to 0.13
   * BREAKING: `thiserror` to 2.0
   * BREAKING: `wkt` to 0.14.0
+  * BREAKING: `sqlx` to 0.9
   * <https://github.com/georust/geozero/pull/244>
 * Add feature writing support and MVT layer output to `MvtWriter`
   * Breaking: `MvtWriter::new` now returns a `Result` instead of a `MvtWriter`
