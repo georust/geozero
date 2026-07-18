@@ -119,11 +119,6 @@ jobs:
 
       - name: Load PostGIS benchmark data
         shell: bash
-        # The `countries` bench table (179 features) is imported from the small
-        # in-repo FlatGeobuf file so the postgis_* benches exercise real data
-        # during coverage. The larger `buildings` dataset stays a local-only
-        # bench (see geozero-bench/tests/data/Makefile) and its benches are
-        # skipped when its data is absent.
         run: |
           psql "$DATABASE_URL" -c "CREATE EXTENSION IF NOT EXISTS postgis"
           ogr2ogr -f PostgreSQL "PG:$DATABASE_URL" \
