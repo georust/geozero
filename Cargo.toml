@@ -37,6 +37,10 @@ futures-util = "0.3.28"
 gdal = { version = "0.18.0", default-features = false }
 gdal-sys = "0.11.0"
 geo = "0.33.1"
+geoarrow-array = { version = "0.8.0", default-features = false }
+geoarrow-schema = "0.8.0"
+geoparquet = "0.8.0"
+parquet = "58"
 geo-types = { version = "0.7.11", default-features = false }
 geojson = { version = "0.24.1", default-features = false }
 geos = "10.0"
