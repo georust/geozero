@@ -55,6 +55,12 @@ impl<'a, P: FeatureProcessor, T: Read + Seek + 'a> Iterator for ShapeRecordItera
         if self.featno == 0 {
             self.shape_iter.processor.dataset_begin(None).ok();
         }
+        // Stop on shape-file EOF: since dbase 0.8 the dbf record iterator no
+        // longer returns None at EOF, so it can't drive termination here.
+        if self.shape_iter.current_pos >= self.shape_iter.file_length {
+            self.shape_iter.processor.dataset_end().ok();
+            return None;
+        }
         let record = match self.dbf_reader.iter_records().next() {
             None => {
                 self.shape_iter.processor.dataset_end().ok();

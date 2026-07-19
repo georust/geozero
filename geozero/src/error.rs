@@ -49,6 +49,9 @@ pub enum GeozeroError {
     #[cfg(feature = "with-gdal")]
     #[error("GDAL error `{0}`")]
     GdalError(#[from] crate::gdal::GdalError),
+    #[cfg(feature = "with-geos")]
+    #[error("GEOS error `{0}`")]
+    GeosError(#[from] geos::Error),
 }
 
 pub type Result<T> = std::result::Result<T, GeozeroError>;
