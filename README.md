@@ -35,7 +35,7 @@ Supported dimensions: X, Y, Z, M, T
 | SVG | ❌ | ✅ | |
 | [geo-types](https://github.com/georust/geo) | ✅ | ✅ | |
 | MVT (Mapbox Vector Tiles) | ✅ | ✅ | |
-| MLT (MapLibre Tiles) | ✅ | ✅ | Available via the [mlt-core](https://crates.io/crates/mlt-core) crate. Writing bridges through MVT. |
+| MLT (MapLibre Tiles) | ✅ | ✅ | Available via the [mlt-core](https://crates.io/crates/mlt-core) crate. |
 | GPX | ✅ | ❌ | |
 | Shapefile | ✅ | ❌ | |
 | FlatGeobuf | ✅ | ❌ | Available via the [flatgeobuf](https://crates.io/crates/flatgeobuf) crate. |
