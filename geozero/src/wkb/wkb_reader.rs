@@ -1078,11 +1078,9 @@ mod test {
     }
     #[test]
     fn deeply_nested_geometry_collection_returns_error() {
-        // Build a deeply nested chain of empty GeometryCollections
         // Each level: byte order (1) + type (4) + count (4) = 9 bytes
         fn nested_gc(depth: usize) -> Vec<u8> {
-            // innermost: empty GeometryCollection
-            let mut blob = vec![0x01u8]; // little-endian
+            let mut blob = vec![0x01u8];
             blob.extend_from_slice(&7u32.to_le_bytes()); // GeometryCollection
             blob.extend_from_slice(&0u32.to_le_bytes()); // count = 0
             for _ in 0..depth {
@@ -1095,7 +1093,6 @@ mod test {
             blob
         }
 
-        // Depth well beyond the limit should return an error
         let bomb = nested_gc(WKB_MAX_NESTING_DEPTH as usize + 10);
         let result = process_ewkb_geom(&mut bomb.as_slice(), &mut crate::ProcessorSink);
         assert!(result.is_err());
@@ -1108,7 +1105,6 @@ mod test {
 
     #[test]
     fn nesting_depth_at_limit_succeeds() {
-        // A geometry at exactly the limit should still work
         fn nested_gc(depth: usize) -> Vec<u8> {
             let mut blob = vec![0x01u8];
             blob.extend_from_slice(&7u32.to_le_bytes());
