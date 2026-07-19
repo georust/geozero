@@ -94,7 +94,7 @@ impl GeozeroDatasource for MltLayerReader<'_, '_> {
             // iter_properties yields only present columns; nulls are skipped.
             for (i, column) in feature.iter_properties().enumerate() {
                 let key = column.name().to_string();
-                processor.property(i, &key, &to_column_value(column.value()))?;
+                processor.property(i, &key, &ColumnValue::from(column.value()))?;
             }
             processor.properties_end()?;
 
@@ -109,18 +109,20 @@ impl GeozeroDatasource for MltLayerReader<'_, '_> {
     }
 }
 
-fn to_column_value(value: PropValueRef<'_>) -> ColumnValue<'_> {
-    match value {
-        PropValueRef::Bool(v) => ColumnValue::Bool(v),
-        PropValueRef::I8(v) => ColumnValue::Byte(v),
-        PropValueRef::U8(v) => ColumnValue::UByte(v),
-        PropValueRef::I32(v) => ColumnValue::Int(v),
-        PropValueRef::U32(v) => ColumnValue::UInt(v),
-        PropValueRef::I64(v) => ColumnValue::Long(v),
-        PropValueRef::U64(v) => ColumnValue::ULong(v),
-        PropValueRef::F32(v) => ColumnValue::Float(v),
-        PropValueRef::F64(v) => ColumnValue::Double(v),
-        PropValueRef::Str(v) => ColumnValue::String(v),
+impl<'a> From<PropValueRef<'a>> for ColumnValue<'a> {
+    fn from(value: PropValueRef<'a>) -> Self {
+        match value {
+            PropValueRef::Bool(v) => ColumnValue::Bool(v),
+            PropValueRef::I8(v) => ColumnValue::Byte(v),
+            PropValueRef::U8(v) => ColumnValue::UByte(v),
+            PropValueRef::I32(v) => ColumnValue::Int(v),
+            PropValueRef::U32(v) => ColumnValue::UInt(v),
+            PropValueRef::I64(v) => ColumnValue::Long(v),
+            PropValueRef::U64(v) => ColumnValue::ULong(v),
+            PropValueRef::F32(v) => ColumnValue::Float(v),
+            PropValueRef::F64(v) => ColumnValue::Double(v),
+            PropValueRef::Str(v) => ColumnValue::String(v),
+        }
     }
 }
 
