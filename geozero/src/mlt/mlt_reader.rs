@@ -1,7 +1,7 @@
 //! Decode MapLibre Tiles (MLT) into geozero processors.
 
 use mlt_core::geo_types::{Geometry, LineString, Polygon};
-use mlt_core::{Decoder, LendingIterator, Parser, ParsedLayer, ParsedLayer01, PropValueRef};
+use mlt_core::{Decoder, LendingIterator, ParsedLayer, ParsedLayer01, Parser, PropValueRef};
 
 use super::mlt_error::MltError;
 use crate::error::Result;
