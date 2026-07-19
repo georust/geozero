@@ -77,6 +77,9 @@ pub use crate::wkt::conversion::*;
 #[cfg(feature = "with-mvt")]
 pub mod mvt;
 
+#[cfg(feature = "with-mlt")]
+pub mod mlt;
+
 pub mod bounds;
 
 #[cfg(feature = "with-mvt")]

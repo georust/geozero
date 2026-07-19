@@ -35,6 +35,7 @@ Supported dimensions: X, Y, Z, M, T
 | SVG | ❌ | ✅ | |
 | [geo-types](https://github.com/georust/geo) | ✅ | ✅ | |
 | MVT (Mapbox Vector Tiles) | ✅ | ✅ | |
+| MLT (MapLibre Tiles) | ✅ | ✅ | Available via the [mlt-core](https://crates.io/crates/mlt-core) crate. |
 | GPX | ✅ | ❌ | |
 | Shapefile | ✅ | ❌ | |
 | FlatGeobuf | ✅ | ❌ | Available via the [flatgeobuf](https://crates.io/crates/flatgeobuf) crate. |
@@ -53,6 +54,7 @@ Supported dimensions: X, Y, Z, M, T
 | GEOS          | `geos::Geometry`                                                                                                         | XYZ        | -                                                                                    | [ToGeos]            | [GeosWriter](geos::GeosWriter)                  |
 | GPX           |                                                                                                                          | XY         | [GpxReader](gpx::GpxReader)                                                          |                     |                                                 |
 | MVT           | [mvt::tile::Feature]                                                                                                     | XY         | [mvt::tile::Layer]                                                                   | [ToMvt]             | [MvtWriter](mvt::MvtWriter)                     |
+| MLT           | -                                                                                                                        | XY         | [MltReader](mlt::MltReader)                                                          | -                   | [MltWriter](mlt::MltWriter)                     |
 | Shapefile     | -                                                                                                                        | XYZM       | [shp::ShpReader]                                                                     |                     |                                                 |
 | SVG           | -                                                                                                                        | XY         | -                                                                                    | [ToSvg]             | [SvgWriter](svg::SvgWriter)                     |
 | WKB           | [Wkb](wkb::Wkb), [Ewkb](wkb::Ewkb), [GpkgWkb](wkb::GpkgWkb), [SpatiaLiteWkb](wkb::SpatiaLiteWkb), [MySQL](wkb::MySQLWkb) | XYZM       | -                                                                                    | [ToWkb]             | [WkbWriter](wkb::WkbWriter)                     |

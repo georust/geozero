@@ -15,7 +15,7 @@ homepage = "https://github.com/georust/geozero"
 repository = "https://github.com/georust/geozero"
 readme = "README.md"
 license = "MIT OR Apache-2.0"
-rust-version = "1.88.0"
+rust-version = "1.92.0"
 
 [workspace.dependencies]
 # Used in geozero-cli and geozero-bench
@@ -36,7 +36,7 @@ env_logger = "0.11.5"
 futures-util = "0.3.28"
 gdal = { version = "0.18.0", default-features = false }
 gdal-sys = "0.11.0"
-geo = "0.31.0"
+geo = "0.33.1"
 geoarrow-array = { version = "0.8.0", default-features = false }
 geoarrow-schema = "0.8.0"
 geoparquet = "0.8.0"
@@ -49,6 +49,7 @@ hex = "0.4"
 kdbush = "0.2"
 log = "0.4.19"
 lyon = "1.0.1"
+mlt-core = "0.12.3"
 postgis = "0.9.0"
 postgres = "0.19"
 postgres-types = "0.2"
