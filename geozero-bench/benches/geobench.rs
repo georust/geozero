@@ -400,28 +400,43 @@ fn countries_bbox_benchmark(c: &mut Criterion) {
     group.finish()
 }
 
+/// The buildings benches use the full OSM buildings dataset locally (a large
+/// external download, see the crate README and tests/data/Makefile) and a small
+/// committed subset when running in CI (`CI=true`), so they run there without
+/// the download. Returns the dataset filename stem.
+fn buildings_stem() -> &'static str {
+    if std::env::var("CI").as_deref() == Ok("true") {
+        "osm-buildings-3857-ch-sample"
+    } else {
+        "osm-buildings-3857-ch"
+    }
+}
+
 fn buildings_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("buildings");
     let rt = tokio::runtime::Runtime::new().unwrap();
     let bbox = None;
     let srid = 3857;
+    let stem = buildings_stem();
+    let count = if stem.ends_with("-sample") {
+        204
+    } else {
+        2407771
+    };
+    let fgb_path = format!("tests/data/{stem}.fgb");
+    let shp_path = format!("tests/data/{stem}.shp");
+    let gpkg_path = format!("tests/data/{stem}.gpkg");
+    let http_name = format!("{stem}.fgb");
     group.bench_function("2-fgb", |b| {
-        b.iter(|| fgb::fgb_to_geo("tests/data/osm-buildings-3857-ch.fgb", &bbox, 2407771))
+        b.iter(|| fgb::fgb_to_geo(&fgb_path, &bbox, count))
     });
     group.bench_function("1-shp", |b| {
-        b.iter(|| gdal::gdal_read("tests/data/osm-buildings-3857-ch.shp", &bbox, 2407771))
+        b.iter(|| gdal::gdal_read(&shp_path, &bbox, count))
     });
     if std::env::var("SKIP_GPKG_BIG").is_err() {
         // A test machine freezes when running this bench !!??
         group.bench_function("3-gpkg", |b| {
-            b.iter(|| {
-                rt.block_on(gpkg::gpkg_to_geo(
-                    "tests/data/osm-buildings-3857-ch.gpkg",
-                    "buildings",
-                    &bbox,
-                    2407771,
-                ))
-            })
+            b.iter(|| rt.block_on(gpkg::gpkg_to_geo(&gpkg_path, "buildings", &bbox, count)))
         });
     }
     // > 50s
@@ -445,13 +460,7 @@ fn buildings_benchmark(c: &mut Criterion) {
     //     })
     // });
     group.bench_function("6-fgb_http", |b| {
-        b.iter(|| {
-            rt.block_on(fgb::fgb_http_to_geo(
-                "osm-buildings-3857-ch.fgb",
-                &bbox,
-                2407771,
-            ))
-        });
+        b.iter(|| rt.block_on(fgb::fgb_http_to_geo(&http_name, &bbox, count)));
     });
     // group.bench_function("7-postgis_sqlx", |b| {
     //     let mut conn = rt.block_on(postgis_sqlx::connect()).unwrap();
@@ -468,13 +477,7 @@ fn buildings_benchmark(c: &mut Criterion) {
     group.bench_function("7-postgis_postgres", |b| {
         let mut client = postgis_postgres::connect().unwrap();
         b.iter(|| {
-            postgis_postgres::postgis_postgres_to_geo(
-                &mut client,
-                "buildings",
-                &bbox,
-                srid,
-                2407771,
-            )
+            postgis_postgres::postgis_postgres_to_geo(&mut client, "buildings", &bbox, srid, count)
         })
     });
     // group.bench_function("7-rust_postgis", |b| {
@@ -494,34 +497,33 @@ fn buildings_bbox_benchmark(c: &mut Criterion) {
         maxy: 6012256.0,
     });
     let srid = 3857;
+    let stem = buildings_stem();
+    // The full dataset's readers disagree slightly on the bbox count; the CI
+    // subset sits fully inside the bbox, so every reader returns the same number.
+    let (fgb_shp, gpkg_cnt, pg_cnt) = if stem.ends_with("-sample") {
+        (204, 204, 204)
+    } else {
+        (54351, 54355, 54353)
+    };
+    let fgb_path = format!("tests/data/{stem}.fgb");
+    let shp_path = format!("tests/data/{stem}.shp");
+    let gpkg_path = format!("tests/data/{stem}.gpkg");
+    let http_name = format!("{stem}.fgb");
     group.bench_function("1-shp", |b| {
-        b.iter(|| gdal::gdal_read("tests/data/osm-buildings-3857-ch.shp", &bbox, 54351))
+        b.iter(|| gdal::gdal_read(&shp_path, &bbox, fgb_shp))
     });
     group.bench_function("2-fgb", |b| {
-        b.iter(|| fgb::fgb_to_geo("tests/data/osm-buildings-3857-ch.fgb", &bbox, 54351))
+        b.iter(|| fgb::fgb_to_geo(&fgb_path, &bbox, fgb_shp))
     });
     group.bench_function("3-gpkg", |b| {
-        b.iter(|| {
-            rt.block_on(gpkg::gpkg_to_geo(
-                "tests/data/osm-buildings-3857-ch.gpkg",
-                "buildings",
-                &bbox,
-                54355, // fgb: 54351
-            ))
-        })
+        b.iter(|| rt.block_on(gpkg::gpkg_to_geo(&gpkg_path, "buildings", &bbox, gpkg_cnt)))
     });
     // signal: 11, SIGSEGV: invalid memory reference
     // group.bench_function("3-gpkg_gdal", |b| {
     //     b.iter(|| gdal::gdal_read("tests/data/osm-buildings-3857-ch.gpkg", &bbox, 54351))
     // });
     group.bench_function("6-fgb_http", |b| {
-        b.iter(|| {
-            rt.block_on(fgb::fgb_http_to_geo(
-                "osm-buildings-3857-ch.fgb",
-                &bbox,
-                54351,
-            ))
-        });
+        b.iter(|| rt.block_on(fgb::fgb_http_to_geo(&http_name, &bbox, fgb_shp)));
     });
     group.bench_function("7-postgis_sqlx", |b| {
         let mut conn = rt.block_on(postgis_sqlx::connect()).unwrap();
@@ -531,26 +533,19 @@ fn buildings_bbox_benchmark(c: &mut Criterion) {
                 "buildings",
                 &bbox,
                 srid,
-                54353, // fgb: 54351
+                pg_cnt,
             ))
         })
     });
     group.bench_function("7-postgis_postgres", |b| {
         let mut client = postgis_postgres::connect().unwrap();
         b.iter(|| {
-            postgis_postgres::postgis_postgres_to_geo(
-                &mut client,
-                "buildings",
-                &bbox,
-                srid,
-                54353, // fgb: 54351
-            )
+            postgis_postgres::postgis_postgres_to_geo(&mut client, "buildings", &bbox, srid, pg_cnt)
         })
     });
     group.bench_function("7-rust_postgis", |b| {
         let mut client = postgis_postgres::connect().unwrap();
-        b.iter(|| rust_postgis::rust_postgis_read(&mut client, "buildings", &bbox, srid, 54353))
-        // fgb: 54351
+        b.iter(|| rust_postgis::rust_postgis_read(&mut client, "buildings", &bbox, srid, pg_cnt))
     });
     group.finish()
 }
