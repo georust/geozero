@@ -40,6 +40,9 @@ pub enum GeozeroError {
     #[error("I/O error `{0}`")]
     IoError(#[from] std::io::Error),
     // Format Specific
+    #[cfg(feature = "with-wkb")]
+    #[error("WKB geometry nesting exceeds maximum depth of {0}")]
+    WkbMaxNestingDepth(u32),
     #[cfg(feature = "with-csv")]
     #[error("CSV error `{0}`")]
     CsvError(#[from] crate::csv::CsvError),
