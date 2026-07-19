@@ -1,6 +1,4 @@
 //! MapLibre Tiles (MLT) conversions.
-//!
-//! Reading decodes via `mlt-core`. Writing bridges through MVT (see [`MltWriter`]).
 mod mlt_error;
 mod mlt_reader;
 mod mlt_writer;

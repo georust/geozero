@@ -70,8 +70,6 @@ impl MltWriter {
     }
 }
 
-// Forward every method MvtWriter overrides to the inner writer.
-// Unlisted methods are no-ops in both, so the defaults stay in sync.
 impl GeomProcessor for MltWriter {
     fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
         self.mvt.xy(x, y, idx)

@@ -9,8 +9,9 @@ use crate::{ColumnValue, FeatureProcessor, GeomProcessor, GeozeroDatasource};
 
 /// Reader for a MapLibre Tiles (MLT) tile.
 ///
-/// A tile holds one or more named layers. Each layer is a [`GeozeroDatasource`],
-/// mirroring MVT. Geometries are emitted in raw tile-local coordinates.
+/// A tile holds one or more named layers.
+/// Each layer is a [`GeozeroDatasource`], mirroring MVT.
+/// Geometries are emitted in raw tile-local coordinates.
 ///
 /// # Example
 /// ```no_run
@@ -59,7 +60,6 @@ impl<'a> MltReader<'a> {
             .map(|layer| MltLayerReader { layer })
     }
 
-    /// The MVT-compatible (`Tag01`) layers; forward-compat `Unknown` layers are skipped.
     fn tag01_layers(&self) -> impl Iterator<Item = &ParsedLayer01<'a>> + '_ {
         self.layers.iter().filter_map(|layer| match layer {
             ParsedLayer::Tag01(l) => Some(l),
@@ -82,38 +82,31 @@ impl<'a> MltLayerReader<'_, 'a> {
 
 impl GeozeroDatasource for MltLayerReader<'_, '_> {
     fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> Result<()> {
-        process_layer(self.layer, processor)
-    }
-}
+        processor.dataset_begin(Some(self.layer.name()))?;
+        let mut idx: u64 = 0;
+        let mut features = self.layer.iter_features();
+        while let Some(feature) = features.next() {
+            let feature = feature.map_err(MltError::from)?;
 
-/// Process a single decoded MLT layer, driving `processor`.
-///
-/// Private so `mlt-core`'s `ParsedLayer01` stays out of geozero's public API.
-fn process_layer<P: FeatureProcessor>(layer: &ParsedLayer01<'_>, processor: &mut P) -> Result<()> {
-    processor.dataset_begin(Some(layer.name()))?;
-    let mut idx: u64 = 0;
-    let mut features = layer.iter_features();
-    while let Some(feature) = features.next() {
-        let feature = feature.map_err(MltError::from)?;
+            processor.feature_begin(idx)?;
 
-        processor.feature_begin(idx)?;
+            processor.properties_begin()?;
+            // iter_properties yields only present columns; nulls are skipped.
+            for (i, column) in feature.iter_properties().enumerate() {
+                let key = column.name().to_string();
+                processor.property(i, &key, &to_column_value(column.value()))?;
+            }
+            processor.properties_end()?;
 
-        processor.properties_begin()?;
-        // iter_properties yields only present columns; nulls are skipped.
-        for (i, column) in feature.iter_properties().enumerate() {
-            let key = column.name().to_string();
-            processor.property(i, &key, &to_column_value(column.value()))?;
+            processor.geometry_begin()?;
+            process_geometry(feature.geometry(), 0, processor)?;
+            processor.geometry_end()?;
+
+            processor.feature_end(idx)?;
+            idx += 1;
         }
-        processor.properties_end()?;
-
-        processor.geometry_begin()?;
-        process_geometry(feature.geometry(), 0, processor)?;
-        processor.geometry_end()?;
-
-        processor.feature_end(idx)?;
-        idx += 1;
+        processor.dataset_end()
     }
-    processor.dataset_end()
 }
 
 fn to_column_value(value: PropValueRef<'_>) -> ColumnValue<'_> {
