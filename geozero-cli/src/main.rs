@@ -7,12 +7,17 @@ use std::process::exit;
 
 use clap::Parser;
 use flatgeobuf::{FgbReader, FgbWriter, GeometryType, HttpFgbReader};
+use geo::Rect;
+use geoarrow_array::geozero::export::GeozeroRecordBatchReader;
+use geoarrow_schema::CoordType;
+use geoparquet::reader::{GeoParquetReaderBuilder, GeoParquetRecordBatchReader};
 use geozero::csv::{CsvReader, CsvWriter};
 use geozero::error::{GeozeroError, Result};
 use geozero::geojson::{GeoJsonLineReader, GeoJsonReader, GeoJsonWriter};
 use geozero::svg::SvgWriter;
 use geozero::wkt::{WktReader, WktWriter};
 use geozero::{FeatureProcessor, GeozeroDatasource};
+use parquet::arrow::arrow_reader::ParquetRecordBatchReaderBuilder;
 
 #[derive(Parser)]
 #[command(about, version)]
@@ -25,7 +30,7 @@ struct Cli {
     #[arg(short, long, value_parser = parse_extent)]
     extent: Option<Extent>,
 
-    /// The path or URL to the FlatGeobuf file to read
+    /// The path to the input file, or the URL for remote FlatGeobuf files
     input: String,
 
     /// The path to the file to write
@@ -94,6 +99,41 @@ async fn transform<P: FeatureProcessor>(args: &Cli, processor: &mut P) -> Result
             Some("jsonl") | Some("geojsonl") => {
                 GeozeroDatasource::process(&mut GeoJsonLineReader::new(filein), processor)
             }
+            Some("parquet") | Some("geoparquet") => {
+                let mut builder = ParquetRecordBatchReaderBuilder::try_new(File::open(path_in)?)
+                    .map_err(geoparquet_to_geozero_err)?;
+
+                let geo_metadata = builder
+                    .geoparquet_metadata()
+                    .transpose()
+                    .map_err(geoparquet_to_geozero_err)?
+                    .ok_or_else(|| {
+                        GeozeroError::Dataset(
+                            "Not a GeoParquet file: missing 'geo' file metadata".to_string(),
+                        )
+                    })?;
+
+                if let Some(bbox) = &args.extent {
+                    builder = builder
+                        .with_intersecting_row_filter(
+                            Rect::new((bbox.minx, bbox.miny), (bbox.maxx, bbox.maxy)),
+                            &geo_metadata,
+                            None,
+                        )
+                        .map_err(geoparquet_to_geozero_err)?;
+                }
+
+                let geoarrow_schema = builder
+                    .geoarrow_schema(&geo_metadata, true, CoordType::default())
+                    .map_err(geoparquet_to_geozero_err)?;
+
+                let parquet_reader = builder.build().map_err(geoparquet_to_geozero_err)?;
+                let reader = GeoParquetRecordBatchReader::try_new(parquet_reader, geoarrow_schema)
+                    .map_err(geoparquet_to_geozero_err)?;
+
+                let mut wrapper = GeozeroRecordBatchReader::new(Box::new(reader));
+                wrapper.process(processor)
+            }
             Some("fgb") => {
                 let ds = FgbReader::open(&mut filein).map_err(fgb_to_geozero_err)?;
                 let mut ds = if let Some(bbox) = &args.extent {
@@ -160,6 +200,10 @@ async fn get_extent(args: &Cli) -> Result<Extent> {
             })
         }
     }
+}
+
+fn geoparquet_to_geozero_err<E: std::fmt::Display>(err: E) -> GeozeroError {
+    GeozeroError::Dataset(format!("GeoParquet error: {err}"))
 }
 
 fn fgb_to_geozero_err(fgb_err: flatgeobuf::Error) -> GeozeroError {
