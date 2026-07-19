@@ -1,15 +1,14 @@
 //! MVT (Mapbox Vector Tile) conversions.
 //!
-//! Reading and writing is built on the [`fast-mvt`](https://crates.io/crates/fast-mvt)
-//! crate. Geometries and features are represented with its high-level, integer-only
-//! (tile-space) types rather than raw protobuf messages:
+//! Reading and writing is built on the [`fast-mvt`](https://crates.io/crates/fast-mvt) crate.
+//! Geometries and features are represented with its high-level, integer-only (tile-space) types rather than raw protobuf messages:
 //!
-//! * [`MvtTile`], [`MvtLayer`], [`MvtFeature`] — owned, inspectable tile/layer/feature types.
-//! * [`MvtValue`] — a typed property value.
-//! * [`MvtReaderRef`] — a zero-copy decoder for encoded tile bytes.
+//! * [`MvtTile`], [`MvtLayer`], [`MvtFeature`] - owned, inspectable tile/layer/feature types.
+//! * [`MvtValue`] - a typed property value.
+//! * [`MvtReaderRef`] - a zero-copy decoder for encoded tile bytes.
 //!
-//! Encode an [`MvtTile`] with [`MvtTile::encode`], and decode bytes with
-//! [`MvtReaderRef::new`] (use [`MvtReaderRef::to_tile`] for an owned [`MvtTile`]).
+//! Encode an [`MvtTile`] with [`MvtTile::encode`], and decode bytes with [`MvtReaderRef::new`].
+//! Use [`MvtReaderRef::to_tile`] for an owned [`MvtTile`].
 
 pub use fast_mvt::{
     DEFAULT_EXTENT, MvtExtent, MvtFeature, MvtGeometry, MvtLayer, MvtReaderRef, MvtTile, MvtValue,
