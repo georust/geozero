@@ -117,13 +117,21 @@ jobs:
           port: 34837
         id: pg
 
-      - name: Load PostGIS benchmark data
+      - name: Prepare benchmark data
         shell: bash
+        # The benches run against the small committed subsets in CI (CI=true):
+        # the in-repo countries.fgb and buildings sample. Derive the shp/gpkg and
+        # load the PostGIS tables the benches read.
         run: |
           psql "$DATABASE_URL" -c "CREATE EXTENSION IF NOT EXISTS postgis"
           ogr2ogr -f PostgreSQL "PG:$DATABASE_URL" \
             geozero/tests/data/countries.fgb \
             -nln countries -lco GEOMETRY_NAME=geom -nlt PROMOTE_TO_MULTI
+          sample=geozero-bench/tests/data/osm-buildings-3857-ch-sample
+          ogr2ogr -f "ESRI Shapefile" -lco SPATIAL_INDEX=YES "$sample.shp" "$sample.fgb"
+          ogr2ogr -f GPKG -nln buildings "$sample.gpkg" "$sample.fgb"
+          ogr2ogr -f PostgreSQL "PG:$DATABASE_URL" "$sample.fgb" \
+            -nln buildings -lco GEOMETRY_NAME=geom -nlt PROMOTE_TO_MULTI
         env:
           DATABASE_URL: "${{ steps.pg.outputs.connection-uri }}?sslmode=disable"
 
