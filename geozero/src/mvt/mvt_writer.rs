@@ -14,12 +14,10 @@ use crate::{ColumnValue, FeatureProcessor, GeomProcessor, PropertyProcessor};
 
 /// Generator for MVT geometries, features, and layers.
 ///
-/// The writer implements the geozero processor traits, accumulating streamed
-/// geometry (in tile coordinate space, as integer [`fast_mvt::MvtGeometry`]) and
-/// properties into [`MvtFeature`]s. Call [`MvtWriter::layer`] to obtain the
-/// finished [`MvtLayer`], which can be added to an
-/// [`MvtTile`](crate::mvt::MvtTile) and encoded with
-/// [`MvtTile::encode`](crate::mvt::MvtTile::encode).
+/// The writer implements the geozero processor traits, accumulating streamed geometry.
+/// Coordinates are in tile coordinate space, as integer [`fast_mvt::MvtGeometry`]) and properties into [`MvtFeature`]s.
+/// Call [`MvtWriter::layer`] to obtain the finished [`MvtLayer`], which can be added to an [`MvtTile`](crate::mvt::MvtTile).
+/// Encode with [`MvtTile::encode`](crate::mvt::MvtTile::encode).
 ///
 /// # Example
 /// Generate a MVT layer using a type that implements [`GeozeroDatasource`](crate::GeozeroDatasource).
