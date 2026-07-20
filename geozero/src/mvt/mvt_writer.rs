@@ -192,6 +192,16 @@ impl MvtWriter {
     }
 }
 
+/// Number of coordinates in a ring, ignoring a repeated closing coordinate.
+fn distinct_ring_coords(ring: &LineString<i32>) -> usize {
+    let coords = &ring.0;
+    if coords.len() >= 2 && coords.first() == coords.last() {
+        coords.len() - 1
+    } else {
+        coords.len()
+    }
+}
+
 impl GeomProcessor for MvtWriter {
     fn xy(&mut self, x: f64, y: f64, _idx: usize) -> Result<()> {
         let coord = self.transform(x, y);
@@ -248,6 +258,9 @@ impl GeomProcessor for MvtWriter {
             .ok_or_else(|| GeozeroError::Geometry("No coords for LineString".to_string()))?;
         let line_string = LineString(coords);
         if tagged {
+            if line_string.0.len() < 2 {
+                return Err(MvtError::TooFewCoordinates.into());
+            }
             self.finish_geometry(line_string.into())
         } else {
             let line_strings = self.line_strings.as_mut().ok_or_else(|| {
@@ -268,6 +281,9 @@ impl GeomProcessor for MvtWriter {
         let line_strings = self.line_strings.take().ok_or_else(|| {
             GeozeroError::Geometry("No LineStrings for MultiLineString".to_string())
         })?;
+        if line_strings.iter().any(|line| line.0.len() < 2) {
+            return Err(MvtError::TooFewCoordinates.into());
+        }
         self.finish_geometry(MultiLineString(line_strings).into())
     }
 
@@ -282,12 +298,16 @@ impl GeomProcessor for MvtWriter {
             .line_strings
             .take()
             .ok_or_else(|| GeozeroError::Geometry("Missing LineStrings for Polygon".to_string()))?;
-        let polygon = if line_strings.is_empty() {
-            Polygon::new(LineString(vec![]), vec![])
-        } else {
-            let exterior = line_strings.remove(0);
-            Polygon::new(exterior, line_strings)
-        };
+        if line_strings.is_empty() {
+            return Err(MvtError::TooFewCoordinates.into());
+        }
+        for ring in &line_strings {
+            if distinct_ring_coords(ring) < 3 {
+                return Err(MvtError::TooFewCoordinates.into());
+            }
+        }
+        let exterior = line_strings.remove(0);
+        let polygon = Polygon::new(exterior, line_strings);
         if tagged {
             self.finish_geometry(polygon.into())
         } else {
@@ -532,6 +552,34 @@ mod test {
                 vec![],
             ))
         );
+    }
+
+    #[test]
+    fn ring_with_two_coords_is_rejected() {
+        let geojson = GeoJson(r#"{"type": "Polygon", "coordinates": [[[1,1],[1,1]]]}"#);
+        assert!(matches!(
+            geojson.to_mvt_unscaled(),
+            Err(GeozeroError::MvtError(MvtError::TooFewCoordinates))
+        ));
+    }
+
+    #[test]
+    fn line_with_one_coord_is_rejected() {
+        let geojson = GeoJson(r#"{"type": "LineString", "coordinates": [[1,1]]}"#);
+        assert!(matches!(
+            geojson.to_mvt_unscaled(),
+            Err(GeozeroError::MvtError(MvtError::TooFewCoordinates))
+        ));
+    }
+
+    #[test]
+    fn multiline_member_with_one_coord_is_rejected() {
+        let geojson =
+            GeoJson(r#"{"type": "MultiLineString", "coordinates": [[[2,2],[2,10]],[[1,1]]]}"#);
+        assert!(matches!(
+            geojson.to_mvt_unscaled(),
+            Err(GeozeroError::MvtError(MvtError::TooFewCoordinates))
+        ));
     }
 
     #[test]
