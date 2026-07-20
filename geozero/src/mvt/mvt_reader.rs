@@ -151,8 +151,11 @@ fn process_polygon<P: GeomProcessor>(
 #[cfg(test)]
 #[cfg(feature = "with-geojson")]
 mod test {
-    use fast_mvt::{DEFAULT_EXTENT, MvtFeature, MvtGeometry, MvtLayer, MvtValue};
-    use geo_types::{LineString, MultiPolygon, Point, Polygon, point};
+    use fast_mvt::{
+        DEFAULT_EXTENT, MvtExtent, MvtFeature, MvtGeometry, MvtLayer, MvtReaderRef, MvtTile,
+        MvtValue,
+    };
+    use geo_types::{LineString, MultiLineString, MultiPolygon, Point, Polygon, point};
     use serde_json::json;
 
     use crate::{ProcessToJson, ToJson};
@@ -247,6 +250,22 @@ mod test {
     }
 
     #[test]
+    fn multiline_geom() {
+        let mvt_feature = feature(MvtGeometry::MultiLineString(MultiLineString(vec![
+            LineString::from(vec![(2, 2), (2, 10), (10, 10)]),
+            LineString::from(vec![(1, 1), (3, 5)]),
+        ])));
+        let geojson = mvt_feature.to_json().unwrap();
+        assert_eq!(
+            serde_json::from_str::<serde_json::Value>(&geojson).unwrap(),
+            json!({
+                "type": "MultiLineString",
+                "coordinates": [[[2,2],[2,10],[10,10]],[[1,1],[3,5]]]
+            })
+        );
+    }
+
+    #[test]
     fn polygon_geom() {
         let mvt_feature = feature(MvtGeometry::Polygon(Polygon::new(
             LineString::from(vec![(3, 6), (8, 12), (20, 34), (3, 6)]),
@@ -286,6 +305,123 @@ mod test {
                     [[[0,0],[10,0],[10,10],[0,10],[0,0]]],
                     [[[11,11],[20,11],[20,20],[11,20],[11,11]],[[13,13],[13,17],[17,17],[17,13],[13,13]]]
                 ]
+            })
+        );
+    }
+
+    fn roundtrip(extent: MvtExtent, geometry: MvtGeometry) -> MvtFeature {
+        let mut layer = MvtLayer::new("l", extent);
+        layer.add_feature(feature(geometry));
+        let mut tile = MvtTile::new();
+        tile.add_layer(layer);
+        let encoded = tile.encode().unwrap();
+        let reader = MvtReaderRef::new(&encoded).unwrap();
+        reader
+            .to_tile()
+            .unwrap()
+            .layers
+            .remove(0)
+            .features
+            .remove(0)
+    }
+
+    #[test]
+    fn big_number_geom() {
+        let coords = vec![
+            (34876, 37618),
+            (37047, 39028),
+            (37756, 39484),
+            (38779, 40151),
+            (39247, 40451),
+            (39601, 40672),
+            (40431, 41182),
+            (41010, 41525),
+            (41834, 41995),
+            (42190, 42193),
+            (42547, 42387),
+            (42540, 42402),
+            (42479, 42516),
+            (42420, 42627),
+            (42356, 42749),
+            (42344, 42770),
+            (42337, 42784),
+            (41729, 42461),
+            (40755, 41926),
+            (40118, 41563),
+            (39435, 41161),
+            (38968, 40882),
+            (38498, 40595),
+            (37200, 39786),
+            (36547, 39382),
+            (34547, 38135),
+            (34555, 38122),
+            (34595, 38059),
+            (34655, 37964),
+            (34726, 37855),
+            (34795, 37745),
+            (34863, 37638),
+            (34876, 37618),
+        ];
+        let mvt_feature = roundtrip(
+            MvtExtent::new(65536).unwrap(),
+            MvtGeometry::Polygon(Polygon::new(LineString::from(coords), vec![])),
+        );
+
+        let geojson = mvt_feature.to_json().unwrap();
+
+        assert_eq!(
+            serde_json::from_str::<serde_json::Value>(&geojson).unwrap(),
+            json!({
+                "type": "Polygon",
+                "coordinates": [[[34876,37618],[37047,39028],[37756,39484],[38779,40151],[39247,40451],[39601,40672],[40431,41182],[41010,41525],[41834,41995],[42190,42193],[42547,42387],[42540,42402],[42479,42516],[42420,42627],[42356,42749],[42344,42770],[42337,42784],[41729,42461],[40755,41926],[40118,41563],[39435,41161],[38968,40882],[38498,40595],[37200,39786],[36547,39382],[34547,38135],[34555,38122],[34595,38059],[34655,37964],[34726,37855],[34795,37745],[34863,37638],[34876,37618]]]
+            })
+        );
+    }
+
+    #[test]
+    fn polygon_ccw_exterior_is_rewound() {
+        let mvt_feature = roundtrip(
+            DEFAULT_EXTENT,
+            MvtGeometry::Polygon(Polygon::new(
+                LineString::from(vec![(0, 0), (0, 10), (10, 10), (10, 0), (0, 0)]),
+                vec![],
+            )),
+        );
+
+        let geojson = mvt_feature.to_json().unwrap();
+
+        assert_eq!(
+            serde_json::from_str::<serde_json::Value>(&geojson).unwrap(),
+            json!({
+                "type": "Polygon",
+                "coordinates": [[[10,0],[10,10],[0,10],[0,0],[10,0]]]
+            })
+        );
+    }
+
+    #[test]
+    fn polygon_ccw_exterior_and_cw_interior_are_rewound() {
+        let mvt_feature = roundtrip(
+            DEFAULT_EXTENT,
+            MvtGeometry::Polygon(Polygon::new(
+                LineString::from(vec![(0, 0), (0, 10), (10, 10), (10, 0), (0, 0)]),
+                vec![LineString::from(vec![
+                    (12, 2),
+                    (18, 2),
+                    (18, 8),
+                    (12, 8),
+                    (12, 2),
+                ])],
+            )),
+        );
+
+        let geojson = mvt_feature.to_json().unwrap();
+
+        assert_eq!(
+            serde_json::from_str::<serde_json::Value>(&geojson).unwrap(),
+            json!({
+                "type": "Polygon",
+                "coordinates": [[[10,0],[10,10],[0,10],[0,0],[10,0]],[[12,8],[18,8],[18,2],[12,2],[12,8]]]
             })
         );
     }
