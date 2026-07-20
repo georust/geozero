@@ -17,6 +17,13 @@
   * BREAKING: `wkt` to 0.14.0
   * BREAKING: `sqlx` to 0.9
   * <https://github.com/georust/geozero/pull/244>
+  * BREAKING: `geojson` to 1.0
+  * BREAKING: `geos` to 11.x
+  * BREAKING: `geo` to 13.x
+  * BREAKING: `dup-indexer` to 0.4
+  * BREAKING: `dbase` to 0.8.x
+  * Fix `shp` feature `iter_features` looping forever / erroring at end-of-file
+    with `dbase` 0.8 (its record iterator no longer returns `None` at EOF)
 * Add feature writing support and MVT layer output to `MvtWriter`
   * Breaking: `MvtWriter::new` now returns a `Result` instead of a `MvtWriter`
   * Breaking: `MvtWriter` does not implement `Default` anymore

@@ -15,11 +15,12 @@ homepage = "https://github.com/georust/geozero"
 repository = "https://github.com/georust/geozero"
 readme = "README.md"
 license = "MIT OR Apache-2.0"
-rust-version = "1.88.0"
+rust-version = "1.94.0"
 
 [workspace.dependencies]
 # Used in geozero-cli and geozero-bench
 # geozero version must be in sync with flatgeobuf version!
+# Held at 5.0.0: flatgeobuf 6.x requires geozero 0.15, but this workspace is still 0.14.
 flatgeobuf = "5.0.0"
 geozero = { version = "0.14.0", default-features = false }
 
@@ -27,19 +28,23 @@ base64 = "0.22.1"
 byteorder = { version = "1.4.3", default-features = false }
 bytes = "1.11.1"
 clap = { version = "4.3", features = ["derive"] }
-criterion = "0.7.0"
+criterion = "0.8.2"
 csv = "1.2.2"
-dbase = "0.6.0"
+dbase = "0.8.0"
 diesel = { version = "2.2.3", default-features = false, features = ["postgres"] }
-dup-indexer = "0.4.0"
+dup-indexer = "0.5.1"
 env_logger = "0.11.5"
 futures-util = "0.3.28"
 gdal = { version = "0.18.0", default-features = false }
 gdal-sys = "0.11.0"
-geo = "0.31.0"
+geo = "0.33.1"
+geoarrow-array = { version = "0.8.0", default-features = false }
+geoarrow-schema = "0.8.0"
+geoparquet = "0.8.0"
+parquet = "58"
 geo-types = { version = "0.7.11", default-features = false }
-geojson = { version = "0.24.1", default-features = false }
-geos = "10.0"
+geojson = { version = "1.0.0", default-features = false }
+geos = "11.1"
 gpx = { version = "0.10", default-features = false }
 hex = "0.4"
 kdbush = "0.2"
