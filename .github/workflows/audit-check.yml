@@ -6,20 +6,23 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions: {}
+
 jobs:
   audit:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      issues: write
-      checks: write
+      issues: write # rustsec/audit-check opens issues for new advisories
+      checks: write # rustsec/audit-check publishes a check run with the results
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with: { persist-credentials: false }
       - uses: rustsec/audit-check@69366f33c96575abad1ee0dba8212993eecbe998 # v2.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          ignore: RUSTSEC-2023-0071
-          # RUSTSEC-2023-0071 = Marvin Attack: potential key recovery through timing sidechannels => not used exploitably
+          ignore: RUSTSEC-2023-0089
+          # RUSTSEC-2023-0089 = atomic-polyfill unmaintained => only pulled via geo-types' optional old rstar (0.9/0.10/0.11) deps, which we never enable, so it's never actually compiled
   codeql:
     name: CodeQL (${{ matrix.language }})
     runs-on: ubuntu-latest
@@ -43,6 +46,7 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      with: { persist-credentials: false }
     - name: Initialize CodeQL
       uses: github/codeql-action/init@7188fc363630916deb702c7fdcf4e481b751f97a # v4.37.1
       with:
