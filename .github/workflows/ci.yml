@@ -41,7 +41,7 @@ jobs:
           done
         env:
           RUSTDOCFLAGS: "-D warnings"
-    
+
   test:
     name: tests - stable - x86_64-unknown-linux-gnu
     runs-on: ubuntu-latest
@@ -57,9 +57,6 @@ jobs:
           cargo --version
           sudo apt-get update
           sudo apt-get install -y libgdal-dev libgeos-dev
-
-      - name: Install protoc
-        uses: arduino/setup-protoc@c65c819552d16ad3c9b72d9dfd5ba5237b9c906b # v3.0.0
 
       - name: Tests
         shell: bash
@@ -167,4 +164,3 @@ jobs:
       - if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}
         name: CI Result
         run: exit 1
-

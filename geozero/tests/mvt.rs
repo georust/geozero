@@ -2,7 +2,7 @@ use std::env;
 use std::fmt::Write;
 use std::sync::Mutex;
 
-use geozero::mvt::{Message, Tile};
+use geozero::mvt::{MvtGeometry, MvtReaderRef};
 use geozero::{
     ColumnValue, CoordDimensions, FeatureProcessor, GeomProcessor, GeozeroDatasource,
     PropertyProcessor, ToJson, ToMvt,
@@ -13,7 +13,10 @@ use serde_json::json;
 fn geo_screen_coords_to_mvt() {
     let geo: geo_types::Geometry<f64> = geo_types::Point::new(25.0, 17.0).into();
     let mvt = geo.to_mvt_unscaled().unwrap();
-    assert_eq!(mvt.geometry, [9, 50, 34]);
+    assert_eq!(
+        mvt.geometry,
+        MvtGeometry::Point(geo_types::point! { x: 25, y: 17 })
+    );
 }
 
 #[test]
@@ -22,7 +25,10 @@ fn geo_to_mvt() {
     let mvt = geo
         .to_mvt(256, 958826.08, 5987771.04, 978393.96, 6007338.92)
         .unwrap();
-    assert_eq!(mvt.geometry, [9, 30, 122]);
+    assert_eq!(
+        mvt.geometry,
+        MvtGeometry::Point(geo_types::point! { x: 15, y: 61 })
+    );
     let geojson = mvt.to_json().unwrap();
     assert_eq!(
         serde_json::from_str::<serde_json::Value>(&geojson).unwrap(),
@@ -309,7 +315,7 @@ fn mvt_decode() {
     let data = &include_bytes!("data/tile.mvt")[..];
 
     let mut buf = String::new();
-    let tile = Tile::decode(data).unwrap();
+    let tile = MvtReaderRef::new(data).unwrap().to_tile().unwrap();
     for mut layer in tile.layers {
         let mut proc = Proc::new(buf);
         writeln!(proc.buf, "---------- start layer {} ----------", layer.name).unwrap();
