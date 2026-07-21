@@ -32,7 +32,7 @@ with-geojson = ["dep:geojson"]
 with-geos = ["dep:geos"]
 with-gpkg = ["with-wkb", "dep:sqlx", "sqlx?/sqlite"]
 with-gpx = ["dep:gpx"]
-with-mvt = ["dep:prost", "dep:prost-build", "dep:dup-indexer", "dep:base64"]
+with-mvt = ["dep:fast-mvt", "dep:base64", "dep:geo-types"]
 with-postgis-diesel = ["with-wkb", "dep:diesel", "dep:byteorder"]
 with-postgis-postgres = ["with-wkb", "dep:postgres-types", "dep:bytes"]
 with-postgis-sqlx = ["with-wkb", "dep:sqlx", "sqlx?/postgres"]
@@ -54,7 +54,7 @@ bytes = { workspace = true, optional = true }
 csv = { workspace = true, optional = true }
 dbase = { workspace = true, optional = true }
 diesel = { workspace = true, optional = true }
-dup-indexer = { workspace = true, optional = true }
+fast-mvt = { workspace = true, optional = true }
 gdal = { workspace = true, optional = true }
 gdal-sys = { workspace = true, optional = true }
 geo-types = { workspace = true, optional = true }
@@ -63,13 +63,10 @@ geos = { workspace = true, optional = true }
 gpx = { workspace = true, optional = true }
 lyon = { workspace = true, optional = true }
 postgres-types = { workspace = true, optional = true }
-prost = { workspace = true, optional = true }
 scroll = { workspace = true, optional = true }
 sqlx = { workspace = true, optional = true }
 wkt = { workspace = true, optional = true }
 
-[build-dependencies]
-prost-build = { workspace = true, optional = true }
 
 [dev-dependencies]
 geo.workspace = true

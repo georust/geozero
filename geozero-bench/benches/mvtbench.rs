@@ -2,7 +2,7 @@ use std::hint::black_box;
 
 use criterion::{Criterion, criterion_group, criterion_main};
 use geozero::error::Result;
-use geozero::mvt::{Message, Tile};
+use geozero::mvt::MvtReaderRef;
 use geozero::{
     ColumnValue, CoordDimensions, FeatureProcessor, GeomProcessor, GeozeroDatasource,
     PropertyProcessor,
@@ -292,7 +292,10 @@ impl FeatureProcessor for Proc {
 
 fn run_parse(mut proc: Proc) {
     let data = &include_bytes!("../../geozero/tests/data/tile.mvt")[..];
-    let tile = Tile::decode(black_box(data)).unwrap();
+    let tile = MvtReaderRef::new(black_box(data))
+        .unwrap()
+        .to_tile()
+        .unwrap();
     for mut layer in tile.layers {
         layer.process(&mut proc).unwrap();
     }
