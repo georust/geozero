@@ -966,7 +966,6 @@ dependencies = [
  "diesel_derives",
  "downcast-rs",
  "itoa",
- "pq-sys",
 ]
 
 [[package]]
@@ -1608,6 +1607,7 @@ dependencies = [
  "kdbush",
  "log",
  "lyon",
+ "postgis_diesel",
  "postgres",
  "postgres-types",
  "scroll",
@@ -2860,6 +2860,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "postgis_diesel"
+version = "3.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "436e1a10fb43ba8d366b70d0daf6dbff621808dfecfa46d85198f17d3bd2611f"
+dependencies = [
+ "byteorder",
+]
+
+[[package]]
 name = "postgres"
 version = "0.19.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2916,17 +2925,6 @@ name = "powerfmt"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "439ee305def115ba05938db6eb1644ff94165c5ab5e9420d1c1bcedbba909391"
-
-[[package]]
-name = "pq-sys"
-version = "0.7.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "574ddd6a267294433f140b02a726b0640c43cf7c6f717084684aaa3b285aba61"
-dependencies = [
- "libc",
- "pkg-config",
- "vcpkg",
-]
 
 [[package]]
 name = "prettyplease"

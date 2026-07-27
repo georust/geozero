@@ -23,7 +23,7 @@ pub(crate) mod conversion {
     impl<T: GeozeroGeometry> ToJson for T {
         fn to_json(&self) -> Result<String> {
             let mut out: Vec<u8> = Vec::new();
-            let mut p = GeoJsonWriter::new(&mut out);
+            let mut p = GeoJsonWriter::with_dims(&mut out, self.dims());
             self.process_geom(&mut p)?;
             String::from_utf8(out).map_err(|_| {
                 crate::error::GeozeroError::Geometry("Invalid UTF-8 encoding".to_string())

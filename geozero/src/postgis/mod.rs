@@ -92,13 +92,10 @@ pub mod sqlx {}
 ///
 /// # PostGIS usage example with Diesel
 ///
-/// Declare model and select Ewkb types directly with GeoZero and Diesel
+/// Declare a table with a geometry column, and a model holding raw EWKB:
 ///
 /// ```
-/// use diesel::pg::PgConnection;
-/// use diesel::{Connection, QueryDsl, RunQueryDsl};
 /// use diesel::prelude::*;
-///
 /// use geozero::wkb::Ewkb;
 ///
 /// diesel::table! {
@@ -117,35 +114,55 @@ pub mod sqlx {}
 ///     pub name: String,
 ///     pub geom: Option<Ewkb<Vec<u8>>>,
 /// }
+/// ```
 ///
-/// pub fn establish_connection() -> PgConnection {
-///     let database_url = std::env::var("DATABASE_URL").expect("Unable to find database url.");
-///     PgConnection::establish(&database_url).unwrap()
+/// A column can also be read into, and written from, any geometry type supported by GeoZero by
+/// wrapping it in [`wkb::Decode`](crate::wkb::Decode) and [`wkb::Encode`](crate::wkb::Encode).
+/// Below that is a postgis_diesel geometry, but `geo_types::Geometry<f64>` and the other supported
+/// geometry types work the same way:
+///
+/// ```
+/// use diesel::prelude::*;
+/// use geozero::wkb;
+/// use postgis_diesel::types::{GeometryContainer, Point};
+///
+/// # diesel::table! {
+/// #     use diesel::sql_types::*;
+/// #     use geozero::postgis::diesel::sql_types::*;
+/// #
+/// #     geometries (name) {
+/// #         name -> Varchar,
+/// #         geom -> Geometry,
+/// #     }
+/// # }
+/// #
+/// #[derive(Queryable, Debug)]
+/// #[diesel(table_name = geometries)]
+/// pub struct Geom {
+///     pub name: String,
+///     pub geom: wkb::Decode<GeometryContainer<Point>>,
 /// }
 ///
-/// # async fn rust_geo_query() -> Result<(), diesel::result::Error> {
-/// let conn = &mut establish_connection();
+/// #[derive(Insertable, Debug)]
+/// #[diesel(table_name = geometries)]
+/// pub struct NewGeom {
+///     pub name: String,
+///     pub geom: wkb::Encode<GeometryContainer<Point>>,
+/// }
+/// ```
 ///
-/// let wkb = Ewkb(vec![
-///     1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 64, 0, 0, 0, 0, 0, 0, 52, 192,
-/// ]);
+/// A `Nullable<Geometry>` column needs an `Option<wkb::Decode<_>>`; the `geometry` field of
+/// [`wkb::Decode`](crate::wkb::Decode) is always populated when decoding through Diesel.
 ///
-/// let insert_geometry = Geom {
-///     name: "GeoZeroTest".to_string(),
-///     geom: Some(wkb),
-/// };
+/// The postgis_diesel geometry types implement [`GeozeroGeometry`](crate::GeozeroGeometry), so they
+/// convert to any GeoZero-supported format:
 ///
-/// let inserted: Geom = diesel::insert_into(geometries::table)
-///     .values(&insert_geometry)
-///     .get_result(conn)
-///     .expect("Unable to insert into postgis");
+/// ```
+/// use geozero::ToWkt;
+/// use postgis_diesel::types::Point;
 ///
-/// let geometry_vec: Vec<Geom> = geometries::dsl::geometries
-///     .limit(10)
-///     .load::<Geom>(conn)
-///     .expect("Error loading geometries");
-/// # Ok(())
-/// # }
+/// let point = Point::new(10.0, 20.0, Some(4326));
+/// assert_eq!(point.to_wkt().unwrap(), "POINT(10 20)");
 /// ```
 #[cfg(feature = "with-postgis-diesel")]
 pub mod diesel {

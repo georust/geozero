@@ -1,15 +1,26 @@
 use std::fmt;
 use std::io::Read;
 
+#[cfg(feature = "with-postgis-diesel")]
+use diesel::{deserialize::FromSqlRow, expression::AsExpression};
+
 use crate::error::Result;
+#[cfg(feature = "with-postgis-diesel")]
+use crate::postgis::diesel::sql_types::{Geography, Geometry};
 use crate::{GeozeroGeometry, ToWkt};
 
 /// Encode to WKB
 // Used to impl encoding for foreign types
+#[cfg_attr(feature = "with-postgis-diesel", derive(AsExpression))]
+#[cfg_attr(feature = "with-postgis-diesel", diesel(sql_type = Geometry))]
+#[cfg_attr(feature = "with-postgis-diesel", diesel(sql_type = Geography))]
 pub struct Encode<T: GeozeroGeometry>(pub T);
 
 /// Decode from WKB
 // Used to impl decoding for foreign types
+#[cfg_attr(feature = "with-postgis-diesel", derive(FromSqlRow))]
+#[cfg_attr(feature = "with-postgis-diesel", diesel(sql_type = Geometry))]
+#[cfg_attr(feature = "with-postgis-diesel", diesel(sql_type = Geography))]
 pub struct Decode<T: FromWkb> {
     /// Decoded geometry. `None` for `NULL` value.
     pub geometry: Option<T>,

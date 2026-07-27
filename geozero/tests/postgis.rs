@@ -466,6 +466,11 @@ mod postgis_sqlx_macros {
     geozero::impl_sqlx_postgis_decode!(super::PointZ);
     geozero::impl_sqlx_postgis_encode!(super::PointZ);
 }
+#[cfg(feature = "with-postgis-diesel")]
+mod postgis_diesel_macros {
+    geozero::impl_diesel_postgis_decode!(super::PointZ);
+    geozero::impl_diesel_postgis_encode!(super::PointZ);
+}
 #[cfg(feature = "with-gpkg")]
 mod gpkg_sqlx_macros {
     geozero::impl_sqlx_gpkg_type_info!(super::PointZ);

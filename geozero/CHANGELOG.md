@@ -31,6 +31,14 @@
 * Updated to 2024 edition
 * Cleanup justfile, editor config, other minor non-coding aspects
 * Use `fast-mvt` for all MVT handling
+* Add `GeozeroGeometry` and `FromWkb` support for `postgis_diesel` geometry types, and
+  `wkb::Decode` / `wkb::Encode` support for Diesel, bringing the `with-postgis-diesel` feature to
+  parity with the `postgres` and `sqlx` integrations
+  * `with-postgis-diesel` now enables `diesel/postgres_backend` rather than `diesel/postgres`, so
+    it no longer pulls in `libpq`
+  * <https://github.com/georust/geozero/pull/284>
+* Breaking: `ToJson::to_json` now respects the input geometry's `dims()` instead of always writing
+  2D coordinates, so 3D geometries produce `[x, y, z]` positions
 
 ## 0.14.0 - (2024-09-26)
 

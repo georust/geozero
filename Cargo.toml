@@ -32,7 +32,7 @@ clap = { version = "4.3", features = ["derive"] }
 criterion = "0.8.2"
 csv = "1.2.2"
 dbase = "0.8.0"
-diesel = { version = "2.2.3", default-features = false, features = ["postgres"] }
+diesel = { version = "2.2.3", default-features = false, features = ["postgres_backend"] }
 env_logger = "0.11.5"
 futures-util = "0.3.28"
 gdal = { version = "0.18.0", default-features = false }
@@ -51,6 +51,7 @@ kdbush = "0.2"
 log = "0.4.19"
 lyon = "1.0.1"
 postgis = "0.9.0"
+postgis_diesel = { version = "3.1.0", default-features = false }
 postgres = "0.19"
 postgres-types = "0.2"
 scroll = "0.13.0"
