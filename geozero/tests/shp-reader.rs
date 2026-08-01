@@ -103,7 +103,7 @@ fn geometry_iterator_without_shx_index_has_no_upper_bound() -> Result<(), geozer
 
 fn poly_shx_claiming(shapes: usize) -> Result<Vec<u8>, geozero::shp::Error> {
     let mut shx = std::fs::read("./tests/data/shp/poly.shx")?;
-    let file_length = (100 + shapes * 8) / 2;
+    let file_length = usize::midpoint(100, shapes * 8);
     shx[24..28].copy_from_slice(&(file_length as i32).to_be_bytes());
     Ok(shx)
 }
