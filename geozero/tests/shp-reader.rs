@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::BufReader;
+use std::io::{BufReader, Cursor};
 use std::str::from_utf8;
 
 use dbase::FieldValue;
@@ -43,6 +43,144 @@ fn iterate() -> Result<(), geozero::shp::Error> {
         cnt += 1;
     }
     assert_eq!(cnt, 10);
+
+    Ok(())
+}
+
+#[test]
+fn iterators_stay_exhausted() -> Result<(), geozero::shp::Error> {
+    fn assert_fused<I: std::iter::FusedIterator>(_: &I) {}
+
+    let reader = ShpReader::from_path("./tests/data/shp/poly.shp")?;
+    let mut sink = ProcessorSink::new();
+    let mut geoms = reader.iter_geometries(&mut sink);
+    assert_fused(&geoms);
+    assert_eq!(geoms.by_ref().count(), 10);
+    assert_eq!(geoms.size_hint(), (0, Some(0)));
+    assert!(geoms.next().is_none());
+    assert!(geoms.next().is_none());
+
+    let reader = ShpReader::from_path("./tests/data/shp/poly.shp")?;
+    let mut sink = ProcessorSink::new();
+    let mut feats = reader.iter_features(&mut sink)?;
+    assert_fused(&feats);
+    assert_eq!(feats.by_ref().count(), 10);
+    assert_eq!(feats.size_hint(), (0, Some(0)));
+    assert!(feats.next().is_none());
+    assert!(feats.next().is_none());
+
+    Ok(())
+}
+
+#[test]
+fn shx_index_bounds_the_geometry_iterator() -> Result<(), geozero::shp::Error> {
+    let reader = ShpReader::from_path("./tests/data/shp/poly.shp")?;
+    let mut sink = ProcessorSink::new();
+    let mut geoms = reader.iter_geometries(&mut sink);
+
+    assert_eq!(geoms.size_hint(), (1, Some(10)));
+    for remaining in (1..10).rev() {
+        geoms.next().unwrap()?;
+        assert_eq!(geoms.size_hint(), (1, Some(remaining)));
+    }
+    geoms.next().unwrap()?;
+    assert_eq!(geoms.size_hint(), (0, Some(0)));
+
+    Ok(())
+}
+
+#[test]
+fn geometry_iterator_without_shx_index_has_no_upper_bound() -> Result<(), geozero::shp::Error> {
+    let source = BufReader::new(File::open("./tests/data/shp/poly.shp")?);
+    let reader = ShpReader::new(source)?;
+    let mut sink = ProcessorSink::new();
+    let geoms = reader.iter_geometries(&mut sink);
+
+    assert_eq!(geoms.size_hint(), (1, None));
+
+    Ok(())
+}
+
+fn poly_shx_claiming(shapes: usize) -> Result<Vec<u8>, geozero::shp::Error> {
+    let mut shx = std::fs::read("./tests/data/shp/poly.shx")?;
+    let file_length = (100 + shapes * 8) / 2;
+    shx[24..28].copy_from_slice(&(file_length as i32).to_be_bytes());
+    Ok(shx)
+}
+
+#[test]
+fn an_shx_that_disagrees_with_the_shp_gives_no_upper_bound() -> Result<(), geozero::shp::Error> {
+    let mut reader = ShpReader::new(Cursor::new(std::fs::read("./tests/data/shp/poly.shp")?))?;
+    reader.add_index_source(Cursor::new(poly_shx_claiming(3)?))?;
+    let mut sink = ProcessorSink::new();
+    let mut geoms = reader.iter_geometries(&mut sink);
+
+    assert_eq!(geoms.size_hint(), (1, None));
+    assert_eq!(geoms.by_ref().count(), 10);
+
+    Ok(())
+}
+
+#[test]
+fn shape_count_bounds_the_feature_iterator() -> Result<(), geozero::shp::Error> {
+    let reader = ShpReader::from_path("./tests/data/shp/poly.shp")?;
+    let mut sink = ProcessorSink::new();
+    let mut feats = reader.iter_features(&mut sink)?;
+
+    assert_eq!(feats.size_hint(), (0, Some(10)));
+    for remaining in (1..10).rev() {
+        feats.next().unwrap()?;
+        assert_eq!(feats.size_hint(), (0, Some(remaining)));
+    }
+    feats.next().unwrap()?;
+    assert_eq!(feats.size_hint(), (0, Some(0)));
+
+    Ok(())
+}
+
+fn poly_dbf_holding(records: usize) -> Result<Vec<u8>, geozero::shp::Error> {
+    let mut dbf = std::fs::read("./tests/data/shp/poly.dbf")?;
+    let offset_to_first_record = u16::from_le_bytes([dbf[8], dbf[9]]) as usize;
+    let size_of_record = u16::from_le_bytes([dbf[10], dbf[11]]) as usize;
+    dbf.truncate(offset_to_first_record + records * size_of_record);
+    dbf[4..8].copy_from_slice(&(records as u32).to_le_bytes());
+    Ok(dbf)
+}
+
+fn poly_reader_with_dbf(dbf: Vec<u8>) -> Result<ShpReader<Cursor<Vec<u8>>>, geozero::shp::Error> {
+    let mut reader = ShpReader::new(Cursor::new(std::fs::read("./tests/data/shp/poly.shp")?))?;
+    reader.add_index_source(Cursor::new(std::fs::read("./tests/data/shp/poly.shx")?))?;
+    reader.add_dbf_source(Cursor::new(dbf))?;
+    Ok(reader)
+}
+
+#[test]
+fn a_dbf_with_fewer_records_than_shapes_stays_within_the_upper_bound()
+-> Result<(), geozero::shp::Error> {
+    let reader = poly_reader_with_dbf(poly_dbf_holding(2)?)?;
+    let mut sink = ProcessorSink::new();
+    let mut feats = reader.iter_features(&mut sink)?;
+
+    assert_eq!(feats.size_hint(), (0, Some(10)));
+    let items: Vec<_> = feats.by_ref().collect();
+    assert_eq!(items.len(), 3);
+    assert!(items[0].is_ok());
+    assert!(items[1].is_ok());
+    assert!(items[2].is_err());
+    assert_eq!(feats.size_hint(), (0, Some(0)));
+    assert!(feats.next().is_none());
+
+    Ok(())
+}
+
+#[test]
+fn an_empty_dbf_yields_no_features() -> Result<(), geozero::shp::Error> {
+    let reader = poly_reader_with_dbf(poly_dbf_holding(0)?)?;
+    let mut sink = ProcessorSink::new();
+    let mut feats = reader.iter_features(&mut sink)?;
+
+    assert_eq!(feats.size_hint(), (0, Some(0)));
+    assert!(feats.next().is_none());
 
     Ok(())
 }
