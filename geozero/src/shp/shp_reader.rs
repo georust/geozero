@@ -4,6 +4,7 @@ use std::mem::size_of;
 use byteorder::{BigEndian, LittleEndian, ReadBytesExt};
 
 use crate::GeomProcessor;
+use crate::geometry_processor::bounded_vec;
 use crate::shp::{Error, ShapeType};
 
 /// Value inferior to this are considered as NO_DATA
@@ -33,14 +34,36 @@ impl RecordHeader {
     }
 }
 
+/// Coerce an untrusted `i32` count field (e.g. `num_points`, `num_parts`, or a
+/// `record_size`/`file_length` doubling) into a `usize` that is safe to feed to a
+/// `Vec` reservation.
+///
+/// Rejects negative counts (the ESRI spec describes these as non-negative record
+/// sizes/counts; a negative value sign-extends to ~1.8e19 when cast `as usize`, which
+/// either panics with `capacity overflow` or requests a multi-GB allocation from a
+/// handful of bytes — a tiny-input OOM/panic DoS). Returns [`Error::InvalidShapeRecordSize`]
+/// so the record is skipped instead of crashing the reader.
+pub(crate) fn validate_count(count: i32) -> Result<usize, Error> {
+    if count.is_negative() {
+        return Err(Error::InvalidShapeRecordSize);
+    }
+    Ok(count as usize)
+}
+
 /// Read and process one shape record
 pub(crate) fn read_shape<'a, P: GeomProcessor + 'a, T: Read>(
     processor: &'a mut P,
     mut source: &mut T,
 ) -> Result<RecordHeader, Error> {
     let hdr = RecordHeader::read_from(&mut source)?;
-    let record_size = hdr.record_size * 2;
-    read_shape_rec(processor, &mut source, record_size as usize)?;
+    // `record_size` is in 16-bit words; double it to get bytes. Reject negatives and
+    // guarded-doubling overflow up front so a hostile header can't reach the body
+    // allocation with a wrapped value.
+    let record_size = validate_count(hdr.record_size)?;
+    let record_size = record_size
+        .checked_mul(2)
+        .ok_or(Error::InvalidShapeRecordSize)?;
+    read_shape_rec(processor, &mut source, record_size)?;
     Ok(hdr)
 }
 
@@ -50,7 +73,11 @@ fn read_shape_rec<P: GeomProcessor, T: Read>(
     record_size: usize,
 ) -> Result<(), Error> {
     let shape_type = ShapeType::read_from(&mut source)?;
-    let record_size = record_size - size_of::<i32>();
+    // The shape type is part of the record, so the remaining body is 4 bytes shorter.
+    // A record_size below that underflows (debug panic / release wrap to ~1.8e19).
+    let record_size = record_size
+        .checked_sub(size_of::<i32>())
+        .ok_or(Error::InvalidShapeRecordSize)?;
     match shape_type {
         ShapeType::Point => read_point(processor, &mut source, record_size, shape_type)?,
         ShapeType::PointM => read_point(processor, &mut source, record_size, shape_type)?,
@@ -134,18 +161,22 @@ fn read_multipoint<P: GeomProcessor, T: Read>(
     point_type: ShapeType,
 ) -> Result<(), Error> {
     let _bbox = read_bbox(source, 2)?;
-    let num_points = source.read_i32::<LittleEndian>()? as usize;
+    let num_points = validate_count(source.read_i32::<LittleEndian>()?)?;
 
     let mut size = 4 * size_of::<f64>() // BBOX
     + size_of::<i32>() // num points
-    + size_of::<f64>() * 2 * num_points;
+    + size_of::<f64>()
+        .checked_mul(2)
+        .ok_or(Error::InvalidShapeRecordSize)?
+        .checked_mul(num_points)
+        .ok_or(Error::InvalidShapeRecordSize)?;
     let has_z = point_type == ShapeType::PointZ;
     if has_z {
-        size += multipart_dim_value_size(num_points);
+        size += multipart_dim_value_size(num_points)?;
     }
-    let has_m = record_size == size + multipart_dim_value_size(num_points);
+    let has_m = record_size == size + multipart_dim_value_size(num_points)?;
     if has_m {
-        size += multipart_dim_value_size(num_points);
+        size += multipart_dim_value_size(num_points)?;
     }
 
     if record_size != size {
@@ -212,7 +243,7 @@ fn read_multipatch_shape_content<P: GeomProcessor, T: Read>(
     record_size: usize,
 ) -> Result<(), Error> {
     // TODO
-    let mut buffer = vec![0; record_size];
+    let mut buffer = bounded_vec(record_size)?;
     source.read_exact(&mut buffer)?;
     Ok(())
 }
@@ -238,18 +269,24 @@ impl MultiPartShape {
         has_z: bool,
     ) -> Result<MultiPartShape, Error> {
         let _bbox = read_bbox(source, 2)?;
-        let num_parts = source.read_i32::<LittleEndian>()? as usize;
-        let num_points = source.read_i32::<LittleEndian>()? as usize;
-        let mut rec_size = multipart_record_size(num_points, num_parts);
+        let num_parts = validate_count(source.read_i32::<LittleEndian>()?)?;
+        let num_points = validate_count(source.read_i32::<LittleEndian>()?)?;
+        let mut rec_size = multipart_record_size(num_points, num_parts)?;
         if has_z {
-            rec_size += multipart_dim_value_size(num_points);
+            rec_size = rec_size
+                .checked_add(multipart_dim_value_size(num_points)?)
+                .ok_or(Error::InvalidShapeRecordSize)?;
         }
-        let has_m = record_size == rec_size + multipart_dim_value_size(num_points);
+        let has_m = record_size == rec_size + multipart_dim_value_size(num_points)?;
         if record_size != rec_size && !has_m {
             return Err(Error::InvalidShapeRecordSize);
         }
 
-        let mut parts_index = Vec::with_capacity(num_parts + 1);
+        let mut parts_index = bounded_vec(
+            num_parts
+                .checked_add(1)
+                .ok_or(Error::InvalidShapeRecordSize)?,
+        )?;
         for _ in 0..num_parts {
             parts_index.push(source.read_i32::<LittleEndian>()? as usize);
         }
@@ -357,19 +394,28 @@ impl MultiPartShape {
     }
 }
 
-fn multipart_record_size(num_points: usize, num_parts: usize) -> usize {
+fn multipart_record_size(num_points: usize, num_parts: usize) -> Result<usize, Error> {
     let mut size = 0usize;
     size += 4 * size_of::<f64>(); // BBOX
     size += size_of::<i32>(); // num parts
     size += size_of::<i32>(); // num points
-    size += size_of::<i32>() * num_parts;
-    size += size_of::<f64>() * 2 * num_points;
-    size
+    size += size_of::<i32>()
+        .checked_mul(num_parts)
+        .ok_or(Error::InvalidShapeRecordSize)?;
+    size += size_of::<f64>()
+        .checked_mul(2)
+        .ok_or(Error::InvalidShapeRecordSize)?
+        .checked_mul(num_points)
+        .ok_or(Error::InvalidShapeRecordSize)?;
+    Ok(size)
 }
 
-fn multipart_dim_value_size(num_points: usize) -> usize {
-    2 * size_of::<f64>() // range
-     + num_points * size_of::<f64>() // values
+fn multipart_dim_value_size(num_points: usize) -> Result<usize, Error> {
+    let values = size_of::<f64>()
+        .checked_mul(num_points)
+        .ok_or(Error::InvalidShapeRecordSize)?;
+    Ok(2 * size_of::<f64>() // range
+        + values)
 }
 
 fn read_bbox<R: Read>(source: &mut R, dims: usize) -> Result<Vec<f64>, Error> {
@@ -381,7 +427,7 @@ fn read_bbox<R: Read>(source: &mut R, dims: usize) -> Result<Vec<f64>, Error> {
 }
 
 fn read_xy<R: Read>(source: &mut R, num_points: usize) -> Result<Vec<Coord>, Error> {
-    let mut coords = Vec::with_capacity(num_points);
+    let mut coords = bounded_vec(num_points)?;
     for _ in 0..num_points {
         let x = source.read_f64::<LittleEndian>()?;
         let y = source.read_f64::<LittleEndian>()?;
@@ -392,7 +438,7 @@ fn read_xy<R: Read>(source: &mut R, num_points: usize) -> Result<Vec<Coord>, Err
 
 fn read_dim_values<R: Read>(source: &mut R, num_points: usize) -> Result<Vec<f64>, Error> {
     let _range = read_bbox(source, 1)?;
-    let mut values = Vec::with_capacity(num_points);
+    let mut values = bounded_vec(num_points)?;
     for _ in 0..num_points {
         values.push(source.read_f64::<LittleEndian>()?);
     }
