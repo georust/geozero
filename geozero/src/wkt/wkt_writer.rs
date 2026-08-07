@@ -13,16 +13,17 @@ pub struct WktWriter<W: Write> {
     first_header: bool,
     /// Stack of in-progress geometry sizes
     geometry_sizes: Vec<usize>,
+    precision: Option<usize>,
     pub(crate) out: W,
 }
 
 impl<W: Write> WktWriter<W> {
     pub fn new(out: W) -> Self {
-        Self::with_opts(out, WktDialect::Wkt, CoordDimensions::default(), None)
+        Self::with_opts(out, WktDialect::Wkt, CoordDimensions::default(), None, None)
     }
 
     pub fn with_dims(out: W, dims: CoordDimensions) -> Self {
-        Self::with_opts(out, WktDialect::Wkt, dims, None)
+        Self::with_opts(out, WktDialect::Wkt, dims, None, None)
     }
 
     pub fn with_opts(
@@ -30,6 +31,7 @@ impl<W: Write> WktWriter<W> {
         dialect: WktDialect,
         dims: CoordDimensions,
         srid: Option<i32>,
+        precision: Option<usize>,
     ) -> Self {
         Self {
             dims,
@@ -37,6 +39,7 @@ impl<W: Write> WktWriter<W> {
             dialect,
             first_header: true,
             geometry_sizes: vec![],
+            precision,
             out,
         }
     }
@@ -101,7 +104,13 @@ impl<W: Write> GeomProcessor for WktWriter<W> {
         if f64::is_nan(x) && f64::is_nan(y) {
             self.out.write_all(b"EMPTY")?;
         } else {
-            self.out.write_all(format!("{x} {y}").as_bytes())?;
+            let coord_string = if let Some(precision) = self.precision {
+                format!("{x:.precision$} {y:.precision$}")
+            } else {
+                format!("{x} {y}")
+            };
+
+            self.out.write_all(coord_string.as_bytes())?;
         }
         Ok(())
     }
