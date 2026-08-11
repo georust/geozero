@@ -7,9 +7,7 @@ use crate::shp::{Error, header};
 const INDEX_RECORD_SIZE: usize = 2 * size_of::<i32>();
 
 pub(crate) struct ShapeIndex {
-    #[allow(dead_code)]
     pub offset: i32,
-    #[allow(dead_code)]
     pub record_size: i32,
 }
 
