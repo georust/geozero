@@ -498,7 +498,7 @@ mod bounded_alloc {
     #[test]
     fn bounded_vec_reserves_exact_valid_capacity() {
         let v: Vec<u64> = bounded_vec(128).unwrap();
-        assert!(v.is_empty());
+        assert_eq!(v, Vec::<u64>::new());
         assert_eq!(v.capacity(), 128);
     }
 
