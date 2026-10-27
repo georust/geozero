@@ -154,7 +154,7 @@ jobs:
           DATABASE_URL: "${{ steps.pg.outputs.connection-uri }}?sslmode=disable"
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           files: target/llvm-cov/codecov.info
           fail_ci_if_error: false
@@ -170,7 +170,7 @@ jobs:
         with: { persist-credentials: false }
 
       - name: Run zizmor
-        uses: zizmorcore/zizmor-action@6fc4b006235f201fdab3722e17240ab420d580e5 # v0.6.1
+        uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482 # v0.6.4
         with:
           # Report inline annotations instead of uploading SARIF, so the job needs
           # no security-events: write and works for pull requests from forks.
