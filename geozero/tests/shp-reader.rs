@@ -47,6 +47,20 @@ fn null_shape_then_point(null_size_16_bit: i32) -> Vec<u8> {
     shp
 }
 
+fn multipatch_then_null_shape() -> Vec<u8> {
+    let mut multipatch_body = (geozero::shp::ShapeType::Multipatch as i32)
+        .to_le_bytes()
+        .to_vec();
+    multipatch_body.extend_from_slice(&[0; 136]);
+    let first = shape_record(1, (multipatch_body.len() / 2) as i32, &multipatch_body);
+    let null_shape = (geozero::shp::ShapeType::NullShape as i32).to_le_bytes();
+    let second = shape_record(2, 2, &null_shape);
+    let mut shp = shp_header(((100 + first.len() + second.len()) / 2) as i32);
+    shp.extend(first);
+    shp.extend(second);
+    shp
+}
+
 #[test]
 fn null_shape_record_size_must_match_its_four_byte_body() {
     let mut sink = ProcessorSink::new();
@@ -74,6 +88,30 @@ fn null_shape_record_with_wrong_size_is_rejected(#[case] size_16_bit: i32) {
         "NullShape record with declared size {size_16_bit} must be rejected"
     );
     assert!(records.next().is_none());
+}
+
+#[test]
+fn multipatch_body_is_consumed_before_the_next_record() {
+    let mut sink = ProcessorSink::new();
+    let reader = ShpReader::new(Cursor::new(multipatch_then_null_shape())).unwrap();
+    let mut records = reader.iter_geometries(&mut sink);
+    assert!(records.next().unwrap().is_ok());
+    assert!(records.next().unwrap().is_ok());
+    assert!(records.next().is_none());
+}
+
+#[test]
+fn truncated_multipatch_body_is_rejected() {
+    let mut shp = shp_header(124);
+    shp.extend(shape_record(
+        1,
+        70,
+        &(geozero::shp::ShapeType::Multipatch as i32).to_le_bytes(),
+    ));
+    let mut sink = ProcessorSink::new();
+    let reader = ShpReader::new(Cursor::new(shp)).unwrap();
+    let result = reader.iter_geometries(&mut sink).next().unwrap();
+    assert!(matches!(result, Err(geozero::shp::Error::IoError(_))));
 }
 
 #[test]
@@ -543,4 +581,165 @@ fn polygonzm() -> Result<(), geozero::shp::Error> {
     );
 
     Ok(())
+}
+
+// --- untrusted-count preallocation / overflow DoS regression tests ---
+//
+// Mirrors the WKB hardening (#297/#299): every `.shp`/`.shx` count field decoded
+// off untrusted bytes must be validated before being handed to a `Vec` reservation,
+// so a tiny malformed record returns `Err` instead of panicking (`capacity overflow`
+// / debug int-overflow) or requesting a multi-GB allocation.
+
+/// Build a valid 100-byte shapefile main header so `ShpReader::new` accepts the
+/// stream; `file_length_words` is the (attacker-controlled) file-length field.
+fn shp_main_header(file_length_words: i32) -> Vec<u8> {
+    let mut h = Vec::with_capacity(100);
+    h.extend_from_slice(&9994i32.to_be_bytes()); // file_code
+    h.extend_from_slice(&[0u8; 20]); // 5x i32 skip
+    h.extend_from_slice(&file_length_words.to_be_bytes()); // file_length (16-bit words), BE
+    h.extend_from_slice(&1000i32.to_le_bytes()); // version, LE
+    h.extend_from_slice(&0i32.to_le_bytes()); // shape_type (NullShape), LE
+    h.extend_from_slice(&[0u8; 64]); // 8x f64 bbox
+    assert_eq!(h.len(), 100);
+    h
+}
+
+/// Drive the public `ShpReader::new(Cursor) -> iter_geometries` path with `bytes`
+/// and collect the first result. Returns `Ok(())` only if the iterator yields an
+/// `Err` (the safe outcome) rather than panicking.
+fn assert_record_errors(name: &str, bytes: Vec<u8>) {
+    let result = std::panic::catch_unwind(|| {
+        let reader = ShpReader::new(Cursor::new(bytes)).expect("header parse");
+        let mut sink = ProcessorSink::new();
+        reader.iter_geometries(&mut sink).next()
+    });
+    match result {
+        Ok(None) => panic!("[{name}] iterator yielded None (no record read)"),
+        Ok(Some(Ok(_))) => panic!("[{name}] record decoded successfully from malformed input"),
+        Ok(Some(Err(_))) => { /* the safe outcome: malformed record rejected */ }
+        Err(payload) => {
+            let msg = payload
+                .downcast_ref::<String>()
+                .map(String::as_str)
+                .or_else(|| payload.downcast_ref::<&'static str>().copied())
+                .unwrap_or("<non-string panic>");
+            panic!("[{name}] PANIC on malformed input (regression): {msg}");
+        }
+    }
+}
+
+#[test]
+fn multipatch_negative_record_size_is_rejected_not_panicked() {
+    // record_size (BE i32) = -1 -> vec![0; ~1.8e19] capacity overflow before the fix.
+    let mut b = shp_main_header(500);
+    b.extend_from_slice(&1i32.to_be_bytes()); // record_number
+    b.extend_from_slice(&(-1i32).to_be_bytes()); // record_size (untrusted) = -1
+    b.extend_from_slice(&31i32.to_le_bytes()); // shape_type = Multipatch
+    assert_record_errors("multipatch record_size=-1", b);
+}
+
+#[test]
+fn multipatch_huge_record_size_is_rejected_not_oom() {
+    // record_size (BE i32) = i32::MAX -> after *2 a multi-GB reservation.
+    let mut b = shp_main_header(500);
+    b.extend_from_slice(&1i32.to_be_bytes());
+    b.extend_from_slice(&i32::MAX.to_be_bytes()); // record_size = i32::MAX (untrusted)
+    b.extend_from_slice(&31i32.to_le_bytes()); // shape_type = Multipatch
+    assert_record_errors("multipatch record_size=MAX", b);
+}
+
+#[test]
+fn record_size_below_shape_type_is_rejected_not_panicked() {
+    // record_size = 0 is non-negative but smaller than the 4-byte shape type it
+    // contains, so `record_size - size_of::<i32>()` underflowed (debug panic /
+    // release wrap to ~1.8e19).
+    let mut b = shp_main_header(500);
+    b.extend_from_slice(&1i32.to_be_bytes()); // record_number
+    b.extend_from_slice(&0i32.to_be_bytes()); // record_size = 0 (untrusted)
+    b.extend_from_slice(&1i32.to_le_bytes()); // shape_type = Point
+    assert_record_errors("record_size=0", b);
+}
+
+#[test]
+fn polygon_negative_num_points_is_rejected_not_panicked() {
+    // num_points (LE i32) = -1 -> multipart_record_size(16 * -1) debug-mul-overflow /
+    // read_xy Vec::with_capacity(~1.8e19) capacity overflow before the fix.
+    let mut b = shp_main_header(500);
+    b.extend_from_slice(&1i32.to_be_bytes()); // record_number
+    b.extend_from_slice(&1000i32.to_be_bytes()); // record_size (large enough to survive the check)
+    b.extend_from_slice(&5i32.to_le_bytes()); // shape_type = Polygon
+    b.extend_from_slice(&[0u8; 32]); // bbox (4x f64)
+    b.extend_from_slice(&1i32.to_le_bytes()); // num_parts = 1
+    b.extend_from_slice(&(-1i32).to_le_bytes()); // num_points = -1 (untrusted)
+    assert_record_errors("polygon num_points=-1", b);
+}
+
+#[test]
+fn multipoint_negative_num_points_is_rejected_not_panicked() {
+    // Multipoint with num_points (LE i32) = -1.
+    let mut b = shp_main_header(500);
+    b.extend_from_slice(&1i32.to_be_bytes()); // record_number
+    b.extend_from_slice(&1000i32.to_be_bytes()); // record_size
+    b.extend_from_slice(&8i32.to_le_bytes()); // shape_type = Multipoint
+    b.extend_from_slice(&[0u8; 32]); // bbox (4x f64)
+    b.extend_from_slice(&(-1i32).to_le_bytes()); // num_points = -1 (untrusted)
+    assert_record_errors("multipoint num_points=-1", b);
+}
+
+#[test]
+fn polyline_huge_num_parts_is_rejected_not_oom() {
+    // num_parts (LE i32) = i32::MAX -> Vec::with_capacity(num_parts + 1) huge reservation.
+    let mut b = shp_main_header(500);
+    b.extend_from_slice(&1i32.to_be_bytes()); // record_number
+    b.extend_from_slice(&i32::MAX.to_be_bytes()); // record_size (untrusted, large)
+    b.extend_from_slice(&3i32.to_le_bytes()); // shape_type = Polyline
+    b.extend_from_slice(&[0u8; 32]); // bbox (4x f64)
+    b.extend_from_slice(&i32::MAX.to_le_bytes()); // num_parts = i32::MAX (untrusted)
+    b.extend_from_slice(&0i32.to_le_bytes()); // num_points = 0
+    assert_record_errors("polyline num_parts=MAX", b);
+}
+
+#[test]
+fn shx_negative_file_length_is_rejected_not_panicked() {
+    // A .shx whose file_length (BE i32) is negative sign-extends under `as usize`
+    // to ~1.8e19 and the ShapeIndex Vec reservation overflows capacity / OOMs.
+    let mut reader = ShpReader::new(Cursor::new(shp_main_header(500))).expect("shp header parse");
+    // Returns Err (not a panic / OOM) after the fix.
+    let res = reader.add_index_source(Cursor::new(shp_main_header(-1)));
+    assert!(
+        res.is_err(),
+        "add_index_source accepted negative file_length"
+    );
+}
+
+#[test]
+fn shx_huge_file_length_is_rejected_not_oom() {
+    // file_length = i32::MAX -> after *2 and /INDEX_RECORD_SIZE a huge reservation.
+    let mut reader = ShpReader::new(Cursor::new(shp_main_header(500))).expect("shp header parse");
+    let res = reader.add_index_source(Cursor::new(shp_main_header(i32::MAX)));
+    assert!(res.is_err(), "add_index_source accepted huge file_length");
+}
+
+#[test]
+fn legit_shapefiles_still_parse() {
+    // Regression guard: legitimate fixtures must keep decoding after the budget.
+    for f in &[
+        "line.shp",
+        "poly.shp",
+        "point.shp",
+        "pointm.shp",
+        "pointz.shp",
+        "multipoint.shp",
+        "multipointz.shp",
+        "polygon.shp",
+    ] {
+        let reader = ShpReader::from_path(format!("./tests/data/shp/{f}")).expect("open fixture");
+        let mut sink = ProcessorSink::new();
+        let mut n = 0;
+        for res in reader.iter_geometries(&mut sink) {
+            assert!(res.is_ok(), "legit fixture {f} record failed: {res:?}");
+            n += 1;
+        }
+        assert!(n > 0, "legit fixture {f} yielded no records");
+    }
 }

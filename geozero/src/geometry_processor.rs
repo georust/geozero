@@ -3,12 +3,14 @@ use crate::error::{GeozeroError, Result};
 
 /// Byte budget for speculatively pre-allocating a container sized from untrusted
 /// input, so a tiny malformed blob can't trigger a huge allocation (OOM DoS).
-#[cfg(feature = "with-geo")]
+///
+/// Shared by every reader/writer that reserves a `Vec` from a size hint decoded off
+/// untrusted bytes (the WKB→geo-types path, the MVT writer, and the Shapefile reader).
+/// Kept ungated so a reader can use it without pulling in `with-geo`.
 pub(crate) const MAX_PREALLOC_BYTES: usize = 16 * 1024 * 1024;
 
 /// `Vec<T>` reserved for `capacity` untrusted elements, after
 /// [`validate_capacity`] has ruled out a size hint big enough to be a lie.
-#[cfg(feature = "with-geo")]
 pub(crate) fn bounded_vec<T>(capacity: usize) -> Result<Vec<T>> {
     validate_capacity::<T>(capacity)?;
     Ok(Vec::with_capacity(capacity))
@@ -17,7 +19,6 @@ pub(crate) fn bounded_vec<T>(capacity: usize) -> Result<Vec<T>> {
 /// Rejects a `capacity` whose `T`-sized reservation would exceed
 /// [`MAX_PREALLOC_BYTES`]. Split from [`bounded_vec`] so the check itself can
 /// be unit tested, and never called from production code except through `bounded_vec`.
-#[cfg(feature = "with-geo")]
 fn validate_capacity<T>(capacity: usize) -> Result<()> {
     if capacity.saturating_mul(size_of::<T>()) > MAX_PREALLOC_BYTES {
         return Err(GeozeroError::Geometry(format!(
@@ -464,7 +465,7 @@ fn error_message() {
     );
 }
 
-#[cfg(all(test, feature = "with-geo"))]
+#[cfg(test)]
 mod bounded_alloc {
     use super::{MAX_PREALLOC_BYTES, bounded_vec, validate_capacity};
 
