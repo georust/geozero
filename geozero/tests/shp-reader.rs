@@ -47,6 +47,20 @@ fn null_shape_then_point(null_size_16_bit: i32) -> Vec<u8> {
     shp
 }
 
+fn multipatch_then_null_shape() -> Vec<u8> {
+    let mut multipatch_body = (geozero::shp::ShapeType::Multipatch as i32)
+        .to_le_bytes()
+        .to_vec();
+    multipatch_body.extend_from_slice(&[0; 136]);
+    let first = shape_record(1, (multipatch_body.len() / 2) as i32, &multipatch_body);
+    let null_shape = (geozero::shp::ShapeType::NullShape as i32).to_le_bytes();
+    let second = shape_record(2, 2, &null_shape);
+    let mut shp = shp_header(((100 + first.len() + second.len()) / 2) as i32);
+    shp.extend(first);
+    shp.extend(second);
+    shp
+}
+
 #[test]
 fn null_shape_record_size_must_match_its_four_byte_body() {
     let mut sink = ProcessorSink::new();
@@ -74,6 +88,30 @@ fn null_shape_record_with_wrong_size_is_rejected(#[case] size_16_bit: i32) {
         "NullShape record with declared size {size_16_bit} must be rejected"
     );
     assert!(records.next().is_none());
+}
+
+#[test]
+fn multipatch_body_is_consumed_before_the_next_record() {
+    let mut sink = ProcessorSink::new();
+    let reader = ShpReader::new(Cursor::new(multipatch_then_null_shape())).unwrap();
+    let mut records = reader.iter_geometries(&mut sink);
+    assert!(records.next().unwrap().is_ok());
+    assert!(records.next().unwrap().is_ok());
+    assert!(records.next().is_none());
+}
+
+#[test]
+fn truncated_multipatch_body_is_rejected() {
+    let mut shp = shp_header(124);
+    shp.extend(shape_record(
+        1,
+        70,
+        &(geozero::shp::ShapeType::Multipatch as i32).to_le_bytes(),
+    ));
+    let mut sink = ProcessorSink::new();
+    let reader = ShpReader::new(Cursor::new(shp)).unwrap();
+    let result = reader.iter_geometries(&mut sink).next().unwrap();
+    assert!(matches!(result, Err(geozero::shp::Error::IoError(_))));
 }
 
 #[test]

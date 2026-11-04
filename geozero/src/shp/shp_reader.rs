@@ -244,6 +244,7 @@ fn read_multipatch_shape_content<P: GeomProcessor, T: Read>(
 ) -> Result<(), Error> {
     // TODO
     let mut buffer = bounded_vec(record_size)?;
+    buffer.resize(record_size, 0);
     source.read_exact(&mut buffer)?;
     Ok(())
 }
