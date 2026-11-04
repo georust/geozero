@@ -658,6 +658,6 @@ mod test {
 
         let mut tile = MvtTile::new();
         tile.add_layer(layer);
-        assert!(!tile.encode().unwrap().is_empty());
+        assert_ne!(tile.encode().unwrap(), Vec::<u8>::new());
     }
 }

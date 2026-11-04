@@ -17,6 +17,8 @@ pub struct ShapeIterator<'a, P: GeomProcessor, T: Read> {
     current_pos: usize,
     file_length: usize,
     encountered_error: bool,
+    /// Shape count from the .shx index, if one was loaded
+    remaining: Option<usize>,
 }
 
 impl<P: GeomProcessor, T: Read> ShapeIterator<'_, P, T> {
@@ -33,6 +35,7 @@ impl<P: GeomProcessor, T: Read> ShapeIterator<'_, P, T> {
             .current_pos
             .saturating_add(RecordHeader::SIZE)
             .saturating_add(record_size);
+        self.remaining = self.remaining.map(|n| n.saturating_sub(1));
         Ok(())
     }
 }
@@ -48,9 +51,18 @@ impl<'a, P: GeomProcessor, T: Read + 'a> Iterator for ShapeIterator<'a, P, T> {
         self.encountered_error = result.is_err();
         Some(result)
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        if self.encountered_error || self.current_pos >= self.file_length {
+            return (0, Some(0));
+        }
+        // Records are variable sized, so the .shx count is the only upper bound.
+        // If it disagrees with the shapes actually present, fall back to unknown.
+        (1, self.remaining.filter(|n| *n > 0))
+    }
 }
 
-impl<'a, P: FeatureProcessor, T: Read + Seek + 'a> FusedIterator for ShapeIterator<'a, P, T> {}
+impl<'a, P: GeomProcessor, T: Read + 'a> FusedIterator for ShapeIterator<'a, P, T> {}
 
 pub struct ShapeRecordIterator<'a, P: FeatureProcessor, T: Read + Seek> {
     shape_iter: ShapeIterator<'a, P, T>,
@@ -82,6 +94,16 @@ impl<'a, P: FeatureProcessor, T: Read + Seek + 'a> Iterator for ShapeRecordItera
         // shape stream, dbf stream and the processor's event stream are all left mid-feature.
         self.encountered_error = !matches!(result, Some(Ok(_)));
         result
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        // A dbf without records yields nothing, whatever the shapes say
+        if self.encountered_error || self.dbf_reader.header().num_records == 0 {
+            return (0, Some(0));
+        }
+        // Every feature consumes one shape, and an error ends both iterators.
+        // The dbf can still run out first, so there is no lower bound.
+        (0, self.shape_iter.size_hint().1)
     }
 }
 
@@ -182,12 +204,25 @@ impl<T: Read + Seek> ShpReader<T> {
         self,
         processor: &mut P,
     ) -> ShapeIterator<'_, P, T> {
+        let file_length = (self.header.file_length as usize).saturating_mul(2);
+        // The .shx holds one entry per shape, but it is a separate file: only
+        // trust its count when the entries end exactly where the .shp does
+        let remaining = self.shapes_index.as_ref().and_then(|index| {
+            let last = index.last()?;
+            let end = usize::try_from(last.offset)
+                .ok()?
+                .checked_mul(2)?
+                .checked_add(RecordHeader::SIZE)?
+                .checked_add(usize::try_from(last.record_size).ok()?.checked_mul(2)?)?;
+            (end == file_length).then_some(index.len())
+        });
         ShapeIterator {
             processor,
             source: self.source,
             current_pos: header::HEADER_SIZE as usize,
-            file_length: (self.header.file_length as usize).saturating_mul(2),
+            file_length,
             encountered_error: false,
+            remaining,
         }
     }
 

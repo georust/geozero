@@ -34,6 +34,11 @@
 * Fix the `shp` reader iterators never terminating on a malformed or truncated file: an
   error is now terminal instead of being yielded again forever, and the main header's
   `file_length` is validated
+* `ShapeIterator` and `ShapeRecordIterator` implement `size_hint`, bounded by the `.shx`
+  shape count when the index is available
+* `FusedIterator` for `ShapeIterator` now covers every `ShapeIterator` that is an
+  `Iterator` (previously only `P: FeatureProcessor, T: Read + Seek`)
+* `ToGeoFeatures::to_geo_features` returns `impl ExactSizeIterator + FusedIterator`
 
 ## 0.14.0 - (2024-09-26)
 

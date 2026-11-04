@@ -51,7 +51,7 @@ impl<W: Write> FeatureProcessor for CsvWriter<W> {
         Ok(())
     }
     fn feature_begin(&mut self, _idx: u64) -> Result<()> {
-        debug_assert!(self.current_row_props.is_empty());
+        debug_assert_eq!(self.current_row_props, Vec::<String>::new());
         Ok(())
     }
 
@@ -74,7 +74,7 @@ impl<W: Write> FeatureProcessor for CsvWriter<W> {
         Ok(())
     }
     fn properties_begin(&mut self) -> Result<()> {
-        debug_assert!(self.current_row_props.is_empty());
+        debug_assert_eq!(self.current_row_props, Vec::<String>::new());
         Ok(())
     }
     fn properties_end(&mut self) -> Result<()> {

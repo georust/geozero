@@ -299,7 +299,9 @@ mod tests {
         let f = File::open("tests/data/places.json").unwrap();
         let mut geojson = GeoJsonReader(f);
         let feature_iter = geojson.to_geo_features().unwrap();
+        let len = feature_iter.len();
         let features: Vec<_> = feature_iter.collect();
+        assert_eq!(features.len(), len);
         let first = features.first().unwrap();
         assert_eq!(first.property::<String>("NAME").unwrap(), "Bombo");
         assert_eq!(

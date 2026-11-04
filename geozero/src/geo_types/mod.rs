@@ -8,6 +8,8 @@ pub use geo_types_reader::*;
 pub use geo_types_writer::*;
 
 pub(crate) mod conversion {
+    use std::iter::FusedIterator;
+
     use crate::error::{GeozeroError, Result};
     use crate::geo_types::GeoWriter;
     use crate::geo_types::geo_types_feature_writer::{GeoFeature, GeoFeatureWriter};
@@ -29,11 +31,15 @@ pub(crate) mod conversion {
     }
 
     pub trait ToGeoFeatures {
-        fn to_geo_features(&mut self) -> Result<impl Iterator<Item = GeoFeature>>;
+        fn to_geo_features(
+            &mut self,
+        ) -> Result<impl ExactSizeIterator<Item = GeoFeature> + FusedIterator>;
     }
 
     impl<DS: GeozeroDatasource> ToGeoFeatures for DS {
-        fn to_geo_features(&mut self) -> Result<impl Iterator<Item = GeoFeature>> {
+        fn to_geo_features(
+            &mut self,
+        ) -> Result<impl ExactSizeIterator<Item = GeoFeature> + FusedIterator> {
             let mut geo = GeoFeatureWriter::new();
             self.process(&mut geo)?;
             Ok(geo.features.into_iter())
