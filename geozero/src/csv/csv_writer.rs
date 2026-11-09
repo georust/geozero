@@ -1,14 +1,22 @@
+use std::collections::HashMap;
 use std::io::Write;
 
-use crate::error::Result;
+use crate::error::{GeozeroError, Result};
 use crate::wkt::WktWriter;
 use crate::{ColumnValue, CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcessor};
 
+/// Streaming CSV writer with geometry in the first column.
+///
+/// Property columns follow the first feature's order. Later features are matched
+/// by name, with empty cells for missing properties. New columns after the first
+/// feature and duplicate property names return an error instead of changing the
+/// already-written header.
 pub struct CsvWriter<W: Write> {
     csv: csv::Writer<W>,
     headers: Vec<String>,
+    property_columns: HashMap<String, usize>,
     has_written_first_record: bool,
-    current_row_props: Vec<String>,
+    current_row_props: Vec<Option<String>>,
     wkt_writer: WktWriter<Vec<u8>>,
 }
 
@@ -21,6 +29,7 @@ impl<W: Write> CsvWriter<W> {
         Self {
             csv: csv::Writer::from_writer(out),
             headers: vec!["geometry".to_string()],
+            property_columns: HashMap::new(),
             has_written_first_record: false,
             current_row_props: vec![],
             wkt_writer: WktWriter::with_dims(vec![], dims),
@@ -48,10 +57,13 @@ impl<W: Write> FeatureProcessor for CsvWriter<W> {
     }
     fn dataset_end(&mut self) -> Result<()> {
         self.headers = vec!["geometry".to_string()];
+        self.property_columns.clear();
         Ok(())
     }
     fn feature_begin(&mut self, _idx: u64) -> Result<()> {
-        debug_assert_eq!(self.current_row_props, Vec::<String>::new());
+        debug_assert_eq!(self.current_row_props, Vec::<Option<String>>::new());
+        self.current_row_props
+            .resize_with(self.property_columns.len(), || None);
         Ok(())
     }
 
@@ -66,7 +78,7 @@ impl<W: Write> FeatureProcessor for CsvWriter<W> {
         self.wkt_writer.out.clear();
 
         for field in &self.current_row_props {
-            self.csv.write_field(field)?;
+            self.csv.write_field(field.as_deref().unwrap_or_default())?;
         }
         self.csv.write_record(None::<&[u8]>)?;
         self.current_row_props.clear();
@@ -74,7 +86,7 @@ impl<W: Write> FeatureProcessor for CsvWriter<W> {
         Ok(())
     }
     fn properties_begin(&mut self) -> Result<()> {
-        debug_assert_eq!(self.current_row_props, Vec::<String>::new());
+        debug_assert!(self.current_row_props.iter().all(Option::is_none));
         Ok(())
     }
     fn properties_end(&mut self) -> Result<()> {
@@ -90,20 +102,28 @@ impl<W: Write> FeatureProcessor for CsvWriter<W> {
 }
 
 impl<W: Write> PropertyProcessor for CsvWriter<W> {
-    fn property(&mut self, i: usize, colname: &str, colval: &ColumnValue) -> Result<bool> {
-        // TODO: support mis-ordered properties?
-        if self.has_written_first_record {
-            assert_eq!(
-                colname,
-                &self.headers[i + 1],
-                "CSV features must all have the same column names"
-            );
+    fn property(&mut self, _i: usize, colname: &str, colval: &ColumnValue) -> Result<bool> {
+        let column = if let Some(&column) = self.property_columns.get(colname) {
+            column
         } else {
+            if self.has_written_first_record {
+                return Err(GeozeroError::Property(format!(
+                    "CSV column '{colname}' is not present in the first feature"
+                )));
+            }
+            let column = self.property_columns.len();
             self.headers.push(colname.to_string());
-        }
+            self.property_columns.insert(colname.to_string(), column);
+            self.current_row_props.push(None);
+            column
+        };
 
-        // TODO: support non-string colval
-        self.current_row_props.push(colval.to_string());
+        if self.current_row_props[column].is_some() {
+            return Err(GeozeroError::Property(format!(
+                "CSV column '{colname}' occurs more than once in a feature"
+            )));
+        }
+        self.current_row_props[column] = Some(colval.to_string());
         Ok(false)
     }
 }
