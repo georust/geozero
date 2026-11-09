@@ -1,5 +1,7 @@
 ## UNRELEASED
 
+* Escape GeoJSON property names, string values, and collection names as JSON strings
+
 * Implement `GeozeroGeometry::srid` and `dims` for wkb types
 * Add `style` option to SVGWriter for writing \<style\> tags
 * Add `BoundsProcessor` to compute bounds of geometry

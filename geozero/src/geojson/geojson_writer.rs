@@ -1,5 +1,5 @@
 use std::fmt::Display;
-use std::io::Write;
+use std::io::{self, Write};
 
 use crate::error::Result;
 use crate::{ColumnValue, CoordDimensions, FeatureProcessor, GeomProcessor, PropertyProcessor};
@@ -35,7 +35,8 @@ impl<W: Write> FeatureProcessor for GeoJsonWriter<W> {
 "type": "FeatureCollection""#,
         )?;
         if let Some(name) = name {
-            write!(self.out, ",\n\"name\": \"{name}\"")?;
+            self.out.write_all(b",\n")?;
+            write_str_prop(&mut self.out, "name", name)?;
         }
         self.out.write_all(
             br#",
@@ -196,22 +197,26 @@ impl<W: Write> GeomProcessor for GeoJsonWriter<W> {
     }
 }
 
+fn write_json_string<W: Write>(out: W, value: &str) -> Result<()> {
+    serde_json::to_writer(out, value).map_err(io::Error::from)?;
+    Ok(())
+}
+
 fn write_num_prop<W: Write>(mut out: W, colname: &str, v: &dyn Display) -> Result<()> {
-    let colname = colname.replace('\"', "\\\"");
-    out.write_all(format!(r#""{colname}": {v}"#).as_bytes())?;
+    write_json_string(&mut out, colname)?;
+    write!(out, ": {v}")?;
     Ok(())
 }
 
 fn write_str_prop<W: Write>(mut out: W, colname: &str, v: &str) -> Result<()> {
-    let colname = colname.replace('\"', "\\\"");
-    let value = v.replace('\"', "\\\"");
-    out.write_all(format!(r#""{colname}": "{value}""#).as_bytes())?;
-    Ok(())
+    write_json_string(&mut out, colname)?;
+    out.write_all(b": ")?;
+    write_json_string(out, v)
 }
 
 fn write_json_prop<W: Write>(mut out: W, colname: &str, v: &str) -> Result<()> {
-    let colname = colname.replace('\"', "\\\"");
-    out.write_all(format!(r#""{colname}": {v}"#).as_bytes())?;
+    write_json_string(&mut out, colname)?;
+    write!(out, ": {v}")?;
     Ok(())
 }
 
