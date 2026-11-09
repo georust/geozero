@@ -1,5 +1,6 @@
 ## UNRELEASED
 
+* Match CSV properties by name, fill missing columns with empty cells, and report new or duplicate columns as errors (#258)
 * Implement `GeozeroGeometry::srid` and `dims` for wkb types
 * Add `style` option to SVGWriter for writing \<style\> tags
 * Add `BoundsProcessor` to compute bounds of geometry
