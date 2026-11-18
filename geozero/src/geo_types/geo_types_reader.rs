@@ -1,21 +1,28 @@
-use geo_types::{Coord, Geometry, LineString, Polygon};
+use geo_types::{Coord, CoordNum, Geometry, LineString, Polygon};
 
-use crate::error::Result;
+use crate::error::{GeozeroError, Result};
 use crate::{GeomProcessor, GeozeroGeometry};
 
-impl GeozeroGeometry for Geometry<f64> {
+impl<T: CoordNum> GeozeroGeometry for Geometry<T> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
         process_geom(self, processor)
     }
 }
 
 /// Process geo-types geometry.
-pub fn process_geom<P: GeomProcessor>(geom: &Geometry<f64>, processor: &mut P) -> Result<()> {
+///
+/// `GeomProcessor` expects `f64` coordinates, so any other type `T`
+/// will be converted to `f64` via `ToPrimitive`. If this conversion fails,
+/// [`GeozeroError::GeometryFormat`] will be returned.
+pub fn process_geom<T: CoordNum, P: GeomProcessor>(
+    geom: &Geometry<T>,
+    processor: &mut P,
+) -> Result<()> {
     process_geom_n(geom, 0, processor)
 }
 
-fn process_geom_n<P: GeomProcessor>(
-    geom: &Geometry<f64>,
+fn process_geom_n<T: CoordNum, P: GeomProcessor>(
+    geom: &Geometry<T>,
     idx: usize,
     processor: &mut P,
 ) -> Result<()> {
@@ -66,20 +73,28 @@ fn process_geom_n<P: GeomProcessor>(
     }
 }
 
-fn process_coord<P: GeomProcessor>(
-    coord: &Coord<f64>,
+fn process_coord<T: CoordNum, P: GeomProcessor>(
+    coord: &Coord<T>,
     idx: usize,
     processor: &mut P,
 ) -> Result<()> {
     if processor.multi_dim() {
-        processor.coordinate(coord.x, coord.y, None, None, None, None, idx)
+        processor.coordinate(
+            to_f64(&coord.x)?,
+            to_f64(&coord.y)?,
+            None,
+            None,
+            None,
+            None,
+            idx,
+        )
     } else {
-        processor.xy(coord.x, coord.y, idx)
+        processor.xy(to_f64(&coord.x)?, to_f64(&coord.y)?, idx)
     }
 }
 
-fn process_linestring<P: GeomProcessor>(
-    geom: &LineString<f64>,
+fn process_linestring<T: CoordNum, P: GeomProcessor>(
+    geom: &LineString<T>,
     tagged: bool,
     idx: usize,
     processor: &mut P,
@@ -88,16 +103,24 @@ fn process_linestring<P: GeomProcessor>(
     processor.linestring_begin(tagged, geom.0.len(), idx)?;
     for (i, coord) in geom.0.iter().enumerate() {
         if multi {
-            processor.coordinate(coord.x, coord.y, None, None, None, None, i)?;
+            processor.coordinate(
+                to_f64(&coord.x)?,
+                to_f64(&coord.y)?,
+                None,
+                None,
+                None,
+                None,
+                i,
+            )?;
         } else {
-            processor.xy(coord.x, coord.y, i)?;
+            processor.xy(to_f64(&coord.x)?, to_f64(&coord.y)?, i)?;
         }
     }
     processor.linestring_end(tagged, idx)
 }
 
-fn process_polygon<P: GeomProcessor>(
-    geom: &Polygon<f64>,
+fn process_polygon<T: CoordNum, P: GeomProcessor>(
+    geom: &Polygon<T>,
     tagged: bool,
     idx: usize,
     processor: &mut P,
@@ -113,11 +136,15 @@ fn process_polygon<P: GeomProcessor>(
     processor.polygon_end(tagged, idx)
 }
 
+fn to_f64<T: CoordNum>(val: &T) -> Result<f64> {
+    val.to_f64().ok_or(GeozeroError::GeometryFormat)
+}
+
 #[cfg(test)]
 #[cfg(feature = "with-wkt")]
 mod test {
     use std::convert::TryFrom;
-    use std::str::FromStr;
+    use std::str::{FromStr, from_utf8};
 
     use super::*;
     use crate::ToWkt;
@@ -126,54 +153,72 @@ mod test {
     #[test]
     fn point() {
         let wkt = "POINT(1 1)";
-        let geo = Geometry::try_from(wkt::Wkt::from_str(wkt).unwrap()).unwrap();
+        let geo = Geometry::<f64>::try_from(wkt::Wkt::from_str(wkt).unwrap()).unwrap();
 
-        let mut wkt_data: Vec<u8> = Vec::new();
+        let mut wkt_data = Vec::new();
         assert!(process_geom(&geo, &mut WktWriter::new(&mut wkt_data)).is_ok());
 
-        assert_eq!(std::str::from_utf8(&wkt_data).unwrap(), wkt);
+        assert_eq!(from_utf8(&wkt_data).unwrap(), wkt);
+
+        let geo = Geometry::<f32>::try_from(wkt::Wkt::from_str(wkt).unwrap()).unwrap();
+
+        let mut wkt_data = Vec::new();
+        assert!(process_geom(&geo, &mut WktWriter::new(&mut wkt_data)).is_ok());
+
+        assert_eq!(from_utf8(&wkt_data).unwrap(), wkt);
     }
 
     #[test]
     fn multipoint() {
         let wkt = "MULTIPOINT(1 1,2 2)";
-        let geo =
-            Geometry::try_from(wkt::Wkt::from_str("MULTIPOINT((1 1),(2 2))").unwrap()).unwrap();
+        let geo = Geometry::<f64>::try_from(wkt::Wkt::from_str(wkt).unwrap()).unwrap();
+        assert_eq!(geo.to_wkt().unwrap(), wkt);
+        let geo = Geometry::<f32>::try_from(wkt::Wkt::from_str(wkt).unwrap()).unwrap();
         assert_eq!(geo.to_wkt().unwrap(), wkt);
     }
 
     #[test]
     fn line() {
         let wkt = "LINESTRING(1 1,2 2)";
-        let geo = Geometry::try_from(wkt::Wkt::from_str(wkt).unwrap()).unwrap();
+        let geo = Geometry::<f64>::try_from(wkt::Wkt::from_str(wkt).unwrap()).unwrap();
+        assert_eq!(geo.to_wkt().unwrap(), wkt);
+        let geo = Geometry::<f32>::try_from(wkt::Wkt::from_str(wkt).unwrap()).unwrap();
         assert_eq!(geo.to_wkt().unwrap(), wkt);
     }
 
     #[test]
     fn multiline() {
         let wkt = "MULTILINESTRING((1 1,2 2),(3 3,4 4))";
-        let geo = Geometry::try_from(wkt::Wkt::from_str(wkt).unwrap()).unwrap();
+        let geo = Geometry::<f64>::try_from(wkt::Wkt::from_str(wkt).unwrap()).unwrap();
+        assert_eq!(geo.to_wkt().unwrap(), wkt);
+        let geo = Geometry::<f32>::try_from(wkt::Wkt::from_str(wkt).unwrap()).unwrap();
         assert_eq!(geo.to_wkt().unwrap(), wkt);
     }
 
     #[test]
     fn polygon() {
-        let wkt = "POLYGON((0 0,0 3,3 3,3 0,0 0),(0.2 0.2,0.2 2,2 2,2 0.2,0.2 0.2))";
-        let geo = Geometry::try_from(wkt::Wkt::from_str(wkt).unwrap()).unwrap();
+        let wkt = "POLYGON((0 0,0 3,3 3,3 0,0 0),(0.25 0.25,0.25 2,2 2,2 0.25,0.25 0.25))";
+        let geo = Geometry::<f64>::try_from(wkt::Wkt::from_str(wkt).unwrap()).unwrap();
+        assert_eq!(geo.to_wkt().unwrap(), wkt);
+        let geo = Geometry::<f32>::try_from(wkt::Wkt::from_str(wkt).unwrap()).unwrap();
         assert_eq!(geo.to_wkt().unwrap(), wkt);
     }
 
     #[test]
     fn multipolygon() {
         let wkt = "MULTIPOLYGON(((0 0,0 1,1 1,1 0,0 0)))";
-        let geo = Geometry::try_from(wkt::Wkt::from_str(wkt).unwrap()).unwrap();
+        let geo = Geometry::<f64>::try_from(wkt::Wkt::from_str(wkt).unwrap()).unwrap();
+        assert_eq!(geo.to_wkt().unwrap(), wkt);
+        let geo = Geometry::<f32>::try_from(wkt::Wkt::from_str(wkt).unwrap()).unwrap();
         assert_eq!(geo.to_wkt().unwrap(), wkt);
     }
 
     #[test]
     fn geometry_collection() {
         let wkt = "GEOMETRYCOLLECTION(POINT(1 1),LINESTRING(1 1,2 2))";
-        let geo = Geometry::try_from(wkt::Wkt::from_str(wkt).unwrap()).unwrap();
+        let geo = Geometry::<f64>::try_from(wkt::Wkt::from_str(wkt).unwrap()).unwrap();
+        assert_eq!(geo.to_wkt().unwrap(), wkt);
+        let geo = Geometry::<f32>::try_from(wkt::Wkt::from_str(wkt).unwrap()).unwrap();
         assert_eq!(geo.to_wkt().unwrap(), wkt);
     }
 }
