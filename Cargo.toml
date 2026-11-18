@@ -11,9 +11,7 @@ authors = [
     "Yuri Astrakhan <YuriAstrakhan@gmail.com>",
 ]
 edition = "2024"
-homepage = "https://github.com/georust/geozero"
 repository = "https://github.com/georust/geozero"
-readme = "README.md"
 license = "MIT OR Apache-2.0"
 rust-version = "1.94.0"
 
