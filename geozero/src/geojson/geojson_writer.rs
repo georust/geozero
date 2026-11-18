@@ -81,7 +81,7 @@ impl<W: Write> GeomProcessor for GeoJsonWriter<W> {
     }
     fn xy(&mut self, x: f64, y: f64, idx: usize) -> Result<()> {
         self.comma(idx)?;
-        self.out.write_all(format!("[{x},{y}]").as_bytes())?;
+        write!(&mut self.out, "[{x},{y}]")?;
         Ok(())
     }
     fn coordinate(
@@ -95,9 +95,9 @@ impl<W: Write> GeomProcessor for GeoJsonWriter<W> {
         idx: usize,
     ) -> Result<()> {
         self.comma(idx)?;
-        self.out.write_all(format!("[{x},{y}").as_bytes())?;
+        write!(&mut self.out, "[{x},{y}")?;
         if let Some(z) = z {
-            self.out.write_all(format!(",{z}").as_bytes())?;
+            write!(&mut self.out, ",{z}")?;
         }
         self.out.write_all(b"]")?;
         Ok(())
@@ -198,20 +198,20 @@ impl<W: Write> GeomProcessor for GeoJsonWriter<W> {
 
 fn write_num_prop<W: Write>(mut out: W, colname: &str, v: &dyn Display) -> Result<()> {
     let colname = colname.replace('\"', "\\\"");
-    out.write_all(format!(r#""{colname}": {v}"#).as_bytes())?;
+    write!(out, r#""{colname}": {v}"#)?;
     Ok(())
 }
 
 fn write_str_prop<W: Write>(mut out: W, colname: &str, v: &str) -> Result<()> {
     let colname = colname.replace('\"', "\\\"");
     let value = v.replace('\"', "\\\"");
-    out.write_all(format!(r#""{colname}": "{value}""#).as_bytes())?;
+    write!(out, r#""{colname}": "{value}""#)?;
     Ok(())
 }
 
 fn write_json_prop<W: Write>(mut out: W, colname: &str, v: &str) -> Result<()> {
     let colname = colname.replace('\"', "\\\"");
-    out.write_all(format!(r#""{colname}": {v}"#).as_bytes())?;
+    write!(out, r#""{colname}": {v}"#)?;
     Ok(())
 }
 
