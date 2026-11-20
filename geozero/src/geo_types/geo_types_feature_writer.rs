@@ -10,19 +10,19 @@ use crate::{
 pub type GeoProperties = HashMap<String, OwnedColumnValue>;
 
 #[derive(Debug, PartialEq)]
-pub struct GeoFeature {
-    geometry: geo_types::Geometry,
+pub struct GeoFeature<T: geo_types::CoordNum> {
+    geometry: geo_types::Geometry<T>,
     properties: GeoProperties,
 }
 
-#[derive(Debug, Default)]
-pub struct GeoFeatureWriter {
-    geometry_writer: GeoWriter,
+#[derive(Debug)]
+pub struct GeoFeatureWriter<T: geo_types::CoordNum> {
+    geometry_writer: GeoWriter<T>,
     next_properties: Option<GeoProperties>,
-    pub(crate) features: Vec<GeoFeature>,
+    pub(crate) features: Vec<GeoFeature<T>>,
 }
 
-impl GeomProcessor for GeoFeatureWriter {
+impl<T: geo_types::CoordNum> GeomProcessor for GeoFeatureWriter<T> {
     fn dimensions(&self) -> CoordDimensions {
         self.geometry_writer.dimensions()
     }
@@ -142,7 +142,7 @@ impl GeomProcessor for GeoFeatureWriter {
     }
 }
 
-impl PropertyProcessor for GeoFeatureWriter {
+impl<T: geo_types::CoordNum> PropertyProcessor for GeoFeatureWriter<T> {
     fn property(&mut self, _idx: usize, name: &str, value: &ColumnValue) -> Result<bool> {
         let properties = self
             .next_properties
@@ -221,7 +221,7 @@ impl From<&ColumnValue<'_>> for OwnedColumnValue {
     }
 }
 
-impl FeatureProcessor for GeoFeatureWriter {
+impl<T: geo_types::CoordNum> FeatureProcessor for GeoFeatureWriter<T> {
     fn feature_begin(&mut self, _idx: u64) -> Result<()> {
         debug_assert!(self.geometry_writer.is_empty());
         debug_assert!(self.next_properties.is_none());
@@ -251,18 +251,28 @@ impl FeatureProcessor for GeoFeatureWriter {
     }
 }
 
-impl GeoFeatureWriter {
+impl<T: geo_types::CoordNum> Default for GeoFeatureWriter<T> {
+    fn default() -> Self {
+        Self {
+            geometry_writer: GeoWriter::default(),
+            next_properties: None,
+            features: Vec::new(),
+        }
+    }
+}
+
+impl<T: geo_types::CoordNum> GeoFeatureWriter<T> {
     pub(crate) fn new() -> Self {
         Self::default()
     }
 }
 
-impl GeoFeature {
-    pub fn geometry(&self) -> &geo_types::Geometry {
+impl<S: geo_types::CoordNum> GeoFeature<S> {
+    pub fn geometry(&self) -> &geo_types::Geometry<S> {
         &self.geometry
     }
 
-    pub fn geometry_mut(&mut self) -> &mut geo_types::Geometry {
+    pub fn geometry_mut(&mut self) -> &mut geo_types::Geometry<S> {
         &mut self.geometry
     }
 
@@ -283,7 +293,7 @@ impl GeoFeature {
         T::get_value(&column_value)
     }
 
-    pub fn into_inner(self) -> (geo_types::Geometry, GeoProperties) {
+    pub fn into_inner(self) -> (geo_types::Geometry<S>, GeoProperties) {
         (self.geometry, self.properties)
     }
 }
