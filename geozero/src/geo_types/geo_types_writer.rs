@@ -1,8 +1,8 @@
 use std::mem;
 
 use geo_types::{
-    Coord, Geometry, GeometryCollection, LineString, MultiLineString, MultiPoint, MultiPolygon,
-    Point, Polygon, coord,
+    Coord, CoordNum, Geometry, GeometryCollection, LineString, MultiLineString, MultiPoint,
+    MultiPolygon, Point, Polygon, coord,
 };
 
 use crate::error::{GeozeroError, Result};
@@ -10,25 +10,37 @@ use crate::geometry_processor::bounded_vec;
 use crate::{FeatureProcessor, GeomProcessor, PropertyProcessor};
 
 /// Generator for geo-types geometry type.
-#[derive(Debug, Default)]
-pub struct GeoWriter {
-    geoms: Vec<Geometry<f64>>,
+#[derive(Debug)]
+pub struct GeoWriter<T: CoordNum> {
+    geoms: Vec<Geometry<T>>,
     /// Stack of any in-progress (potentially nested) GeometryCollections
-    collections: Vec<Vec<Geometry<f64>>>,
+    collections: Vec<Vec<Geometry<T>>>,
     /// In-progress multi-polygon
-    polygons: Option<Vec<Polygon<f64>>>,
+    polygons: Option<Vec<Polygon<T>>>,
     /// In-progress polygon or multi_linestring
-    line_strings: Option<Vec<LineString<f64>>>,
+    line_strings: Option<Vec<LineString<T>>>,
     /// In-progress point or line_string
-    coords: Option<Vec<Coord<f64>>>,
+    coords: Option<Vec<Coord<T>>>,
 }
 
-impl GeoWriter {
-    pub fn new() -> GeoWriter {
+impl<T: CoordNum> Default for GeoWriter<T> {
+    fn default() -> Self {
+        Self {
+            geoms: Vec::new(),
+            collections: Vec::new(),
+            polygons: None,
+            line_strings: None,
+            coords: None,
+        }
+    }
+}
+
+impl<T: CoordNum> GeoWriter<T> {
+    pub fn new() -> Self {
         Self::default()
     }
 
-    pub fn take_geometry(&mut self) -> Option<Geometry<f64>> {
+    pub fn take_geometry(&mut self) -> Option<Geometry<T>> {
         match self.geoms.len() {
             0 => None,
             1 => Some(self.geoms.pop().unwrap()),
@@ -43,7 +55,7 @@ impl GeoWriter {
         self.geoms.is_empty()
     }
 
-    fn finish_geometry(&mut self, geometry: Geometry<f64>) -> Result<()> {
+    fn finish_geometry(&mut self, geometry: Geometry<T>) -> Result<()> {
         // Add the geometry to a collection if we're in the middle of processing
         // a (potentially nested) collection
         if let Some(most_recent_collection) = self.collections.last_mut() {
@@ -55,13 +67,13 @@ impl GeoWriter {
     }
 }
 
-impl GeomProcessor for GeoWriter {
+impl<T: CoordNum> GeomProcessor for GeoWriter<T> {
     fn xy(&mut self, x: f64, y: f64, _idx: usize) -> Result<()> {
         let coords = self
             .coords
             .as_mut()
             .ok_or(GeozeroError::Geometry("Not ready for coords".to_string()))?;
-        coords.push(coord!(x: x, y: y));
+        coords.push(coord!(x: from_f64(x)?, y: from_f64(y)?));
         Ok(())
     }
 
@@ -185,9 +197,13 @@ impl GeomProcessor for GeoWriter {
     }
 }
 
-impl PropertyProcessor for GeoWriter {}
+impl<T: CoordNum> PropertyProcessor for GeoWriter<T> {}
 
-impl FeatureProcessor for GeoWriter {}
+impl<T: CoordNum> FeatureProcessor for GeoWriter<T> {}
+
+fn from_f64<T: CoordNum>(val: f64) -> Result<T> {
+    T::from(val).ok_or(GeozeroError::GeometryFormat)
+}
 
 #[cfg(test)]
 mod prealloc_guard {
@@ -198,13 +214,17 @@ mod prealloc_guard {
 
     #[test]
     fn multipoint_begin_rejects_oversized_hint() {
-        assert!(GeoWriter::new().multipoint_begin(usize::MAX, 0).is_err());
+        assert!(
+            GeoWriter::<f64>::new()
+                .multipoint_begin(usize::MAX, 0)
+                .is_err()
+        );
     }
 
     #[test]
     fn linestring_begin_rejects_oversized_hint() {
         assert!(
-            GeoWriter::new()
+            GeoWriter::<f64>::new()
                 .linestring_begin(true, usize::MAX, 0)
                 .is_err()
         );
@@ -213,7 +233,7 @@ mod prealloc_guard {
     #[test]
     fn multilinestring_begin_rejects_oversized_hint() {
         assert!(
-            GeoWriter::new()
+            GeoWriter::<f64>::new()
                 .multilinestring_begin(usize::MAX, 0)
                 .is_err()
         );
@@ -221,18 +241,26 @@ mod prealloc_guard {
 
     #[test]
     fn polygon_begin_rejects_oversized_hint() {
-        assert!(GeoWriter::new().polygon_begin(true, usize::MAX, 0).is_err());
+        assert!(
+            GeoWriter::<f64>::new()
+                .polygon_begin(true, usize::MAX, 0)
+                .is_err()
+        );
     }
 
     #[test]
     fn multipolygon_begin_rejects_oversized_hint() {
-        assert!(GeoWriter::new().multipolygon_begin(usize::MAX, 0).is_err());
+        assert!(
+            GeoWriter::<f64>::new()
+                .multipolygon_begin(usize::MAX, 0)
+                .is_err()
+        );
     }
 
     #[test]
     fn geometrycollection_begin_rejects_oversized_hint() {
         assert!(
-            GeoWriter::new()
+            GeoWriter::<f64>::new()
                 .geometrycollection_begin(usize::MAX, 0)
                 .is_err()
         );
@@ -345,12 +373,15 @@ mod test {
             "GEOMETRYCOLLECTION (LINESTRING (6308869.40378 356821.22669, 6308867.893 356822.41744, 6308852.75314 356830.22159, 6308869.92754 356844.26638), LINESTRING (6308755.07971 356674.51686, 6308784.81355 356719.16757, 6308815.20022 356765.46178, 6308829.63774 356763.22832, 6308852.87023 356759.82402, 6308867.19982 356771.06823, 6308875.40631 356796.20162, 6308872.51907 356815.17242), LINESTRING (6308874.12086 356813.73392, 6308876.83028 356795.77697, 6308868.23871 356770.06254, 6308853.09618 356758.29456, 6308815.86529 356763.89689, 6308799.76731 356739.37835, 6308747.77971 356662.11613, 6308746.55411 356661.61702, 6308744.06545 356657.72563, 6308731.77184 356668.45076, 6308699.45221 356683.15463, 6308682.44689 356684.63193, 6308654.96629 356683.66846, 6308636.13879 356680.0482, 6308618.19888 356671.76352, 6308608.41685 356661.79428, 6308578.7973 356592.35062, 6308545.33908 356542.14886, 6308517.52088 356509.38474, 6308505.40266 356506.84141, 6308493.59689 356506.98067, 6308375.07918 356520.46209), LINESTRING (6308877.92941 356819.50984, 6309072.26249 356514.14689, 6309073.44938 356513.3739, 6309076.25423 356511.31751, 6309096.05004 356528.52014, 6309103.33938 356535.32615, 6309107.49584 356539.20699, 6309107.78601 356539.47793, 6309119.09139 356550.03322, 6309137.04465 356567.13752, 6309137.6323 356567.69515, 6309138.92096 356568.91355, 6309138.46355 356569.69798, 6309150.68532 356566.34027, 6309151.94333 356567.03108, 6309157.81557 356565.41779, 6309161.54152 356564.33408, 6309174.6464 356579.77423, 6309175.71622 356581.0361, 6309177.25892 356582.84545, 6309225.37695 356611.76515, 6309226.90588 356612.65173, 6309229.72021 356614.34101, 6309232.64678 356598.75445, 6309244.10246 356528.49893, 6309251.20809 356487.90256, 6309252.35489 356481.34967, 6309258.41778 356442.34047, 6309258.56036 356441.19511, 6309258.76115 356440.13123, 6309260.99127 356426.22389, 6309258.49745 356425.57244, 6309240.94882 356422.48836, 6309240.53276 356422.37171, 6309240.10958 356422.29068), LINESTRING (6308870.96141 356823.05522, 6308881.43519 356846.04558, 6308859.94336 356857.75024, 6308859.6305 356857.95378, 6308893.96675 356932.14467, 6308921.19517 356993.60222, 6308942.68768 357040.82051, 6308961.42173 357079.52481, 6308976.48471 357108.08898, 6308992.14194 357136.52543, 6309018.60922 357184.68892, 6309024.87557 357193.57884, 6309025.31785 357194.20629, 6309028.73486 357199.05392, 6309045.86114 357220.97586, 6309078.85225 357261.01696, 6309131.17986 357323.22098, 6309184.03434 357388.33409, 6309212.61182 357423.54026, 6309252.80543 357467.20429, 6309288.51836 357504.59499, 6309318.98068 357536.37443, 6309366.01084 357588.07961, 6309383.32941 357609.89089, 6309383.33718 357609.92579, 6309383.36584 357611.49516), POLYGON ((6309096.87876754 357058.96992573235, 6309100.9240038069 357067.89795246266, 6309103.1497403858 357077.44361610821, 6309103.4704434676 357087.24008216924, 6309101.8737886148 357096.91087794991, 6309098.421134375 357106.08436019259, 6309093.2451643161 357114.40799712023, 6309086.5447880644 357121.56191603432, 6309078.5774973193 357127.27119584358, 6309013.594489282 357164.78915304772, 6309004.6664625369 357168.8343893392, 6308995.1207988719 357171.06012593472, 6308985.3243327877 357171.38082902494, 6308975.6535369828 357169.78417417, 6308966.4800547194 357166.33151992067, 6308958.156417775 357161.1555498438, 6308951.0024988521 357154.45517356717, 6308945.293219042 357146.48788279406, 6308795.0043396624 356886.1799069175, 6308790.959103398 356877.251880196, 6308788.7333668182 356867.70621655986, 6308788.4126637317 356857.90975050797, 6308790.0093185771 356848.2389547351, 6308793.4619728047 356839.0654724979, 6308798.6379428506 356830.74183557258, 6308805.3383190883 356823.587916657, 6308813.3056098176 356817.87863684172, 6308878.2886178084 356780.36067953659, 6308887.2166445563 356776.315443229, 6308896.7623082288 356774.08970661991, 6308906.5587743223 356773.76900351944, 6308916.2295701364 356775.36565836804, 6308925.403052411 356778.81831261492, 6308933.7266893657 356783.99428269314, 6308940.8806082979 356790.69465897442, 6308946.5898881136 356798.66194975481, 6309096.87876754 357058.96992573235)))",
         );
 
-        assert!(wkt.to_geo().is_ok());
+        assert!(ToGeo::<f64>::to_geo(&wkt).is_ok());
+        assert!(ToGeo::<f32>::to_geo(&wkt).is_ok());
     }
 
     #[test]
     fn to_geo() {
         let geom: Geometry<f64> = Point::new(10.0, 20.0).into();
-        assert_eq!(geom.clone().to_geo().unwrap(), geom);
+        assert_eq!(geom.to_geo().unwrap(), geom);
+        let geom: Geometry<f32> = Point::new(10.0, 20.0).into();
+        assert_eq!(geom.to_geo().unwrap(), geom);
     }
 }

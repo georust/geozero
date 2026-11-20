@@ -16,13 +16,13 @@ pub(crate) mod conversion {
     use crate::{GeozeroDatasource, GeozeroGeometry};
 
     /// Convert to geo-types Geometry.
-    pub trait ToGeo {
+    pub trait ToGeo<T: geo_types::CoordNum> {
         /// Convert to geo-types Geometry.
-        fn to_geo(&self) -> Result<geo_types::Geometry<f64>>;
+        fn to_geo(&self) -> Result<geo_types::Geometry<T>>;
     }
 
-    impl<T: GeozeroGeometry> ToGeo for T {
-        fn to_geo(&self) -> Result<geo_types::Geometry<f64>> {
+    impl<S: geo_types::CoordNum, T: GeozeroGeometry> ToGeo<S> for T {
+        fn to_geo(&self) -> Result<geo_types::Geometry<S>> {
             let mut geo = GeoWriter::new();
             self.process_geom(&mut geo)?;
             geo.take_geometry()
@@ -30,16 +30,16 @@ pub(crate) mod conversion {
         }
     }
 
-    pub trait ToGeoFeatures {
+    pub trait ToGeoFeatures<T: geo_types::CoordNum> {
         fn to_geo_features(
             &mut self,
-        ) -> Result<impl ExactSizeIterator<Item = GeoFeature> + FusedIterator>;
+        ) -> Result<impl ExactSizeIterator<Item = GeoFeature<T>> + FusedIterator>;
     }
 
-    impl<DS: GeozeroDatasource> ToGeoFeatures for DS {
+    impl<T: geo_types::CoordNum, DS: GeozeroDatasource> ToGeoFeatures<T> for DS {
         fn to_geo_features(
             &mut self,
-        ) -> Result<impl ExactSizeIterator<Item = GeoFeature> + FusedIterator> {
+        ) -> Result<impl ExactSizeIterator<Item = GeoFeature<T>> + FusedIterator> {
             let mut geo = GeoFeatureWriter::new();
             self.process(&mut geo)?;
             Ok(geo.features.into_iter())
