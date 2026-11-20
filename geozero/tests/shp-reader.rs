@@ -280,7 +280,7 @@ fn shp_to_geo() -> Result<(), geozero::shp::Error> {
     use geozero::geo_types::GeoWriter;
 
     let reader = ShpReader::from_path("./tests/data/shp/poly.shp")?;
-    let mut geo = GeoWriter::new();
+    let mut geo = GeoWriter::<f64>::new();
     let mut cnt = 0;
     for _geom in reader.iter_geometries(&mut geo) {
         cnt += 1;

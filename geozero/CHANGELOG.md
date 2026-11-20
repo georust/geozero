@@ -41,6 +41,8 @@
 * `ToGeoFeatures::to_geo_features` returns `impl ExactSizeIterator + FusedIterator`
 * Implement `GeozeroGeometry` for `Geometry<T>` with arbitrary coordinate types `T`
   by internally converting them to `f64` for `GeomProcessor`.
+* Make `GeoWriter` and `GeoFeatureWriter` generic over the coordinate type
+  by internally converting from `f64`.
 
 ## 0.14.0 - (2024-09-26)
 

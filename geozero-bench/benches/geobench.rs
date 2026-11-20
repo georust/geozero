@@ -30,7 +30,7 @@ mod fgb {
         };
         let mut cnt = 0;
         while let Some(feature) = selected_fgb.next()? {
-            let _geom = feature.to_geo()?;
+            let _geom: geo_types::Geometry<f64> = feature.to_geo()?;
             cnt += 1;
         }
         assert_eq!(cnt, count);
@@ -53,7 +53,7 @@ mod fgb {
         };
         let mut cnt = 0;
         while let Some(feature) = selected_fgb.next().await? {
-            let _geom = feature.to_geo()?;
+            let _geom: geo_types::Geometry<f64> = feature.to_geo()?;
             cnt += 1;
         }
         assert_eq!(cnt, count);

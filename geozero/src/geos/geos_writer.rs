@@ -267,7 +267,8 @@ mod test {
     fn geo_to_geos() -> Result<()> {
         use std::str::FromStr;
         let geo =
-            geo_types::Geometry::try_from(wkt::Wkt::from_str("POINT (10 20)").unwrap()).unwrap();
+            geo_types::Geometry::<f32>::try_from(wkt::Wkt::from_str("POINT (10 20)").unwrap())
+                .unwrap();
         let geos = geo.to_geos()?;
         assert_eq!(&geos.to_wkt().unwrap(), "POINT (10 20)");
         Ok(())

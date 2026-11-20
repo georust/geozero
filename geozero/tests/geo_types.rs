@@ -23,7 +23,7 @@ fn ewkb_huge_count_does_not_oom() {
     linestring.extend((SRID_FLAG | LINESTRING).to_be_bytes());
     linestring.extend(1i32.to_be_bytes()); // SRID
     linestring.extend(0xb024_a594u32.to_be_bytes()); // lied-about point count
-    assert!(Ewkb(linestring.as_slice()).to_geo().is_err());
+    assert!(ToGeo::<f64>::to_geo(&Ewkb(linestring.as_slice())).is_err());
 
     // The original fuzz finding: that same LineString wrapped in a
     // GeometryCollection (so the over-large count is reached via a nested header).
@@ -32,7 +32,7 @@ fn ewkb_huge_count_does_not_oom() {
     collection.extend(27i32.to_be_bytes()); // SRID
     collection.extend(1u32.to_be_bytes()); // one member geometry
     collection.extend(linestring);
-    assert!(Ewkb(collection.as_slice()).to_geo().is_err());
+    assert!(ToGeo::<f64>::to_geo(&Ewkb(collection.as_slice())).is_err());
 }
 
 #[test]

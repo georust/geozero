@@ -338,7 +338,7 @@ mod test {
         #[test]
         fn empty_point() {
             let wkt = Wkt("POINT EMPTY");
-            let actual = wkt.to_geo().unwrap_err();
+            let actual = ToGeo::<f64>::to_geo(&wkt).unwrap_err();
             assert!(matches!(actual, GeozeroError::Geometry(_)));
         }
 
@@ -443,7 +443,7 @@ mod test {
         #[test]
         fn empty_geometry_collection() {
             let wkt = Wkt("GEOMETRYCOLLECTION EMPTY");
-            let actual = wkt.to_geo().unwrap();
+            let actual = ToGeo::<f64>::to_geo(&wkt).unwrap();
 
             let expected =
                 geo_types::Geometry::GeometryCollection(geo_types::GeometryCollection(vec![]));
