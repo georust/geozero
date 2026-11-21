@@ -1,0 +1,7 @@
+[advisories]
+ignore = [
+    # atomic-polyfill is unmaintained. Only geo-types' optional old rstar
+    # (0.9, 0.10, 0.11) dependencies use it. We do not enable them, so it is
+    # not compiled.
+    "RUSTSEC-2023-0089",
+]
