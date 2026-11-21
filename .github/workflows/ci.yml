@@ -152,9 +152,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgdal-dev libgeos-dev gdal-bin
 
-      - name: Install protoc
-        uses: arduino/setup-protoc@c65c819552d16ad3c9b72d9dfd5ba5237b9c906b # v3.0.0
-
       - name: Prepare benchmark data
         shell: bash
         # The benches run against the small committed subsets in CI (CI=true):
