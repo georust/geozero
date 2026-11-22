@@ -19,13 +19,13 @@ pub struct GeoJsonString(pub String);
 
 impl GeozeroGeometry for GeoJsonString {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
-        read_geojson_geom(&mut self.0.as_bytes(), processor)
+        parse_geojson_geom(&self.0, processor)
     }
 }
 
 impl GeozeroDatasource for GeoJsonString {
     fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> Result<()> {
-        read_geojson(&mut self.0.as_bytes(), processor)
+        parse_geojson(&self.0, processor)
     }
 }
 
@@ -34,13 +34,13 @@ pub struct GeoJson<'a>(pub &'a str);
 
 impl GeozeroGeometry for GeoJson<'_> {
     fn process_geom<P: GeomProcessor>(&self, processor: &mut P) -> Result<()> {
-        read_geojson_geom(&mut self.0.as_bytes(), processor)
+        parse_geojson_geom(self.0, processor)
     }
 }
 
 impl GeozeroDatasource for GeoJson<'_> {
     fn process<P: FeatureProcessor>(&mut self, processor: &mut P) -> Result<()> {
-        read_geojson(&mut self.0.as_bytes(), processor)
+        parse_geojson(self.0, processor)
     }
 }
 
@@ -57,6 +57,10 @@ impl<R: Read> GeozeroDatasource for GeoJsonReader<R> {
 pub fn read_geojson<R: Read, P: FeatureProcessor>(mut reader: R, processor: &mut P) -> Result<()> {
     let mut geojson_str = String::new();
     reader.read_to_string(&mut geojson_str)?;
+    parse_geojson(&geojson_str, processor)
+}
+
+fn parse_geojson<P: FeatureProcessor>(geojson_str: &str, processor: &mut P) -> Result<()> {
     let geojson = geojson_str.parse::<GeoGeoJson>()?;
     process_geojson(&geojson, processor)
 }
@@ -76,6 +80,10 @@ pub fn read_geojson_geom<R: Read, P: GeomProcessor>(
 ) -> Result<()> {
     let mut geojson_str = String::new();
     reader.read_to_string(&mut geojson_str)?;
+    parse_geojson_geom(&geojson_str, processor)
+}
+
+fn parse_geojson_geom<P: GeomProcessor>(geojson_str: &str, processor: &mut P) -> Result<()> {
     let geojson = geojson_str.parse::<GeoGeoJson>()?;
     process_geojson_geom(&geojson, processor)
 }
