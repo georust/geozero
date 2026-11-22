@@ -8,6 +8,7 @@ This implies the following update sequence for major version updates:
 ## geozero
 
 * Make sure GitHub CI status is green.
+* Release from `main`. If you release from a different branch, merge that branch into `main` immediately after `cargo publish`.
 * Make sure local branch is up-to-date (`git pull --rebase`)
 * `cd geozero`
 * Check for compatible major updates with `cargo outdated`
@@ -16,6 +17,7 @@ This implies the following update sequence for major version updates:
 * `git commit -a -m "Release geozero x.x.x"`
 * `cargo publish` (possibly `cargo publish --no-verify`)
 * `git tag -m v0.x.x v0.x.x`
+* `git push origin v0.x.x`
 * Bump to next minor version in `Cargo.toml` (without `-dev` postfix)
 * `git commit -a -m "Bump version"`
 

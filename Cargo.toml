@@ -5,6 +5,9 @@ default-members = ["geozero", "geozero-cli"]
 resolver = "3"
 
 [workspace.package]
+# The latest release on crates.io is 0.15.1 (tag v0.15.1).
+# Do not change this version yet. flatgeobuf 5 and geoarrow-array require geozero ^0.14.
+# With a different version, the [patch.crates-io] entry for geozero does not apply to them.
 version = "0.14.0"
 authors = [
     "Pirmin Kalberer <pka@sourcepole.ch>",
