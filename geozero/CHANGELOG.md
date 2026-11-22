@@ -1,6 +1,38 @@
 ## UNRELEASED
 
 * Implement `GeozeroGeometry::srid` and `dims` for wkb types
+  * <https://github.com/georust/geozero/pull/278>
+* Update Deps:
+  * BREAKING: `sqlx` to 0.9
+  * <https://github.com/georust/geozero/pull/292>
+  * BREAKING: `geojson` to 1.0
+  * BREAKING: `geos` to 11.x
+  * BREAKING: `geo` to 0.33
+  * BREAKING: `dup-indexer` to 0.5
+  * BREAKING: `dbase` to 0.8.x
+  * Fix `shp` feature `iter_features` looping forever / erroring at end-of-file
+    with `dbase` 0.8 (its record iterator no longer returns `None` at EOF)
+  * <https://github.com/georust/geozero/pull/310>
+* Cleanup justfile, editor config, other minor non-coding aspects
+  * <https://github.com/georust/geozero/pull/301>
+* Use `fast-mvt` for all MVT handling
+  * <https://github.com/georust/geozero/pull/311>
+* Fix the `shp` reader iterators never terminating on a malformed or truncated file: an
+  error is now terminal instead of being yielded again forever, and the main header's
+  `file_length` is validated
+  * <https://github.com/georust/geozero/pull/322>
+* `ShapeIterator` and `ShapeRecordIterator` implement `size_hint`, bounded by the `.shx`
+  shape count when the index is available
+* `FusedIterator` for `ShapeIterator` now covers every `ShapeIterator` that is an
+  `Iterator` (previously only `P: FeatureProcessor, T: Read + Seek`)
+* `ToGeoFeatures::to_geo_features` returns `impl ExactSizeIterator + FusedIterator`
+  * <https://github.com/georust/geozero/pull/325>
+
+## 0.15.1 - (2025-12-11)
+* Update `geo` dependency to 0.32.0
+
+## 0.15.0 - (2025-12-11)
+
 * Add `style` option to SVGWriter for writing \<style\> tags
 * Add `BoundsProcessor` to compute bounds of geometry
 * Update Deps:
@@ -15,30 +47,12 @@
   * BREAKING: `scroll` to 0.13
   * BREAKING: `thiserror` to 2.0
   * BREAKING: `wkt` to 0.14.0
-  * BREAKING: `sqlx` to 0.9
   * <https://github.com/georust/geozero/pull/244>
-  * BREAKING: `geojson` to 1.0
-  * BREAKING: `geos` to 11.x
-  * BREAKING: `geo` to 13.x
-  * BREAKING: `dup-indexer` to 0.4
-  * BREAKING: `dbase` to 0.8.x
-  * Fix `shp` feature `iter_features` looping forever / erroring at end-of-file
-    with `dbase` 0.8 (its record iterator no longer returns `None` at EOF)
 * Add feature writing support and MVT layer output to `MvtWriter`
   * Breaking: `MvtWriter::new` now returns a `Result` instead of a `MvtWriter`
   * Breaking: `MvtWriter` does not implement `Default` anymore
   * <https://github.com/georust/geozero/pull/264>
 * Updated to 2024 edition
-* Cleanup justfile, editor config, other minor non-coding aspects
-* Use `fast-mvt` for all MVT handling
-* Fix the `shp` reader iterators never terminating on a malformed or truncated file: an
-  error is now terminal instead of being yielded again forever, and the main header's
-  `file_length` is validated
-* `ShapeIterator` and `ShapeRecordIterator` implement `size_hint`, bounded by the `.shx`
-  shape count when the index is available
-* `FusedIterator` for `ShapeIterator` now covers every `ShapeIterator` that is an
-  `Iterator` (previously only `P: FeatureProcessor, T: Read + Seek`)
-* `ToGeoFeatures::to_geo_features` returns `impl ExactSizeIterator + FusedIterator`
 
 ## 0.14.0 - (2024-09-26)
 
