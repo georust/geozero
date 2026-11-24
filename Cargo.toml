@@ -15,7 +15,7 @@ homepage = "https://github.com/georust/geozero"
 repository = "https://github.com/georust/geozero"
 readme = "README.md"
 license = "MIT OR Apache-2.0"
-rust-version = "1.94.0"
+rust-version = "1.95.0"
 
 [workspace.dependencies]
 # Used in geozero-cli and geozero-bench
@@ -38,10 +38,10 @@ futures-util = "0.3.28"
 gdal = { version = "0.19.0", default-features = false }
 gdal-sys = "0.12.0"
 geo = "0.33.1"
-geoarrow-array = { version = "0.8.0", default-features = false }
-geoarrow-schema = "0.8.0"
-geoparquet = "0.8.0"
-parquet = "58"
+geoarrow-array = { version = "0.10.0", default-features = false }
+geoarrow-schema = "0.10.0"
+geoparquet = "0.10.0"
+parquet = "60"
 geo-types = { version = "0.7.11", default-features = false }
 geojson = { version = "1.0.0", default-features = false }
 geos = "11.1"
@@ -60,7 +60,7 @@ serde_json = "1.0.104"
 sqlx = { version = "0.9", default-features = false }
 thiserror = "2.0.7"
 tokio = { version = "1.30.0", default-features = false }
-wkt = "0.14.0"
+wkt = "0.15.0"
 
 [workspace.lints.rust]
 # unsafe_code = "forbid"  # One day...
