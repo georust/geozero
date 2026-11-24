@@ -13,16 +13,42 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      issues: write # rustsec/audit-check opens issues for new advisories
-      checks: write # rustsec/audit-check publishes a check run with the results
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
-      - uses: rustsec/audit-check@69366f33c96575abad1ee0dba8212993eecbe998 # v2.0.0
+      - name: Install cargo-audit
+        uses: taiki-e/install-action@fe3acb53a98b62c772db35de75ce0e4595e7ca8c # v2.90.8
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          ignore: RUSTSEC-2023-0089
-          # RUSTSEC-2023-0089 = atomic-polyfill unmaintained => only pulled via geo-types' optional old rstar (0.9/0.10/0.11) deps, which we never enable, so it's never actually compiled
+          tool: cargo-audit
+      # Ignored advisories are in .cargo/audit.toml.
+      - name: Run cargo audit
+        shell: bash
+        run: cargo audit
+
+  # Open an issue when the scheduled audit fails. If an open issue exists,
+  # add a comment to it instead.
+  report:
+    name: Report scheduled audit failure
+    needs: audit
+    if: failure() && github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Open or update issue
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title="Scheduled security audit failed"
+          existing=$(gh issue list --state open --search "\"$title\" in:title" --json number --jq '.[0].number // empty')
+          if [[ -n "$existing" ]]; then
+            gh issue comment "$existing" --body "The scheduled audit failed again: $RUN_URL"
+          else
+            gh issue create --title "$title" --body "The scheduled \`cargo audit\` run failed: $RUN_URL"
+          fi
   codeql:
     name: CodeQL (${{ matrix.language }})
     runs-on: ubuntu-latest
@@ -48,11 +74,11 @@ jobs:
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with: { persist-credentials: false }
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
+      uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
       with:
         languages: ${{ matrix.language }}
         build-mode: none
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
+      uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
       with:
         category: "/language:${{matrix.language}}"
